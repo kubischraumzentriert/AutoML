@@ -1,6 +1,7 @@
 _artifacts/
 *.csv
 *.rds
+*.html
 .RData
 .Rhistory
 .Rproj.user/
