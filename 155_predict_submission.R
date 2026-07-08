@@ -10,11 +10,11 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 
-if (!file.exists(final_model_lightgbm_full_path)) {
-  source(file.path(project_dir, "150_train_full_lightgbm.R"))
+if (!file.exists(final_model_full_path(submission_model_name))) {
+  source(file.path(project_dir, "150_train_full_model.R"))
 }
 
-model_bundle <- readRDS(final_model_lightgbm_full_path)
+model_bundle <- readRDS(final_model_full_path(submission_model_name))
 learner <- model_bundle$learner
 feature_levels <- model_bundle$feature_levels
 

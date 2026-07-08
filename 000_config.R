@@ -82,8 +82,17 @@ catboost_iterations <- 200
 class_weight_power_extended_grid <- c(1, 1.25, 1.5, 1.75, 2, 2.5, 3)
 class_weight_power_extended_results_path <- file.path(artifact_dir, "class_weight_power_extended_results.csv")
 
-final_model_lightgbm_full_path <- file.path(artifact_dir, "final_model_lightgbm_full.rds")
+final_model_full_path <- function(model_name) {
+  file.path(artifact_dir, paste0("final_model_", model_name, "_full.rds"))
+}
 submission_path <- file.path(project_dir, "submission.csv")
+
+ensemble_candidates_results_path <- file.path(artifact_dir, "ensemble_candidates_results.csv")
+ensemble_ranger_lightgbm_results_path <- file.path(artifact_dir, "ensemble_ranger_lightgbm_results.csv")
+
+ranger_weighted_tuning_search_results_path <- file.path(artifact_dir, "ranger_weighted_tuning_search_results.csv")
+ranger_weighted_tuning_final_results_path <- file.path(artifact_dir, "ranger_weighted_tuning_final_results.csv")
+ranger_weighted_tuning_instance_path <- file.path(artifact_dir, "ranger_weighted_tuning_instance.rds")
 
 # Schwellenwert-Tuning: 3-Wege-Split (Train/Tune/Eval), Gewichte pro Klasse
 # werden auf dem Tune-Split gesucht (argmax(prob * weight)), um BAcc direkt zu
@@ -110,7 +119,7 @@ tabpfn_results_path <- file.path(artifact_dir, "tabpfn_results.csv")
 model_feature_sets <- list(
   lda = "raw",
   multinom = "selected",
-  lightgbm = "raw"
+  ranger = "raw"
 )
 
 resolve_task_path <- function(feature_set) {
@@ -124,6 +133,28 @@ resolve_task_path <- function(feature_set) {
 final_model_path <- function(model_name) {
   file.path(artifact_dir, paste0("final_model_", model_name, ".rds"))
 }
+
+# Basis-Learner-Konstruktoren je Modellname (ohne Imputations-Pipeline - die
+# wenden die Trainingsskripte selbst an, siehe make_baseline_learner in
+# 070/140/150). Bei einem neuen Klassifikationsaufgaben-Workflow bleibt diese
+# Liste gleich, sofern dieselben Modellnamen weiterverwendet werden - sonst
+# genuegt es, sie zu ergaenzen.
+base_learner_constructors <- list(
+  lda = function() lrn("classif.lda"),
+  multinom = function() {
+    learner <- lrn("classif.multinom")
+    if ("trace" %in% learner$param_set$ids()) {
+      learner$param_set$values$trace <- FALSE
+    }
+    learner
+  },
+  ranger = function() lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed),
+  lightgbm = function() lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations)
+)
+
+# Welches Modell aus model_feature_sets fuer die finale Kaggle-Submission auf
+# dem vollen Datensatz trainiert wird (siehe 150_train_full_model.R).
+submission_model_name <- "ranger"
 
 # Balancierte Klassengewichte mit Daempfung: power = 0 -> ungewichtet,
 # power = 1 -> volle Balance (weight_i = n_gesamt / (n_klassen * n_klasse_i)).
@@ -150,5 +181,5 @@ class_weight_power <- 1.5
 # Modelle, auf die beim finalen Training Klassengewichte angewendet werden
 # (siehe 070_final_models.R). Nur Modelle mit Eintrag hier werden gewichtet.
 model_class_weight_power <- list(
-  lightgbm = class_weight_power
+  ranger = class_weight_power
 )

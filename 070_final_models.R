@@ -26,25 +26,6 @@ make_baseline_learner <- function(base_learner) {
   as_learner(po("imputemedian") %>>% po("imputemode") %>>% base_learner)
 }
 
-# Learner-Konstruktoren je Modellname aus model_feature_sets. Bei einem neuen
-# Klassifikationsaufgaben-Workflow bleibt diese Liste gleich, sofern dieselben
-# Modellnamen weiterverwendet werden - sonst genuegt es, sie zu ergaenzen.
-learner_constructors <- list(
-  lda = function() make_baseline_learner(lrn("classif.lda")),
-  multinom = function() {
-    base_learner <- lrn("classif.multinom")
-    if ("trace" %in% base_learner$param_set$ids()) {
-      base_learner$param_set$values$trace <- FALSE
-    }
-    make_baseline_learner(base_learner)
-  },
-  lightgbm = function() {
-    make_baseline_learner(
-      lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations)
-    )
-  }
-)
-
 cat("=== Finale Modelle ===\n")
 
 for (model_name in names(model_feature_sets)) {
@@ -56,7 +37,7 @@ for (model_name in names(model_feature_sets)) {
     task <- add_balanced_class_weights(task, weight_power)
   }
 
-  learner <- learner_constructors[[model_name]]()
+  learner <- make_baseline_learner(base_learner_constructors[[model_name]]())
 
   set.seed(seed)
   learner$train(task)

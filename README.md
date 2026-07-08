@@ -41,7 +41,10 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `125_catboost_benchmark.R` | Vergleicht CatBoost gegen LightGBM (beide `power=1`, Rohfeatures, CV) |
 | `130_threshold_tuning.R` | Sucht post-hoc Klassengewichte auf den Wahrscheinlichkeiten (`argmax(prob * weight)`) auf einem Tune-Split, vergleicht mit `class_weight_power` |
 | `135_lightgbm_class_weight_power_extended.R` | Setzt die `power`-Kurve aus `105` ueber 1 hinaus fort, findet das innere BAcc-Maximum |
-| `150_train_full_lightgbm.R` | Trainiert das finale LightGBM (Rohfeatures, `power = 1.5`) auf dem vollen Trainingsdatensatz (`train.csv`, alle Zeilen) |
+| `140_ensemble_candidates_weighted.R` | Vergleicht LightGBM, Ranger und XGBoost mit derselben `power=1.5`-Gewichtung (CV) |
+| `142_ranger_tuning_weighted.R` | Wiederholt `090` auf dem `power=1.5`-gewichteten Task (Random Search), Finalvergleich per CV |
+| `145_ensemble_ranger_lightgbm.R` | Gleichgewichtetes Wahrscheinlichkeits-Ensemble (`gunion()` + `po("classifavg")`) aus Ranger und LightGBM |
+| `150_train_full_model.R` | Trainiert `submission_model_name` (aktuell Ranger, Rohfeatures, `power=1.5`) auf dem vollen Trainingsdatensatz (`train.csv`, alle Zeilen) |
 | `155_predict_submission.R` | Wendet das volle Modell auf `test.csv` an und schreibt `submission.csv` im Format von `sample_submission.csv` |
 
 ## Bewertungsmetriken
@@ -313,9 +316,48 @@ Anders als im Bereich 0-1 ist diese Kurve **nicht monoton** — sie hat ein inne
 
 **Entscheidung: `power = 1.5`** (nicht der exakte Peak bei 1.75): BAcc 0.9445 liegt nur 0.0004 unter dem Peak (Rauschniveau), MCC ist bei 1.5 aber spuerbar besser (0.8025 vs. 0.7945). Wichtiger: **`power=1.5` erreicht BAcc und MCC von CatBoost gleichzeitig** (0.9445/0.8025 vs. CatBoosts 0.9435/0.8022) bei gut 10x kuerzerer Laufzeit (77s vs. 806s) — kein Modellwechsel noetig, derselbe Effekt guenstiger ueber den bestehenden Regler erreichbar.
 
+## Ranger und XGBoost mit Klassengewichtung (Ensemble-Kandidaten)
+
+Alle bisherigen Klassengewichts-Experimente liefen nur mit LightGBM. `140_ensemble_candidates_weighted.R` testet Ranger und XGBoost mit derselben `power=1.5`-Gewichtung, um einen fairen Vergleich fuer eine moegliche Ensemble-Entscheidung zu haben (die bisherigen Ranger-/XGBoost-Zahlen aus `080`/`090` waren ungewichtet):
+
+| Modell | BAcc | MCC | Laufzeit (5-fache CV) |
+|---|---:|---:|---:|
+| LightGBM | 0.9438 | 0.8016 | 79.6 s |
+| **Ranger** | **0.9456** | **0.8144** | 135.3 s |
+| XGBoost | 0.8912 | 0.7739 | 438.2 s |
+
+**Ueberraschung**: Ranger mit Klassengewichtung schlaegt sowohl LightGBM als auch CatBoost auf beiden Metriken (CatBoost: 0.9435/0.8022) — bei weniger als einem Sechstel von CatBoosts Laufzeit. Ungewichtet war das komplett unsichtbar; der ungewichtete Ranger-Vergleich aus `080`/`090` haette diese Staerke nie gezeigt. XGBoost bleibt dagegen selbst gewichtet deutlich zurueck und ist mit Abstand am langsamsten — kein sinnvoller Ensemble-Kandidat.
+
+**Entscheidung**: Ranger (Rohfeatures, `num.trees=200`, `power=1.5`) loest LightGBM als finales Modell ab (`model_feature_sets`/`model_class_weight_power`/`070_final_models.R`/`150_train_full_model.R`, gesteuert ueber `submission_model_name`).
+
+**Erste Kaggle-Einreichung mit Ranger**: BAcc **0.9482** (vs. 0.94751 mit dem vorherigen LightGBM-Stand) - wieder nah an der CV-Schaetzung (0.9456), bestaetigt erneut die CV-Methodik.
+
+## Ranger + LightGBM Ensemble (verworfen)
+
+`145_ensemble_ranger_lightgbm.R` testet ein gleichgewichtetes Wahrscheinlichkeits-Ensemble (`gunion()` + `po("classifavg")`, beide Zweige `power=1.5`-gewichtet) gegen die Einzelmodelle:
+
+| Modell | BAcc | MCC | Laufzeit |
+|---|---:|---:|---:|
+| Ranger | 0.9456 | **0.8144** | 136.1 s |
+| LightGBM | 0.9438 | 0.8016 | 77.0 s |
+| Ensemble (50/50) | 0.9459 | 0.8049 | 208.0 s |
+
+Erkenntnis: Der BAcc-Gewinn gegenueber Ranger allein (+0.0003) ist Rauschen, MCC faellt dagegen spuerbar (LightGBMs schwaecherer MCC zieht den Durchschnitt runter), bei fast doppelter Laufzeit. **Entscheidung: kein Ensemble** - Ranger pur bleibt das finale Modell. Anders als bei LDA/Multinom (grosser Staerkeunterschied) liegt es hier daran, dass beide Modelle zu aehnlich in dieselbe Richtung ziehen, um echten Diversitaetsgewinn zu erzeugen.
+
+## Ranger-Tuning unter Klassengewichtung (verworfen)
+
+`090_ranger_tuning.R` tunte Ranger **ohne** Klassengewichtung. `142_ranger_tuning_weighted.R` wiederholt das Tuning auf dem `power=1.5`-gewichteten Task, da die Zielfunktionslandschaft mit Gewichtung eine andere ist:
+
+| Modell | mtry.ratio | min.node.size | sample.fraction | BAcc | MCC | Laufzeit |
+|---|---:|---:|---:|---:|---:|---:|
+| Default (gewichtet) | 0.333 | 1 | 1.0 | 0.9458 | **0.8148** | 114.3 s |
+| Getunt (gewichtet) | 0.377 | 20 | 0.685 | **0.9473** | 0.7920 | 112.3 s |
+
+Erkenntnis: Anders als bei LightGBM (`100`) findet das Tuning hier einen kleinen echten BAcc-Gewinn (+0.0015), aber wieder zum Preis eines spuerbaren MCC-Verlusts (-0.023). Der Gewinn liegt in der Groessenordnung der CV-Rauschgrenze, die wir in anderen Experimenten beobachtet haben. **Entscheidung: Standard-Hyperparameter behalten** - konsistent mit der Wahl `power=1.5` statt des BAcc-Peaks bei `power=1.75`: ein unsicherer, kleiner BAcc-Gewinn rechtfertigt nicht den sichereren, groesseren MCC-Verlust.
+
 ## Modell-Erkenntnisse
 
-- Ranger war lange die wichtigste Vergleichsbaseline, wurde aber von LightGBM als staerkstem Kandidaten abgeloest (siehe Boosting-Benchmark).
+- Ranger war zunaechst die wichtigste Vergleichsbaseline, wurde von LightGBM abgeloest (Boosting-Benchmark) - und hat dann mit Klassengewichtung LightGBM (und CatBoost) wieder ueberholt (siehe oben). Lektion: Modellvergleiche ohne dieselbe Gewichtungs-/Preprocessing-Behandlung sind nicht belastbar, selbst wenn sie zuvor "eindeutig" aussahen.
 - Lineare Modelle profitieren nicht automatisch von vielen abgeleiteten Features.
 - LDA reagiert empfindlich auf Kollinearitaet.
 - Unregularisierte multinomiale Regression ist schnell, aber nicht stark genug.
@@ -336,7 +378,8 @@ Anders als im Bereich 0-1 ist diese Kurve **nicht monoton** — sie hat ein inne
 
 - **LDA**: Rohfeatures, keine engineered Features (kollinearitaetsempfindlich, kein CV-bestaetigter Nutzen).
 - **Multinom**: Aktivitaet+Cardio+Schlaf-Feature-Set (`task_train_small_features_selected.rds`) — CV-bestaetigter Vorteil gegenueber Rohfeatures.
-- **LightGBM (loest Ranger als Referenzmodell ab)**: Rohfeatures, Standardparameter (`num_iterations = 200`, sonst Default), balancierte Klassengewichte mit `power = 1.5` (siehe Klassengewichtung ueber power=1 hinaus) — schlaegt Ranger deutlich und erreicht CatBoosts BAcc/MCC bei 10x kuerzerer Laufzeit, eigenes Hyperparameter-Tuning brachte keinen Zusatznutzen. Bereits in `model_feature_sets`/`model_class_weight_power`/`070_final_models.R` uebernommen.
+- **Ranger (finales Modell, `submission_model_name`)**: Rohfeatures, Standardparameter (`num.trees = 200`, sonst Default), balancierte Klassengewichte mit `power = 1.5` — schlaegt gewichtetes LightGBM und CatBoost auf BAcc und MCC gleichzeitig, bei einem Sechstel von CatBoosts Laufzeit (siehe Ensemble-Kandidaten-Abschnitt). Bereits in `model_feature_sets`/`model_class_weight_power`/`070_final_models.R`/`150_train_full_model.R` uebernommen.
+- **LightGBM**: weiterhin ein sehr starker Kandidat (Rohfeatures, `power = 1.5`, eigenes Hyperparameter-Tuning brachte keinen Zusatznutzen), aber knapp hinter Ranger — bleibt als moeglicher Ensemble-Partner interessant (siehe Ensemble-Kandidaten-Abschnitt).
 
 Diese Zuordnung ist in `model_feature_sets` und `model_class_weight_power` (`000_config.R`) fest verdrahtet und wird von `070_final_models.R` automatisch angewendet: das Skript laedt je Learner ueber `resolve_task_path()` das passende Feature-Set-Task, wendet ueber `add_balanced_class_weights()` ggf. Klassengewichte an und trainiert/speichert das finale Modell (`_artifacts/final_model_<modell>.rds`).
 
@@ -346,27 +389,33 @@ Diese Zuordnung ist in `model_feature_sets` und `model_class_weight_power` (`000
 2. `feature_families`/`selected_families` in `000_config.R` an die neuen Familien anpassen.
 3. `model_feature_sets` neu befuellen (welcher Learner nutzt welches Feature-Set).
 4. `model_class_weight_power` neu befuellen (welcher Learner bekommt Klassengewichte, welche `power`-Staerke) - je nachdem, welche Metrik fuer die neue Aufgabe zaehlt.
+5. `base_learner_constructors` um neue Modellnamen ergaenzen, falls noetig, und `submission_model_name` auf das gewuenschte finale Modell setzen.
 
-`005_benchmark_runtime.R`, `040_preprocessing.R`, `025_feature_engineering.R` und `070_final_models.R` bleiben dabei unveraendert, da sie ausschliesslich ueber diese Konfigurationswerte arbeiten.
+`005_benchmark_runtime.R`, `040_preprocessing.R`, `025_feature_engineering.R`, `070_final_models.R` und `150_train_full_model.R` bleiben dabei unveraendert, da sie ausschliesslich ueber diese Konfigurationswerte arbeiten.
 
 ## Finales Training & Submission
 
-`150_train_full_lightgbm.R` trainiert das finale LightGBM (Rohfeatures, Standardparameter, `class_weight_power = 1.5`) auf dem **vollen** Trainingsdatensatz (`train.csv`, 690088 Zeilen statt des 10%-Subsets) und speichert Modell + Faktorstufen der Merkmale gemeinsam (`_artifacts/final_model_lightgbm_full.rds`) - Letzteres, damit `155_predict_submission.R` `test.csv` exakt auf dieselben Kategorie-Stufen abbildet, unabhaengig davon, ob im Test-Set zufaellig alle Stufen vorkommen. `155` erzeugt daraus `submission.csv` im Format von `sample_submission.csv` (Spalten `id`, `health_condition`).
+`150_train_full_model.R` trainiert `submission_model_name` (aktuell `ranger`: Rohfeatures, Standardparameter, `class_weight_power = 1.5`) auf dem **vollen** Trainingsdatensatz (`train.csv`, 690088 Zeilen statt des 10%-Subsets) und speichert Modell + Faktorstufen der Merkmale gemeinsam (`_artifacts/final_model_<modell>_full.rds`) - Letzteres, damit `155_predict_submission.R` `test.csv` exakt auf dieselben Kategorie-Stufen abbildet, unabhaengig davon, ob im Test-Set zufaellig alle Stufen vorkommen. `155` erzeugt daraus `submission.csv` im Format von `sample_submission.csv` (Spalten `id`, `health_condition`).
 
-Vorhergesagte Klassenverteilung auf `test.csv` (295753 Zeilen): `at-risk` 79.7%, `unhealthy` 12.5%, `fit` 7.8% (Rohverteilung im Training war ca. 86/8/6%) - die Verschiebung Richtung Minderheitsklassen entspricht dem erwarteten Effekt von `class_weight_power = 1.5`.
+Vorhergesagte Klassenverteilung auf `test.csv` (295753 Zeilen, Ranger): `at-risk` 81.8%, `unhealthy` 10.9%, `fit` 7.25% (Rohverteilung im Training war ca. 86/8/6%) - naeher an der Rohverteilung als LightGBMs Vorhersage, passend zu Rangers besserer Precision/MCC in der CV.
+
+**Erste Kaggle-Einreichung** (LightGBM, `power=1.5`, vor der Ranger-Umstellung): BAcc **0.94751**, Platz 618/1104 - sehr nah an der lokalen CV-Schaetzung (0.9445), was die CV-Methodik nachtraeglich bestaetigt (kein Overfitting an das 10%-Subset, der Adversarial-Validation-Shift hat sich als unschaedlich erwiesen).
 
 Kein erneutes Hyperparameter-Tuning auf dem vollen Datensatz: `100_lightgbm_tuning.R` zeigte auf dem Subset keinen Vorteil gegenueber Standardparametern, und eine erneute Suche haette auf der 10x groesseren Datenmenge grob geschaetzt 1.5-2.5 Stunden gekostet, ohne dass ein anderes Ergebnis zu erwarten war.
 
 ## Naechste Schritte
 
-1. ~~Ranger als feste Referenzbaseline behalten~~ - abgeloest: LightGBM ist das Referenzmodell, finales Training auf vollem Datensatz abgeschlossen (siehe oben).
+1. ~~Ranger als feste Referenzbaseline behalten~~ - Ranger ist (wieder) das finale Modell, diesmal mit Klassengewichtung, finales Training auf vollem Datensatz abgeschlossen (siehe oben).
 2. ~~Feature Engineering in kleinere Feature-Familien aufteilen~~ - erledigt in `features/*.R`, `025`, `036` und `037`, fuer LightGBM in `110` bestaetigt (kein Zusatznutzen).
 3. ~~Preprocessing-Strategien explizit fuer LightGBM vergleichen~~ - erledigt in `120`: `""` behalten bleibt klar besser (bestaetigt bestehende Konfiguration).
-4. ~~Boosting-Kandidaten pruefen: XGBoost, LightGBM, CatBoost~~ - XGBoost/LightGBM erledigt in `080`, CatBoost in `125` (schlaegt BAcc, aber 10x langsamer - LightGBM mit hoeherem `class_weight_power` erreicht denselben Punkt guenstiger, siehe `135`).
+4. ~~Boosting-Kandidaten pruefen: XGBoost, LightGBM, CatBoost~~ - XGBoost/LightGBM erledigt in `080`, CatBoost in `125`, alle drei nochmal gewichtet in `140` (Ranger gewinnt).
 5. ~~LightGBM tunen~~ - erledigt in `100` (Bayesian Optimization via `mlr3mbo`), kein Zusatznutzen gegenueber Standardparametern.
-6. ~~Klassengewichtung pruefen~~ - erledigt in `105`/`135`, `power = 1.5` uebernommen (BAcc 0.9445, MCC 0.8025, Kaggle-Bewertungsmetrik ist BAcc).
+6. ~~Klassengewichtung pruefen~~ - erledigt in `105`/`135`, `power = 1.5` uebernommen; in `140` bestaetigt, dass Ranger davon noch staerker profitiert als LightGBM.
 7. ~~Adversarial Validation durchfuehren~~ - erledigt in `115`. Moderater, aber nicht per Mittelwert/Streuung erklaerbarer Shift (AUC 0.654) - als geprueftes Risiko akzeptiert, kein Handlungsbedarf.
 8. ~~Post-hoc Threshold-Tuning pruefen~~ - erledigt in `130`, kein unabhaengiger Hebel gegenueber `class_weight_power`.
-9. ~~Ganz am Schluss: kompletten Trainingsdatensatz statt 10%-Subset verwenden~~ - erledigt in `150`/`155`, `submission.csv` erzeugt.
-10. Optional, falls noch gewuenscht: SHAP/Interpretierbarkeit fuer das finale Modell einsetzen.
-11. Optional: `targets` zur Orchestrierung der Skripte einfuehren.
+9. ~~Ganz am Schluss: kompletten Trainingsdatensatz statt 10%-Subset verwenden~~ - erledigt in `150`/`155`, `submission.csv` erzeugt. Kaggle-Einreichungen: LightGBM-Stand BAcc 0.94751 (Platz 618/1104), Ranger-Stand BAcc 0.9482 - beide nah an der jeweiligen CV-Schaetzung.
+10. ~~Ensemble aus LightGBM + Ranger~~ - erledigt in `145`: kein Zusatznutzen, BAcc-Gewinn ist Rauschen, MCC leidet. Ranger pur bleibt final. XGBoost bewusst ausgeschlossen (schwaecher und ~10x langsamer, siehe `140`).
+11. ~~Ranger-Tuning unter Klassengewichtung pruefen~~ - erledigt in `142`: kleiner, unsicherer BAcc-Gewinn (+0.0015) zum Preis eines spuerbaren MCC-Verlusts (-0.023) - nicht uebernommen, Standard-Hyperparameter bleiben.
+12. Pseudo-Labeling als moeglicher weiterer Hebel besprochen (mehr Trainingsdaten, passt Modell an Testverteilung an) - Risiko: kann die muehsam hergestellte Klassenbalance wieder unterlaufen, falls Konfidenz-Schwellen nicht pro Klasse gesetzt werden. Noch nicht umgesetzt.
+13. Optional, falls noch gewuenscht: SHAP/Interpretierbarkeit fuer das finale Modell einsetzen.
+14. Optional: `targets` zur Orchestrierung der Skripte einfuehren.
