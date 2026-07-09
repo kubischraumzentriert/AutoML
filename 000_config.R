@@ -1,5 +1,7 @@
-config_path <- normalizePath(sys.frame(1)$ofile)
-project_dir <- dirname(config_path)
+if (!exists("project_dir")) {
+  config_path <- normalizePath(sys.frame(1)$ofile)
+  project_dir <- dirname(config_path)
+}
 
 train_path <- file.path(project_dir, "train.csv")
 test_path <- file.path(project_dir, "test.csv")

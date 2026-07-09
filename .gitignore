@@ -1,4 +1,5 @@
 _artifacts/
+_targets/
 *.csv
 *.rds
 *.html

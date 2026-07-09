@@ -10,7 +10,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 
 - `mlr3pipelines` beschreibt die Modell-Pipeline: Imputation, Faktorbehandlung, Encoding, Skalierung und Learner.
 - Die nummerierten Skripte beschreiben den Workflow: Datenueberblick, Task-Erzeugung, Baselines, Feature Engineering, Kandidatenmodelle.
-- Spaeter kann `targets` diese Skripte orchestrieren, ersetzt aber nicht die `mlr3`-Pipelines.
+- `targets` (`_targets.R`) orchestriert den *finalen* Workflow (Task-Erzeugung bis Submission, siehe eigener Abschnitt), ersetzt aber nicht die `mlr3`-Pipelines und nicht die explorativen Einzel-Skripte zur Modellauswahl.
 - Datenquellenspezifisches Feature Engineering bleibt austauschbar und liegt separat.
 
 ## Skriptstruktur
@@ -46,6 +46,32 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `145_ensemble_ranger_lightgbm.R` | Gleichgewichtetes Wahrscheinlichkeits-Ensemble (`gunion()` + `po("classifavg")`) aus Ranger und LightGBM |
 | `150_train_full_model.R` | Trainiert `submission_model_name` (aktuell Ranger, Rohfeatures, `power=1.5`) auf dem vollen Trainingsdatensatz (`train.csv`, alle Zeilen) |
 | `155_predict_submission.R` | Wendet das volle Modell auf `test.csv` an und schreibt `submission.csv` im Format von `sample_submission.csv` |
+
+## `targets`-Pipeline (`_targets.R`)
+
+Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
+
+`_targets.R` bildet genau diesen Workflow als expliziten, cachenden Abhaengigkeitsgraphen ab (`targets`-Paket):
+
+- `train_raw`/`train_full` laden `train.csv` (getrennt fuer Subset- bzw. volles Training).
+- `task_family` ist ein **dynamisch verzweigtes** Ziel (`pattern = map(feature_family_name)`) - baut automatisch einen Task pro Eintrag in `feature_families`, ohne den Code pro Familie zu wiederholen.
+- `task_raw`/`task_combined`/`task_selected` entsprechen den Roh-/Kombinierten/Ausgewaehlten Tasks aus `025`.
+- `final_model_subset` verzweigt ebenso ueber `model_name` (alle Eintraege aus `model_feature_sets`) und entspricht `070`.
+- `task_full`/`task_full_weighted`/`final_model_full` entsprechen `150`, `submission` entspricht `155`.
+
+**Nutzung**:
+```r
+targets::tar_make()          # Pipeline ausfuehren (baut nur veraltete/fehlende Ziele neu)
+targets::tar_visnetwork()    # Abhaengigkeitsgraphen interaktiv anzeigen
+targets::tar_manifest()      # Zielliste ohne Ausfuehrung pruefen
+targets::tar_read(final_model_full)  # Ein bestimmtes Ziel aus dem Cache laden
+```
+
+Aendert sich z.B. `class_weight_power` in `000_config.R`, erkennt `tar_make()` beim naechsten Aufruf automatisch, dass `task_full_weighted` und alles Nachgelagerte (`final_model_full`, `submission`) veraltet sind, und baut nur diese neu - `task_family`/`task_combined` (die nicht von `class_weight_power` abhaengen) bleiben unveraendert im Cache.
+
+**Bewusst nicht in `targets` uebernommen**: die explorativen Einzel-Skripte `030`-`145`. Die dienten der Modellauswahl (welches Modell, welche Gewichtung, welche Feature-Familie) und sind eher Analysewerkzeuge fuer eine einmalige Entscheidungsfindung als Teil einer wiederholbaren Produktions-Pipeline - sie bleiben als eigenstaendige Skripte und als Vorlage fuer die *Methodik* (wie man Klassengewichte testet, wie man Adversarial Validation aufsetzt, etc.), wenn ein neuer Klassifikationsaufgaben-Workflow dieselben Fragen erneut beantworten muss.
+
+**Fuer einen neuen Klassifikationsaufgaben-Workflow** (siehe auch "Modularitaet" oben) reduziert `targets` den Umstellungsaufwand: man aendert `000_config.R` (Metrik, Spalten, `model_feature_sets`/`model_class_weight_power`) und `features/*.R`, ruft `tar_make()` auf - der Abhaengigkeitsgraph selbst (welches Ziel von welchem abhaengt) bleibt strukturell gleich, muss also nicht neu durchdacht werden.
 
 ## Bewertungsmetriken
 
@@ -418,4 +444,4 @@ Kein erneutes Hyperparameter-Tuning auf dem vollen Datensatz: `100_lightgbm_tuni
 11. ~~Ranger-Tuning unter Klassengewichtung pruefen~~ - erledigt in `142`: kleiner, unsicherer BAcc-Gewinn (+0.0015) zum Preis eines spuerbaren MCC-Verlusts (-0.023) - nicht uebernommen, Standard-Hyperparameter bleiben.
 12. Pseudo-Labeling als moeglicher weiterer Hebel besprochen (mehr Trainingsdaten, passt Modell an Testverteilung an) - Risiko: kann die muehsam hergestellte Klassenbalance wieder unterlaufen, falls Konfidenz-Schwellen nicht pro Klasse gesetzt werden. Noch nicht umgesetzt.
 13. Optional, falls noch gewuenscht: SHAP/Interpretierbarkeit fuer das finale Modell einsetzen.
-14. Optional: `targets` zur Orchestrierung der Skripte einfuehren.
+14. ~~`targets` zur Orchestrierung der Skripte einfuehren~~ - erledigt (`_targets.R`), deckt den finalen Workflow ab (Task-Erzeugung bis Submission), siehe eigener Abschnitt oben.
