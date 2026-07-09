@@ -9,6 +9,12 @@ suppressPackageStartupMessages({
 db_connect <- function(db_path = experiments_db_path) {
   con <- dbConnect(RSQLite::SQLite(), db_path)
   dbExecute(con, "PRAGMA foreign_keys = ON;")
+  # WAL erlaubt gleichzeitige Leser/Schreiber besser als der Default-Modus,
+  # busy_timeout laesst einen Writer auf einen kurz gesperrten Writer warten
+  # statt sofort mit SQLITE_BUSY zu scheitern - relevant, wenn mehrere
+  # Skripte parallel am Ende ihres Laufs in dieselbe DB loggen.
+  dbExecute(con, "PRAGMA journal_mode = WAL;")
+  dbExecute(con, "PRAGMA busy_timeout = 30000;")
 
   schema_sql <- paste(readLines(file.path(project_dir, "db_schema.sql"), warn = FALSE), collapse = "\n")
   statements <- Filter(function(s) nchar(s) > 0, trimws(strsplit(schema_sql, ";")[[1]]))

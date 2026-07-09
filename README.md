@@ -35,10 +35,10 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `095_tabpfn_benchmark.R` | Explorativer TabPFN-Vergleich auf einem CPU-vertraeglichen Mini-Subset (eigenes `tabpfn_subset_size`) |
 | `100_lightgbm_tuning.R` | Bayesian-Optimization-Tuning fuer LightGBM (`mlr3mbo`), Finalvergleich per CV |
 | `105_lightgbm_class_weights.R` | Vergleicht balancierte Klassengewichte (`power`-Stufen 0 bis 1) fuer LightGBM per CV, inkl. Konfusionsmatrizen |
-| `110_lightgbm_feature_family_benchmark.R` | Wiederholt den Feature-Family-Vergleich (wie `036`) fuer LightGBM mit `power=1`-Gewichtung |
+| `110_lightgbm_feature_family_benchmark.R` | Wiederholt den Feature-Family-Vergleich (wie `036`) fuer LightGBM mit der aktuellen `class_weight_power`-Gewichtung |
 | `115_adversarial_validation.R` | Prueft per Adversarial Validation, ob Train und Test unterscheidbar sind (AUC + Feature Importance) |
-| `120_lightgbm_empty_string_preprocessing.R` | Vergleicht `""` behalten vs. `"" -> NA -> Imputation` fuer LightGBM (`power=1`), per CV |
-| `125_catboost_benchmark.R` | Vergleicht CatBoost gegen LightGBM (beide `power=1`, Rohfeatures, CV) |
+| `120_lightgbm_empty_string_preprocessing.R` | Vergleicht `""` behalten vs. `"" -> NA -> Imputation` fuer LightGBM (aktuelle `class_weight_power`-Gewichtung), per CV |
+| `125_catboost_benchmark.R` | Vergleicht CatBoost gegen LightGBM (beide mit aktueller `class_weight_power`-Gewichtung, Rohfeatures, CV) |
 | `130_threshold_tuning.R` | Sucht post-hoc Klassengewichte auf den Wahrscheinlichkeiten (`argmax(prob * weight)`) auf einem Tune-Split, vergleicht mit `class_weight_power` |
 | `135_lightgbm_class_weight_power_extended.R` | Setzt die `power`-Kurve aus `105` ueber 1 hinaus fort, findet das innere BAcc-Maximum |
 | `140_ensemble_candidates_weighted.R` | Vergleicht LightGBM, Ranger und XGBoost mit derselben `power=1.5`-Gewichtung (CV) |
@@ -280,21 +280,21 @@ Das ist ein glatter, monotoner Trade-off ohne Sweet Spot: BAcc steigt mit `power
 
 ## LightGBM Feature-Family-Benchmark
 
-`110_lightgbm_feature_family_benchmark.R` wiederholt den Feature-Family-Vergleich aus `036` fuer LightGBM, diesmal mit der finalen `power=1`-Klassengewichtung auf allen Tasks (sonst waere der Vergleich inkonsistent zur tatsaechlichen Endkonfiguration). 5-fache CV:
+`110_lightgbm_feature_family_benchmark.R` wiederholt den Feature-Family-Vergleich aus `036` fuer LightGBM, mit der aktuellen `power=1.5`-Klassengewichtung auf allen Tasks (sonst waere der Vergleich inkonsistent zur tatsaechlichen Endkonfiguration). 5-fache CV:
 
 | Feature-Set | BAcc | MCC |
 |---|---:|---:|
-| Roh | 0.9357 | 0.8225 |
-| + BMI | 0.9366 | 0.8228 |
-| + Schlaf | **0.9372** | 0.8255 |
-| + Aktivitaet | 0.9357 | 0.8255 |
-| + Hydration | 0.9362 | 0.8261 |
-| + Cardio | 0.9342 | 0.8241 |
-| + Interaktionen | 0.9347 | 0.8261 |
-| Ausgewaehlt (Aktivitaet+Cardio+Schlaf) | 0.9360 | **0.8293** |
-| Kombiniert (alle Familien) | 0.9303 | 0.8284 |
+| Roh | 0.9438 | 0.8016 |
+| + BMI | 0.9434 | 0.8010 |
+| + Schlaf | **0.9443** | 0.8043 |
+| + Aktivitaet | 0.9438 | 0.8071 |
+| + Hydration | 0.9432 | 0.8043 |
+| + Cardio | 0.9426 | 0.8052 |
+| + Interaktionen | 0.9422 | 0.8045 |
+| Ausgewaehlt (Aktivitaet+Cardio+Schlaf) | 0.9419 | 0.8076 |
+| Kombiniert (alle Familien) | 0.9408 | **0.8105** |
 
-Erkenntnis: Alle Werte liegen innerhalb von ca. 0.7 Prozentpunkten Streuung — das ist Rauschniveau, kein robuster Effekt, dasselbe Muster wie bei Ranger/Multinom/LDA in `036`/`037`. "Kombiniert" ist erneut die schwaechste Variante. LightGBM bleibt daher bei Rohfeatures; Feature Engineering bringt fuer dieses Modell keinen verlaesslichen Zusatznutzen.
+Erkenntnis: Alle Werte liegen innerhalb von ca. 0.35 Prozentpunkten Streuung — das ist Rauschniveau, kein robuster Effekt, dasselbe Muster wie bei Ranger/Multinom/LDA in `036`/`037`. "Kombiniert" ist bei BAcc weiterhin die schwaechste Variante (hat hier aber das beste MCC) — kein Feature-Set ist auf beiden Metriken klar ueberlegen. LightGBM bleibt daher bei Rohfeatures; Feature Engineering bringt fuer dieses Modell keinen verlaesslichen Zusatznutzen. (Zahlen aktualisiert auf `power=1.5`, dem seit "Klassengewichtung ueber power=1 hinaus" gueltigen Stand — die fruehere Tabelle stammte noch von `power=1`.)
 
 ## Adversarial Validation
 
@@ -308,14 +308,14 @@ Erkenntnis: Der Shift ist real und reproduzierbar (bei ~985k Zeilen kein Zufalls
 
 ## LightGBM: Leere Strings
 
-`120_lightgbm_empty_string_preprocessing.R` wiederholt den Vergleich aus der Baseline (`030` vs. `050`) fuer LightGBM: `""` als eigene Faktorstufe behalten (aktueller Ansatz) vs. `"" -> NA -> Imputation` ueber `empty_factor_to_na` (`040_preprocessing.R`), beide mit `power=1`-Gewichtung, 5-fache CV:
+`120_lightgbm_empty_string_preprocessing.R` wiederholt den Vergleich aus der Baseline (`030` vs. `050`) fuer LightGBM: `""` als eigene Faktorstufe behalten (aktueller Ansatz) vs. `"" -> NA -> Imputation` ueber `empty_factor_to_na` (`040_preprocessing.R`), beide mit `power=1.5`-Gewichtung (aktueller Stand), 5-fache CV:
 
 | Variante | BAcc | MCC |
 |---|---:|---:|
-| `""` behalten | **0.9357** | **0.8225** |
-| `"" -> NA -> Imputation` | 0.8951 | 0.7863 |
+| `""` behalten | **0.9438** | **0.8016** |
+| `"" -> NA -> Imputation` | 0.9034 | 0.6921 |
 
-Erkenntnis: Der Unterschied ist fuer LightGBM sogar noch groesser als bei den urspruenglichen Baseline-Modellen (ca. 4 BAcc- und 3.6 MCC-Punkte) — `""` traegt echtes Signal, das durch Imputation verloren geht. Bestaetigt die bestehende Konfiguration (keine `empty_factor_to_na`-Behandlung im finalen Modell).
+Erkenntnis: Der Unterschied ist fuer LightGBM sogar noch groesser als bei den urspruenglichen Baseline-Modellen (ca. 4 BAcc-Punkte, aber gut **11 MCC-Punkte**) — `""` traegt echtes Signal, das durch Imputation verloren geht, und der Verlust trifft MCC unverhaeltnismaessig staerker als BAcc (die Imputation verschlechtert offenbar gezielt die Trennung der Minderheitsklassen). Bestaetigt die bestehende Konfiguration (keine `empty_factor_to_na`-Behandlung im finalen Modell). (Zahlen aktualisiert auf `power=1.5`; die fruehere Tabelle stammte noch von `power=1`, die Kernaussage war und ist aber unveraendert.)
 
 ## Schwellenwert-Tuning
 
@@ -324,22 +324,22 @@ Idee: Statt (oder zusaetzlich zu) Klassengewichten beim Training koennte man die
 | Variante | BAcc (argmax) | MCC (argmax) | BAcc (Gewicht getunt) | MCC (Gewicht getunt) | Gefundene Gewichte |
 |---|---:|---:|---:|---:|---|
 | LightGBM ungewichtet trainiert | 0.8735 | 0.8626 | 0.9291 | 0.8330 | fit=6.0, unhealthy=6.0 |
-| LightGBM `power=1` trainiert (final) | 0.9254 | 0.8323 | 0.9419 | 0.7927 | fit=6.0, unhealthy=6.0 |
+| LightGBM `power=1.5` trainiert (aktueller Stand) | 0.9351 | 0.8181 | 0.9428 | 0.7903 | fit=4.0, unhealthy=3.5 |
 
-**Wichtiger methodischer Befund**: Die gefundenen Gewichte (6.0/6.0) treffen exakt den Rand des Suchgitters (`threshold_tuning_weight_grid = seq(0.5, 6, by = 0.5)`) — es gibt kein inneres Optimum. Reines BAcc-Maximieren ohne Gegengewicht treibt die Gewichte prinzipiell unbegrenzt weiter (im Grenzfall werden Minderheitsklassen fast immer vorhergesagt, Recall steigt, Precision/MCC kollabieren). Post-hoc-Threshold-Tuning ist damit **kein unabhaengiger zusaetzlicher Hebel**, sondern derselbe BAcc/MCC-Trade-off wie bei `class_weight_power`, nur ueber einen anderen Mechanismus (Nachbearbeitung der Wahrscheinlichkeiten statt Trainingsgewichte) erreicht: "ungewichtet trainiert + getunt" (BAcc 0.929, MCC 0.833) landet fast exakt auf demselben Punkt der Kurve wie "`power=1` trainiert + normaler argmax" (BAcc 0.925, MCC 0.832).
+**Wichtiger methodischer Befund**: Beim ungewichtet trainierten Modell treffen die gefundenen Gewichte (6.0/6.0) exakt den Rand des Suchgitters (`threshold_tuning_weight_grid = seq(0.5, 6, by = 0.5)`) — dort gibt es kein inneres Optimum, reines BAcc-Maximieren ohne Gegengewicht treibt die Gewichte prinzipiell unbegrenzt weiter (im Grenzfall werden Minderheitsklassen fast immer vorhergesagt, Recall steigt, Precision/MCC kollabieren). Beim bereits mit `power=1.5` trainierten Modell liegt das gefundene Optimum dagegen deutlich innerhalb des Gitters (4.0/3.5) — die Trainingsgewichtung nimmt dem Threshold-Tuning einen Teil der Notwendigkeit ab, an den Rand zu laufen. Post-hoc-Threshold-Tuning ist damit **kein unabhaengiger zusaetzlicher Hebel**, sondern derselbe BAcc/MCC-Trade-off wie bei `class_weight_power`, nur ueber einen anderen Mechanismus (Nachbearbeitung der Wahrscheinlichkeiten statt Trainingsgewichte) erreicht.
 
-**Entscheidung**: Threshold-Tuning wird nicht zusaetzlich zur Trainings-Klassengewichtung eingesetzt — das Stacken beider Mechanismen drueckt MCC weiter (0.793) fuer kaum zusaetzlichen BAcc-Gewinn (0.942 vs. 0.925), ohne einen neuen Freiheitsgrad zu erschliessen. `class_weight_power` bleibt der einzige Regler fuer den BAcc/MCC-Trade-off.
+**Entscheidung**: Threshold-Tuning wird nicht zusaetzlich zur Trainings-Klassengewichtung eingesetzt — das Stacken beider Mechanismen drueckt MCC weiter (0.790) fuer kaum zusaetzlichen BAcc-Gewinn (0.943 vs. 0.935), ohne einen neuen Freiheitsgrad zu erschliessen. `class_weight_power` bleibt der einzige Regler fuer den BAcc/MCC-Trade-off. (Zahlen aktualisiert auf `power=1.5`; die fruehere Tabelle stammte noch von `power=1`, die Kernaussage war und ist aber unveraendert.)
 
 ## CatBoost
 
-`125_catboost_benchmark.R` vergleicht CatBoost (Standardparameter, `iterations = 200`, `power=1`-Gewichtung) gegen LightGBM. Anders als beim CatBoost-vs-LightGBM-Kategorien-Argument (siehe Modell-Erkenntnisse) geht es hier um CatBoosts *Ordered Boosting* (reduziert Prediction-Shift/Overfitting unabhaengig von Kategorien) - deshalb doch noch getestet:
+`125_catboost_benchmark.R` vergleicht CatBoost (Standardparameter, `iterations = 200`, aktuelle `power=1.5`-Gewichtung) gegen LightGBM. Anders als beim CatBoost-vs-LightGBM-Kategorien-Argument (siehe Modell-Erkenntnisse) geht es hier um CatBoosts *Ordered Boosting* (reduziert Prediction-Shift/Overfitting unabhaengig von Kategorien) - deshalb doch noch getestet:
 
 | Modell | BAcc | MCC | Laufzeit (5-fache CV) |
 |---|---:|---:|---:|
-| LightGBM | 0.9357 | **0.8225** | 81.9 s |
-| CatBoost | **0.9435** | 0.8022 | 805.8 s (~10x langsamer) |
+| LightGBM | 0.9438 | **0.8016** | 67.8 s |
+| CatBoost | **0.9445** | 0.7653 | 772.1 s (~11x langsamer) |
 
-Erkenntnis: CatBoost gewinnt bei BAcc, verliert bei MCC, bei fast 10x hoeherer Laufzeit — dasselbe Trade-off-Muster wie bei `class_weight_power`, nur ueber einen Modellwechsel statt einen Regler erreicht. Bevor deshalb auf CatBoost umgestiegen wird, lohnt sich der Test, ob LightGBM mit hoeherem `class_weight_power` denselben BAcc-Punkt guenstiger erreicht (siehe naechster Abschnitt).
+Erkenntnis: CatBoost gewinnt bei BAcc nur noch hauchduenn (+0.07 Punkte statt der urspruenglich unter `power=1` beobachteten +0.78 Punkte), verliert aber weiterhin klar bei MCC (-3.6 Punkte), bei fast 11x hoeherer Laufzeit — dasselbe Trade-off-Muster wie bei `class_weight_power`, nur ueber einen Modellwechsel statt einen Regler erreicht. Der naechste Abschnitt zeigt, wie diese Beobachtung (damals noch unter `power=1`) zur Wahl von `power=1.5` fuer LightGBM gefuehrt hat, das CatBoost seitdem auf beiden Metriken schlaegt (siehe "Ranger und XGBoost mit Klassengewichtung").
 
 ## Klassengewichtung ueber power=1 hinaus
 
