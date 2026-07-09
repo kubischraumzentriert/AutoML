@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "005_benchmark_runtime.R"))
+source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -77,3 +78,27 @@ print(importance_dt)
 cat("\nGespeichert:\n")
 cat("Ergebnisse:", adversarial_validation_results_path, "\n")
 cat("Importance:", adversarial_validation_importance_path, "\n")
+
+# --- Experiment-Tracking (SQLite) ------------------------------------------
+db_con <- db_connect()
+db_proj_id <- db_get_or_create_project(db_con, project_name)
+db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "115_adversarial_validation.R")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "Adversarial Validation: Train vs. Test unterscheidbar?")
+db_log_run_config(db_con, db_run_id, list(
+  adversarial_validation_cv_folds = adversarial_validation_cv_folds,
+  adversarial_validation_iterations = adversarial_validation_iterations
+))
+
+db_log_timed_benchmark(
+  db_con, db_run_id, timed_benchmark, measure_names = "classif.auc",
+  model_config_fn = function(row) list(
+    task_type = "classif", algorithm = "lightgbm", feature_set = "adversarial",
+    preprocessing = "none", class_weight_power = NA_real_, task_id = row$task_id[1],
+    hyperparams = list(num_iterations = adversarial_validation_iterations)
+  ),
+  resampling_strategy = "cv", resampling_folds = adversarial_validation_cv_folds, resampling_seed = seed
+)
+
+db_finish_run(db_con, db_run_id)
+DBI::dbDisconnect(db_con)
+cat("Experiment-DB   :", experiments_db_path, "\n")

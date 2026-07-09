@@ -10,6 +10,9 @@ sample_submission_path <- file.path(project_dir, "sample_submission.csv")
 id_col <- "id"
 target_col <- "health_condition"
 
+# Experiment-Tracking (SQLite, siehe db_schema.sql/db_logging.R)
+project_name <- "playground-series-s6e7-health-condition"
+
 seed <- 42
 subset_fraction <- 0.10
 
@@ -21,6 +24,7 @@ glmnet_nfolds <- 3
 glmnet_nlambda <- 30
 
 artifact_dir <- file.path(project_dir, "_artifacts")
+experiments_db_path <- file.path(artifact_dir, "experiments.db")
 task_train_small_path <- file.path(artifact_dir, "task_train_small.rds")
 task_train_small_features_path <- file.path(artifact_dir, "task_train_small_features.rds")
 
@@ -185,3 +189,30 @@ class_weight_power <- 1.5
 model_class_weight_power <- list(
   ranger = class_weight_power
 )
+
+# --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
+# Leitet aus einem mlr3-Task-Id (z.B. "health_condition_10pct_sleep_weighted_p1.5")
+# ein feature_set-Label fuer model_config ab.
+feature_set_from_task_id <- function(task_id) {
+  task_id <- sub("_weighted.*$", "", task_id)
+  if (task_id == "health_condition_10pct") return("raw")
+  if (task_id == "health_condition_10pct_features") return("features")
+  if (task_id == "health_condition_10pct_selected") return("selected")
+  if (task_id == "health_condition_tabpfn_subset") return("raw")
+  suffix <- sub("^health_condition_10pct_", "", task_id)
+  suffix
+}
+
+# Leitet aus einem (ggf. durch mlr3pipelines zusammengesetzten) Learner-Id
+# den Algorithmus-Namen ab, z.B. "imputemedian.imputemode.classif.ranger" ->
+# "ranger". Bei eigens vergebenen Ids ohne "classif."-Praefix (z.B.
+# "...encode_factors_one_hot.glmnet_ridge") wird das letzte Punkt-Segment
+# genommen; bei einfachen Ids ohne Punkte (z.B. "ranger_tuned") bleibt die Id
+# unveraendert.
+algorithm_from_learner_id <- function(learner_id) {
+  if (grepl("classif\\.", learner_id)) {
+    return(sub(".*classif\\.", "", learner_id))
+  }
+  parts <- strsplit(learner_id, "\\.", fixed = FALSE)[[1]]
+  parts[length(parts)]
+}

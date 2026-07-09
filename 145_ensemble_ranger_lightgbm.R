@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "005_benchmark_runtime.R"))
+source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -72,3 +73,38 @@ fwrite(ensemble_results, ensemble_ranger_lightgbm_results_path)
 cat("=== Ranger vs. LightGBM vs. gleichgewichtetes Ensemble (power =", class_weight_power, ", 5-fache CV) ===\n")
 print(ensemble_results)
 cat("\nGespeichert:", ensemble_ranger_lightgbm_results_path, "\n")
+
+# --- Experiment-Tracking (SQLite) ------------------------------------------
+db_con <- db_connect()
+db_proj_id <- db_get_or_create_project(db_con, project_name)
+db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "145_ensemble_ranger_lightgbm.R")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "Ranger vs. LightGBM vs. gleichgewichtetes Wahrscheinlichkeits-Ensemble")
+db_log_run_config(db_con, db_run_id, list(
+  cv_folds = cv_folds,
+  class_weight_power = class_weight_power,
+  lightgbm_tuning_final_iterations = lightgbm_tuning_final_iterations
+))
+
+db_log_timed_benchmark(
+  db_con, db_run_id, timed_benchmark, measure_names = baseline_measure_ids,
+  model_config_fn = function(row) {
+    algorithm <- algorithm_from_learner_id(row$learner_id[1])
+    hyperparams <- if (algorithm == "lightgbm") {
+      list(num_iterations = lightgbm_tuning_final_iterations)
+    } else if (algorithm == "ranger") {
+      list(num.trees = 200)
+    } else {
+      list(branches = "ranger+lightgbm", combine = "classifavg")
+    }
+    list(
+      task_type = "classif", algorithm = algorithm, feature_set = feature_set_from_task_id(row$task_id[1]),
+      preprocessing = "impute_median_mode", class_weight_power = class_weight_power, task_id = row$task_id[1],
+      hyperparams = hyperparams
+    )
+  },
+  resampling_strategy = "cv", resampling_folds = cv_folds, resampling_seed = seed
+)
+
+db_finish_run(db_con, db_run_id)
+DBI::dbDisconnect(db_con)
+cat("Experiment-DB   :", experiments_db_path, "\n")

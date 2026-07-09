@@ -12,6 +12,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "005_benchmark_runtime.R"))
+source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -115,3 +116,57 @@ cat("\nGespeichert:\n")
 cat("Suchergebnisse:", ranger_tuning_search_results_path, "\n")
 cat("Finalvergleich :", ranger_tuning_final_results_path, "\n")
 cat("Tuning-Instanz :", ranger_tuning_instance_path, "\n")
+
+# --- Experiment-Tracking (SQLite) ------------------------------------------
+db_con <- db_connect()
+db_proj_id <- db_get_or_create_project(db_con, project_name)
+db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "090_ranger_tuning.R")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "Ranger-Tuning ohne Klassengewichtung (Random Search)")
+db_log_run_config(db_con, db_run_id, list(
+  cv_folds = cv_folds,
+  validation_ratio = validation_ratio,
+  ranger_tuning_search_trees = ranger_tuning_search_trees,
+  ranger_tuning_evals = ranger_tuning_evals,
+  ranger_tuning_final_trees = ranger_tuning_final_trees
+))
+
+db_rsmp_search_id <- db_create_resampling(db_con, db_run_id, strategy = "holdout", ratio = validation_ratio, seed = seed)
+for (i in seq_len(nrow(archive_dt))) {
+  row <- archive_dt[i]
+  mconf_id <- db_create_model_config(
+    db_con, db_run_id,
+    task_type = "classif", algorithm = "ranger", feature_set = "raw",
+    preprocessing = "impute_median_mode", class_weight_power = NA_real_, task_id = task_train_small$id,
+    hyperparams = list(
+      num.trees = ranger_tuning_search_trees,
+      mtry.ratio = row$classif.ranger.mtry.ratio,
+      min.node.size = row$classif.ranger.min.node.size,
+      sample.fraction = row$classif.ranger.sample.fraction
+    )
+  )
+  db_log_metric_result(db_con, mconf_id, db_rsmp_search_id, "classif.bacc", row$classif.bacc)
+}
+
+db_log_timed_benchmark(
+  db_con, db_run_id, timed_benchmark, measure_names = baseline_measure_ids,
+  model_config_fn = function(row) {
+    hyperparams <- if (grepl("ranger_tuned", row$learner_id[1])) {
+      setNames(
+        best_params[c("classif.ranger.mtry.ratio", "classif.ranger.min.node.size", "classif.ranger.sample.fraction", "classif.ranger.num.trees")],
+        c("mtry.ratio", "min.node.size", "sample.fraction", "num.trees")
+      )
+    } else {
+      list(num.trees = ranger_tuning_final_trees)
+    }
+    list(
+      task_type = "classif", algorithm = "ranger", feature_set = feature_set_from_task_id(row$task_id[1]),
+      preprocessing = "impute_median_mode", class_weight_power = NA_real_, task_id = row$task_id[1],
+      hyperparams = hyperparams
+    )
+  },
+  resampling_strategy = "cv", resampling_folds = cv_folds, resampling_seed = seed
+)
+
+db_finish_run(db_con, db_run_id)
+DBI::dbDisconnect(db_con)
+cat("Experiment-DB   :", experiments_db_path, "\n")

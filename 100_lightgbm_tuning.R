@@ -13,6 +13,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "005_benchmark_runtime.R"))
+source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -114,3 +115,59 @@ cat("\nGespeichert:\n")
 cat("Suchergebnisse:", lightgbm_tuning_search_results_path, "\n")
 cat("Finalvergleich :", lightgbm_tuning_final_results_path, "\n")
 cat("Tuning-Instanz :", lightgbm_tuning_instance_path, "\n")
+
+# --- Experiment-Tracking (SQLite) ------------------------------------------
+db_con <- db_connect()
+db_proj_id <- db_get_or_create_project(db_con, project_name)
+db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "100_lightgbm_tuning.R")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "LightGBM-Tuning ohne Klassengewichtung (Bayesian Optimization)")
+db_log_run_config(db_con, db_run_id, list(
+  cv_folds = cv_folds,
+  validation_ratio = validation_ratio,
+  lightgbm_tuning_search_iterations = lightgbm_tuning_search_iterations,
+  lightgbm_tuning_evals = lightgbm_tuning_evals,
+  lightgbm_tuning_final_iterations = lightgbm_tuning_final_iterations
+))
+
+db_rsmp_search_id <- db_create_resampling(db_con, db_run_id, strategy = "holdout", ratio = validation_ratio, seed = seed)
+for (i in seq_len(nrow(archive_dt))) {
+  row <- archive_dt[i]
+  mconf_id <- db_create_model_config(
+    db_con, db_run_id,
+    task_type = "classif", algorithm = "lightgbm", feature_set = "raw",
+    preprocessing = "impute_median_mode", class_weight_power = NA_real_, task_id = task_train_small$id,
+    hyperparams = list(
+      num_iterations = lightgbm_tuning_search_iterations,
+      learning_rate = row$classif.lightgbm.learning_rate,
+      num_leaves = row$classif.lightgbm.num_leaves,
+      min_data_in_leaf = row$classif.lightgbm.min_data_in_leaf,
+      feature_fraction = row$classif.lightgbm.feature_fraction,
+      bagging_fraction = row$classif.lightgbm.bagging_fraction
+    )
+  )
+  db_log_metric_result(db_con, mconf_id, db_rsmp_search_id, "classif.bacc", row$classif.bacc)
+}
+
+db_log_timed_benchmark(
+  db_con, db_run_id, timed_benchmark, measure_names = baseline_measure_ids,
+  model_config_fn = function(row) {
+    hyperparams <- if (grepl("lightgbm_tuned", row$learner_id[1])) {
+      setNames(
+        best_params[c("classif.lightgbm.learning_rate", "classif.lightgbm.num_leaves", "classif.lightgbm.min_data_in_leaf", "classif.lightgbm.feature_fraction", "classif.lightgbm.bagging_fraction", "classif.lightgbm.num_iterations")],
+        c("learning_rate", "num_leaves", "min_data_in_leaf", "feature_fraction", "bagging_fraction", "num_iterations")
+      )
+    } else {
+      list(num_iterations = lightgbm_tuning_final_iterations)
+    }
+    list(
+      task_type = "classif", algorithm = "lightgbm", feature_set = feature_set_from_task_id(row$task_id[1]),
+      preprocessing = "impute_median_mode", class_weight_power = NA_real_, task_id = row$task_id[1],
+      hyperparams = hyperparams
+    )
+  },
+  resampling_strategy = "cv", resampling_folds = cv_folds, resampling_seed = seed
+)
+
+db_finish_run(db_con, db_run_id)
+DBI::dbDisconnect(db_con)
+cat("Experiment-DB   :", experiments_db_path, "\n")

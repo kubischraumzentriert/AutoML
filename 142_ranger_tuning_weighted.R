@@ -12,6 +12,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "005_benchmark_runtime.R"))
+source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -118,3 +119,70 @@ cat("\nGespeichert:\n")
 cat("Suchergebnisse:", ranger_weighted_tuning_search_results_path, "\n")
 cat("Finalvergleich :", ranger_weighted_tuning_final_results_path, "\n")
 cat("Tuning-Instanz :", ranger_weighted_tuning_instance_path, "\n")
+
+# --- Experiment-Tracking (SQLite) ------------------------------------------
+db_con <- db_connect()
+db_proj_id <- db_get_or_create_project(db_con, project_name)
+db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "142_ranger_tuning_weighted.R")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "Ranger-Tuning unter Klassengewichtung")
+
+db_log_run_config(db_con, db_run_id, list(
+  class_weight_power = class_weight_power,
+  cv_folds = cv_folds,
+  validation_ratio = validation_ratio,
+  ranger_tuning_search_trees = ranger_tuning_search_trees,
+  ranger_tuning_evals = ranger_tuning_evals,
+  ranger_tuning_final_trees = ranger_tuning_final_trees
+))
+
+# Suchphase: jede Evaluation als eigene model_config + Holdout-Resampling.
+db_rsmp_search_id <- db_create_resampling(db_con, db_run_id, strategy = "holdout", ratio = validation_ratio, seed = seed)
+for (i in seq_len(nrow(archive_dt))) {
+  row <- archive_dt[i]
+  mconf_id <- db_create_model_config(
+    db_con, db_run_id,
+    task_type = "classif", algorithm = "ranger", feature_set = "raw",
+    preprocessing = "impute_median_mode",
+    class_weight_power = class_weight_power, task_id = task_weighted$id,
+    hyperparams = list(
+      num.trees = ranger_tuning_search_trees,
+      mtry.ratio = row$classif.ranger.mtry.ratio,
+      min.node.size = row$classif.ranger.min.node.size,
+      sample.fraction = row$classif.ranger.sample.fraction
+    )
+  )
+  db_log_metric_result(db_con, mconf_id, db_rsmp_search_id, "classif.bacc", row$classif.bacc)
+}
+
+# Finalvergleich: Default- vs. getunter Ranger, CV.
+db_rsmp_final_id <- db_create_resampling(db_con, db_run_id, strategy = "cv", folds = cv_folds, seed = seed)
+final_hyperparams <- list(
+  ranger_weighted_default = list(num.trees = ranger_tuning_final_trees),
+  ranger_weighted_tuned = setNames(
+    best_params[c("classif.ranger.mtry.ratio", "classif.ranger.min.node.size", "classif.ranger.sample.fraction", "classif.ranger.num.trees")],
+    c("mtry.ratio", "min.node.size", "sample.fraction", "num.trees")
+  )
+)
+
+for (i in seq_len(nrow(ranger_weighted_tuning_final_results))) {
+  row <- ranger_weighted_tuning_final_results[i]
+  learner_key <- if (grepl("ranger_weighted_tuned", row$learner_id)) "ranger_weighted_tuned" else "ranger_weighted_default"
+
+  mconf_id <- db_create_model_config(
+    db_con, db_run_id,
+    task_type = "classif", algorithm = "ranger", feature_set = "raw",
+    preprocessing = "impute_median_mode",
+    class_weight_power = class_weight_power, task_id = row$task_id,
+    hyperparams = final_hyperparams[[learner_key]]
+  )
+  db_log_benchmark_metrics(
+    db_con, mconf_id, db_rsmp_final_id,
+    results_row = row, scores = timed_benchmark$scores,
+    measure_names = baseline_measure_ids
+  )
+}
+
+db_finish_run(db_con, db_run_id)
+DBI::dbDisconnect(db_con)
+
+cat("Experiment-DB   :", experiments_db_path, "\n")

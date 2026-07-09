@@ -6,6 +6,7 @@ suppressPackageStartupMessages({
 run_timed_benchmark <- function(tasks, learners, resampling, measures) {
   benchmark_results <- list()
   result_rows <- list()
+  score_rows <- list()
   run_id <- 1L
 
   for (task in tasks) {
@@ -26,14 +27,21 @@ run_timed_benchmark <- function(tasks, learners, resampling, measures) {
       result <- benchmark_result$aggregate(measures = measures)
       result[, elapsed_seconds := as.numeric(timing[["elapsed"]])]
 
+      # Werte pro einzelnem Resampling-Fold (nicht nur aggregiert) - fuer das
+      # Experiment-Tracking (siehe db_logging.R, metric_result.mres_fold).
+      scores <- benchmark_result$score(measures = measures)
+      scores[, elapsed_seconds := as.numeric(timing[["elapsed"]])]
+
       benchmark_results[[run_id]] <- benchmark_result
       result_rows[[run_id]] <- result
+      score_rows[[run_id]] <- scores
       run_id <- run_id + 1L
     }
   }
 
   list(
     results = rbindlist(result_rows, fill = TRUE),
+    scores = rbindlist(score_rows, fill = TRUE),
     benchmarks = benchmark_results
   )
 }

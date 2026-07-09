@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
 })
 
 source("000_config.R")
+source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -109,3 +110,56 @@ fwrite(results, threshold_tuning_results_path)
 cat("=== Schwellenwert-Tuning: argmax(prob) vs. argmax(prob * Gewicht) ===\n")
 print(results)
 cat("\nGespeichert:", threshold_tuning_results_path, "\n")
+
+# --- Experiment-Tracking (SQLite) ------------------------------------------
+# Kein run_timed_benchmark()-Ergebnis (custom Train/Tune/Eval-Split statt CV/
+# Holdout), daher manuelles Logging statt db_log_timed_benchmark(). Pro
+# Variante (ungewichtet/power) werden zwei model_configs angelegt - "plain"
+# (argmax(prob)) und "tuned" (argmax(prob * Gewicht)) - damit beide
+# Bewertungsvarianten unabhaengig abfragbar sind.
+db_con <- db_connect()
+db_proj_id <- db_get_or_create_project(db_con, project_name)
+db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "130_threshold_tuning.R")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "Schwellenwert-Tuning: argmax(prob) vs. argmax(prob * Klassengewicht)")
+db_log_run_config(db_con, db_run_id, list(
+  threshold_tuning_train_ratio = threshold_tuning_train_ratio,
+  threshold_tuning_tune_ratio = threshold_tuning_tune_ratio,
+  lightgbm_tuning_final_iterations = lightgbm_tuning_final_iterations,
+  class_weight_power = class_weight_power
+))
+
+db_rsmp_id <- db_create_resampling(
+  db_con, db_run_id, strategy = "custom_split",
+  ratio = threshold_tuning_train_ratio, seed = seed
+)
+
+variant_class_weight_power <- c(0, class_weight_power)
+for (i in seq_len(nrow(results))) {
+  power <- variant_class_weight_power[i]
+
+  mconf_plain <- db_create_model_config(
+    db_con, db_run_id,
+    task_type = "classif", algorithm = "lightgbm", feature_set = "raw",
+    preprocessing = "none", class_weight_power = power, task_id = task_train_small$id,
+    hyperparams = list(num_iterations = lightgbm_tuning_final_iterations, threshold_strategy = "plain")
+  )
+  db_log_metric_result(db_con, mconf_plain, db_rsmp_id, "classif.bacc", results$bacc_plain[i])
+  db_log_metric_result(db_con, mconf_plain, db_rsmp_id, "classif.mcc", results$mcc_plain[i])
+
+  mconf_tuned <- db_create_model_config(
+    db_con, db_run_id,
+    task_type = "classif", algorithm = "lightgbm", feature_set = "raw",
+    preprocessing = "none", class_weight_power = power, task_id = task_train_small$id,
+    hyperparams = list(
+      num_iterations = lightgbm_tuning_final_iterations,
+      threshold_strategy = "tuned",
+      tuned_weights = results$gewichte[i]
+    )
+  )
+  db_log_metric_result(db_con, mconf_tuned, db_rsmp_id, "classif.bacc", results$bacc_tuned[i])
+  db_log_metric_result(db_con, mconf_tuned, db_rsmp_id, "classif.mcc", results$mcc_tuned[i])
+}
+
+db_finish_run(db_con, db_run_id)
+DBI::dbDisconnect(db_con)
+cat("Experiment-DB   :", experiments_db_path, "\n")

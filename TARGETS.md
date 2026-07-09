@@ -129,7 +129,10 @@ Angenommen, du willst `class_weight_power` von 1.5 auf 1.75 testen:
    nicht als Copy-Paste) fuer den neuen Datensatz wiederholen - Feature-
    Familien testen, Modelle vergleichen, Klassengewichtung pruefen,
    Adversarial Validation - und die Ergebnisse in Schritt 2/4 einfliessen
-   lassen.
+   lassen. Alle diese Skripte loggen automatisch in `_artifacts/experiments.db`
+   (siehe README.md, Abschnitt "Experiment-Tracking (SQLite)") - fuer einen
+   neuen Wettbewerb reicht ein neuer `project_name` in `000_config.R`, Schema
+   und Logging-Code bleiben unveraendert.
 
 ## Bekannte Einschraenkung
 

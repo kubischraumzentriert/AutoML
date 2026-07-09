@@ -11,6 +11,7 @@ suppressPackageStartupMessages({
 source("000_config.R")
 source(file.path(project_dir, "005_benchmark_runtime.R"))
 source(file.path(project_dir, "040_preprocessing.R"))
+source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -75,3 +76,32 @@ print(glmnet_results)
 cat("\nGespeichert:\n")
 cat("Ergebnisse:", glmnet_results_path, "\n")
 cat("Benchmark :", glmnet_benchmark_path, "\n")
+
+# --- Experiment-Tracking (SQLite) ------------------------------------------
+db_con <- db_connect()
+db_proj_id <- db_get_or_create_project(db_con, project_name)
+db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "060_regularized_linear.R")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "Regularisierte lineare Modelle (glmnet: Ridge/Elastic Net/Lasso)")
+db_log_run_config(db_con, db_run_id, list(
+  validation_ratio = validation_ratio,
+  glmnet_nfolds = glmnet_nfolds,
+  glmnet_nlambda = glmnet_nlambda
+))
+
+db_log_timed_benchmark(
+  db_con, db_run_id, timed_benchmark, measure_names = baseline_measure_ids,
+  model_config_fn = function(row) list(
+    task_type = "classif",
+    algorithm = algorithm_from_learner_id(row$learner_id[1]),
+    feature_set = feature_set_from_task_id(row$task_id[1]),
+    preprocessing = "empty_to_na_onehot",
+    class_weight_power = NA_real_,
+    task_id = row$task_id[1],
+    hyperparams = list(nfolds = glmnet_nfolds, nlambda = glmnet_nlambda, s = "lambda.1se")
+  ),
+  resampling_strategy = "holdout", resampling_ratio = validation_ratio, resampling_seed = seed
+)
+
+db_finish_run(db_con, db_run_id)
+DBI::dbDisconnect(db_con)
+cat("Experiment-DB   :", experiments_db_path, "\n")

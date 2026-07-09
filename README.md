@@ -75,6 +75,58 @@ Aendert sich z.B. `class_weight_power` in `000_config.R`, erkennt `tar_make()` b
 
 **Fuer einen neuen Klassifikationsaufgaben-Workflow** (siehe auch "Modularitaet" oben) reduziert `targets` den Umstellungsaufwand: man aendert `000_config.R` (Metrik, Spalten, `model_feature_sets`/`model_class_weight_power`) und `features/*.R`, ruft `tar_make()` auf - der Abhaengigkeitsgraph selbst (welches Ziel von welchem abhaengt) bleibt strukturell gleich, muss also nicht neu durchdacht werden.
 
+## Experiment-Tracking (SQLite)
+
+Alle explorativen Skripte (`030`-`145`) schreiben ihre Ergebnisse zusaetzlich zu den bisherigen CSV-Exporten in eine normalisierte SQLite-Datenbank (`_artifacts/experiments.db`, Pfad in `experiments_db_path`, `000_config.R`). Ziel: mehr Daten festhalten als das, was auf der Konsole ausgegeben wird (Pro-Fold-Werte, alle Hyperparameter, Preprocessing-Wahl), damit sich zukuenftige Optimierungsentscheidungen direkt per SQL statt per README-Gedaechtnis treffen lassen - auch fuer Claude in einer neuen Session.
+
+**Schema** (`db_schema.sql`, DDL-Konventionen aus einem MES-Traceability-Referenzprojekt uebernommen: Tabellenpraefix + `_id` als UUID-Fachschluessel + `_seq` als SQLite-Autoincrement-PK):
+
+```
+project (1) --< workflow (1) --< run (1) --< run_config      [Key-Value: Konfiguration je Lauf]
+                                        --< resampling --< metric_result   [aggregiert + pro Fold]
+                                        --< model_config --< hyperparam
+                                                          --< metric_result
+```
+
+- `project`/`workflow`: ein Projekt (`playground-series-s6e7-health-condition`) hat mehrere Workflows (jedes Skript `030.R` etc. oder `_targets.R` ist ein eigener Workflow, `wf_type IN ('script','targets')`).
+- `run`: ein Skriptdurchlauf (Seed, Git-Commit, Start-/Endzeit).
+- `run_config`: skriptweite Konfigurationswerte als Key-Value (z.B. `cv_folds`, `class_weight_power`).
+- `model_config`: eine getestete Modell-Konfiguration (Algorithmus, Feature-Set, Preprocessing-Label, Klassengewicht-`power`, referenzierter Task) - das Herzstueck, an das `hyperparam` und `metric_result` haengen.
+- `hyperparam`: modellspezifische Hyperparameter als Key-Value (beliebige Learner-Parameter, ohne Schema-Aenderung bei neuen Modellen).
+- `resampling`: eine Resampling-Strategie (`cv`/`holdout`/`custom_split`) je Vergleichsgruppe innerhalb eines Runs.
+- `metric_result`: ein Messwert (`classif.bacc`, `classif.mcc`, `classif.auc`, ...) je `model_config` x `resampling` - sowohl aggregiert (`mres_fold IS NULL`) als auch **pro Fold** (`mres_fold = 1..k`), damit Streuung zwischen Folds auswertbar bleibt, nicht nur der Mittelwert.
+
+**Views** (ebenfalls in `db_schema.sql`):
+
+- `v_model_results`: eine Zeile je `model_config` mit aggregiertem BAcc/MCC, Resampling-Info und Hyperparametern als lesbarer Text - der normalisierte Ersatz fuer die bisherigen CSV-Exporte.
+- `v_fold_detail`: alle Pro-Fold-Werte, fuer Varianz-/Stabilitaetsanalysen zwischen Folds.
+- `v_run_summary`: ein Rollup je Run (Anzahl getesteter Konfigurationen, bester BAcc/MCC im Run).
+- `v_best_per_algorithm`: die aktuell beste (hoechste BAcc) Konfiguration je Algorithmus, ueber alle Runs/Skripte hinweg.
+
+**Logging-Code** (`db_logging.R`, `DBI`/`RSQLite`, UUIDs ueber das `uuid`-Paket): jedes Skript oeffnet am Ende einen Block mit `db_connect()`, legt Projekt/Workflow/Run an, loggt die Run-Konfiguration und ruft entweder `db_log_timed_benchmark()` (Standardfall: ein komplettes `run_timed_benchmark()`-Ergebnis mit mehreren Task/Learner-Kombinationen, inkl. automatischem Pro-Fold-Logging) oder - bei Skripten mit eigener Suchschleife (`090`, `100`, `142`) bzw. eigenem Train/Tune/Eval-Split ohne `BenchmarkResult` (`130`) - die Bausteinfunktionen `db_create_model_config()`/`db_log_metric_result()` direkt auf.
+
+**Beispielabfragen**:
+
+```sql
+-- Bestes Modell je Algorithmus
+SELECT * FROM v_best_per_algorithm ORDER BY bacc DESC;
+
+-- Streuung zwischen Folds fuer ein bestimmtes Modell
+SELECT mres_fold, mres_value FROM v_fold_detail
+WHERE mconf_algorithm = 'ranger' AND mres_measure_name = 'classif.bacc'
+ORDER BY mres_fold;
+
+-- Wie hat sich BAcc mit steigendem class_weight_power entwickelt (ueber alle Skripte hinweg)?
+SELECT wf_name, mconf_class_weight_power, bacc, mcc
+FROM v_model_results
+WHERE mconf_algorithm = 'lightgbm' AND mconf_class_weight_power IS NOT NULL
+ORDER BY mconf_class_weight_power;
+```
+
+Die Datenbank ist rein additiv und projektunabhaengig aufgebaut (kein Bezug zu `health_condition` oder den drei Klassen im Schema) - fuer einen neuen Kaggle-Wettbewerb reicht ein neuer `proj_name`, das Schema und `db_logging.R` bleiben unveraendert.
+
+`_targets.R` schreibt aktuell **nicht** in die Datenbank (das Schema unterstuetzt `wf_type = 'targets'` bereits dafuer) - der finale Produktions-Workflow braucht kein Experiment-Tracking mehr, da die Modell-/Feature-/Gewichtungsentscheidung bereits ueber die Skripte `030`-`145` getroffen und dokumentiert ist.
+
 ## Bewertungsmetriken
 
 Wir verwenden aktuell:
