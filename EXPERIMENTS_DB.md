@@ -1,0 +1,350 @@
+# Anleitung: Experiment-Tracking-Datenbank (`experiments.db`)
+
+Diese Datei erklärt Aufbau und Konzept der SQLite-Datenbank, in die alle
+explorativen Skripte (`030`-`145`) ihre Ergebnisse schreiben. Für die
+inhaltlichen Ergebnisse (welches Modell, welche Klassengewichtung) siehe
+`README.md` - hier geht es nur um das *Werkzeug*: Schema, Konventionen,
+Logging-Code und wie man die Datenbank abfragt.
+
+## Warum ueberhaupt eine Datenbank
+
+Jedes Skript druckt seine Ergebnisse auf die Konsole und schreibt sie
+zusaetzlich als CSV nach `_artifacts/`. Beides hat Grenzen:
+
+- Die Konsolenausgabe ist aggregiert (Mittelwert ueber alle CV-Folds) - die
+  Streuung zwischen Folds geht verloren.
+- Jede CSV hat ihre eigene Spaltenstruktur (`105` hat eine `weight_power`-
+  Spalte, `090` hat `mtry.ratio`/`min.node.size`/..., `130` hat
+  `bacc_plain`/`bacc_tuned`/...) - Ergebnisse aus verschiedenen Skripten
+  lassen sich nicht direkt gegeneinander abfragen, ohne jede CSV-Struktur
+  einzeln zu kennen.
+- Es gibt keinen Ort, an dem "was haben wir mit LightGBM insgesamt schon
+  alles getestet, ueber alle Skripte hinweg" in einer Abfrage beantwortet
+  werden kann.
+
+Die Datenbank loest das, indem sie ein **gemeinsames, normalisiertes Schema**
+fuer "welche Konfiguration wurde getestet, mit welchem Ergebnis" definiert,
+unabhaengig davon, welches Skript sie erzeugt hat. Ziel ist explizit auch,
+dass eine KI (Claude) in einer *spaeteren* Session direkt per SQL nachsehen
+kann, was frueher schon probiert wurde, statt sich nur auf README-Prosa oder
+Skript-Wiederausfuehrung verlassen zu muessen.
+
+## Grundkonzept
+
+- **Projekt** (`project`): ein Kaggle-Wettbewerb / eine Aufgabe (hier:
+  `playground-series-s6e7-health-condition`). Der `proj_name` ist der einzige
+  Bezug zu diesem konkreten Datensatz im ganzen Schema.
+- **Workflow** (`workflow`): eine Ausfuehrungseinheit innerhalb eines
+  Projekts - im Alltag ein einzelnes nummeriertes Skript (`wf_type =
+  'script'`, `wf_name = "105_lightgbm_class_weights.R"`). Das Schema
+  unterstuetzt auch `wf_type = 'targets'` fuer eine `_targets.R`-Pipeline,
+  das wird aktuell aber nicht genutzt (siehe "Bekannte Einschraenkung").
+- **Run** (`run`): ein einzelner Aufruf eines Workflows (ein `Rscript
+  030_baseline.R` z.B.) - mit Zeitstempel, Seed und Git-Commit, damit
+  spaeter nachvollziehbar ist, mit welchem Codestand ein Ergebnis erzeugt
+  wurde. Ein Skript kann mehrfach ausgefuehrt werden (z.B. nach einer
+  Config-Aenderung) - jeder Aufruf ist ein eigener Run, alte Runs bleiben
+  erhalten statt ueberschrieben zu werden.
+- **Model-Config** (`model_config`): eine konkrete getestete Kombination aus
+  Algorithmus, Feature-Set, Preprocessing und Klassengewicht - das
+  Herzstueck des Schemas. Ein Run erzeugt typischerweise mehrere
+  Model-Configs (z.B. eine je Learner in einem Benchmark, oder eine je
+  Parameter-Kombination in einer Tuning-Suche).
+- **Hyperparameter** (`hyperparam`): beliebige Key-Value-Paare zu einer
+  Model-Config (z.B. `num_iterations = 200`). Als Key-Value statt fester
+  Spalten modelliert, damit ein neues Modell mit voellig anderen
+  Hyperparametern keine Schema-Aenderung braucht.
+- **Resampling** (`resampling`): die Validierungsstrategie (`cv`/`holdout`/
+  `custom_split`) fuer eine Gruppe von Model-Configs innerhalb eines Runs.
+- **Metric-Result** (`metric_result`): ein einzelner Messwert (`classif.bacc`,
+  `classif.mcc`, `classif.auc`, ...) fuer eine Model-Config unter einer
+  Resampling-Strategie - **sowohl aggregiert als auch pro Fold** (siehe
+  unten).
+
+## Namenskonvention
+
+Uebernommen aus einem MES-Traceability-Referenzprojekt (Postgres-DDL), an
+SQLite angepasst. Jede Tabelle hat ein kurzes Praefix (`proj`, `wf`, `run`,
+`rconf`, `mconf`, `hparam`, `rsmp`, `mres`); alle Spalten der Tabelle tragen
+dieses Praefix, z.B. `mconf_algorithm`, `mconf_task_id`.
+
+| Spaltenmuster | Bedeutung | SQLite-Umsetzung |
+|---|---|---|
+| `<praefix>_seq` | Fortlaufende Nummer | `INTEGER PRIMARY KEY` (Alias auf `rowid`, autoincrement bei `NULL`-Insert) |
+| `<praefix>_id` | Fachlicher, stabiler Schluessel | `TEXT NOT NULL UNIQUE`, eine UUID (Paket `uuid` in R, da SQLite kein natives `uuid_generate_v4()` hat) |
+| `<praefix>_created_at`/`_started_at`/... | Zeitstempel | `TEXT` (ISO8601 ueber `datetime('now')`, SQLite hat keinen nativen Timestamp-Typ) |
+
+Fremdschluessel referenzieren immer den `_id` (UUID), nie den `_seq`
+(Autoincrement) - der `_seq` existiert nur, weil SQLite ohne einen
+`INTEGER PRIMARY KEY` keinen echten `rowid`-Alias anlegt, nicht als
+fachlicher Bezug.
+
+## ER-Diagramm
+
+```
+project (1)───<(n) workflow (1)───<(n) run (1)───<(n) run_config
+                                          │
+                                          ├──<(n) resampling ──<(n) metric_result
+                                          │                          │
+                                          └──<(n) model_config ──<(n)┤
+                                                     │                │
+                                                     └──<(n) hyperparam
+```
+
+`metric_result` haengt an **beiden** Elternteilen (`model_config` UND
+`resampling`), weil ein Messwert immer die Kombination "welche Konfiguration,
+unter welcher Validierungsstrategie" ist - dieselbe Model-Config koennte
+theoretisch unter verschiedenen Resampling-Strategien gemessen werden (kommt
+aktuell in den Skripten nicht vor, ist aber durch das Schema abgedeckt, z.B.
+falls man dieselbe Konfiguration einmal per Holdout und einmal per CV
+pruefen wollte).
+
+## Tabellen im Detail (`db_schema.sql`)
+
+### `project`
+
+Ein Eintrag pro Kaggle-Wettbewerb/Aufgabe. `proj_name` ist `UNIQUE` und
+dient als der eigentliche Bezugspunkt (`db_get_or_create_project()` legt
+nur an, wenn der Name noch nicht existiert - wiederholte Aufrufe sind
+idempotent).
+
+### `workflow`
+
+Ein Eintrag pro Skript/Pipeline innerhalb eines Projekts. `UNIQUE
+(wf_proj_id, wf_type, wf_name)` sorgt dafuer, dass z.B.
+`"105_lightgbm_class_weights.R"` innerhalb eines Projekts nur einmal als
+Workflow existiert, auch wenn das Skript zehnmal laeuft - jeder Lauf wird
+stattdessen ein neuer `run`-Eintrag.
+
+### `run`
+
+Ein Eintrag pro Skriptausfuehrung: `run_seed` (der in `000_config.R`
+gesetzte globale Seed), `run_git_commit` (per `git rev-parse HEAD` zum
+Zeitpunkt des Laufs - `get_git_commit()` in `db_logging.R`), `run_notes`
+(Freitext, was das Skript inhaltlich testet), `run_started_at`/
+`run_finished_at` (Start automatisch bei `db_create_run()`, Ende explizit
+per `db_finish_run()` am Skriptende - ein Run ohne `run_finished_at` bedeutet
+also, dass das Skript abgebrochen ist, bevor es fertig geloggt hat).
+
+### `run_config`
+
+Skriptweite Konfigurationswerte als Key-Value (z.B. `cv_folds = 5`,
+`class_weight_power = 1.5`). Bewusst nicht als feste Spalten modelliert,
+weil jedes Skript andere relevante Config-Werte hat (siehe `hyperparam` fuer
+dieselbe Ueberlegung auf Modellebene).
+
+### `model_config`
+
+Die zentrale Tabelle - eine Zeile pro getesteter Konfiguration:
+
+| Spalte | Bedeutung |
+|---|---|
+| `mconf_task_type` | `"classif"` (aktuell immer, da alle Skripte Klassifikation sind - fuer eine Regressionsaufgabe waere das der Unterscheidungspunkt) |
+| `mconf_algorithm` | Kurzname des Learners (`"ranger"`, `"lightgbm"`, `"catboost"`, ...) - siehe `algorithm_from_learner_id()` unten |
+| `mconf_feature_set` | `"raw"`/`"features"`/`"selected"` oder ein Familienname (`"bmi"`, `"cardio"`, ...) - siehe `feature_set_from_task_id()` unten |
+| `mconf_preprocessing` | Freitext-Label fuer die Preprocessing-Pipeline (`"impute_median_mode"`, `"empty_to_na_onehot"`, `"none"`, ...) - getrennt von `feature_set` (welche Spalten) und `algorithm` (welcher Learner) |
+| `mconf_class_weight_power` | Der `power`-Exponent aus `add_balanced_class_weights()`, `NA` wenn ungewichtet |
+| `mconf_task_id` | Die `mlr3`-Task-`id` (z.B. `"health_condition_10pct_weighted_p1.5"`) - der Rohbezug, aus dem `feature_set`/`class_weight_power` oft erst abgeleitet werden |
+
+### `hyperparam`
+
+Key-Value-Paare zu einer `model_config` (z.B. `num_iterations = 200`,
+`mtry.ratio = 0.377`). Ein neues Modell mit komplett anderen Parametern
+braucht keine Schema-Aenderung, nur passende Eintraege beim Logging.
+
+### `resampling`
+
+Eine Validierungsstrategie: `rsmp_strategy` (`'cv'`/`'holdout'`/
+`'custom_split'`, per `CHECK`-Constraint erzwungen), plus `rsmp_folds`
+(bei `cv`), `rsmp_ratio` (bei `holdout`/`custom_split`), `rsmp_seed`.
+`custom_split` deckt Faelle wie `130_threshold_tuning.R` ab (stratifizierter
+Train/Tune/Eval-Split, weder reines CV noch reines Holdout).
+
+### `metric_result`
+
+Ein Messwert: `mres_measure_name` (`"classif.bacc"`, `"classif.mcc"`,
+`"classif.auc"`), `mres_value`, `mres_elapsed_seconds`. **`mres_fold`** ist
+der Schluessel zum Pro-Fold-vs-Aggregat-Unterschied:
+
+- `mres_fold IS NULL` → aggregierter Wert (Mittelwert ueber alle Folds bzw.
+  der einzelne Holdout-Wert) - das, was auch in der Konsole/CSV auftaucht.
+- `mres_fold = 1, 2, 3, ...` → der Wert eines einzelnen CV-Folds.
+
+Beide Varianten werden fuer dieselbe `model_config`/`resampling`-Kombination
+gespeichert (siehe `db_log_benchmark_metrics()` unten), damit sowohl "was
+war der Durchschnitt" als auch "wie stark hat es zwischen Folds gestreut"
+abfragbar ist, ohne die Rohwerte aus mlr3 erneut berechnen zu muessen.
+
+## Views (ebenfalls in `db_schema.sql`)
+
+### `v_model_results`
+
+Eine Zeile je `model_config` mit aggregiertem BAcc/MCC (aus den
+`mres_fold IS NULL`-Zeilen per `MAX(CASE WHEN ...)`-Pivot), Resampling-Info
+und allen Hyperparametern als ein zusammengefasster Text
+(`GROUP_CONCAT(hparam_name || '=' || hparam_value, ', ')`). Der normalisierte
+Ersatz fuer die bisherigen CSV-Exporte - eine Zeile pro getesteter
+Konfiguration, unabhaengig davon, aus welchem Skript sie stammt.
+
+### `v_fold_detail`
+
+Alle Pro-Fold-Werte (`mres_fold IS NOT NULL`) mit Algorithmus/Feature-Set/
+Gewichtung als Kontext - fuer Streuungs-/Stabilitaetsanalysen zwischen
+Folds (z.B. "war der BAcc-Vorteil von Ranger stabil ueber alle 5 Folds, oder
+kommt er nur von einem guenstigen Fold?").
+
+### `v_run_summary`
+
+Ein Rollup je Run: Anzahl getesteter Model-Configs, bester BAcc/MCC-Wert im
+Run. Schneller Ueberblick "was kam bei diesem Skriptlauf im Wesentlichen
+heraus", ohne einzelne Model-Configs durchzugehen.
+
+### `v_best_per_algorithm`
+
+Die aktuell beste (hoechste BAcc) Konfiguration je Algorithmus, ueber alle
+Runs/Skripte/Projekte hinweg - per `ROW_NUMBER() OVER (PARTITION BY
+mconf_algorithm ORDER BY bacc DESC)`. Direkte Antwort auf "was ist gerade
+unser bestes Ranger-Ergebnis, unser bestes LightGBM-Ergebnis, etc."
+
+## Logging-Code (`db_logging.R`)
+
+`db_connect(db_path = experiments_db_path)` oeffnet (und legt bei Bedarf an)
+die Datenbank: liest `db_schema.sql`, splittet es an `;` und fuehrt jedes
+Statement einzeln aus. Da alle `CREATE TABLE`/`CREATE INDEX`/`CREATE VIEW`
+Anweisungen `IF NOT EXISTS` verwenden, ist das idempotent - jeder Skriptlauf
+kann `db_connect()` unbesorgt aufrufen, auch wenn das Schema schon existiert.
+
+Jedes der Skripte `030`-`145` haengt am Ende einen Block nach demselben
+Muster an:
+
+```r
+db_con <- db_connect()
+db_proj_id <- db_get_or_create_project(db_con, project_name)
+db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "105_lightgbm_class_weights.R")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "...")
+db_log_run_config(db_con, db_run_id, list(cv_folds = cv_folds, ...))
+
+# ... Modelle/Konfigurationen loggen (siehe unten) ...
+
+db_finish_run(db_con, db_run_id)
+DBI::dbDisconnect(db_con)
+```
+
+Fuer das eigentliche Modell-/Ergebnis-Logging gibt es zwei Ebenen:
+
+**1. Der Normalfall — `db_log_timed_benchmark()`:** Fast alle Skripte rufen
+`run_timed_benchmark()` (`005_benchmark_runtime.R`) auf, das ein
+`mlr3::BenchmarkResult` fuer mehrere Task/Learner-Kombinationen erzeugt.
+`db_log_timed_benchmark()` nimmt dieses Ergebnis, legt **ein** `resampling`
+fuer alle Zeilen an (dieselbe Strategie gilt ueblicherweise fuer den ganzen
+Benchmark-Aufruf) und ruft je Ergebniszeile eine vom Skript uebergebene
+Funktion `model_config_fn(row)` auf, die aus der Zeile (Task-ID, Learner-ID)
+die Metadaten ableitet:
+
+```r
+model_config_fn = function(row) list(
+  task_type = "classif",
+  algorithm = algorithm_from_learner_id(row$learner_id[1]),
+  feature_set = feature_set_from_task_id(row$task_id[1]),
+  preprocessing = "impute_median_mode",
+  class_weight_power = class_weight_power,
+  task_id = row$task_id[1],
+  hyperparams = list(num_iterations = lightgbm_tuning_final_iterations)
+)
+```
+
+`db_log_timed_benchmark()` legt daraus `model_config`+`hyperparam` an und
+ruft `db_log_benchmark_metrics()` auf, die sowohl den aggregierten Wert
+(aus `timed_benchmark$results`) als auch alle Pro-Fold-Werte (aus
+`timed_benchmark$scores`, gefiltert auf dieselbe Task-/Learner-Kombination)
+loggt.
+
+`algorithm_from_learner_id()` und `feature_set_from_task_id()`
+(`000_config.R`) sind reine String-Heuristiken auf mlr3-IDs:
+
+- `algorithm_from_learner_id("classif.lightgbm")` → `"lightgbm"` (Praefix
+  `classif.` abgeschnitten); bei benutzerdefinierten IDs ohne dieses Praefix
+  (z.B. `"ranger_tuned"`, `"lightgbm_keep_empty"`) wird das letzte
+  Punkt-getrennte Segment genommen bzw. die ID unveraendert zurueckgegeben,
+  wenn sie keine Punkte enthaelt.
+- `feature_set_from_task_id("health_condition_10pct_bmi_weighted_p1.5")` →
+  `"bmi"` (Gewichtungs-Suffix `_weighted_p...` zuerst abgeschnitten, dann der
+  bekannte Task-Namens-Praefix entfernt).
+
+**2. Sonderfaelle — direkte Bausteine:** Skripte mit einer eigenen
+Such-/Tuning-Schleife (`090`, `100`, `142`, per `mlr3tuning`/`mlr3mbo`) oder
+einem komplett eigenen Aufbau ohne `BenchmarkResult` (`115` mit einem
+einzelnen `msr("classif.auc")`, `130` mit einem manuellen Train/Tune/Eval-
+Split) rufen `db_create_model_config()`/`db_create_resampling()`/
+`db_log_metric_result()` direkt auf, statt `db_log_timed_benchmark()` zu
+nutzen - z.B. loggt `090_ranger_tuning.R` jede der 20 Random-Search-
+Evaluationen als eigene `model_config` unter einem gemeinsamen
+`holdout`-`resampling`, bevor die finale CV-Vergleichsphase wieder ueber
+`db_log_timed_benchmark()` laeuft.
+
+## Beispielabfragen
+
+```sql
+-- Bestes Modell je Algorithmus, ueber alle Skripte/Runs hinweg
+SELECT * FROM v_best_per_algorithm ORDER BY bacc DESC;
+
+-- Streuung zwischen Folds fuer ein bestimmtes Modell
+SELECT mres_fold, mres_value FROM v_fold_detail
+WHERE mconf_algorithm = 'ranger' AND mres_measure_name = 'classif.bacc'
+ORDER BY mres_fold;
+
+-- Wie hat sich BAcc/MCC mit steigendem class_weight_power entwickelt?
+SELECT wf_name, mconf_class_weight_power, bacc, mcc
+FROM v_model_results
+WHERE mconf_algorithm = 'lightgbm' AND mconf_class_weight_power IS NOT NULL
+ORDER BY mconf_class_weight_power;
+
+-- Welche Feature-Sets wurden fuer LightGBM je getestet, und mit welchem Ergebnis?
+SELECT mconf_feature_set, bacc, mcc FROM v_model_results
+WHERE mconf_algorithm = 'lightgbm' ORDER BY bacc DESC;
+
+-- Alle Hyperparameter einer bestimmten Model-Config nachschlagen
+SELECT hparam_name, hparam_value FROM hyperparam WHERE hparam_mconf_id = '<mconf_id>';
+
+-- Wie lange dauerten die einzelnen Runs eines Skripts (fuer Laufzeit-Planung)?
+SELECT run_started_at, run_finished_at, run_notes FROM run r
+JOIN workflow w ON r.run_wf_id = w.wf_id
+WHERE w.wf_name = '125_catboost_benchmark.R';
+```
+
+Direkt aus R (z.B. in einer neuen Claude-Session):
+
+```r
+con <- DBI::dbConnect(RSQLite::SQLite(), "_artifacts/experiments.db")
+DBI::dbGetQuery(con, "SELECT * FROM v_best_per_algorithm ORDER BY bacc DESC")
+DBI::dbDisconnect(con)
+```
+
+## Uebertragung auf ein neues Projekt
+
+Das Schema ist bewusst projektunabhaengig: kein Bezug zu `health_condition`,
+den drei Klassen oder sonstigen Datensatz-Spezifika. Fuer einen neuen Kaggle-
+Wettbewerb (analog zur Checkliste in `TARGETS.md`):
+
+1. `db_schema.sql` und `db_logging.R` bleiben **unveraendert**.
+2. Nur `project_name` in `000_config.R` aendern - `db_get_or_create_project()`
+   legt beim ersten Lauf automatisch einen neuen `project`-Eintrag an.
+   Bisherige Ergebnisse anderer Projekte bleiben in derselben `experiments.db`
+   erhalten und sauber getrennt abfragbar (`WHERE proj_name = ...`).
+3. Neue explorative Skripte haengen den immer gleichen Logging-Block
+   (siehe oben) an ihr Ende an und schreiben eine passende
+   `model_config_fn`, die aus ihren eigenen Task-/Learner-IDs die Metadaten
+   ableitet - `algorithm_from_learner_id()`/`feature_set_from_task_id()`
+   koennen dabei wiederverwendet werden, wenn die Task-Namenskonvention aus
+   `020_task.R`/`025_feature_engineering.R` gleich bleibt.
+
+## Bekannte Einschraenkung
+
+`_targets.R` schreibt aktuell **nicht** in `experiments.db` (das Schema
+unterstuetzt `wf_type = 'targets'` bereits dafuer, es wird aber von keinem
+Code genutzt). Grund: Der finale Produktions-Workflow trifft keine neuen
+Modell-/Feature-/Gewichtungsentscheidungen mehr - die sind bereits ueber die
+Skripte `030`-`145` getroffen und in `000_config.R` festgeschrieben. Sollte
+sich das aendern (z.B. `_targets.R` soll selbst mehrere Kandidaten
+vergleichen statt nur `submission_model_name` zu trainieren), koennte
+`db_logging.R` unveraendert auch aus `_targets.R` heraus aufgerufen werden.
