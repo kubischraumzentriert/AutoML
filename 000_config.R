@@ -107,6 +107,7 @@ threshold_tuning_train_ratio <- 0.6
 threshold_tuning_tune_ratio <- 0.2
 threshold_tuning_weight_grid <- seq(0.5, 6, by = 0.5)
 threshold_tuning_results_path <- file.path(artifact_dir, "threshold_tuning_results.csv")
+threshold_tuning_ranger_results_path <- file.path(artifact_dir, "threshold_tuning_ranger_results.csv")
 
 # TabPFN hat eine begrenzte Kontextlaenge (Vortrainings-Limits fuer Zeilen-
 # /Feature-Anzahl) und erlaubt auf CPU standardmaessig nur bis zu 1000

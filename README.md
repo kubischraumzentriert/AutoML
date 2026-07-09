@@ -44,6 +44,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `140_ensemble_candidates_weighted.R` | Vergleicht LightGBM, Ranger und XGBoost mit derselben `power=1.5`-Gewichtung (CV) |
 | `142_ranger_tuning_weighted.R` | Wiederholt `090` auf dem `power=1.5`-gewichteten Task (Random Search), Finalvergleich per CV |
 | `145_ensemble_ranger_lightgbm.R` | Gleichgewichtetes Wahrscheinlichkeits-Ensemble (`gunion()` + `po("classifavg")`) aus Ranger und LightGBM |
+| `146_threshold_tuning_ranger.R` | Wiederholt `130` fuer Ranger statt LightGBM (Probability-Forest-Wahrscheinlichkeiten statt Log-Loss-optimierter Wahrscheinlichkeiten) |
 | `150_train_full_model.R` | Trainiert `submission_model_name` (aktuell Ranger, Rohfeatures, `power=1.5`) auf dem vollen Trainingsdatensatz (`train.csv`, alle Zeilen) |
 | `155_predict_submission.R` | Wendet das volle Modell auf `test.csv` an und schreibt `submission.csv` im Format von `sample_submission.csv` |
 
@@ -329,6 +330,19 @@ Idee: Statt (oder zusaetzlich zu) Klassengewichten beim Training koennte man die
 **Wichtiger methodischer Befund**: Beim ungewichtet trainierten Modell treffen die gefundenen Gewichte (6.0/6.0) exakt den Rand des Suchgitters (`threshold_tuning_weight_grid = seq(0.5, 6, by = 0.5)`) — dort gibt es kein inneres Optimum, reines BAcc-Maximieren ohne Gegengewicht treibt die Gewichte prinzipiell unbegrenzt weiter (im Grenzfall werden Minderheitsklassen fast immer vorhergesagt, Recall steigt, Precision/MCC kollabieren). Beim bereits mit `power=1.5` trainierten Modell liegt das gefundene Optimum dagegen deutlich innerhalb des Gitters (4.0/3.5) — die Trainingsgewichtung nimmt dem Threshold-Tuning einen Teil der Notwendigkeit ab, an den Rand zu laufen. Post-hoc-Threshold-Tuning ist damit **kein unabhaengiger zusaetzlicher Hebel**, sondern derselbe BAcc/MCC-Trade-off wie bei `class_weight_power`, nur ueber einen anderen Mechanismus (Nachbearbeitung der Wahrscheinlichkeiten statt Trainingsgewichte) erreicht.
 
 **Entscheidung**: Threshold-Tuning wird nicht zusaetzlich zur Trainings-Klassengewichtung eingesetzt — das Stacken beider Mechanismen drueckt MCC weiter (0.790) fuer kaum zusaetzlichen BAcc-Gewinn (0.943 vs. 0.935), ohne einen neuen Freiheitsgrad zu erschliessen. `class_weight_power` bleibt der einzige Regler fuer den BAcc/MCC-Trade-off. (Zahlen aktualisiert auf `power=1.5`; die fruehere Tabelle stammte noch von `power=1`, die Kernaussage war und ist aber unveraendert.)
+
+## Schwellenwert-Tuning fuer Ranger
+
+Ranger liefert Wahrscheinlichkeiten ueber ein *Probability Forest*: Jeder Baum speichert je Blatt die Klassenanteile der dort gelandeten Trainingsbeobachtungen, die Vorhersage ist der Durchschnitt dieser Anteile ueber alle Baeume — anders als LightGBMs Log-Loss-optimierte Wahrscheinlichkeiten. `146_threshold_tuning_ranger.R` wiederholt `130` deshalb mit Ranger, um zu pruefen, ob post-hoc-Gewichtung bei dieser anderen Art Wahrscheinlichkeit aehnlich stark greift:
+
+| Variante | BAcc (argmax) | MCC (argmax) | BAcc (Gewicht getunt) | MCC (Gewicht getunt) | Gefundene Gewichte |
+|---|---:|---:|---:|---:|---|
+| Ranger ungewichtet trainiert | 0.8552 | 0.8624 | 0.9260 | 0.7729 | fit=6.0, unhealthy=6.0 |
+| Ranger `power=1.5` trainiert (final) | 0.9398 | 0.7672 | 0.9398 | 0.7672 | fit=1.0, unhealthy=1.0 |
+
+**Wichtiger Unterschied zu LightGBM**: Beim ungewichteten Ranger zeigt sich dasselbe Randgitter-Muster wie bei LightGBM (Gewichte laufen auf 6.0/6.0, kein inneres Optimum). Beim bereits mit `power=1.5` trainierten Ranger findet die Suche dagegen **keine besseren Gewichte als 1.0/1.0/1.0** — argmax(prob) ohne jede Nachbearbeitung ist hier bereits optimal, BAcc/MCC bleiben exakt gleich. Bei LightGBM (siehe oben) brachte dieselbe Suche selbst beim gewichteten Modell noch eine kleine Verschiebung (fit=4.0, unhealthy=3.5). Ranger scheint die Trainings-Klassengewichtung vollstaendiger in seine Wahrscheinlichkeiten zu uebernehmen, sodass kein Rest-Bias im argmax uebrig bleibt, den man post-hoc noch herausdruecken koennte.
+
+**Entscheidung**: Bestaetigt die bestehende Konfiguration - fuer Ranger gibt es keinen Grund, zusaetzlich zur Trainings-Klassengewichtung ein Post-hoc-Threshold-Tuning einzusetzen; der Effekt waere schlicht null.
 
 ## CatBoost
 
