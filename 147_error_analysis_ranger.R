@@ -5,12 +5,15 @@ suppressPackageStartupMessages({
   library(mlr3)
   library(mlr3learners)
   library(mlr3extralearners)
+  library(mlr3pipelines)
   library(mlr3measures)
   library(ranger)
   library(kernelshap)
+  library(isotree)
 })
 
 source("000_config.R")
+source(file.path(project_dir, "040_preprocessing.R"))
 source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
@@ -70,13 +73,20 @@ learner_lightgbm <- lrn(
   num_iterations = lightgbm_tuning_final_iterations,
   predict_type = "prob"
 )
+# LDA unterstuetzt (anders als Ranger/LightGBM) keine Gewichte - mlr3 bricht
+# sonst mit einem Fehler ab. use_weights = "ignore" traininiert LDA bewusst
+# ungewichtet auf demselben Task (konsistent mit der README-Feststellung,
+# dass LDA in diesem Projekt nirgends gewichtet trainiert wird).
+learner_lda <- lrn("classif.lda", predict_type = "prob", use_weights = "ignore")
 
 learner_ranger$train(train_task)
 learner_lightgbm$train(train_task)
+learner_lda$train(train_task)
 
 eval_newdata <- eval_imputed[, c(target_col_name, feature_cols), with = FALSE]
 pred_ranger <- learner_ranger$predict_newdata(eval_newdata, task = train_task)
 pred_lightgbm <- learner_lightgbm$predict_newdata(eval_newdata, task = train_task)
+pred_lda <- learner_lda$predict_newdata(eval_newdata, task = train_task)
 
 truth <- pred_ranger$truth
 ranger_response <- pred_ranger$response
@@ -88,6 +98,10 @@ lightgbm_response <- pred_lightgbm$response
 lightgbm_probs <- pred_lightgbm$prob
 lightgbm_confidence <- apply(lightgbm_probs, 1, max)
 
+lda_response <- pred_lda$response
+lda_probs <- pred_lda$prob
+lda_confidence <- apply(lda_probs, 1, max)
+
 # --- Teil 1: Ranger-Fehler - Sicherheit & haette LightGBM richtig gelegen? -
 misclassified_idx <- which(ranger_response != truth)
 
@@ -98,7 +112,10 @@ error_dt <- data.table(
   ranger_true_class_prob = ranger_true_class_prob[misclassified_idx],
   lightgbm_pred = lightgbm_response[misclassified_idx],
   lightgbm_confidence = lightgbm_confidence[misclassified_idx],
-  lightgbm_correct = lightgbm_response[misclassified_idx] == truth[misclassified_idx]
+  lightgbm_correct = lightgbm_response[misclassified_idx] == truth[misclassified_idx],
+  lda_pred = lda_response[misclassified_idx],
+  lda_confidence = lda_confidence[misclassified_idx],
+  lda_correct = lda_response[misclassified_idx] == truth[misclassified_idx]
 )
 # 0.5 ist bei 3 Klassen kein willkuerlicher Bruchteil: darunter war nicht mal
 # die vorhergesagte Klasse selbst mehrheitsfaehig (Ranger "unsicher"), darueber
@@ -108,11 +125,13 @@ error_dt[, ranger_confidence_bucket := fifelse(ranger_confidence < 0.5, "unsiche
 rescue_summary <- error_dt[, .(
   n_fehler = .N,
   lightgbm_rescue_rate = round(mean(lightgbm_correct), 4),
+  lda_rescue_rate = round(mean(lda_correct), 4),
   mean_ranger_confidence = round(mean(ranger_confidence), 4)
 ), by = ranger_confidence_bucket]
 setorder(rescue_summary, ranger_confidence_bucket)
 
 overall_rescue_rate <- mean(error_dt$lightgbm_correct)
+overall_lda_rescue_rate <- mean(error_dt$lda_correct)
 
 # Bonus (symmetrisch): rettet umgekehrt Ranger LightGBMs Fehler?
 lightgbm_misclassified_idx <- which(lightgbm_response != truth)
@@ -126,10 +145,55 @@ lightgbm_rescued_by_ranger_rate <- mean(lightgbm_error_dt$ranger_correct)
 
 fwrite(error_dt, error_analysis_results_path)
 
-cat("=== Ranger-Fehler: Sicherheit vs. LightGBM-Vergleich (Eval-Split,", nrow(error_dt), "von", length(truth), "Zeilen falsch) ===\n")
+cat("=== Ranger-Fehler: Sicherheit vs. LightGBM/LDA-Vergleich (Eval-Split,", nrow(error_dt), "von", length(truth), "Zeilen falsch) ===\n")
 print(rescue_summary)
 cat("\nLightGBM 'rettet' insgesamt", sprintf("%.1f%%", 100 * overall_rescue_rate), "von Rangers Fehlern (waere selbst richtig gelegen).\n")
+cat("LDA 'rettet' insgesamt", sprintf("%.1f%%", 100 * overall_lda_rescue_rate), "von Rangers Fehlern.\n")
 cat("Zum Vergleich (umgekehrt): Ranger rettet", sprintf("%.1f%%", 100 * lightgbm_rescued_by_ranger_rate), "von LightGBMs Fehlern (", length(lightgbm_misclassified_idx), "Zeilen).\n")
+
+# --- Teil 1b: Isolierte "alle drei selbstsicher falsch"-Faelle - Ausreisser? ---
+# Staerkeres Signal als ein Einzelmodell-Fehler: drei strukturell verschiedene
+# Modellfamilien (Baum-Ensemble, Boosting, linear) irren sich unabhaengig auf
+# derselben Zeile. Kandidaten fuer entweder Feature-Raum-Ausreisser oder
+# Grenzfaelle/Label-Rauschen (siehe README-Diskussion).
+hard_case_idx <- which(
+  ranger_response != truth & lightgbm_response != truth & lda_response != truth &
+    ranger_confidence >= error_analysis_uncertainty_threshold
+)
+same_wrong_class <- ranger_response[hard_case_idx] == lightgbm_response[hard_case_idx] &
+  ranger_response[hard_case_idx] == lda_response[hard_case_idx]
+
+cat("\n=== 'Alle drei Modelle selbstsicher falsch' (Ranger, LightGBM, LDA) ===\n")
+cat(length(hard_case_idx), "von", length(misclassified_idx), "Ranger-Fehlern sind auch fuer LightGBM UND LDA falsch, bei Ranger-Konfidenz >=", error_analysis_uncertainty_threshold, ".\n")
+cat(sum(same_wrong_class), "von", length(hard_case_idx), "davon sagen sogar dieselbe falsche Klasse voraus.\n")
+
+correct_all_idx <- which(ranger_response == truth & lightgbm_response == truth & lda_response == truth)
+
+train_features_only <- train_imputed[, ..feature_cols]
+eval_features_only <- eval_imputed[, ..feature_cols]
+
+if (length(hard_case_idx) >= 5) {
+  iso_model <- isolation.forest(train_features_only, ntrees = 500, nthreads = 1, seed = seed)
+
+  hard_case_scores <- predict(iso_model, eval_features_only[hard_case_idx])
+  set.seed(seed)
+  baseline_idx <- sample(correct_all_idx, min(5 * length(hard_case_idx), length(correct_all_idx)))
+  baseline_scores <- predict(iso_model, eval_features_only[baseline_idx])
+
+  outlier_test <- wilcox.test(hard_case_scores, baseline_scores)
+
+  cat("\nIsolation-Forest-Anomalie-Score (0.5 = normal, -> 1 = Ausreisser):\n")
+  cat("  'Alle drei selbstsicher falsch' (n=", length(hard_case_idx), "): Median =", round(median(hard_case_scores), 4), ", Mean =", round(mean(hard_case_scores), 4), "\n")
+  cat("  Baseline: alle drei richtig  (n=", length(baseline_idx), "): Median =", round(median(baseline_scores), 4), ", Mean =", round(mean(baseline_scores), 4), "\n")
+  cat("  Wilcoxon-Test p-Wert:", signif(outlier_test$p.value, 4), "\n")
+} else {
+  cat("\nZu wenige Faelle (<5) fuer eine belastbare Isolation-Forest-Auswertung.\n")
+}
+
+# "Interessante" Zeilen (falsch klassifiziert ODER unsicher) - Basis fuer den
+# TabPFN-Vergleich unten UND fuer das DB-Logging am Skriptende.
+low_confidence_idx <- which(ranger_confidence < error_analysis_uncertainty_threshold)
+interesting_idx <- union(misclassified_idx, low_confidence_idx)
 
 # --- Teil 2: KernelSHAP - welche Features treiben Ranger in die falsche Klasse? ---
 pred_fun <- function(model, newdata) {
@@ -137,8 +201,6 @@ pred_fun <- function(model, newdata) {
 }
 
 ranger_fit <- learner_ranger$model
-train_features_only <- train_imputed[, ..feature_cols]
-eval_features_only <- eval_imputed[, ..feature_cols]
 
 set.seed(seed)
 bg_idx <- sample(nrow(train_features_only), min(error_analysis_shap_background_size, nrow(train_features_only)))
@@ -186,6 +248,49 @@ cat("\nGespeichert:\n")
 cat("Fehler-Details :", error_analysis_results_path, "\n")
 cat("SHAP-Vergleich :", error_analysis_shap_importance_path, "\n")
 
+# --- Teil 3: TabPFN - komplett andere Methodik (in-context statt trainiert) ---
+# TabPFN ist auf CPU auf ca. 1000 Kontextzeilen begrenzt (siehe 095), daher nur
+# ein kleiner, klassenstratifizierter Kontext. Vorhersage NUR auf den
+# "interessanten" Zeilen (nicht dem kompletten 13802-Zeilen-Eval-Split), um
+# die CPU-Inferenzzeit praktikabel zu halten.
+cat("\n=== TabPFN auf den", length(interesting_idx), "'interessanten' Zeilen (Kontext:", error_analysis_tabpfn_context_size, "klassenstratifizierte Zeilen) ===\n")
+
+set.seed(seed)
+train_target_vec <- train_imputed[[target_col_name]]
+context_frac <- error_analysis_tabpfn_context_size / nrow(train_imputed)
+context_idx <- unlist(lapply(split(seq_len(nrow(train_imputed)), train_target_vec), function(idx) {
+  sample(idx, max(1, round(length(idx) * context_frac)))
+}))
+tabpfn_context <- train_imputed[context_idx]
+
+tabpfn_task <- as_task_classif(
+  tabpfn_context[, c(target_col_name, feature_cols), with = FALSE],
+  target = target_col_name, id = "error_analysis_tabpfn_context"
+)
+
+# TabPFN akzeptiert nur logical/integer/numeric, daher one-hot-Encoding wie in 095.
+learner_tabpfn <- build_classif_pipeline(
+  lrn("classif.tabpfn", device = "cpu"),
+  encode_factors = TRUE, scale_numeric = FALSE
+)
+learner_tabpfn$predict_type <- "prob"
+learner_tabpfn$train(tabpfn_task)
+
+pred_tabpfn <- learner_tabpfn$predict_newdata(eval_newdata[interesting_idx], task = tabpfn_task)
+tabpfn_response <- pred_tabpfn$response
+tabpfn_probs <- pred_tabpfn$prob
+tabpfn_correct <- tabpfn_response == truth[interesting_idx]
+
+misclassified_pos <- match(misclassified_idx, interesting_idx)
+tabpfn_rescue_rate <- mean(tabpfn_correct[misclassified_pos])
+
+hard_case_pos <- match(hard_case_idx, interesting_idx)
+tabpfn_hard_case_rescue_rate <- if (length(hard_case_idx) > 0) mean(tabpfn_correct[hard_case_pos]) else NA_real_
+
+cat("TabPFN 'rettet'", sprintf("%.1f%%", 100 * tabpfn_rescue_rate), "von Rangers", length(misclassified_idx), "Fehlern.\n")
+cat("TabPFN 'rettet'", sprintf("%.1f%%", 100 * tabpfn_hard_case_rescue_rate), "der", length(hard_case_idx), "'alle drei selbstsicher falsch'-Zeilen.\n")
+cat("(Hinweis: TabPFN nur auf", error_analysis_tabpfn_context_size, "Kontextzeilen trainiert, nicht auf allen", nrow(train_imputed), "- kein fairer Gesamtvergleich, siehe README zu 095.)\n")
+
 # --- Experiment-Tracking (SQLite) ------------------------------------------
 # Nur die "interessanten" Zeilen (falsch klassifiziert ODER unsicher, siehe
 # error_analysis_uncertainty_threshold) werden auf Zeilenebene geloggt - nicht
@@ -193,13 +298,14 @@ cat("SHAP-Vergleich :", error_analysis_shap_importance_path, "\n")
 db_con <- db_connect()
 db_proj_id <- db_get_or_create_project(db_con, project_name)
 db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "147_error_analysis_ranger.R")
-db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "Fehleranalyse Ranger: Konfidenz, LightGBM-Vergleich, KernelSHAP")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "Fehleranalyse Ranger: Konfidenz, LightGBM/LDA/TabPFN-Vergleich, Isolation-Forest, KernelSHAP")
 db_log_run_config(db_con, db_run_id, list(
   validation_ratio = validation_ratio,
   class_weight_power = class_weight_power,
   error_analysis_uncertainty_threshold = error_analysis_uncertainty_threshold,
   error_analysis_shap_sample_size = error_analysis_shap_sample_size,
-  error_analysis_shap_background_size = error_analysis_shap_background_size
+  error_analysis_shap_background_size = error_analysis_shap_background_size,
+  error_analysis_tabpfn_context_size = error_analysis_tabpfn_context_size
 ))
 
 db_rsmp_id <- db_create_resampling(
@@ -219,14 +325,30 @@ mconf_lightgbm <- db_create_model_config(
   preprocessing = "impute_median_mode", class_weight_power = class_weight_power, task_id = task_weighted$id,
   hyperparams = list(num_iterations = lightgbm_tuning_final_iterations)
 )
+mconf_lda <- db_create_model_config(
+  db_con, db_run_id,
+  task_type = "classif", algorithm = "lda", feature_set = "raw",
+  preprocessing = "impute_median_mode", class_weight_power = NA_real_, task_id = task_weighted$id,
+  hyperparams = list(note = "use_weights=ignore (LDA unterstuetzt keine Gewichte)")
+)
+mconf_tabpfn <- db_create_model_config(
+  db_con, db_run_id,
+  task_type = "classif", algorithm = "tabpfn", feature_set = "raw",
+  preprocessing = "empty_to_na_onehot", class_weight_power = NA_real_, task_id = task_weighted$id,
+  hyperparams = list(
+    context_size = error_analysis_tabpfn_context_size,
+    note = "nur auf interesting_idx-Teilmenge evaluiert (kleiner Kontext, CPU-Limit), kein repraesentatives bacc/mcc geloggt"
+  )
+)
 
 db_log_metric_result(db_con, mconf_ranger, db_rsmp_id, "classif.bacc", mlr3measures::bacc(truth, ranger_response))
 db_log_metric_result(db_con, mconf_ranger, db_rsmp_id, "classif.mcc", mlr3measures::mcc(truth, ranger_response))
 db_log_metric_result(db_con, mconf_lightgbm, db_rsmp_id, "classif.bacc", mlr3measures::bacc(truth, lightgbm_response))
 db_log_metric_result(db_con, mconf_lightgbm, db_rsmp_id, "classif.mcc", mlr3measures::mcc(truth, lightgbm_response))
-
-low_confidence_idx <- which(ranger_confidence < error_analysis_uncertainty_threshold)
-interesting_idx <- union(misclassified_idx, low_confidence_idx)
+db_log_metric_result(db_con, mconf_lda, db_rsmp_id, "classif.bacc", mlr3measures::bacc(truth, lda_response))
+db_log_metric_result(db_con, mconf_lda, db_rsmp_id, "classif.mcc", mlr3measures::mcc(truth, lda_response))
+# Kein bacc/mcc fuer TabPFN: nur auf interesting_idx evaluiert, nicht auf dem
+# vollen Eval-Split - waere nicht vergleichbar mit den anderen drei Zeilen.
 
 db_log_predictions(
   db_con, mconf_ranger, db_rsmp_id,
@@ -238,7 +360,17 @@ db_log_predictions(
   row_ids = eval_ids[interesting_idx], truth = truth[interesting_idx], response = lightgbm_response[interesting_idx],
   prob_matrix = lightgbm_probs[interesting_idx, , drop = FALSE]
 )
+db_log_predictions(
+  db_con, mconf_lda, db_rsmp_id,
+  row_ids = eval_ids[interesting_idx], truth = truth[interesting_idx], response = lda_response[interesting_idx],
+  prob_matrix = lda_probs[interesting_idx, , drop = FALSE]
+)
+db_log_predictions(
+  db_con, mconf_tabpfn, db_rsmp_id,
+  row_ids = eval_ids[interesting_idx], truth = truth[interesting_idx], response = tabpfn_response,
+  prob_matrix = tabpfn_probs
+)
 
 db_finish_run(db_con, db_run_id)
 DBI::dbDisconnect(db_con)
-cat("Experiment-DB   :", experiments_db_path, "(", length(interesting_idx), "Zeilen x 2 Modelle geloggt)\n")
+cat("Experiment-DB   :", experiments_db_path, "(", length(interesting_idx), "Zeilen x 4 Modelle geloggt)\n")

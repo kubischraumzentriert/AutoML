@@ -206,6 +206,12 @@ error_analysis_shap_importance_path <- file.path(artifact_dir, "error_analysis_s
 # (siehe db_schema.sql, Tabelle prediction).
 error_analysis_uncertainty_threshold <- 0.5
 
+# TabPFN-Kontextgroesse fuer die Fehleranalyse (147): knapp unter dem CPU-Limit
+# von 1000 Trainingszeilen (siehe 095_tabpfn_benchmark.R), klassenstratifiziert
+# gezogen. TabPFN wird hier NICHT auf dem kompletten Eval-Split ausgewertet,
+# sondern nur auf den "interessanten" Zeilen (siehe error_analysis_uncertainty_threshold).
+error_analysis_tabpfn_context_size <- 999
+
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "health_condition_10pct_sleep_weighted_p1.5")
 # ein feature_set-Label fuer model_config ab.

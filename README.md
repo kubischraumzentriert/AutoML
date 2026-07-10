@@ -45,7 +45,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `142_ranger_tuning_weighted.R` | Wiederholt `090` auf dem `power=1.5`-gewichteten Task (Random Search), Finalvergleich per CV |
 | `145_ensemble_ranger_lightgbm.R` | Gleichgewichtetes Wahrscheinlichkeits-Ensemble (`gunion()` + `po("classifavg")`) aus Ranger und LightGBM |
 | `146_threshold_tuning_ranger.R` | Wiederholt `130` fuer Ranger statt LightGBM (Probability-Forest-Wahrscheinlichkeiten statt Log-Loss-optimierter Wahrscheinlichkeiten) |
-| `147_error_analysis_ranger.R` | Analysiert Rangers falsch klassifizierte Zeilen: Konfidenz, LightGBM-Vergleich auf denselben Zeilen, KernelSHAP-Fehleranalyse |
+| `147_error_analysis_ranger.R` | Analysiert Rangers falsch klassifizierte Zeilen: Konfidenz, LightGBM/LDA/TabPFN-Vergleich auf denselben Zeilen, Isolation-Forest-Ausreissercheck, KernelSHAP-Fehleranalyse |
 | `150_train_full_model.R` | Trainiert `submission_model_name` (aktuell Ranger, Rohfeatures, `power=1.5`) auf dem vollen Trainingsdatensatz (`train.csv`, alle Zeilen) |
 | `155_predict_submission.R` | Wendet das volle Modell auf `test.csv` an und schreibt `submission.csv` im Format von `sample_submission.csv` |
 
@@ -402,9 +402,11 @@ Alle bisherigen Klassengewichts-Experimente liefen nur mit LightGBM. `140_ensemb
 
 Erkenntnis: Der BAcc-Gewinn gegenueber Ranger allein (+0.0003) ist Rauschen, MCC faellt dagegen spuerbar (LightGBMs schwaecherer MCC zieht den Durchschnitt runter), bei fast doppelter Laufzeit. **Entscheidung: kein Ensemble** - Ranger pur bleibt das finale Modell. Anders als bei LDA/Multinom (grosser Staerkeunterschied) liegt es hier daran, dass beide Modelle zu aehnlich in dieselbe Richtung ziehen, um echten Diversitaetsgewinn zu erzeugen.
 
-## Fehleranalyse Ranger: Konfidenz, LightGBM-Vergleich, SHAP
+## Fehleranalyse Ranger: Konfidenz, Modellvergleich, Isolation Forest, SHAP
 
-`147_error_analysis_ranger.R` untersucht Rangers falsch klassifizierte Zeilen auf einem eigenen Holdout-Split (Ranger und LightGBM beide `predict_type = "prob"`, `power=1.5`, damit Wahrscheinlichkeiten direkt vergleichbar sind): Wie sicher war Ranger, als es falsch lag, und haette LightGBM bei denselben Zeilen richtig entschieden?
+`147_error_analysis_ranger.R` untersucht Rangers falsch klassifizierte Zeilen auf einem eigenen Holdout-Split (`power=1.5`, `predict_type="prob"` fuer alle Vergleichsmodelle): Wie sicher war Ranger, als es falsch lag, haetten andere Modelle (LightGBM, LDA, TabPFN) bei denselben Zeilen richtig entschieden, sind die hartnaeckigsten Fehler Feature-Ausreisser, und welche Features treiben Ranger ueberproportional in die falsche Klasse?
+
+**Konfidenz und LightGBM-Vergleich** (beide `power=1.5`-gewichtet, fairer Vergleich):
 
 | Ranger-Konfidenz bei Fehlern | n Fehler | LightGBM-Rescue-Rate | Ø Ranger-Konfidenz |
 |---|---:|---:|---:|
@@ -413,7 +415,35 @@ Erkenntnis: Der BAcc-Gewinn gegenueber Ranger allein (+0.0003) ist Rauschen, MCC
 
 Von 13802 Eval-Zeilen waren 741 falsch (5.4%). LightGBM "rettet" insgesamt nur 8.6% von Rangers Fehlern (waere selbst richtig gelegen); umgekehrt rettet Ranger 14.5% von LightGBMs 792 Fehlern. Bei unsicheren Faellen ist LightGBMs Rescue-Rate deutlich hoeher (36.4% vs. 7.8%) - die Vermutung "LightGBM entscheidet bei unsicheren Faellen oefter richtig" bestaetigt sich damit qualitativ. Diese Faelle sind aber selten: Nur 22 von 741 Fehlern (3%) waren ueberhaupt "unsicher" - die grosse Mehrheit von Rangers Fehlern ist selbstsicher falsch (Ø-Konfidenz 0.75), und dort hilft LightGBM kaum, weil beide Modelle sich meist gemeinsam irren (row-genauer Vergleich zeigt uebereinstimmende Fehlklassifikationen).
 
-Zusaetzlich: KernelSHAP (Paket `kernelshap`) auf je 100 zufaellig gezogenen falsch- und richtig-klassifizierten Zeilen, um zu pruefen, welche Features ueberproportional an Fehlern beteiligt sind (`mean(|SHAP|)` fuer die jeweils vorhergesagte Klasse, Verhaeltnis falsch/richtig):
+**Wichtige methodische Falle: LDA und TabPFN "retten" scheinbar viel mehr, aber nicht echt.** LDA (kann keine Gewichte, `use_weights="ignore"`) und TabPFN (kleiner klassenstratifizierter 999-Zeilen-Kontext, ebenfalls ungewichtet) zeigen auf den ersten Blick beeindruckende Rescue-Raten von **77.7%** bzw. **80.7%** ueber alle 741 Fehler. Aufschluesselung nach der tatsaechlichen Klasse zeigt aber: Das ist fast vollstaendig Mehrheitsklassen-Bias, kein echtes Signal.
+
+| Wahre Klasse | n (von 741 Fehlern) | LDA-Rescue | LightGBM-Rescue |
+|---|---:|---:|---:|
+| at-risk | 645 | 88.5% | 7.8% |
+| unhealthy + fit | 96 | **5.2%** | 14.6% |
+
+645 der 741 Ranger-Fehler haben `truth=at-risk` - genau die Faelle, wo die Klassengewichtung Ranger bewusst von der Mehrheitsklasse wegdrueckt und dabei manchmal uebers Ziel hinausschiesst. LDA/TabPFN sind ungewichtet und tippen daher meist auf "at-risk", was hier zufaellig oft stimmt. Bei den 96 Faellen, wo die Wahrheit tatsaechlich eine Minderheitsklasse ist (die eigentliche Zielgruppe der Gewichtung), rettet LDA nur 5.2% - **schlechter als das korrekt gewichtete LightGBM (14.6%)**. Dasselbe Muster bestaetigt sich fuer TabPFN auf den 138 "alle drei selbstsicher falsch"-Zeilen unten (siehe dort). Lektion (erneut): Modellvergleiche ohne dieselbe Gewichtungsbehandlung sind nicht belastbar, auch nicht als "Rescue-Rate"-Nebenrechnung.
+
+**Isolierte "alle drei Modelle selbstsicher falsch"-Faelle**: 138 von 741 Ranger-Fehlern sind auch fuer LightGBM UND LDA falsch (bei Ranger-Konfidenz >= 0.5); 136 davon sagen sogar dieselbe falsche Klasse voraus - ein starkes, konsistentes Verwirrungsmuster ueber drei strukturell verschiedene Modellfamilien (Baum-Ensemble, Boosting, linear). Sind das Feature-Raum-Ausreisser? **Isolation Forest** (Paket `isotree`, 500 Baeume) sagt nein:
+
+| Gruppe | n | Anomalie-Score (Median) | Anomalie-Score (Mean) |
+|---|---:|---:|---:|
+| Alle drei selbstsicher falsch | 138 | 0.4585 | 0.466 |
+| Baseline: alle drei richtig | 690 | 0.4626 | 0.4676 |
+
+Praktisch identisch (Wilcoxon-Test p=0.30, nicht signifikant) - diese Zeilen sehen im Feature-Raum vollkommen unauffaellig aus. Das spricht gegen "ungewoehnliche Merkmalskombination, auf der Modelle schlecht extrapolieren" und eher fuer inhaerente Grenzfaelle/Label-Mehrdeutigkeit (passend zum synthetischen Datensatz und dem in `115` gefundenen Generierungs-Artefakt) - kein Befund, den man ueber Trainingsdaten-Bereinigung leicht beheben koennte.
+
+**TabPFN auf den 138 Faellen** (999-Zeilen-Kontext, siehe `095` fuer das CPU-Limit): 21.7% Rescue-Rate insgesamt, aber wieder Mehrheitsklassen-Bias bei genauerem Hinsehen:
+
+| Wahre Klasse | n | TabPFN-Rescue |
+|---|---:|---:|
+| at-risk | 62 | 46.8% |
+| fit | 36 | **0%** |
+| unhealthy | 40 | **2.5%** |
+
+29 der 30 "Rettungen" kommen aus der at-risk-Klasse, nur 1 aus unhealthy, keine einzige aus fit - TabPFN bringt hier keinen robusten Zusatznutzen auf den Klassen, die tatsaechlich zaehlen, trotz komplett anderer Methodik (in-context-Lernen statt Baum-Splits/lineare Grenzen).
+
+**KernelSHAP** (Paket `kernelshap`) auf je 100 zufaellig gezogenen falsch- und richtig-klassifizierten Zeilen, um zu pruefen, welche Features ueberproportional an Fehlern beteiligt sind (`mean(|SHAP|)` fuer die jeweils vorhergesagte Klasse, Verhaeltnis falsch/richtig):
 
 | Feature | Error-Ratio |
 |---|---:|
@@ -433,9 +463,11 @@ Zusaetzlich: KernelSHAP (Paket `kernelshap`) auf je 100 zufaellig gezogenen fals
 
 **Verbindung zur Adversarial Validation (`115`)**: Dort waren `water_intake`, `calorie_expenditure`, `smoking_alcohol`, `bmi` die vier staerksten Treiber des Train/Test-Shifts. Hier zeigt sich, dass `smoking_alcohol` und `bmi` auch ueberproportional an Rangers Fehlern beteiligt sind (Ratio 2.98 bzw. 1.63) - der Shift scheint bei diesen beiden Merkmalen tatsaechlich mit Fehlklassifikationen zusammenzuhaengen. `water_intake` dagegen, der staerkste Shift-Treiber in `115`, hat eine Error-Ratio **unter 1** - traegt zum Shift bei, aber nicht ueberproportional zu Fehlern, vermutlich weil es insgesamt der schwaechste Praediktor im Modell ist (niedrigster absoluter SHAP-Beitrag aller Features).
 
-**Erkenntnis**: Kein einzelner Hebel springt hier heraus, der eine gezielte Korrektur rechtfertigen wuerde (siehe Warnung zu Overfitting auf beobachtete Fehler in der vorherigen Diskussion) - aber `smoking_alcohol`/`sleep_quality`/`diet_type` waeren die ersten Kandidaten, wenn man gezielt an Feature-Qualitaet/-Kodierung fuer diese Spalten arbeiten wollte.
+**Gesamterkenntnis**: Kein einzelner Hebel springt heraus, der eine gezielte Korrektur rechtfertigen wuerde. Weder ein anderes Modell (LightGBM/LDA/TabPFN) noch eine Feature-Raum-Anomalie erklaeren Rangers hartnaeckigste Fehler robust - die Isolation-Forest- und klassenweisen Rescue-Analysen deuten eher auf inhaerent schwierige/mehrdeutige Faelle hin als auf ein behebbares Modell- oder Datenproblem. `smoking_alcohol`/`sleep_quality`/`diet_type` waeren die ersten Kandidaten, falls man dennoch gezielt an Feature-Qualitaet/-Kodierung arbeiten wollte.
 
-**Neu in der Datenbank**: `147` ist das erste Skript, das Einzelvorhersagen zeilenweise loggt (Tabellen `prediction`/`prediction_prob`, siehe `EXPERIMENTS_DB.md`) - aber bewusst nur fuer die "interessanten" Zeilen (falsch klassifiziert oder Konfidenz < `error_analysis_uncertainty_threshold`), nicht fuer den kompletten Eval-Split, um die Tabelle klein zu halten (757 von 13802 Zeilen, je Modell).
+**Neu in der Datenbank**: `147` ist das erste Skript, das Einzelvorhersagen zeilenweise loggt (Tabellen `prediction`/`prediction_prob`, siehe `EXPERIMENTS_DB.md`) - aber bewusst nur fuer die "interessanten" Zeilen (falsch klassifiziert oder Konfidenz < `error_analysis_uncertainty_threshold`), nicht fuer den kompletten Eval-Split, um die Tabelle klein zu halten (757 von 13802 Zeilen, je Modell - inzwischen 4 Modelle: Ranger, LightGBM, LDA, TabPFN).
+
+**Laufzeit-Hinweis**: Dieses Skript ist rechnerisch teuer - KernelSHAP (Sampling-basierte Permutations-SHAP) und TabPFNs CPU-Inferenz brauchen zusammen deutlich ueber eine Stunde, obwohl beide Kosten aus fruaheren Skripten (`095`) bereits bekannt waren. Vor einer Wiederholung/Erweiterung lohnt es sich, den Nutzen explizit gegen die Laufzeit abzuwaegen, statt mehrere teure Analyseschritte routinemaessig zu stapeln.
 
 ## Ranger-Tuning unter Klassengewichtung (verworfen)
 
