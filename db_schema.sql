@@ -97,6 +97,38 @@ CREATE TABLE IF NOT EXISTS metric_result (
   mres_elapsed_seconds REAL
 );
 
+-- Zeilenebene fuer einzelne Vorhersagen - bewusst NICHT fuer jede Model-Config
+-- befuellt (waere bei CV ueber alle Zeilen x alle Konfigurationen viel zu
+-- gross), sondern nur fuer die "interessanten" Faelle: falsch klassifiziert
+-- oder Konfidenz unter einem Schwellenwert (siehe 147_error_analysis_ranger.R,
+-- error_analysis_uncertainty_threshold in 000_config.R). Aufrufende Skripte
+-- entscheiden selbst, welche Zeilen sie uebergeben - db_log_predictions()
+-- filtert nicht selbst.
+-- Bewusste Abweichung von der sonstigen <praefix>_id/_seq-Konvention: Bei
+-- potenziell vielen tausend Zeilen referenziert nichts von aussen eine
+-- einzelne Vorhersage per fachlichem Schluessel (nur prediction_prob per
+-- FK) - der SQLite-interne rowid (pred_seq) reicht als Schluessel, eine
+-- UUID waere hier reiner Speicher-/Join-Overhead ohne Nutzen.
+CREATE TABLE IF NOT EXISTS prediction (
+  pred_seq INTEGER PRIMARY KEY,
+  pred_mconf_id TEXT NOT NULL REFERENCES model_config (mconf_id),
+  pred_rsmp_id TEXT NOT NULL REFERENCES resampling (rsmp_id),
+  pred_row_id INTEGER NOT NULL,
+  pred_fold INTEGER,
+  pred_truth TEXT NOT NULL,
+  pred_response TEXT NOT NULL
+);
+
+-- EAV statt fester Spalten pro Klasse, damit die Klassenzahl projekt-
+-- unabhaengig bleibt. Referenziert prediction ueber pred_seq (INTEGER),
+-- nicht ueber eine UUID - aus demselben Platzgrund wie oben.
+CREATE TABLE IF NOT EXISTS prediction_prob (
+  pprob_seq INTEGER PRIMARY KEY,
+  pprob_pred_seq INTEGER NOT NULL REFERENCES prediction (pred_seq),
+  pprob_class TEXT NOT NULL,
+  pprob_value REAL NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_workflow_proj ON workflow (wf_proj_id);
 CREATE INDEX IF NOT EXISTS idx_run_wf ON run (run_wf_id);
 CREATE INDEX IF NOT EXISTS idx_run_config_run ON run_config (rconf_run_id);
@@ -105,6 +137,10 @@ CREATE INDEX IF NOT EXISTS idx_resampling_run ON resampling (rsmp_run_id);
 CREATE INDEX IF NOT EXISTS idx_hyperparam_mconf ON hyperparam (hparam_mconf_id);
 CREATE INDEX IF NOT EXISTS idx_metric_result_mconf ON metric_result (mres_mconf_id);
 CREATE INDEX IF NOT EXISTS idx_metric_result_rsmp ON metric_result (mres_rsmp_id);
+CREATE INDEX IF NOT EXISTS idx_prediction_mconf ON prediction (pred_mconf_id);
+CREATE INDEX IF NOT EXISTS idx_prediction_rsmp ON prediction (pred_rsmp_id);
+CREATE INDEX IF NOT EXISTS idx_prediction_row ON prediction (pred_row_id);
+CREATE INDEX IF NOT EXISTS idx_prediction_prob_pred ON prediction_prob (pprob_pred_seq);
 
 -- Views ----------------------------------------------------------------
 -- v_model_results: eine Zeile je model_config mit aggregierten BAcc/MCC-
@@ -199,3 +235,26 @@ SELECT * FROM (
   WHERE bacc IS NOT NULL
 )
 WHERE rn = 1;
+
+-- v_prediction_detail: eine Zeile je geloggter Einzelvorhersage (nur die
+-- "interessanten" Faelle, siehe prediction-Tabelle) mit Modellkontext und
+-- Wahrscheinlichkeit der vorhergesagten Klasse - der direkte Einstieg fuer
+-- Fehler-/Unsicherheitsanalysen ueber SQL statt CSV.
+CREATE VIEW IF NOT EXISTS v_prediction_detail AS
+SELECT
+  p.proj_name,
+  wf.wf_name,
+  mc.mconf_algorithm,
+  mc.mconf_class_weight_power,
+  pr.pred_row_id,
+  pr.pred_fold,
+  pr.pred_truth,
+  pr.pred_response,
+  (pr.pred_truth = pr.pred_response) AS correct,
+  (SELECT pp.pprob_value FROM prediction_prob pp WHERE pp.pprob_pred_seq = pr.pred_seq AND pp.pprob_class = pr.pred_response) AS response_prob,
+  (SELECT pp.pprob_value FROM prediction_prob pp WHERE pp.pprob_pred_seq = pr.pred_seq AND pp.pprob_class = pr.pred_truth) AS truth_prob
+FROM prediction pr
+JOIN model_config mc ON mc.mconf_id = pr.pred_mconf_id
+JOIN run r ON r.run_id = mc.mconf_run_id
+JOIN workflow wf ON wf.wf_id = r.run_wf_id
+JOIN project p ON p.proj_id = wf.wf_proj_id;

@@ -45,6 +45,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `142_ranger_tuning_weighted.R` | Wiederholt `090` auf dem `power=1.5`-gewichteten Task (Random Search), Finalvergleich per CV |
 | `145_ensemble_ranger_lightgbm.R` | Gleichgewichtetes Wahrscheinlichkeits-Ensemble (`gunion()` + `po("classifavg")`) aus Ranger und LightGBM |
 | `146_threshold_tuning_ranger.R` | Wiederholt `130` fuer Ranger statt LightGBM (Probability-Forest-Wahrscheinlichkeiten statt Log-Loss-optimierter Wahrscheinlichkeiten) |
+| `147_error_analysis_ranger.R` | Analysiert Rangers falsch klassifizierte Zeilen: Konfidenz, LightGBM-Vergleich auf denselben Zeilen, KernelSHAP-Fehleranalyse |
 | `150_train_full_model.R` | Trainiert `submission_model_name` (aktuell Ranger, Rohfeatures, `power=1.5`) auf dem vollen Trainingsdatensatz (`train.csv`, alle Zeilen) |
 | `155_predict_submission.R` | Wendet das volle Modell auf `test.csv` an und schreibt `submission.csv` im Format von `sample_submission.csv` |
 
@@ -401,6 +402,41 @@ Alle bisherigen Klassengewichts-Experimente liefen nur mit LightGBM. `140_ensemb
 
 Erkenntnis: Der BAcc-Gewinn gegenueber Ranger allein (+0.0003) ist Rauschen, MCC faellt dagegen spuerbar (LightGBMs schwaecherer MCC zieht den Durchschnitt runter), bei fast doppelter Laufzeit. **Entscheidung: kein Ensemble** - Ranger pur bleibt das finale Modell. Anders als bei LDA/Multinom (grosser Staerkeunterschied) liegt es hier daran, dass beide Modelle zu aehnlich in dieselbe Richtung ziehen, um echten Diversitaetsgewinn zu erzeugen.
 
+## Fehleranalyse Ranger: Konfidenz, LightGBM-Vergleich, SHAP
+
+`147_error_analysis_ranger.R` untersucht Rangers falsch klassifizierte Zeilen auf einem eigenen Holdout-Split (Ranger und LightGBM beide `predict_type = "prob"`, `power=1.5`, damit Wahrscheinlichkeiten direkt vergleichbar sind): Wie sicher war Ranger, als es falsch lag, und haette LightGBM bei denselben Zeilen richtig entschieden?
+
+| Ranger-Konfidenz bei Fehlern | n Fehler | LightGBM-Rescue-Rate | Ø Ranger-Konfidenz |
+|---|---:|---:|---:|
+| selbstsicher falsch (>=0.5) | 719 | 7.8% | 0.754 |
+| unsicher (<0.5) | 22 | 36.4% | 0.452 |
+
+Von 13802 Eval-Zeilen waren 741 falsch (5.4%). LightGBM "rettet" insgesamt nur 8.6% von Rangers Fehlern (waere selbst richtig gelegen); umgekehrt rettet Ranger 14.5% von LightGBMs 792 Fehlern. Bei unsicheren Faellen ist LightGBMs Rescue-Rate deutlich hoeher (36.4% vs. 7.8%) - die Vermutung "LightGBM entscheidet bei unsicheren Faellen oefter richtig" bestaetigt sich damit qualitativ. Diese Faelle sind aber selten: Nur 22 von 741 Fehlern (3%) waren ueberhaupt "unsicher" - die grosse Mehrheit von Rangers Fehlern ist selbstsicher falsch (Ø-Konfidenz 0.75), und dort hilft LightGBM kaum, weil beide Modelle sich meist gemeinsam irren (row-genauer Vergleich zeigt uebereinstimmende Fehlklassifikationen).
+
+Zusaetzlich: KernelSHAP (Paket `kernelshap`) auf je 100 zufaellig gezogenen falsch- und richtig-klassifizierten Zeilen, um zu pruefen, welche Features ueberproportional an Fehlern beteiligt sind (`mean(|SHAP|)` fuer die jeweils vorhergesagte Klasse, Verhaeltnis falsch/richtig):
+
+| Feature | Error-Ratio |
+|---|---:|
+| smoking_alcohol | **2.98** |
+| sleep_quality | **2.82** |
+| diet_type | 1.90 |
+| step_count | 1.70 |
+| bmi | 1.63 |
+| exercise_duration | 1.57 |
+| sleep_duration | 1.45 |
+| stress_level | 1.19 |
+| heart_rate | 1.15 |
+| physical_activity_level | 1.14 |
+| gender | 1.12 |
+| calorie_expenditure | 1.07 |
+| water_intake | 0.85 |
+
+**Verbindung zur Adversarial Validation (`115`)**: Dort waren `water_intake`, `calorie_expenditure`, `smoking_alcohol`, `bmi` die vier staerksten Treiber des Train/Test-Shifts. Hier zeigt sich, dass `smoking_alcohol` und `bmi` auch ueberproportional an Rangers Fehlern beteiligt sind (Ratio 2.98 bzw. 1.63) - der Shift scheint bei diesen beiden Merkmalen tatsaechlich mit Fehlklassifikationen zusammenzuhaengen. `water_intake` dagegen, der staerkste Shift-Treiber in `115`, hat eine Error-Ratio **unter 1** - traegt zum Shift bei, aber nicht ueberproportional zu Fehlern, vermutlich weil es insgesamt der schwaechste Praediktor im Modell ist (niedrigster absoluter SHAP-Beitrag aller Features).
+
+**Erkenntnis**: Kein einzelner Hebel springt hier heraus, der eine gezielte Korrektur rechtfertigen wuerde (siehe Warnung zu Overfitting auf beobachtete Fehler in der vorherigen Diskussion) - aber `smoking_alcohol`/`sleep_quality`/`diet_type` waeren die ersten Kandidaten, wenn man gezielt an Feature-Qualitaet/-Kodierung fuer diese Spalten arbeiten wollte.
+
+**Neu in der Datenbank**: `147` ist das erste Skript, das Einzelvorhersagen zeilenweise loggt (Tabellen `prediction`/`prediction_prob`, siehe `EXPERIMENTS_DB.md`) - aber bewusst nur fuer die "interessanten" Zeilen (falsch klassifiziert oder Konfidenz < `error_analysis_uncertainty_threshold`), nicht fuer den kompletten Eval-Split, um die Tabelle klein zu halten (757 von 13802 Zeilen, je Modell).
+
 ## Ranger-Tuning unter Klassengewichtung (verworfen)
 
 `090_ranger_tuning.R` tunte Ranger **ohne** Klassengewichtung. `142_ranger_tuning_weighted.R` wiederholt das Tuning auf dem `power=1.5`-gewichteten Task, da die Zielfunktionslandschaft mit Gewichtung eine andere ist:
@@ -449,6 +485,8 @@ Diese Zuordnung ist in `model_feature_sets` und `model_class_weight_power` (`000
 5. `base_learner_constructors` um neue Modellnamen ergaenzen, falls noetig, und `submission_model_name` auf das gewuenschte finale Modell setzen.
 
 `005_benchmark_runtime.R`, `040_preprocessing.R`, `025_feature_engineering.R`, `070_final_models.R` und `150_train_full_model.R` bleiben dabei unveraendert, da sie ausschliesslich ueber diese Konfigurationswerte arbeiten.
+
+**Empfehlung fuer zukuenftige Projekte**: Wo immer moeglich `predict_type = "prob"` setzen, auch wenn zunaechst nur die Klassenvorhersage gebraucht wird. Grund: `final_model_ranger.rds` (`070_final_models.R`) wurde ohne `predict_type = "prob"` trainiert und lieferte deshalb nur harte Klassenlabels - fuer die Fehleranalyse (`147_error_analysis_ranger.R`, siehe unten) musste Ranger deswegen auf einem eigenen Split neu trainiert werden, nur um an Wahrscheinlichkeiten zu kommen. Wahrscheinlichkeiten kosten beim Training praktisch nichts extra, ermoeglichen aber im Nachhinein Schwellenwert-Tuning (`130`/`146`), Ensembles (`145`) und SHAP-/Fehleranalysen (`147`), ohne neu trainieren zu muessen.
 
 ## Finales Training & Submission
 

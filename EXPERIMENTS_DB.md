@@ -1,7 +1,7 @@
 # Anleitung: Experiment-Tracking-Datenbank (`experiments.db`)
 
 Diese Datei erklärt Aufbau und Konzept der SQLite-Datenbank, in die alle
-explorativen Skripte (`030`-`145`) ihre Ergebnisse schreiben. Für die
+explorativen Skripte (`030`-`147`) ihre Ergebnisse schreiben. Für die
 inhaltlichen Ergebnisse (welches Modell, welche Klassengewichtung) siehe
 `README.md` - hier geht es nur um das *Werkzeug*: Schema, Konventionen,
 Logging-Code und wie man die Datenbank abfragt.
@@ -79,16 +79,27 @@ Fremdschluessel referenzieren immer den `_id` (UUID), nie den `_seq`
 `INTEGER PRIMARY KEY` keinen echten `rowid`-Alias anlegt, nicht als
 fachlicher Bezug.
 
+**Bewusste Ausnahme**: `prediction`/`prediction_prob` (siehe unten) haben
+**keine** `_id`-UUID, nur `_seq`. Bei potenziell tausenden Zeilen pro Lauf
+waere eine UUID pro Zeile reiner Speicher-/Join-Overhead, ohne dass irgendwo
+ausserhalb der Datenbank auf eine einzelne Vorhersage per fachlichem
+Schluessel verwiesen werden muesste - der SQLite-`rowid` (`pred_seq`) reicht
+als Fremdschluessel fuer `prediction_prob`.
+
 ## ER-Diagramm
 
 ```
 project (1)───<(n) workflow (1)───<(n) run (1)───<(n) run_config
                                           │
                                           ├──<(n) resampling ──<(n) metric_result
-                                          │                          │
-                                          └──<(n) model_config ──<(n)┤
+                                          │         │                 │
+                                          │         └──<(n) prediction ┤
+                                          │                    │       │
+                                          └──<(n) model_config─┴──<(n)─┤
                                                      │                │
                                                      └──<(n) hyperparam
+
+prediction (1)───<(n) prediction_prob   [ueber pred_seq, keine UUID]
 ```
 
 `metric_result` haengt an **beiden** Elternteilen (`model_config` UND
@@ -97,7 +108,7 @@ unter welcher Validierungsstrategie" ist - dieselbe Model-Config koennte
 theoretisch unter verschiedenen Resampling-Strategien gemessen werden (kommt
 aktuell in den Skripten nicht vor, ist aber durch das Schema abgedeckt, z.B.
 falls man dieselbe Konfiguration einmal per Holdout und einmal per CV
-pruefen wollte).
+pruefen wollte). `prediction` haengt aus demselben Grund ebenfalls an beiden.
 
 ## Tabellen im Detail (`db_schema.sql`)
 
@@ -175,6 +186,25 @@ gespeichert (siehe `db_log_benchmark_metrics()` unten), damit sowohl "was
 war der Durchschnitt" als auch "wie stark hat es zwischen Folds gestreut"
 abfragbar ist, ohne die Rohwerte aus mlr3 erneut berechnen zu muessen.
 
+### `prediction` / `prediction_prob`
+
+Zeilenebene fuer *einzelne* Vorhersagen: `pred_row_id` (die mlr3-`row_id`
+innerhalb des Tasks aus `mconf_task_id`), `pred_truth`, `pred_response`,
+`pred_fold` (wie `mres_fold`: `NULL` bei Holdout/Custom-Split). Die
+Wahrscheinlichkeitsverteilung liegt in einer eigenen EAV-Tabelle
+(`prediction_prob`: `pprob_class`, `pprob_value`), damit die Klassenzahl
+projektunabhaengig bleibt - ein Projekt mit 10 Klassen braucht keine
+Schema-Aenderung.
+
+**Wichtig**: Diese Tabellen werden **nicht** routinemaessig fuer jede
+`model_config` befuellt - bei CV ueber alle Zeilen x alle Konfigurationen
+waere das schnell im zweistelligen Millionenbereich. Stattdessen entscheidet
+das aufrufende Skript, welche Zeilen "interessant" genug sind (`db_log_predictions()`
+filtert selbst nicht). `147_error_analysis_ranger.R` loggt z.B. nur Zeilen,
+die falsch klassifiziert wurden **oder** eine Konfidenz unter
+`error_analysis_uncertainty_threshold` (`000_config.R`) hatten - 757 von
+13802 Eval-Zeilen, nicht alle.
+
 ## Views (ebenfalls in `db_schema.sql`)
 
 ### `v_model_results`
@@ -198,6 +228,17 @@ kommt er nur von einem guenstigen Fold?").
 Ein Rollup je Run: Anzahl getesteter Model-Configs, bester BAcc/MCC-Wert im
 Run. Schneller Ueberblick "was kam bei diesem Skriptlauf im Wesentlichen
 heraus", ohne einzelne Model-Configs durchzugehen.
+
+### `v_prediction_detail`
+
+Eine Zeile je geloggter Einzelvorhersage, mit Modellkontext (`mconf_algorithm`,
+`mconf_class_weight_power`) und den beiden meistgebrauchten Wahrscheinlich-
+keiten schon herausgepivotet: `response_prob` (Konfidenz in die eigene
+Vorhersage) und `truth_prob` (Wahrscheinlichkeit, die dem tatsaechlichen
+Label gegeben wurde) - erspart den manuellen Join gegen `prediction_prob`
+fuer den Standardfall. Zwei `v_prediction_detail`-Ergebnisse lassen sich
+ueber `pred_row_id` gegeneinander joinen, um zwei Modelle auf denselben
+Zeilen zu vergleichen (siehe Beispielabfragen).
 
 ### `v_best_per_algorithm`
 
@@ -282,6 +323,15 @@ Evaluationen als eigene `model_config` unter einem gemeinsamen
 `holdout`-`resampling`, bevor die finale CV-Vergleichsphase wieder ueber
 `db_log_timed_benchmark()` laeuft.
 
+**3. Zeilenebene — `db_log_predictions()`:** Nur von `147_error_analysis_ranger.R`
+genutzt. Nimmt `row_ids`/`truth`/`response`/eine Wahrscheinlichkeits-Matrix
+(eine Spalte je Klasse) entgegen und schreibt sie in `prediction`/
+`prediction_prob`. Filtert selbst nicht - der Aufrufer uebergibt bereits nur
+die Zeilen, die geloggt werden sollen (siehe Tabelle `prediction` oben).
+Vergibt `pred_seq` manuell in einer Transaktion (`dbBegin()`/`dbCommit()`),
+da `dbAppendTable()` keine generierten `rowid`s zurueckgibt, die zugehoerigen
+`prediction_prob`-Zeilen aber sofort denselben Schluessel brauchen.
+
 ## Beispielabfragen
 
 ```sql
@@ -310,6 +360,14 @@ SELECT hparam_name, hparam_value FROM hyperparam WHERE hparam_mconf_id = '<mconf
 SELECT run_started_at, run_finished_at, run_notes FROM run r
 JOIN workflow w ON r.run_wf_id = w.wf_id
 WHERE w.wf_name = '125_catboost_benchmark.R';
+
+-- Zwei Modelle auf denselben Zeilen vergleichen (z.B. "hat LightGBM bei
+-- Rangers Fehlern richtig gelegen?", siehe 147_error_analysis_ranger.R)
+SELECT r.pred_row_id, r.pred_truth, r.pred_response AS ranger_pred, r.response_prob AS ranger_prob,
+       l.pred_response AS lightgbm_pred, l.response_prob AS lightgbm_prob
+FROM v_prediction_detail r
+JOIN v_prediction_detail l ON l.pred_row_id = r.pred_row_id AND l.mconf_algorithm = 'lightgbm'
+WHERE r.mconf_algorithm = 'ranger' AND r.correct = 0;
 ```
 
 Direkt aus R (z.B. in einer neuen Claude-Session):

@@ -191,6 +191,21 @@ model_class_weight_power <- list(
   ranger = class_weight_power
 )
 
+# Fehleranalyse (siehe 147_error_analysis_ranger.R): Stichprobengroessen fuer
+# KernelSHAP (exakte Berechnung ueber alle Feature-Teilmengen ist bei mehr
+# Zeilen zu teuer) und Ergebnispfade.
+error_analysis_shap_sample_size <- 100
+error_analysis_shap_background_size <- 100
+error_analysis_results_path <- file.path(artifact_dir, "error_analysis_results.csv")
+error_analysis_shap_importance_path <- file.path(artifact_dir, "error_analysis_shap_importance.csv")
+
+# Schwelle, unterhalb derer eine Vorhersage als "unsicher" gilt (bei 3 Klassen
+# kein willkuerlicher Wert: darunter war nicht mal die vorhergesagte Klasse
+# selbst mehrheitsfaehig). Bestimmt, welche Zeilen 147 per db_log_predictions()
+# in die DB schreibt - falsch klassifiziert ODER unsicher, nicht alle Zeilen
+# (siehe db_schema.sql, Tabelle prediction).
+error_analysis_uncertainty_threshold <- 0.5
+
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "health_condition_10pct_sleep_weighted_p1.5")
 # ein feature_set-Label fuer model_config ab.

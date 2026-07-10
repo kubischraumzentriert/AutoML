@@ -135,6 +135,55 @@ db_create_resampling <- function(con, run_id, strategy, folds = NA_integer_, rat
   rsmp_id
 }
 
+# Loggt Einzelvorhersagen (row_id, Wahrheit, Vorhersage, volle Wahrscheinlich-
+# keitsverteilung). Filtert NICHT selbst - der Aufrufer entscheidet, welche
+# Zeilen "interessant" genug sind (typischerweise: falsch klassifiziert oder
+# Konfidenz unter einem Schwellenwert), damit die Tabelle nicht durch
+# routinemaessiges Loggen aller Zeilen aller Model-Configs unkontrolliert
+# waechst.
+# row_ids: Vektor der mlr3-row_ids. truth/response: Faktor-/Character-Vektoren
+# gleicher Laenge. prob_matrix: Matrix/data.frame mit einer Spalte je Klasse
+# (Spaltennamen = Klassenbezeichnungen), Zeilenreihenfolge wie row_ids.
+# fold: einzelner Wert (NA bei Holdout) oder Vektor gleicher Laenge wie row_ids.
+#
+# Vergibt pred_seq manuell (statt SQLite per Autoincrement zu ueberlassen),
+# damit die Werte sofort fuer die zugehoerigen prediction_prob-Zeilen bekannt
+# sind (dbAppendTable() gibt keine generierten rowids zurueck). In einer
+# Transaktion, damit "MAX(pred_seq) lesen" + "einfuegen" atomar bleibt, falls
+# ein anderer Prozess gleichzeitig schreibt (siehe WAL/busy_timeout in
+# db_connect()).
+db_log_predictions <- function(con, mconf_id, rsmp_id, row_ids, truth, response, prob_matrix,
+                                fold = NA_integer_) {
+  n <- length(row_ids)
+  fold_vec <- if (length(fold) == 1) rep(fold, n) else fold
+
+  dbBegin(con)
+  current_max <- dbGetQuery(con, "SELECT COALESCE(MAX(pred_seq), 0) AS m FROM prediction")$m
+  pred_seqs <- current_max + seq_len(n)
+
+  dbAppendTable(con, "prediction", data.frame(
+    pred_seq = pred_seqs,
+    pred_mconf_id = mconf_id,
+    pred_rsmp_id = rsmp_id,
+    pred_row_id = as.integer(row_ids),
+    pred_fold = as.integer(fold_vec),
+    pred_truth = as.character(truth),
+    pred_response = as.character(response),
+    stringsAsFactors = FALSE
+  ))
+
+  prob_df <- as.data.frame(prob_matrix)
+  prob_long <- data.frame(
+    pprob_pred_seq = rep(pred_seqs, times = ncol(prob_df)),
+    pprob_class = rep(colnames(prob_df), each = nrow(prob_df)),
+    pprob_value = unlist(prob_df, use.names = FALSE)
+  )
+  dbAppendTable(con, "prediction_prob", prob_long)
+  dbCommit(con)
+
+  invisible(pred_seqs)
+}
+
 db_log_metric_result <- function(con, mconf_id, rsmp_id, measure_name, value, fold = NA_integer_,
                                   elapsed_seconds = NA_real_) {
   dbExecute(
