@@ -39,6 +39,47 @@ warn_high_cardinality_factors <- function(task, threshold = 50) {
   invisible(high_card)
 }
 
+# Prueft, ob eine Korrekturregel "bei Uneinigkeit auf Modell B umschalten"
+# (z.B. ein staerkeres Modell A durch ein schwaecheres, aber manchmal
+# treffenderes Modell B ergaenzen) tatsaechlich sinnvoll waere. Die in der
+# Fehleranalyse (147) berechnete Rescue-Rate - P(B richtig | A falsch) -
+# reicht dafuer NICHT aus (siehe README, "Zweite methodische Falle"):
+# relevant ist P(B richtig | A und B uneinig), eine andere bedingte
+# Wahrscheinlichkeit. Ein insgesamt viel staerkeres Modell A hat oft auch bei
+# den meisten Uneinigkeitsfaellen noch recht, selbst wenn B einen ueberdurch-
+# schnittlichen Anteil von As SPEZIFISCHEN Fehlern trifft - eine "bei
+# Uneinigkeit B glauben"-Regel kann dann per Saldo mehr schaden als nuetzen.
+# response_a/response_b/truth: gleich lange Vektoren (z.B. aus $response auf
+# demselben Eval-Split).
+check_disagreement_accuracy <- function(response_a, response_b, truth, name_a = "A", name_b = "B") {
+  disagree_idx <- which(response_a != response_b)
+  if (length(disagree_idx) == 0) {
+    cat("Keine Uneinigkeit zwischen", name_a, "und", name_b, "- keine Korrekturregel moeglich/noetig.\n")
+    return(invisible(NULL))
+  }
+
+  acc_a <- mean(response_a[disagree_idx] == truth[disagree_idx])
+  acc_b <- mean(response_b[disagree_idx] == truth[disagree_idx])
+  neither <- mean(response_a[disagree_idx] != truth[disagree_idx] & response_b[disagree_idx] != truth[disagree_idx])
+
+  cat(
+    "=== Uneinigkeits-Genauigkeit: ", name_a, " vs. ", name_b, " (", length(disagree_idx),
+    " von ", length(truth), " Zeilen uneinig, ", sprintf("%.1f%%", 100 * length(disagree_idx) / length(truth)), ") ===\n",
+    sep = ""
+  )
+  cat(name_a, "hat recht:", sprintf("%.1f%%", 100 * acc_a), "\n")
+  cat(name_b, "hat recht:", sprintf("%.1f%%", 100 * acc_b), "\n")
+  cat("Keiner hat recht:", sprintf("%.1f%%", 100 * neither), "\n")
+
+  if (acc_b > acc_a) {
+    cat("-> Bei Uneinigkeit ist", name_b, "im Mittel vertrauenswuerdiger - eine Korrekturregel koennte sich lohnen (trotzdem per CV gegenpruefen).\n")
+  } else {
+    cat("-> Bei Uneinigkeit ist", name_a, "im Mittel vertrauenswuerdiger - eine 'bei Uneinigkeit auf", name_b, "umschalten'-Regel wuerde vermutlich schaden.\n")
+  }
+
+  invisible(list(acc_a = acc_a, acc_b = acc_b, neither = neither, n_disagree = length(disagree_idx)))
+}
+
 run_timed_benchmark <- function(tasks, learners, resampling, measures) {
   benchmark_results <- list()
   result_rows <- list()

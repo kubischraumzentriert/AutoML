@@ -33,9 +33,12 @@ for (col in names(feature_levels)) {
 
 predictions <- learner$predict_newdata(test)
 
-submission <- data.table(id = test_ids, health_condition = predictions$response)
+# target_col direkt verwendet statt eines hartcodierten Zwischenspaltennamens
+# (frueher "health_condition" fest verdrahtet - bei einer Uebertragung auf
+# ein neues Projekt mit anderer Zielspalte war das leicht zu uebersehen).
+submission <- data.table(id = test_ids, response = predictions$response)
 setnames(submission, "id", id_col)
-setnames(submission, "health_condition", target_col)
+setnames(submission, "response", target_col)
 
 fwrite(submission, submission_path)
 
