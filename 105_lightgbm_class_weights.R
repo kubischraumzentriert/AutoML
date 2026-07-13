@@ -14,6 +14,7 @@ source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
+warn_if_threshold_step_low_value("105_lightgbm_class_weights.R", "Trainings-Klassengewichtung")
 
 if (!file.exists(task_train_small_path)) {
   source(file.path(project_dir, "020_task.R"))

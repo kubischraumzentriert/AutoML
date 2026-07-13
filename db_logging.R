@@ -4,6 +4,47 @@ suppressPackageStartupMessages({
   library(uuid)
 })
 
+# Schwellenwertunabhaengige Metriken integrieren ueber alle Klassifikations-
+# Schwellenwerte hinweg (z.B. AUC) - Post-hoc-Schwellenwert-Tuning (130/146)
+# hat darauf KEINEN Effekt und kann komplett uebersprungen werden. Trainings-
+# Klassengewichtung (105) hat dagegen einen kleineren, aber nicht garantiert
+# null Effekt (aendert die Verlustfunktion beim Training selbst, nicht nur
+# einen Cutoff danach) - empirisch bestaetigt in einem AUC-Projekt (siehe
+# TEMPLATE_FRICTION.md von playground-series-s6e5): AUC blieb ueber
+# power=0/0.5/1 im Rauschen (Spanne < 0.001), BAcc stieg deutlich (+5 Punkte).
+# Schwellenwertabhaengige Metriken (BAcc, MCC, Accuracy, F1) profitieren
+# typischerweise stark von beidem.
+threshold_independent_measures <- c(
+  "classif.auc", "classif.logloss", "classif.prauc",
+  "classif.mauc_au1p", "classif.mauc_au1u", "classif.mauc_aunp", "classif.mauc_aunu"
+)
+
+is_threshold_independent_metric <- function(measure_id) {
+  measure_id %in% threshold_independent_measures
+}
+
+# Gibt am Skriptanfang eine kurze Einschaetzung aus, ob sich der jeweilige
+# Schritt fuer die aktuelle Zielmetrik (baseline_measure_ids[1]) lohnt -
+# statt dass man das nur in Kommentaren/Doku nachlesen kann.
+warn_if_threshold_step_low_value <- function(script_name, step_description) {
+  primary_metric <- baseline_measure_ids[1]
+  if (is_threshold_independent_metric(primary_metric)) {
+    cat(
+      "Hinweis (", script_name, "): Zielmetrik '", primary_metric, "' ist schwellenwert-",
+      "unabhaengig - ", step_description, " hat hier vermutlich wenig/keinen Effekt ",
+      "(siehe TARGETS.md-Backlog). Trotzdem sinnvoll, wenn eine explizite Bestaetigung ",
+      "gewuenscht ist.\n",
+      sep = ""
+    )
+  } else {
+    cat(
+      "Hinweis (", script_name, "): Zielmetrik '", primary_metric, "' ist schwellenwert-",
+      "abhaengig - ", step_description, " ist hier relevant.\n",
+      sep = ""
+    )
+  }
+}
+
 # Oeffnet (und legt bei Bedarf an) die Experiment-Tracking-SQLite-Datenbank.
 # Fuehrt db_schema.sql aus (idempotent dank CREATE TABLE IF NOT EXISTS).
 db_connect <- function(db_path = experiments_db_path) {
