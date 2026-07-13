@@ -20,6 +20,7 @@ if (!file.exists(task_train_small_path)) {
 }
 
 task_train_small <- readRDS(task_train_small_path)
+warn_high_cardinality_factors(task_train_small)
 
 make_baseline_learner <- function(base_learner) {
   graph <- po("imputemedian") %>>%

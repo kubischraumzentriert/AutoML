@@ -13,10 +13,10 @@ source("000_config.R")
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
 
-model_name <- submission_model_name
+model_name <- resolve_submission_model_name()
 feature_set <- model_feature_sets[[model_name]]
 if (feature_set != "raw") {
-  stop("150_train_full_model.R unterstuetzt aktuell nur feature_set = 'raw' fuer submission_model_name.")
+  stop("150_train_full_model.R unterstuetzt aktuell nur feature_set = 'raw' fuer das Submission-Modell.")
 }
 
 train <- fread(train_path)
@@ -32,7 +32,7 @@ train[, (target_col) := as.factor(get(target_col))]
 # gibt es in test.csv nicht.
 feature_levels <- lapply(train[, ..feature_char_cols], levels)
 
-task_full <- as_task_classif(train, target = target_col, id = paste0("health_condition_full_", model_name))
+task_full <- as_task_classif(train, target = target_col, id = paste0(task_id_prefix, "_full_", model_name))
 
 weight_power <- model_class_weight_power[[model_name]]
 if (!is.null(weight_power) && weight_power != 0) {

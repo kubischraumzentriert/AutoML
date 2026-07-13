@@ -31,7 +31,7 @@ train_tabpfn <- train %>%
     !!target_col := as.factor(.data[[target_col]])
   )
 
-task_tabpfn <- as_task_classif(train_tabpfn, target = target_col, id = "health_condition_tabpfn_subset")
+task_tabpfn <- as_task_classif(train_tabpfn, target = target_col, id = sub("_10pct$", "_tabpfn_subset", task_id_prefix))
 saveRDS(task_tabpfn, task_tabpfn_path)
 
 cat("TabPFN-Subset:", task_tabpfn$nrow, "Zeilen (Ziel:", tabpfn_subset_size, ")\n\n")

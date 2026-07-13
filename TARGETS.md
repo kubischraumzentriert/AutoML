@@ -114,13 +114,21 @@ Angenommen, du willst `class_weight_power` von 1.5 auf 1.75 testen:
 
 1. `train.csv`/`test.csv`/`sample_submission.csv` durch die neuen Dateien ersetzen.
 2. `000_config.R`: `id_col`, `target_col`, `baseline_measure_ids` (die Ziel-
-   metrik ist wahrscheinlich eine andere als BAcc/MCC!), `feature_families`/
-   `selected_families`, `model_feature_sets`, `model_class_weight_power`,
-   `submission_model_name` neu befuellen.
+   metrik ist wahrscheinlich eine andere als BAcc/MCC! Bei einer schwellenwert-
+   unabhaengigen Metrik wie AUC/LogLoss sind `130_threshold_tuning.R`/
+   `146_threshold_tuning_ranger.R` fuer diesen neuen Wettbewerb i.d.R.
+   ueberspringbar, siehe deren Kopfkommentar), `feature_families`/
+   `selected_families`, `model_feature_sets`, `model_class_weight_power` neu
+   befuellen. `task_id_prefix` wird automatisch aus `target_col` abgeleitet,
+   dort ist **keine** manuelle Anpassung noetig.
+   Bei genau 2 Zielklassen (binaere Aufgabe): `error_analysis_uncertainty_threshold`
+   bewusst deutlich ueber 0.5 setzen (z.B. 0.7) - bei 2 Klassen ist die
+   Konfidenz der vorhergesagten Klasse mathematisch immer >= 0.5, ein
+   Schwellenwert von 0.5 waere dort entartet (bleibt praktisch immer leer).
 3. `features/*.R` durch neue, domaenenspezifische `add_<familie>_features()`-
    Funktionen ersetzen (oder zunaechst leer lassen, falls noch kein Feature
    Engineering feststeht).
-4. Falls ein neues Modell `submission_model_name` werden soll, das noch nicht
+4. Falls ein neues Modell das Submission-Modell werden soll, das noch nicht
    in `base_learner_constructors` (`000_config.R`) steht: dort ergaenzen.
 5. `_targets.R` selbst muss dabei in der Regel **nicht** angefasst werden -
    der Graph (welches Ziel von welchem abhaengt) bleibt strukturell gleich,
@@ -132,7 +140,23 @@ Angenommen, du willst `class_weight_power` von 1.5 auf 1.75 testen:
    lassen. Alle diese Skripte loggen automatisch in `_artifacts/experiments.db`
    (siehe README.md, Abschnitt "Experiment-Tracking (SQLite)") - fuer einen
    neuen Wettbewerb reicht ein neuer `project_name` in `000_config.R`, Schema
-   und Logging-Code bleiben unveraendert.
+   und Logging-Code bleiben unveraendert. `030_baseline.R` warnt automatisch
+   vor hochkardinalen Faktor-Spalten (`warn_high_cardinality_factors()` in
+   `005_benchmark_runtime.R`), die LDA/Multinom zum Absturz bringen koennen -
+   bei einer Warnung die Spalte fuer diese Modelle ausschliessen oder sinnvoll
+   kodieren (Frequenz-/Zielkodierung).
+7. `148_select_submission_model.R` ausfuehren, um datengetrieben (aus
+   `experiments.db`) den Algorithmus mit dem besten Wert von
+   `baseline_measure_ids[1]` auf dem Roh-Feature-Set vorzuschlagen. Ergebnis
+   pruefen (siehe Hinweis unten) und `submission_model_override` in
+   `000_config.R` entweder auf diesen Vorschlag oder eine bewusst abweichende
+   Entscheidung setzen (auf `NULL` lassen uebernimmt den Vorschlag automatisch
+   bei jedem Lauf, ohne dass jemand `000_config.R` anfassen muss - siehe
+   Architektur-Hinweis bei `submission_model_override`). **Vorsicht**: die
+   automatische Auswahl beruecksichtigt nur eine einzelne Metrik auf
+   Rohfeatures - Abwaegungen wie BAcc-vs-MCC-Trade-offs, Feature-Set-Wahl oder
+   Klassengewichtung (wie in diesem Projekt fuer Ranger dokumentiert) muss ein
+   Mensch weiterhin selbst pruefen, bevor er sich auf den Vorschlag verlaesst.
 
 ## Bekannte Einschraenkung
 
@@ -142,3 +166,34 @@ Angenommen, du willst `class_weight_power` von 1.5 auf 1.75 testen:
 `"selected"`-Feature-Set auf dem **vollen** Datensatz nutzen, muss diese
 Stelle erweitert werden (entsprechendes Feature Engineering muesste dann auch
 fuer den vollen Datensatz existieren, nicht nur fuer das 10%-Subset).
+
+## Backlog (bei einer Uebertragung gefunden, noch nicht umgesetzt)
+
+Bei der Uebertragung dieses Templates auf `playground-series-s6e5`
+(F1-Boxenstopp-Vorhersage, binaer, AUC-bewertet) sind weitere
+Reibungspunkte aufgefallen, die sich noch nicht sicher genug generalisieren
+liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
+`TEMPLATE_FRICTION.md` im genannten Projekt:
+
+- **`080_boosting_benchmark.R` bündelt Learner mit unterschiedlichem
+  Preprocessing-Bedarf**: Ranger/LightGBM brauchen keine Encoding-Pipeline,
+  XGBoost zwingend (`classif.xgboost` akzeptiert nur logical/integer/
+  numeric, keine Faktoren). Aufteilen in zwei Skripte wuerde es erlauben,
+  nur den guenstigen Teil (Ranger/LightGBM) laufen zu lassen, ohne die
+  XGBoost-Preprocessing-Abhaengigkeit mitzuziehen.
+- **SQL-Views (`v_model_results`, `v_run_summary`, `v_best_per_algorithm`)
+  zeigen nur `classif.bacc`/`classif.mcc`**: `metric_result` ist generisch
+  (jede Metrik wird korrekt geloggt), aber die Convenience-Views sind auf
+  genau zwei Metriknamen zugeschnitten. Fuer ein Projekt mit anderer
+  Zielmetrik (z.B. AUC) muss man `metric_result` direkt abfragen statt die
+  Views zu nutzen.
+- **`tnr("mbo")`s Initialdesign kann das Eval-Budget stillschweigend
+  aufbrauchen**: Das Initialdesign skaliert mit ~4x Anzahl Suchraum-
+  Parameter - wird der Suchraum erweitert, ohne das Budget (`*_tuning_evals`)
+  entsprechend zu erhoehen, findet ggf. gar keine echte sequenzielle
+  Optimierung mehr statt (pruefbar ueber `unique(instance$archive$data$batch_nr)`
+  - genau 1 eindeutiger Wert heisst: nur Initialdesign, keine Verfeinerung).
+  Vorschlag: vor jedem Tuning-Lauf mit erweitertem Suchraum Budget >= 4x
+  Dimensionen + 10-20 sicherstellen, danach `batch_nr` sowie Spannweite/R²
+  der Zielmetrik ueber die Archiv-Punkte pruefen (Plateau-Indikator), um
+  eine Empfehlung "Budget erhoehen" vs. "vermutlich Plateau" abzuleiten.

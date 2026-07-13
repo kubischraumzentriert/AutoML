@@ -25,6 +25,57 @@ db_connect <- function(db_path = experiments_db_path) {
   con
 }
 
+# Schaetzt grob die Laufzeit eines bevorstehenden CV-Laufs aus der zuletzt
+# geloggten Holdout-Laufzeit desselben Algorithmus/Feature-Sets im selben
+# Projekt - Faustregel: k-fache CV trainiert k Modelle auf einer zum
+# Holdout-Trainingsanteil (validation_ratio) aehnlich grossen Trainingsmenge,
+# also ungefaehr k x Holdout-Laufzeit. Nur eine grobe Vorab-Einschaetzung
+# (in einem Testfall traf sie auf ~5s genau, Garantie ist das nicht) - soll
+# VOR einem CV-/Tuning-Lauf mitgeteilt werden, nicht erst hinterher gemessen
+# (siehe README, Abschnitt "Experiment-Tracking (SQLite)"/TARGETS.md-Backlog).
+estimate_cv_runtime <- function(con, project_name, algorithm, folds, feature_set = "raw") {
+  row <- dbGetQuery(
+    con,
+    "
+    SELECT mr.mres_elapsed_seconds AS elapsed_seconds, r.run_started_at
+    FROM metric_result mr
+    JOIN model_config mc ON mc.mconf_id = mr.mres_mconf_id
+    JOIN resampling rs ON rs.rsmp_id = mr.mres_rsmp_id
+    JOIN run r ON r.run_id = mc.mconf_run_id
+    JOIN workflow wf ON wf.wf_id = r.run_wf_id
+    JOIN project p ON p.proj_id = wf.wf_proj_id
+    WHERE p.proj_name = ? AND mc.mconf_algorithm = ? AND mc.mconf_feature_set = ?
+      AND rs.rsmp_strategy = 'holdout' AND mr.mres_fold IS NULL
+    ORDER BY r.run_started_at DESC
+    LIMIT 1
+    ",
+    params = list(project_name, algorithm, feature_set)
+  )
+
+  if (nrow(row) == 0) {
+    cat(
+      "Keine geloggte Holdout-Laufzeit fuer Algorithmus '", algorithm,
+      "' (feature_set='", feature_set, "') gefunden - keine Laufzeitschaetzung moeglich.\n",
+      sep = ""
+    )
+    return(invisible(NA_real_))
+  }
+
+  holdout_seconds <- row$elapsed_seconds[1]
+  estimate_seconds <- holdout_seconds * folds
+
+  cat(
+    "Laufzeitschaetzung fuer ", folds, "-fache CV (Algorithmus '", algorithm, "'): ~",
+    round(estimate_seconds), "s (", round(estimate_seconds / 60, 1), " min), basierend auf letzter ",
+    "Holdout-Laufzeit ", round(holdout_seconds, 1), "s vom ", row$run_started_at[1], ".\n",
+    "Faustregel: k-fache CV ~ k x Holdout-Laufzeit (aehnlich grosse Trainingsmenge je Fold) - ",
+    "grobe Schaetzung, keine Garantie.\n",
+    sep = ""
+  )
+
+  invisible(estimate_seconds)
+}
+
 get_git_commit <- function() {
   result <- tryCatch(
     system2("git", c("rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE),

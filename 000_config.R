@@ -16,6 +16,20 @@ project_name <- "playground-series-s6e7-health-condition"
 seed <- 42
 subset_fraction <- 0.10
 
+# --- Task-ID-Praefix ---------------------------------------------------------
+# Aus target_col + subset_fraction abgeleitet statt in 020_task.R/
+# 025_feature_engineering.R/_targets.R als Literal-String wiederholt zu
+# werden (frueher z.B. "health_condition_10pct" hart codiert an mehreren
+# Stellen - bei einer Uebertragung auf ein neues Projekt musste man das an
+# jeder Stelle synchron aendern, ohne dass die TARGETS.md-Checkliste das
+# erwaehnte). Fuer target_col = "health_condition" identisch zum bisherigen
+# Literal, daher rueckwirkungsfrei fuer dieses Projekt.
+camel_to_snake_case <- function(x) {
+  x <- gsub("([a-z0-9])([A-Z])", "\\1_\\2", x)
+  tolower(x)
+}
+task_id_prefix <- paste0(camel_to_snake_case(target_col), "_", subset_fraction * 100, "pct")
+
 validation_ratio <- 0.80
 baseline_measure_ids <- c("classif.bacc", "classif.mcc")
 cv_folds <- 5
@@ -92,6 +106,7 @@ final_model_full_path <- function(model_name) {
   file.path(artifact_dir, paste0("final_model_", model_name, "_full.rds"))
 }
 submission_path <- file.path(project_dir, "submission.csv")
+submission_model_selection_path <- file.path(artifact_dir, "submission_model_selection.csv")
 
 ensemble_candidates_results_path <- file.path(artifact_dir, "ensemble_candidates_results.csv")
 ensemble_ranger_lightgbm_results_path <- file.path(artifact_dir, "ensemble_ranger_lightgbm_results.csv")
@@ -159,9 +174,38 @@ base_learner_constructors <- list(
   lightgbm = function() lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations)
 )
 
-# Welches Modell aus model_feature_sets fuer die finale Kaggle-Submission auf
-# dem vollen Datensatz trainiert wird (siehe 150_train_full_model.R).
-submission_model_name <- "ranger"
+# --- Auswahl des Submission-Modells -----------------------------------------
+# Bewusst NICHT als statischer submission_model_name-Wert: welcher Algorithmus
+# gewinnt ist ein Workflow-ERGEBNIS (aus den Benchmarks in experiments.db,
+# siehe 148_select_submission_model.R), keine Config-Eingabe. 000_config.R
+# bleibt dadurch reine Basis-Konfiguration.
+#
+# submission_model_override: auf einen Modellnamen gesetzt (statt NULL) heisst
+# "diesen erzwingen, nicht automatisch waehlen". Hier bewusst auf "ranger"
+# gesetzt: das ist die in README.md ausfuehrlich hergeleitete Entscheidung
+# (BAcc/MCC-Abwaegung, Klassengewichtung, Feature-Family-CV-Befund) - eine rein
+# metrikgetriebene Auto-Auswahl (148) wuerde diese Nuancen nicht erfassen. Bei
+# einem neuen Projekt auf NULL setzen, um automatisch das per Metrik beste
+# Modell aus 148 zu uebernehmen (dort erst pruefen, per CV bestaetigen).
+submission_model_override <- "ranger"
+
+# Ermittelt das tatsaechlich zu trainierende Modell fuer die finale Kaggle-
+# Submission (siehe 150_train_full_model.R). Erst 148_select_submission_model.R
+# ausfuehren, wenn submission_model_override NULL ist, sonst schlaegt dies fehl.
+resolve_submission_model_name <- function() {
+  if (!is.null(submission_model_override)) {
+    return(submission_model_override)
+  }
+  if (!file.exists(submission_model_selection_path)) {
+    stop(
+      "submission_model_override ist NULL und ", submission_model_selection_path,
+      " existiert nicht - erst 148_select_submission_model.R ausfuehren, ",
+      "oder submission_model_override explizit setzen."
+    )
+  }
+  selection <- read.csv(submission_model_selection_path, stringsAsFactors = FALSE)
+  selection$algorithm[1]
+}
 
 # Balancierte Klassengewichte mit Daempfung: power = 0 -> ungewichtet,
 # power = 1 -> volle Balance (weight_i = n_gesamt / (n_klassen * n_klasse_i)).
@@ -213,15 +257,17 @@ error_analysis_uncertainty_threshold <- 0.5
 error_analysis_tabpfn_context_size <- 999
 
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
-# Leitet aus einem mlr3-Task-Id (z.B. "health_condition_10pct_sleep_weighted_p1.5")
-# ein feature_set-Label fuer model_config ab.
+# Leitet aus einem mlr3-Task-Id (z.B. "<task_id_prefix>_sleep_weighted_p1.5")
+# ein feature_set-Label fuer model_config ab. Referenziert task_id_prefix
+# statt eigener Literal-Strings - 020_task.R/025_feature_engineering.R/
+# 095_tabpfn_benchmark.R/_targets.R muessen dieselbe Variable verwenden.
 feature_set_from_task_id <- function(task_id) {
   task_id <- sub("_weighted.*$", "", task_id)
-  if (task_id == "health_condition_10pct") return("raw")
-  if (task_id == "health_condition_10pct_features") return("features")
-  if (task_id == "health_condition_10pct_selected") return("selected")
-  if (task_id == "health_condition_tabpfn_subset") return("raw")
-  suffix <- sub("^health_condition_10pct_", "", task_id)
+  if (task_id == task_id_prefix) return("raw")
+  if (task_id == paste0(task_id_prefix, "_features")) return("features")
+  if (task_id == paste0(task_id_prefix, "_selected")) return("selected")
+  if (task_id == sub("_10pct$", "_tabpfn_subset", task_id_prefix)) return("raw")
+  suffix <- sub(paste0("^", task_id_prefix, "_"), "", task_id)
   suffix
 }
 

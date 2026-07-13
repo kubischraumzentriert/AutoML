@@ -11,6 +11,13 @@ library(targets)
 
 project_dir <- normalizePath(getwd())
 source("000_config.R")
+source(file.path(project_dir, "db_logging.R"))
+# _targets.R wird bei jedem tar_make()-Aufruf frisch neu ausgefuehrt (nicht
+# gecacht wie die Ziele selbst) - der aufgeloeste Wert spiegelt daher immer
+# den aktuellen Stand von submission_model_override/submission_model_selection.csv
+# wider und fliesst korrekt in den Hash der abhaengigen Ziele ein (siehe
+# TEMPLATE_FRICTION.md des s6e5-Projekts fuer die Herleitung).
+submission_model_name <- resolve_submission_model_name()
 source(file.path(project_dir, "features", "utils.R"))
 source(file.path(project_dir, "features", "bmi.R"))
 source(file.path(project_dir, "features", "sleep.R"))
@@ -75,7 +82,7 @@ list(
       set.seed(seed)
       raw_subset <- build_stratified_subset(train_raw)
       featured <- feature_family_functions[[feature_family_name]](raw_subset)
-      finalize_task(featured, id = paste0("health_condition_10pct_", feature_family_name))
+      finalize_task(featured, id = paste0(task_id_prefix, "_", feature_family_name))
     },
     pattern = map(feature_family_name),
     iteration = "list"
@@ -83,20 +90,20 @@ list(
 
   tar_target(task_raw, {
     set.seed(seed)
-    finalize_task(build_stratified_subset(train_raw), id = "health_condition_10pct")
+    finalize_task(build_stratified_subset(train_raw), id = task_id_prefix)
   }),
 
   tar_target(task_combined, {
     finalize_task(
       build_combined_features(train_raw, feature_families),
-      id = "health_condition_10pct_features"
+      id = paste0(task_id_prefix, "_features")
     )
   }),
 
   tar_target(task_selected, {
     finalize_task(
       build_combined_features(train_raw, selected_families),
-      id = "health_condition_10pct_selected"
+      id = paste0(task_id_prefix, "_selected")
     )
   }),
 
@@ -146,9 +153,9 @@ list(
   tar_target(task_full, {
     feature_set <- model_feature_sets[[submission_model_name]]
     if (feature_set != "raw") {
-      stop("Die volle Trainings-Pipeline unterstuetzt aktuell nur feature_set = 'raw' fuer submission_model_name.")
+      stop("Die volle Trainings-Pipeline unterstuetzt aktuell nur feature_set = 'raw' fuer das Submission-Modell.")
     }
-    as_task_classif(train_full, target = target_col, id = paste0("health_condition_full_", submission_model_name))
+    as_task_classif(train_full, target = target_col, id = paste0(task_id_prefix, "_full_", submission_model_name))
   }),
 
   tar_target(task_full_weighted, {

@@ -53,7 +53,7 @@ for (family in feature_families) {
   set.seed(seed)
   raw_subset <- build_stratified_subset(train)
   featured <- feature_family_functions[[family]](raw_subset)
-  task <- finalize_task(featured, id = paste0("health_condition_10pct_", family))
+  task <- finalize_task(featured, id = paste0(task_id_prefix, "_", family))
   saveRDS(task, task_train_small_feature_family_path(family))
 
   cat("Familie:", family, "\n")
@@ -74,7 +74,7 @@ build_combined_features <- function(families) {
 train_small_features <- build_combined_features(feature_families)
 task_train_small_features <- finalize_task(
   train_small_features,
-  id = "health_condition_10pct_features"
+  id = paste0(task_id_prefix, "_features")
 )
 saveRDS(task_train_small_features, task_train_small_features_path)
 
@@ -87,7 +87,7 @@ print(setdiff(names(train_small_features), names(train)))
 train_small_features_selected <- build_combined_features(selected_families)
 task_train_small_features_selected <- finalize_task(
   train_small_features_selected,
-  id = "health_condition_10pct_selected"
+  id = paste0(task_id_prefix, "_selected")
 )
 saveRDS(task_train_small_features_selected, task_train_small_features_selected_path)
 

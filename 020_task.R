@@ -27,7 +27,7 @@ train_small <- train %>%
 task_train_small <- as_task_classif(
   train_small,
   target = target_col,
-  id = "health_condition_10pct"
+  id = task_id_prefix
 )
 
 saveRDS(task_train_small, task_train_small_path)

@@ -13,6 +13,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "005_benchmark_runtime.R"))
+source(file.path(project_dir, "006_tuning_diagnostics.R"))
 source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)
@@ -60,6 +61,12 @@ instance <- ti(
 tuner <- tnr("mbo")
 tuner$optimize(instance)
 
+# Prueft, ob echte sequenzielle Verfeinerung stattfand (nicht nur ein
+# Initialdesign, siehe TARGETS.md-Backlog) und gibt einen groben Plateau-
+# Indikator aus - VOR dem Finalvergleich, damit man ein Ergebnis aus einem
+# reinen Initialdesign nicht ungeprueft per CV bestaetigen laesst.
+diagnose_mbo_search(instance, "classif.bacc")
+
 archive_dt <- as.data.table(instance$archive$data)
 list_cols <- names(archive_dt)[vapply(archive_dt, is.list, logical(1))]
 fwrite(archive_dt[, setdiff(names(archive_dt), list_cols), with = FALSE], lightgbm_tuning_search_results_path)
@@ -93,6 +100,12 @@ learner_lightgbm_default <- make_baseline_learner(
 )
 
 resampling <- rsmp("cv", folds = cv_folds)
+
+# Grobe Laufzeitschaetzung aus der zuletzt geloggten LightGBM-Holdout-
+# Laufzeit, VOR dem eigentlichen CV-Lauf mitgeteilt (siehe README-Backlog).
+db_con_estimate <- db_connect()
+estimate_cv_runtime(db_con_estimate, project_name, "lightgbm", folds = cv_folds * 2)
+DBI::dbDisconnect(db_con_estimate)
 
 timed_benchmark <- run_timed_benchmark(
   tasks = list(task_train_small),
