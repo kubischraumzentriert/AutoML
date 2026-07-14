@@ -28,16 +28,20 @@ make_baseline_learner <- function(base_learner) {
 
 # Ranger als bekannte Referenz (siehe 037), lightgbm verarbeitet Faktoren nativ
 # wie Ranger, xgboost braucht dagegen numerische Eingaben (one-hot encodiert).
+# predict_type="prob" auf jedem Basis-Learner: kostet fuer classif.bacc/
+# classif.mcc nichts, macht das Skript aber sofort AUC-/LogLoss-tauglich fuer
+# eine Uebertragung auf ein neues Projekt (wiederholter Reibungspunkt bei
+# playground-series-s6e5/s5e12, siehe deren TEMPLATE_FRICTION.md).
 learner_ranger <- make_baseline_learner(
-  lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed)
+  lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed, predict_type = "prob")
 )
 
 learner_lightgbm <- make_baseline_learner(
-  lrn("classif.lightgbm", num_iterations = 200)
+  lrn("classif.lightgbm", num_iterations = 200, predict_type = "prob")
 )
 
 learner_xgboost <- build_classif_pipeline(
-  lrn("classif.xgboost", nrounds = 200),
+  lrn("classif.xgboost", nrounds = 200, predict_type = "prob"),
   encode_factors = TRUE,
   scale_numeric = FALSE
 )

@@ -53,6 +53,9 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 ## `targets`-Pipeline (`_targets.R`)
 
 > **Ausfuehrliche Anleitung**: siehe [`TARGETS.md`](TARGETS.md) - Grundkonzepte, Befehlsuebersicht, ein durchgerechnetes Beispiel und eine Checkliste fuer die Uebertragung auf einen neuen Wettbewerb.
+> Fuer eine ausfuehrlichere, Schritt-fuer-Schritt-Fassung dieser Checkliste
+> (Beispielbefehle, erwartete Ausgaben, Entscheidungsregeln je Phase - auch
+> ohne KI-Unterstuetzung nachvollziehbar) siehe [`ANLEITUNG.md`](ANLEITUNG.md).
 
 Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
 

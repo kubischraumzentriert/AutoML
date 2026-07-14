@@ -33,8 +33,10 @@ make_baseline_learner <- function(base_learner) {
 
 # Derselbe Learner fuer alle Power-Stufen - der Unterschied liegt ausschliesslich
 # in der weights_learner-Spalte des jeweiligen Tasks, nicht im Learner selbst.
+# predict_type="prob" gesetzt, damit auch eine schwellenwertunabhaengige
+# Zielmetrik (z.B. classif.auc) in baseline_measure_ids funktioniert.
 learner_lightgbm <- make_baseline_learner(
-  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations)
+  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations, predict_type = "prob")
 )
 
 resampling <- rsmp("cv", folds = cv_folds)

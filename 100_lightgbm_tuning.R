@@ -25,6 +25,14 @@ if (!file.exists(task_train_small_path)) {
 
 task_train_small <- readRDS(task_train_small_path)
 
+# Tuning-Zielmetrik = baseline_measure_ids[1] statt hart codiertem
+# classif.bacc - fuer dieses Projekt identisch (BAcc ist hier die
+# Zielmetrik), aber bei einer Uebertragung auf ein Projekt mit anderer
+# Zielmetrik (z.B. AUC) muss das Tuning nach DIESER Metrik suchen, nicht nach
+# BAcc. Wiederholter Reibungspunkt bei playground-series-s6e5/s5e12 (siehe
+# deren TEMPLATE_FRICTION.md), hier dauerhaft behoben.
+tuning_measure_id <- baseline_measure_ids[1]
+
 make_baseline_learner <- function(base_learner, id = NULL) {
   graph <- po("imputemedian") %>>% po("imputemode") %>>% base_learner
   learner <- as_learner(graph)
@@ -34,8 +42,10 @@ make_baseline_learner <- function(base_learner, id = NULL) {
 
 # Suchphase: kleineres num_iterations fuer vertretbare Laufzeit, Holdout statt
 # CV. bagging_freq wird fixiert, da bagging_fraction sonst wirkungslos bleibt.
+# predict_type="prob" gesetzt, damit auch eine schwellenwertunabhaengige
+# Zielmetrik (z.B. classif.auc) funktioniert.
 search_learner <- make_baseline_learner(
-  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_search_iterations, bagging_freq = 1)
+  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_search_iterations, bagging_freq = 1, predict_type = "prob")
 )
 
 search_space <- ps(
@@ -50,7 +60,7 @@ instance <- ti(
   task = task_train_small,
   learner = search_learner,
   resampling = rsmp("holdout", ratio = validation_ratio),
-  measures = msr("classif.bacc"),
+  measures = msr(tuning_measure_id),
   search_space = search_space,
   terminator = trm("evals", n_evals = lightgbm_tuning_evals)
 )
@@ -65,21 +75,21 @@ tuner$optimize(instance)
 # Initialdesign, siehe TARGETS.md-Backlog) und gibt einen groben Plateau-
 # Indikator aus - VOR dem Finalvergleich, damit man ein Ergebnis aus einem
 # reinen Initialdesign nicht ungeprueft per CV bestaetigen laesst.
-diagnose_mbo_search(instance, "classif.bacc")
+diagnose_mbo_search(instance, tuning_measure_id)
 
 archive_dt <- as.data.table(instance$archive$data)
 list_cols <- names(archive_dt)[vapply(archive_dt, is.list, logical(1))]
 fwrite(archive_dt[, setdiff(names(archive_dt), list_cols), with = FALSE], lightgbm_tuning_search_results_path)
 saveRDS(instance, lightgbm_tuning_instance_path)
 
-cat("=== LightGBM-Tuning: Suchergebnisse ===\n")
+cat("=== LightGBM-Tuning: Suchergebnisse (Zielmetrik:", tuning_measure_id, ") ===\n")
 print(instance$archive$data[, c(
   "classif.lightgbm.learning_rate",
   "classif.lightgbm.num_leaves",
   "classif.lightgbm.min_data_in_leaf",
   "classif.lightgbm.feature_fraction",
   "classif.lightgbm.bagging_fraction",
-  "classif.bacc"
+  tuning_measure_id
 ), with = FALSE])
 cat("\nBeste Konfiguration (Suchphase, num_iterations =", lightgbm_tuning_search_iterations, "):\n")
 print(instance$result_learner_param_vals)
@@ -89,13 +99,13 @@ best_params <- instance$result_learner_param_vals
 best_params[["classif.lightgbm.num_iterations"]] <- lightgbm_tuning_final_iterations
 
 learner_lightgbm_tuned <- make_baseline_learner(
-  lrn("classif.lightgbm"),
+  lrn("classif.lightgbm", predict_type = "prob"),
   id = "lightgbm_tuned"
 )
 learner_lightgbm_tuned$param_set$values <- best_params
 
 learner_lightgbm_default <- make_baseline_learner(
-  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations),
+  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations, predict_type = "prob"),
   id = "lightgbm_default"
 )
 
@@ -133,10 +143,11 @@ cat("Tuning-Instanz :", lightgbm_tuning_instance_path, "\n")
 db_con <- db_connect()
 db_proj_id <- db_get_or_create_project(db_con, project_name)
 db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "100_lightgbm_tuning.R")
-db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "LightGBM-Tuning ohne Klassengewichtung (Bayesian Optimization)")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = paste0("LightGBM-Tuning ohne Klassengewichtung (Bayesian Optimization, Zielmetrik ", tuning_measure_id, ")"))
 db_log_run_config(db_con, db_run_id, list(
   cv_folds = cv_folds,
   validation_ratio = validation_ratio,
+  tuning_measure_id = tuning_measure_id,
   lightgbm_tuning_search_iterations = lightgbm_tuning_search_iterations,
   lightgbm_tuning_evals = lightgbm_tuning_evals,
   lightgbm_tuning_final_iterations = lightgbm_tuning_final_iterations
@@ -158,7 +169,7 @@ for (i in seq_len(nrow(archive_dt))) {
       bagging_fraction = row$classif.lightgbm.bagging_fraction
     )
   )
-  db_log_metric_result(db_con, mconf_id, db_rsmp_search_id, "classif.bacc", row$classif.bacc)
+  db_log_metric_result(db_con, mconf_id, db_rsmp_search_id, tuning_measure_id, row[[tuning_measure_id]])
 }
 
 db_log_timed_benchmark(

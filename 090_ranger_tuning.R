@@ -23,6 +23,14 @@ if (!file.exists(task_train_small_path)) {
 
 task_train_small <- readRDS(task_train_small_path)
 
+# Tuning-Zielmetrik = baseline_measure_ids[1] statt hart codiertem
+# classif.bacc - fuer dieses Projekt identisch (BAcc ist hier die
+# Zielmetrik), aber bei einer Uebertragung auf ein Projekt mit anderer
+# Zielmetrik (z.B. AUC) muss das Tuning nach DIESER Metrik suchen, nicht nach
+# BAcc. Wiederholter Reibungspunkt bei playground-series-s6e5/s5e12 (siehe
+# deren TEMPLATE_FRICTION.md), hier dauerhaft behoben.
+tuning_measure_id <- baseline_measure_ids[1]
+
 make_baseline_learner <- function(base_learner, id = NULL) {
   graph <- po("imputemedian") %>>% po("imputemode") %>>% base_learner
   learner <- as_learner(graph)
@@ -31,12 +39,16 @@ make_baseline_learner <- function(base_learner, id = NULL) {
 }
 
 # Suchphase: kleineres num.trees fuer vertretbare Laufzeit, Holdout statt CV.
+# predict_type="prob" gesetzt, damit auch eine schwellenwertunabhaengige
+# Zielmetrik (z.B. classif.auc) funktioniert, ohne dass jedes neue Projekt
+# das nachziehen muss.
 search_learner <- make_baseline_learner(
   lrn(
     "classif.ranger",
     num.trees = ranger_tuning_search_trees,
     respect.unordered.factors = "order",
-    seed = seed
+    seed = seed,
+    predict_type = "prob"
   )
 )
 
@@ -50,7 +62,7 @@ instance <- ti(
   task = task_train_small,
   learner = search_learner,
   resampling = rsmp("holdout", ratio = validation_ratio),
-  measures = msr("classif.bacc"),
+  measures = msr(tuning_measure_id),
   search_space = search_space,
   terminator = trm("evals", n_evals = ranger_tuning_evals)
 )
@@ -63,12 +75,12 @@ list_cols <- names(archive_dt)[vapply(archive_dt, is.list, logical(1))]
 fwrite(archive_dt[, setdiff(names(archive_dt), list_cols), with = FALSE], ranger_tuning_search_results_path)
 saveRDS(instance, ranger_tuning_instance_path)
 
-cat("=== Ranger-Tuning: Suchergebnisse ===\n")
+cat("=== Ranger-Tuning: Suchergebnisse (Zielmetrik:", tuning_measure_id, ") ===\n")
 print(instance$archive$data[, c(
   "classif.ranger.mtry.ratio",
   "classif.ranger.min.node.size",
   "classif.ranger.sample.fraction",
-  "classif.bacc"
+  tuning_measure_id
 ), with = FALSE])
 cat("\nBeste Konfiguration (Suchphase, num.trees =", ranger_tuning_search_trees, "):\n")
 print(instance$result_learner_param_vals)
@@ -78,7 +90,7 @@ best_params <- instance$result_learner_param_vals
 best_params[["classif.ranger.num.trees"]] <- ranger_tuning_final_trees
 
 learner_ranger_tuned <- make_baseline_learner(
-  lrn("classif.ranger", respect.unordered.factors = "order", seed = seed),
+  lrn("classif.ranger", respect.unordered.factors = "order", seed = seed, predict_type = "prob"),
   id = "ranger_tuned"
 )
 learner_ranger_tuned$param_set$values <- best_params
@@ -88,7 +100,8 @@ learner_ranger_default <- make_baseline_learner(
     "classif.ranger",
     num.trees = ranger_tuning_final_trees,
     respect.unordered.factors = "order",
-    seed = seed
+    seed = seed,
+    predict_type = "prob"
   ),
   id = "ranger_default"
 )
@@ -121,10 +134,11 @@ cat("Tuning-Instanz :", ranger_tuning_instance_path, "\n")
 db_con <- db_connect()
 db_proj_id <- db_get_or_create_project(db_con, project_name)
 db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "090_ranger_tuning.R")
-db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "Ranger-Tuning ohne Klassengewichtung (Random Search)")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = paste0("Ranger-Tuning ohne Klassengewichtung (Random Search, Zielmetrik ", tuning_measure_id, ")"))
 db_log_run_config(db_con, db_run_id, list(
   cv_folds = cv_folds,
   validation_ratio = validation_ratio,
+  tuning_measure_id = tuning_measure_id,
   ranger_tuning_search_trees = ranger_tuning_search_trees,
   ranger_tuning_evals = ranger_tuning_evals,
   ranger_tuning_final_trees = ranger_tuning_final_trees
@@ -144,7 +158,7 @@ for (i in seq_len(nrow(archive_dt))) {
       sample.fraction = row$classif.ranger.sample.fraction
     )
   )
-  db_log_metric_result(db_con, mconf_id, db_rsmp_search_id, "classif.bacc", row$classif.bacc)
+  db_log_metric_result(db_con, mconf_id, db_rsmp_search_id, tuning_measure_id, row[[tuning_measure_id]])
 }
 
 db_log_timed_benchmark(

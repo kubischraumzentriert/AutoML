@@ -43,6 +43,18 @@ if ("trace" %in% learner_multinom$param_set$ids()) {
   learner_multinom$param_set$values$trace <- FALSE
 }
 
+# predict_type="prob" fuer alle drei Learner: kostet fuer classif.bacc/
+# classif.mcc (Zielmetriken dieses Projekts) nichts, macht das Skript aber
+# sofort tauglich fuer eine AUC-/LogLoss-bewertete Uebertragung auf ein neues
+# Projekt (baseline_measure_ids dort typischerweise inkl. classif.auc, das
+# ohne prob-Vorhersagen fehlschlaegt). Wiederholt aufgetretener Reibungspunkt
+# bei der Uebertragung auf playground-series-s6e5/s5e12 (siehe deren
+# TEMPLATE_FRICTION.md), hier dauerhaft behoben statt bei jedem neuen Projekt
+# erneut nachzuziehen.
+learner_lda$predict_type <- "prob"
+learner_multinom$predict_type <- "prob"
+learner_ranger$predict_type <- "prob"
+
 learners <- list(
   make_baseline_learner(learner_lda),
   make_baseline_learner(learner_multinom),

@@ -113,19 +113,31 @@ Angenommen, du willst `class_weight_power` von 1.5 auf 1.75 testen:
 
 ## Checkliste: Uebertragung auf einen neuen Kaggle-Wettbewerb
 
+> **Ausfuehrlichere Fassung**: siehe [`ANLEITUNG.md`](ANLEITUNG.md) - dieselbe
+> Checkliste, aber mit Beispielbefehlen, erwarteten Ausgaben und
+> Entscheidungsregeln pro Schritt, damit sie auch ohne KI-Unterstuetzung
+> nachvollziehbar ist.
+
 1. `train.csv`/`test.csv`/`sample_submission.csv` durch die neuen Dateien ersetzen.
 2. `000_config.R`: `id_col`, `target_col`, `baseline_measure_ids` (die Ziel-
-   metrik ist wahrscheinlich eine andere als BAcc/MCC! Bei einer schwellenwert-
-   unabhaengigen Metrik wie AUC/LogLoss sind `130_threshold_tuning.R`/
-   `146_threshold_tuning_ranger.R` fuer diesen neuen Wettbewerb i.d.R.
-   ueberspringbar, siehe deren Kopfkommentar), `feature_families`/
-   `selected_families`, `model_feature_sets`, `model_class_weight_power` neu
-   befuellen. `task_id_prefix` wird automatisch aus `target_col` abgeleitet,
-   dort ist **keine** manuelle Anpassung noetig.
+   metrik ist wahrscheinlich eine andere als BAcc/MCC! `030_baseline.R`/
+   `080_boosting_benchmark.R`/`090_ranger_tuning.R`/`100_lightgbm_tuning.R`/
+   `105_lightgbm_class_weights.R` setzen `predict_type = "prob"` bereits
+   automatisch und `090`/`100` optimieren bereits `baseline_measure_ids[1]`
+   statt hart codiertem `classif.bacc` - bei einer schwellenwertunabhaengigen
+   Metrik wie AUC/LogLoss ist daher **kein** manueller Fix mehr noetig, nur
+   `130_threshold_tuning.R`/`146_threshold_tuning_ranger.R` bleiben fuer
+   diesen Fall i.d.R. ueberspringbar, siehe deren Kopfkommentar),
+   `feature_families`/`selected_families`, `model_feature_sets`,
+   `model_class_weight_power` neu befuellen. `task_id_prefix` wird automatisch
+   aus `target_col` abgeleitet, dort ist **keine** manuelle Anpassung noetig.
    Bei genau 2 Zielklassen (binaere Aufgabe): `error_analysis_uncertainty_threshold`
    bewusst deutlich ueber 0.5 setzen (z.B. 0.7) - bei 2 Klassen ist die
    Konfidenz der vorhergesagten Klasse mathematisch immer >= 0.5, ein
    Schwellenwert von 0.5 waere dort entartet (bleibt praktisch immer leer).
+   Aus demselben Grund ist bei binaeren Aufgaben der "Keiner hat recht"-Anteil
+   von `check_disagreement_accuracy()` strukturell immer 0% (nur bei >=3
+   Klassen aussagekraeftig).
 3. `features/*.R` durch neue, domaenenspezifische `add_<familie>_features()`-
    Funktionen ersetzen (oder zunaechst leer lassen, falls noch kein Feature
    Engineering feststeht).
