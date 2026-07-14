@@ -60,6 +60,31 @@ feature_family_results_path <- file.path(artifact_dir, "feature_family_results.c
 feature_family_benchmark_path <- file.path(artifact_dir, "feature_family_benchmark.rds")
 selected_cv_results_path <- file.path(artifact_dir, "selected_cv_results.csv")
 selected_cv_benchmark_path <- file.path(artifact_dir, "selected_cv_benchmark.rds")
+surrogate_guided_feature_spec_path <- file.path(artifact_dir, "surrogate_guided_feature_spec.rds")
+surrogate_guided_feature_spec_csv_path <- file.path(artifact_dir, "surrogate_guided_feature_spec.csv")
+task_train_small_surrogate_guided_path <- file.path(artifact_dir, "task_train_small_surrogate_guided.rds")
+surrogate_guided_results_path <- file.path(artifact_dir, "surrogate_guided_results.csv")
+surrogate_guided_benchmark_path <- file.path(artifact_dir, "surrogate_guided_benchmark.rds")
+
+# Surrogate-guided Feature-Kandidaten fuer lineare Surrogat-Modelle:
+# Ein kleines rpart-Ensemble entdeckt stabile Interaktionspaare auf einem
+# Discovery-Split; schnelle lineare Modelle pruefen diese expliziten Features
+# separat, um Leakage zu begrenzen.
+surrogate_guided_discovery_ratio <- 0.60
+surrogate_guided_scout <- "rpart_ensemble"
+surrogate_guided_rpart_runs <- 5
+surrogate_guided_rpart_subsample_ratio <- 0.80
+surrogate_guided_rpart_maxdepth <- 6
+surrogate_guided_rpart_cp <- 0.001
+surrogate_guided_rpart_minsplit <- 50
+surrogate_guided_max_pairs <- 12
+surrogate_guided_min_pair_count <- 3
+surrogate_guided_operations <- c("product", "ratio_ab", "ratio_ba", "absdiff")
+surrogate_guided_eval_max_rows <- 12000
+surrogate_guided_cv_folds <- 3
+surrogate_guided_liblinear_type <- 0
+surrogate_guided_liblinear_cost <- 1
+surrogate_guided_liblinear_bias <- 1
 
 pipeline_results_path <- file.path(artifact_dir, "pipeline_results.csv")
 pipeline_benchmark_path <- file.path(artifact_dir, "pipeline_benchmark.rds")
@@ -148,8 +173,59 @@ resolve_task_path <- function(feature_set) {
   if (feature_set == "raw") return(task_train_small_path)
   if (feature_set == "features") return(task_train_small_features_path)
   if (feature_set == "selected") return(task_train_small_features_selected_path)
+  if (feature_set == "surrogate_guided") return(task_train_small_surrogate_guided_path)
   if (feature_set %in% feature_families) return(task_train_small_feature_family_path(feature_set))
   stop("Unbekanntes Feature-Set: ", feature_set)
+}
+
+# Wendet dieselbe Feature-Set-Logik auf beliebige Daten an (Train-Subset,
+# Full-Train oder test.csv). Die add_*_features-Funktionen muessen vorher aus
+# features/*.R geladen sein; fuer feature_set = "raw" bleibt der Datensatz
+# unveraendert.
+apply_feature_set <- function(data, feature_set) {
+  if (feature_set == "raw") {
+    return(data)
+  }
+
+  if (feature_set == "surrogate_guided") {
+    if (!exists("add_surrogate_guided_features")) {
+      stop("Feature-Set 'surrogate_guided' benoetigt source('features/surrogate_guided.R').")
+    }
+    if (!file.exists(surrogate_guided_feature_spec_path)) {
+      stop(
+        "Feature-Set 'surrogate_guided' benoetigt ", surrogate_guided_feature_spec_path,
+        " - erst 038_surrogate_guided_features.R ausfuehren."
+      )
+    }
+    spec <- readRDS(surrogate_guided_feature_spec_path)
+    return(add_surrogate_guided_features(data, spec, operations = surrogate_guided_operations))
+  }
+
+  families <- switch(feature_set,
+    features = feature_families,
+    selected = selected_families,
+    feature_set
+  )
+
+  unknown_families <- setdiff(families, feature_families)
+  if (length(unknown_families) > 0) {
+    stop("Unbekanntes Feature-Set: ", feature_set)
+  }
+
+  feature_family_functions <- list(
+    bmi = add_bmi_features,
+    sleep = add_sleep_features,
+    activity = add_activity_features,
+    hydration = add_hydration_features,
+    cardio = add_cardio_features,
+    interactions = add_interaction_features
+  )
+
+  Reduce(
+    function(current_data, family) feature_family_functions[[family]](current_data),
+    families,
+    data
+  )
 }
 
 final_model_path <- function(model_name) {
@@ -264,8 +340,11 @@ error_analysis_tabpfn_context_size <- 999
 feature_set_from_task_id <- function(task_id) {
   task_id <- sub("_weighted.*$", "", task_id)
   if (task_id == task_id_prefix) return("raw")
+  if (task_id == paste0(task_id_prefix, "_raw_eval")) return("raw")
   if (task_id == paste0(task_id_prefix, "_features")) return("features")
   if (task_id == paste0(task_id_prefix, "_selected")) return("selected")
+  if (task_id == paste0(task_id_prefix, "_surrogate_guided")) return("surrogate_guided")
+  if (task_id == paste0(task_id_prefix, "_surrogate_guided_eval")) return("surrogate_guided")
   if (task_id == sub("_10pct$", "_tabpfn_subset", task_id_prefix)) return("raw")
   suffix <- sub(paste0("^", task_id_prefix, "_"), "", task_id)
   suffix

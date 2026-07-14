@@ -25,6 +25,7 @@ source(file.path(project_dir, "features", "activity.R"))
 source(file.path(project_dir, "features", "hydration.R"))
 source(file.path(project_dir, "features", "cardio.R"))
 source(file.path(project_dir, "features", "interactions.R"))
+source(file.path(project_dir, "features", "surrogate_guided.R"))
 
 tar_option_set(
   packages = c(
@@ -117,6 +118,10 @@ list(
         raw = task_raw,
         features = task_combined,
         selected = task_selected,
+        surrogate_guided = finalize_task(
+          apply_feature_set(task_raw$data(), "surrogate_guided"),
+          id = paste0(task_id_prefix, "_surrogate_guided")
+        ),
         stop("Feature-Familien-Tasks sind in der Pipeline nicht direkt indexierbar - ", feature_set, " wird von keinem Modell in model_feature_sets verwendet.")
       )
 
@@ -139,6 +144,13 @@ list(
   tar_target(train_full, {
     train <- fread(train_full_file)
     train[, (id_col) := NULL]
+    train
+  }),
+
+  tar_target(train_full_model_data, {
+    feature_set <- model_feature_sets[[submission_model_name]]
+    train <- apply_feature_set(train_full, feature_set)
+    setDT(train)
     feature_char_cols <- setdiff(names(train)[vapply(train, is.character, logical(1))], target_col)
     train[, (feature_char_cols) := lapply(.SD, as.factor), .SDcols = feature_char_cols]
     train[, (target_col) := as.factor(get(target_col))]
@@ -146,16 +158,12 @@ list(
   }),
 
   tar_target(full_feature_levels, {
-    feature_char_cols <- setdiff(names(train_full)[vapply(train_full, is.factor, logical(1))], target_col)
-    lapply(train_full[, ..feature_char_cols], levels)
+    feature_char_cols <- setdiff(names(train_full_model_data)[vapply(train_full_model_data, is.factor, logical(1))], target_col)
+    lapply(train_full_model_data[, ..feature_char_cols], levels)
   }),
 
   tar_target(task_full, {
-    feature_set <- model_feature_sets[[submission_model_name]]
-    if (feature_set != "raw") {
-      stop("Die volle Trainings-Pipeline unterstuetzt aktuell nur feature_set = 'raw' fuer das Submission-Modell.")
-    }
-    as_task_classif(train_full, target = target_col, id = paste0(task_id_prefix, "_full_", submission_model_name))
+    as_task_classif(train_full_model_data, target = target_col, id = paste0(task_id_prefix, "_full_", submission_model_name))
   }),
 
   tar_target(task_full_weighted, {
@@ -180,14 +188,17 @@ list(
       test <- fread(test_file)
       test_ids <- test[[id_col]]
       test[, (id_col) := NULL]
+      feature_set <- model_feature_sets[[submission_model_name]]
+      test <- apply_feature_set(test, feature_set)
+      setDT(test)
       for (col in names(full_feature_levels)) {
         test[[col]] <- factor(test[[col]], levels = full_feature_levels[[col]])
       }
 
       predictions <- final_model_full$predict_newdata(test)
-      result <- data.table(id = test_ids, health_condition = predictions$response)
+      result <- data.table(id = test_ids, response = predictions$response)
       setnames(result, "id", id_col)
-      setnames(result, "health_condition", target_col)
+      setnames(result, "response", target_col)
       fwrite(result, submission_path)
       submission_path
     },

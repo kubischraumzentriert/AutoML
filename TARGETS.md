@@ -87,8 +87,9 @@ nächsten Lauf automatisch einen siebten Branch, ohne dass `_targets.R`
 angefasst werden muss.
 
 **Bewusst nicht in dieser Pipeline enthalten**: die explorativen Skripte
-`030`-`145` (Baselines, Boosting-Vergleich, Klassengewicht-Kurven, Ranger-
-Tuning, Ensemble-Test, Adversarial Validation, ...). Die dienten der
+`030`-`145` (Baselines, Feature-/Surrogate-guided-Vergleiche, Boosting-
+Vergleich, Klassengewicht-Kurven, Ranger-Tuning, Ensemble-Test,
+Adversarial Validation, ...). Die dienten der
 *einmaligen* Modellauswahl fuer *diesen* Wettbewerb, nicht einem
 wiederholbaren Produktions-Workflow. Fuer einen neuen Wettbewerb muesste man
 dieselben *Fragen* erneut stellen (siehe Checkliste unten), aber das ist
@@ -158,14 +159,22 @@ Angenommen, du willst `class_weight_power` von 1.5 auf 1.75 testen:
    Klassengewichtung (wie in diesem Projekt fuer Ranger dokumentiert) muss ein
    Mensch weiterhin selbst pruefen, bevor er sich auf den Vorschlag verlaesst.
 
-## Bekannte Einschraenkung
+## Feature-Sets im finalen Workflow
 
-`task_full`/`final_model_full` unterstuetzen aktuell nur
-`model_feature_sets[[submission_model_name]] == "raw"` (siehe `stop()` in
-`_targets.R`). Soll das finale Modell stattdessen ein `"features"`- oder
-`"selected"`-Feature-Set auf dem **vollen** Datensatz nutzen, muss diese
-Stelle erweitert werden (entsprechendes Feature Engineering muesste dann auch
-fuer den vollen Datensatz existieren, nicht nur fuer das 10%-Subset).
+`task_full`/`final_model_full`/`submission` nutzen dieselbe Feature-Set-Logik
+wie die explorativen Skripte: `apply_feature_set()` wendet `"raw"`,
+`"features"`, `"selected"`, `"surrogate_guided"` oder einzelne Eintraege aus `feature_families`
+identisch auf den vollen Trainingsdatensatz und auf `test.csv` an. Das heisst
+nicht, dass Feature Engineering automatisch besser ist: In diesem Projekt
+bleibt Ranger bewusst auf `"raw"`, weil Cross-Validation und Kaggle-Feedback
+genau diese Entscheidung bestaetigt haben.
+
+`"surrogate_guided"` ist ein Sonderfall: Die Feature-Spezifikation entsteht
+vorher explorativ durch `038_surrogate_guided_features.R` aus Pfaden eines
+kleinen `rpart`-Ensembles. `targets` wendet diese Spezifikation nur reproduzierbar an,
+falls sie bewusst als Feature-Set fuer ein finales Modell gewaehlt wurde; die
+Discovery selbst bleibt ausserhalb des finalen Graphen, um Modellauswahl und
+Produktion sauber zu trennen.
 
 ## Backlog (bei einer Uebertragung gefunden, noch nicht umgesetzt)
 

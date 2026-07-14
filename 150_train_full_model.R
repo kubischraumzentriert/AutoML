@@ -2,6 +2,7 @@ rm(list = ls())
 
 suppressPackageStartupMessages({
   library(data.table)
+  library(tidyverse)
   library(mlr3)
   library(mlr3learners)
   library(mlr3extralearners)
@@ -9,18 +10,24 @@ suppressPackageStartupMessages({
 })
 
 source("000_config.R")
+source(file.path(project_dir, "features", "utils.R"))
+source(file.path(project_dir, "features", "bmi.R"))
+source(file.path(project_dir, "features", "sleep.R"))
+source(file.path(project_dir, "features", "activity.R"))
+source(file.path(project_dir, "features", "hydration.R"))
+source(file.path(project_dir, "features", "cardio.R"))
+source(file.path(project_dir, "features", "interactions.R"))
+source(file.path(project_dir, "features", "surrogate_guided.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
 
 model_name <- resolve_submission_model_name()
 feature_set <- model_feature_sets[[model_name]]
-if (feature_set != "raw") {
-  stop("150_train_full_model.R unterstuetzt aktuell nur feature_set = 'raw' fuer das Submission-Modell.")
-}
 
 train <- fread(train_path)
 train[, (id_col) := NULL]
+train <- apply_feature_set(train, feature_set)
 
 feature_char_cols <- setdiff(names(train)[vapply(train, is.character, logical(1))], target_col)
 train[, (feature_char_cols) := lapply(.SD, as.factor), .SDcols = feature_char_cols]
@@ -41,6 +48,7 @@ if (!is.null(weight_power) && weight_power != 0) {
 
 cat("=== Finales Training auf vollem Trainingsdatensatz ===\n")
 cat("Modell:", model_name, "\n")
+cat("Feature-Set:", feature_set, "\n")
 cat("Zeilen:", task_full$nrow, " Features:", length(task_full$feature_names), "\n")
 if (!is.null(weight_power) && weight_power != 0) {
   cat("class_weight_power:", weight_power, "\n")
@@ -54,7 +62,7 @@ learner_full <- make_baseline_learner(base_learner_constructors[[model_name]]())
 learner_full$train(task_full)
 
 saveRDS(
-  list(learner = learner_full, feature_levels = feature_levels),
+  list(learner = learner_full, feature_levels = feature_levels, feature_set = feature_set),
   final_model_full_path(model_name)
 )
 

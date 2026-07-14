@@ -26,6 +26,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `035_feature_baseline.R` | Dieselben Baseline-Modelle auf engineered Features |
 | `036_feature_family_benchmark.R` | Vergleicht Roh-Task, jede Feature-Familie einzeln und den kombinierten Feature-Task (Holdout) |
 | `037_selected_features_cv.R` | Bestaetigt die Familien-Auswahl per 5-facher Cross-Validation: LDA auf Rohfeatures, Multinom/Ranger auf Roh- vs. ausgewaehltem Feature-Set |
+| `038_surrogate_guided_features.R` | Nutzt ein 5er-`rpart`-Ensemble als schnellen Interaktions-Scout, erzeugt daraus generische Produkt-/Ratio-/Differenzfeatures und prueft sie fuer Multinom/Liblinear auf einem getrennten Evaluation-Split |
 | `040_preprocessing.R` | Wiederverwendbare `mlr3pipelines`-Bausteine |
 | `050_pipeline_benchmark.R` | Benchmark der allgemeinen Preprocessing-Pipeline |
 | `060_regularized_linear.R` | Regularisierte lineare Modelle mit `cv.glmnet` |
@@ -196,6 +197,36 @@ Um die Holdout-Ergebnisse gegenzupruefen, vergleicht `037_selected_features_cv.R
 | Aktivitaet+Cardio+Schlaf | Ranger | 0.8569 | 0.8596 | 279.3 s |
 
 Erkenntnis: Unter CV bestaetigt sich der Multinom-Vorteil aus dem Holdout-Vergleich (BAcc +1.9, MCC +1.7 Prozentpunkte gegenueber Rohfeatures) — Schlaf und Aktivitaet liefern hier ein echtes, robustes Signal. Fuer Ranger dreht sich das Bild dagegen um: Die Kombination liegt unter CV leicht **unter** der Roh-Baseline (BAcc -0.4 Punkte, MCC praktisch gleich). Der im Holdout beobachtete Ranger-Vorteil einzelner Familien war also groesstenteils Rauschen eines einzelnen guenstigen Splits, kein robuster Effekt. Empfehlung: LDA und Ranger auf Rohfeatures belassen, nur Multinom auf dem Aktivitaet+Cardio+Schlaf-Set trainieren.
+
+## Surrogate-guided Feature Engineering
+
+Neben den fachlich motivierten `domain_features` gibt es jetzt einen separaten experimentellen Pfad fuer `surrogate_guided_features` (`038_surrogate_guided_features.R`):
+
+- Ein kleines `rpart`-Ensemble (`surrogate_guided_rpart_runs = 5`) wird auf einem Discovery-Split des 10%-Tasks trainiert und dient nur als Interaktions-Scout, nicht als finale Modellentscheidung.
+- Aus den `rpart`-Baeumen werden Feature-Paare gezaehlt, die wiederholt auf demselben Entscheidungsweg gemeinsam auftreten (`rpart_path_cooccurrence`).
+- Fuer numerisch-numerische Paare entstehen generische Kandidatenfeatures: Produkt, beide Ratios und Absolutdifferenz.
+- Multinom und `classif.liblinear` pruefen diese Features danach auf einem getrennten Evaluation-Split per CV gegen Rohfeatures. Dadurch wird vermieden, dass dieselben Zeilen sowohl fuer Discovery als auch fuer eine zu optimistische Bewertung verwendet werden.
+
+Wichtig: Das ist bewusst kein Ersatz fuer medizinisch/physikalisch motivierte Features. `domain_features` und `surrogate_guided_features` bleiben getrennt, weil sie unterschiedliche Evidenz liefern: Domain-Features sind plausibilitaetsgetrieben, surrogate-guided Features sind modellgetrieben und muessen strenger gegen Overfitting/Leakage validiert werden.
+
+Aktueller schneller Lauf (`038`, rpart-Ensemble mit 5 Laeufen, Discovery 60%, Evaluation max. 12000 Zeilen, 3-fache CV) fand 3 stabile numerisch-numerische Interaktionspaare:
+
+| Rang | Feature A | Feature B | Pair Count |
+|---:|---|---|---:|
+| 1 | bmi | sleep_duration | 6 |
+| 2 | exercise_duration | sleep_duration | 3 |
+| 3 | sleep_duration | step_count | 4 |
+
+Surrogat-Benchmark auf dem getrennten Evaluation-Split:
+
+| Task | Modell | BAcc | MCC | Laufzeit |
+|---|---|---:|---:|---:|
+| Raw Eval | Multinom | 0.8377 | 0.7909 | 9.00 s |
+| Raw Eval | Liblinear | 0.6789 | 0.6830 | 9.42 s |
+| Surrogate-guided Eval | Multinom | 0.8632 | 0.8177 | 16.83 s |
+| Surrogate-guided Eval | Liblinear | 0.7153 | 0.7265 | 13.74 s |
+
+Erkenntnis: Der rpart-Ensemble-Scout ist sehr schnell (die 5 Baeume lagen zusammen unter einer Sekunde Scout-Zeit) und erzeugt nur wenige, gut lesbare Kandidaten. Anders als der vorherige LightGBM/glmnet-Screen verbessert diese Variante Multinom deutlich (BAcc +2.55 Punkte, MCC +2.68 Punkte gegenueber Raw Eval). Liblinear bleibt insgesamt schwach, profitiert aber ebenfalls. Das macht `surrogate_guided` zu einem ernsthaften Kandidaten fuer lineare Surrogatmodelle; vor einer finalen Uebernahme braucht es aber noch eine robustere CV gegen das bisherige `selected`-Feature-Set und gegen den vollen Multinom-Workflow.
 
 ## Regularisierte lineare Modelle
 
@@ -518,13 +549,13 @@ Diese Zuordnung ist in `model_feature_sets` und `model_class_weight_power` (`000
 4. `model_class_weight_power` neu befuellen (welcher Learner bekommt Klassengewichte, welche `power`-Staerke) - je nachdem, welche Metrik fuer die neue Aufgabe zaehlt.
 5. `base_learner_constructors` um neue Modellnamen ergaenzen, falls noetig, und `submission_model_name` auf das gewuenschte finale Modell setzen.
 
-`005_benchmark_runtime.R`, `040_preprocessing.R`, `025_feature_engineering.R`, `070_final_models.R` und `150_train_full_model.R` bleiben dabei unveraendert, da sie ausschliesslich ueber diese Konfigurationswerte arbeiten.
+`005_benchmark_runtime.R`, `040_preprocessing.R`, `025_feature_engineering.R`, `070_final_models.R`, `150_train_full_model.R` und `155_predict_submission.R` bleiben dabei unveraendert, da sie ausschliesslich ueber diese Konfigurationswerte arbeiten. Wichtig: Feature Engineering ist weiterhin aufgabenspezifisch und kein Default. `apply_feature_set()` sorgt nur dafuer, dass ein bewusst gewaehltes Feature-Set identisch auf Full-Train und `test.csv` angewendet wird; fuer dieses Projekt bleibt Ranger aufgrund der CV-/Kaggle-Ergebnisse explizit auf Rohfeatures. `038_surrogate_guided_features.R` ist davon getrennt: es kann generisch neue Kandidatenfeatures vorschlagen, ersetzt aber nicht die fachliche Auswahl und nicht die CV-Bestaetigung.
 
 **Empfehlung fuer zukuenftige Projekte**: Wo immer moeglich `predict_type = "prob"` setzen, auch wenn zunaechst nur die Klassenvorhersage gebraucht wird. Grund: `final_model_ranger.rds` (`070_final_models.R`) wurde ohne `predict_type = "prob"` trainiert und lieferte deshalb nur harte Klassenlabels - fuer die Fehleranalyse (`147_error_analysis_ranger.R`, siehe unten) musste Ranger deswegen auf einem eigenen Split neu trainiert werden, nur um an Wahrscheinlichkeiten zu kommen. Wahrscheinlichkeiten kosten beim Training praktisch nichts extra, ermoeglichen aber im Nachhinein Schwellenwert-Tuning (`130`/`146`), Ensembles (`145`) und SHAP-/Fehleranalysen (`147`), ohne neu trainieren zu muessen.
 
 ## Finales Training & Submission
 
-`150_train_full_model.R` trainiert `submission_model_name` (aktuell `ranger`: Rohfeatures, Standardparameter, `class_weight_power = 1.5`) auf dem **vollen** Trainingsdatensatz (`train.csv`, 690088 Zeilen statt des 10%-Subsets) und speichert Modell + Faktorstufen der Merkmale gemeinsam (`_artifacts/final_model_<modell>_full.rds`) - Letzteres, damit `155_predict_submission.R` `test.csv` exakt auf dieselben Kategorie-Stufen abbildet, unabhaengig davon, ob im Test-Set zufaellig alle Stufen vorkommen. `155` erzeugt daraus `submission.csv` im Format von `sample_submission.csv` (Spalten `id`, `health_condition`).
+`150_train_full_model.R` trainiert `submission_model_name` (aktuell `ranger`: Rohfeatures, Standardparameter, `class_weight_power = 1.5`) auf dem **vollen** Trainingsdatensatz (`train.csv`, 690088 Zeilen statt des 10%-Subsets) und speichert Modell + Feature-Set + Faktorstufen der Merkmale gemeinsam (`_artifacts/final_model_<modell>_full.rds`) - Letzteres, damit `155_predict_submission.R` `test.csv` exakt mit demselben Feature-Set und denselben Kategorie-Stufen verarbeitet, unabhaengig davon, ob im Test-Set zufaellig alle Stufen vorkommen. `155` erzeugt daraus `submission.csv` im Format von `sample_submission.csv` (Spalten `id`, `health_condition`).
 
 Vorhergesagte Klassenverteilung auf `test.csv` (295753 Zeilen, Ranger): `at-risk` 81.8%, `unhealthy` 10.9%, `fit` 7.25% (Rohverteilung im Training war ca. 86/8/6%) - naeher an der Rohverteilung als LightGBMs Vorhersage, passend zu Rangers besserer Precision/MCC in der CV.
 
