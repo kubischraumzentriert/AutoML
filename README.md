@@ -96,6 +96,8 @@ SELECT * FROM v_best_per_algorithm ORDER BY bacc DESC;
 
 Die Datenbank ist rein additiv und projektunabhaengig aufgebaut (kein Bezug zu `health_condition` oder den drei Klassen im Schema) - fuer einen neuen Kaggle-Wettbewerb reicht ein neuer `project_name` in `000_config.R`, Schema und `db_logging.R` bleiben unveraendert. `_targets.R` schreibt aktuell **nicht** in die Datenbank (Details siehe `EXPERIMENTS_DB.md`, Abschnitt "Bekannte Einschraenkung").
 
+In der Praxis bekommt jedes uebertragene Projekt zunaechst seine eigene lokale `experiments.db`. Nach Projektabschluss konsolidiert `merge_project_experiments.R` die aggregierten Tabellen (nicht die Zeilenebene, siehe `EXPERIMENTS_DB.md`) in diese zentrale Template-DB - Stand jetzt enthaelt sie `health_condition`, `s6e5` (Pit-Stop), `s6e6` (Stellar Class) und `s5e12` (Diabetes), abfragbar ueber `proj_name`.
+
 ## Bewertungsmetriken
 
 Wir verwenden aktuell:

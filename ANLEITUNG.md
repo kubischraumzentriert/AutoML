@@ -179,6 +179,17 @@ plausiblen Obergrenze liegt (z.B. deutlich unter 1.0 AUC/BAcc, mit Rest-
 Spielraum) UND konkrete inhaltliche Ideen fuer neue Merkmale vorhanden sind
 (reines Ausprobieren ohne Hypothese bringt selten etwas).
 
+0. **Vor dem Schreiben pruefen**: sind die geplanten Features reine
+   Linearkombinationen/Verhaeltnisse aus bereits vorhandenen numerischen
+   Rohspalten (z.B. `a - b`, `a / b`, gewichtete Summen)? Baum-/Boosting-
+   Modelle koennen solche Beziehungen ueber Splits meist selbst approximieren
+   (kein Informationsgewinn), fuer lineare Modelle (LDA/Multinom) drohen sogar
+   Kollinearitaetsprobleme. Bei `playground-series-s5e12` verschlechterten
+   genau solche Features (Cholesterin-/Blutdruck-Verhaeltnisse) die Zielmetrik
+   konsistent ueber vier Modelle, mit expliziten `lda.default`-
+   Kollinearitaetswarnungen. Aussichtsreicher sind Features, die echte NEUE
+   Information codieren, die in den Rohspalten nicht linear enthalten ist
+   (Cross-Row-Aggregationen, domaenenspezifische nichtlineare Kategorien).
 1. Neue Datei(en) `features/<familie>.R` mit `add_<familie>_features(data)`
    schreiben (Signatur: Data-Frame rein, Data-Frame mit zusaetzlichen Spalten
    raus, `%>%`/`mutate()`-Stil wie die bestehenden Beispiele).
@@ -191,6 +202,10 @@ Spielraum) UND konkrete inhaltliche Ideen fuer neue Merkmale vorhanden sind
    die den Holdout-Wert der Zielmetrik spuerbar verbessern (nicht nur im
    Rauschen). `037_selected_features_cv.R` bestaetigt die Auswahl per 5-facher
    CV, bevor sie in `model_feature_sets` (`000_config.R`) uebernommen wird.
+   Verbessert **keine** Familie den Holdout-Wert (moeglich, siehe Schritt 0) -
+   `037` ueberspringen (nichts zu bestaetigen), `selected_families` leer
+   lassen und bei Rohfeatures bleiben. Ein negatives Ergebnis ist ein
+   valides Ergebnis, keine gescheiterte Analyse.
 
 `038_surrogate_guided_features.R` ist ein Sonderfall fuer automatisch
 entdeckte Interaktionsfeatures (rpart-Ensemble als Scout) - nur relevant, wenn

@@ -396,6 +396,53 @@ Wettbewerb (analog zur Checkliste in `TARGETS.md`):
    koennen dabei wiederverwendet werden, wenn die Task-Namenskonvention aus
    `020_task.R`/`025_feature_engineering.R` gleich bleibt.
 
+**In der Praxis** (Stand `playground-series-s6e5`/`s6e6`/`s5e12`) zeigt sich
+ein leicht abweichendes Muster: jedes Projekt bekommt beim Uebertragen sein
+**eigenes** `_artifacts/experiments.db` (eigener `experiments_db_path` in der
+kopierten `000_config.R`), statt von Anfang an direkt in die zentrale
+Template-DB zu schreiben - einfacher, weil der Projektordner dadurch
+selbstaendig bleibt (kein absoluter Pfad zurueck zum Template-Repo,
+keine parallele Schreibkonkurrenz auf eine gemeinsame Datei waehrend der
+aktiven Arbeit an mehreren Projekten). Siehe naechster Abschnitt, wie sich
+mehrere solcher Projekt-DBs nachtraeglich fuer projektuebergreifende
+Analysen konsolidieren lassen.
+
+## Mehrere Projekt-DBs konsolidieren (`merge_project_experiments.R`)
+
+Nach Abschluss eines Projekts lassen sich dessen aggregierte Ergebnisse in
+die zentrale Template-`experiments.db` ueberfuehren, um spaeter
+projektuebergreifende Muster per SQL zu finden (z.B. "in wie vielen Projekten
+hat Tuning den Default tatsaechlich geschlagen", "AUC- vs. BAcc-Projekte im
+Vergleich") - bisher nur in README-/`TEMPLATE_FRICTION.md`-Prosa dokumentiert,
+jetzt zusaetzlich abfragbar.
+
+```r
+Rscript merge_project_experiments.R
+```
+
+- Sichert die Ziel-DB zuerst per Dateikopie (`experiments_backup_<Zeitstempel>.db`).
+- Kopiert `project`/`workflow`/`run`/`run_config`/`model_config`/`resampling`/
+  `hyperparam`/`metric_result` aus jeder in `source_db_paths` gelisteten
+  Projekt-DB. Alle diese Tabellen haengen ausschliesslich an UUID-Text-
+  Schluesseln (`<praefix>_id`) - kollisionsfrei kopierbar, die lokale
+  `<praefix>_seq`-Spalte (SQLite-rowid-Alias, dient nur als lokaler
+  Primary Key) wird dabei bewusst ausgeschlossen und in der Ziel-DB neu
+  vergeben.
+- **Bewusst NICHT gemergt**: `prediction`/`prediction_prob` (Zeilenebene).
+  Diese beziehen sich auf projektspezifische `row_id`/`truth`/`response`-Werte
+  (nicht projektuebergreifend vergleichbar) und nutzen zusaetzlich lokale
+  INTEGER-Keys statt UUIDs (`pred_seq`/`pprob_pred_seq`, siehe
+  `db_schema.sql`-Kommentar) - ein Merge muesste diese umschreiben, ohne
+  echten Mehrwert fuer projektuebergreifende Analysen. Die vollstaendigen
+  Vorhersagedaten bleiben in der jeweiligen Projekt-`experiments.db` fuer
+  lokale Fehleranalyse (`147`) erhalten.
+- Idempotent: ein Projekt (per `proj_name`) wird nur gemergt, wenn es in der
+  Ziel-DB noch nicht existiert - mehrfaches Ausfuehren ist gefahrlos, auch
+  nach neuen Projekten einfach `source_db_paths` ergaenzen und erneut
+  ausfuehren.
+- Fuer ein neues Projekt `source_db_paths` im Skript um den Pfad zu dessen
+  `_artifacts/experiments.db` ergaenzen.
+
 ## Bekannte Einschraenkung
 
 `_targets.R` schreibt aktuell **nicht** in `experiments.db` (das Schema
