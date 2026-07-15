@@ -19,6 +19,8 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 |---|---|
 | `000_config.R` | Zentrale Pfade, Zielspalte, Seed, Subset-Quote, Metriken, Modellbudgets |
 | `005_benchmark_runtime.R` | Hilfsfunktion fuer Modellbenchmarking mit Laufzeitmessung |
+| `006_tuning_diagnostics.R` | `diagnose_mbo_search()` - prueft nach `tnr("mbo")`-Laeufen auf echte sequenzielle Verfeinerung vs. reines Initialdesign, Plateau-Indikator |
+| `008_curve_diagnostics.R` | Helferfunktionen fuer ROC-/PR-Kurven aus in `experiments.db` geloggten Vorhersagen (Schwellenwert-Sweep, AUC per Trapezregel) |
 | `010_eda.R` | Datenueberblick auf 10%-Subset mit `skimr` |
 | `020_task.R` | Erzeugt den Rohfeature-`TaskClassif` |
 | `025_feature_engineering.R` | Erzeugt je Feature-Familie (`features/*.R`) einen eigenen Task, den kombinierten Feature-Task (alle Familien) und den ausgewaehlten Feature-Task (Aktivitaet+Cardio+Schlaf) |
@@ -46,9 +48,15 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `142_ranger_tuning_weighted.R` | Wiederholt `090` auf dem `power=1.5`-gewichteten Task (Random Search), Finalvergleich per CV |
 | `145_ensemble_ranger_lightgbm.R` | Gleichgewichtetes Wahrscheinlichkeits-Ensemble (`gunion()` + `po("classifavg")`) aus Ranger und LightGBM |
 | `146_threshold_tuning_ranger.R` | Wiederholt `130` fuer Ranger statt LightGBM (Probability-Forest-Wahrscheinlichkeiten statt Log-Loss-optimierter Wahrscheinlichkeiten) |
-| `147_error_analysis_ranger.R` | Analysiert Rangers falsch klassifizierte Zeilen: Konfidenz, LightGBM/LDA/TabPFN-Vergleich auf denselben Zeilen, Isolation-Forest-Ausreissercheck, KernelSHAP-Fehleranalyse |
-| `150_train_full_model.R` | Trainiert `submission_model_name` (aktuell Ranger, Rohfeatures, `power=1.5`) auf dem vollen Trainingsdatensatz (`train.csv`, alle Zeilen) |
-| `155_predict_submission.R` | Wendet das volle Modell auf `test.csv` an und schreibt `submission.csv` im Format von `sample_submission.csv` |
+| `147_error_analysis_ranger_models.R` | Trainiert Ranger/LightGBM/LDA auf dem Holdout-Split EINMAL, speichert Modelle+Vorhersagen als Artefakt (`error_analysis_models_path`), loggt vollstaendig (alle Eval-Zeilen) nach `experiments.db` - Basis fuer `160`/`161` und die folgenden Skripte |
+| `147_error_analysis_ranger_confidence.R` | Laedt das Modelle-Artefakt (kein erneutes Training): Konfidenz-/Rescue-Rate-Analyse, "alle Modelle einig falsch"-Faelle, speichert Zeilen-Indizes als Artefakt (`error_analysis_indices_path`) |
+| `147_error_analysis_ranger_isolation_forest.R` | Laedt Modelle+Indizes-Artefakte: Isolation-Forest-Ausreissercheck auf den "einig falsch"-Faellen |
+| `147_error_analysis_ranger_kernelshap.R` | Laedt Modelle+Indizes-Artefakte: KernelSHAP-Fehleranalyse (welche Features treiben Ranger in die falsche Klasse?) |
+| `147_error_analysis_ranger_tabpfn.R` | Laedt Modelle+Indizes-Artefakte: TabPFN-Vergleich auf den "interessanten" Zeilen (CPU-Kontextlimit) |
+| `150_train_full_model.R` | Trainiert `submission_model_name` (aktuell Ranger, Rohfeatures, `power=1.5`) auf dem vollen Trainingsdatensatz. Jede Modell-Datei ist an eine `run_id` gebunden (kein fixer Dateiname, siehe `final_model_full_path()`) und wird als `model_artifact_path`-Hyperparameter in `experiments.db` geloggt |
+| `155_predict_submission.R` | Findet den Pfad des zuletzt trainierten Modells ueber `db_get_latest_model_artifact_path()`, wendet es auf `test.csv` an und schreibt `submission.csv` im Format von `sample_submission.csv` |
+| `160_plot_roc_curve.R` | ROC-Kurve(n) je Algorithmus aus den in `experiments.db` geloggten Vorhersagen, als PNG gespeichert, AUC-Cross-Check gegen `metric_result` |
+| `161_plot_pr_curve.R` | Precision-Recall-Kurve(n) je Algorithmus, analog zu `160` |
 
 ## `targets`-Pipeline (`_targets.R`)
 

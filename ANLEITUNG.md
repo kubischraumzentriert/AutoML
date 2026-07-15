@@ -296,16 +296,39 @@ i.d.R. ueberspringen (siehe Phase 9).
 
 ## Phase 11: Fehleranalyse (`147`)
 
+Fuenf lose gekoppelte Skripte statt eines Monolithen - jedes laedt das
+Ergebnis des vorherigen als `.rds`-Artefakt, statt selbst neu zu trainieren.
+Das hat sich als wichtig erwiesen: eine kleine Aenderung am DB-Logging
+(letzter Schritt) erforderte vorher, KernelSHAP und TabPFN (die teuersten
+Teile, teils >1h) jedes Mal neu laufen zu lassen, nur um sie zu testen.
+
 ```r
-source("147_error_analysis_ranger.R")   # Primaermodell = Ranger (dieses Projekt)
+source("147_error_analysis_ranger_models.R")           # trainiert einmal, loggt vollstaendig
+source("147_error_analysis_ranger_confidence.R")        # Rescue-Rate, "einig falsch"-Faelle
+source("147_error_analysis_ranger_isolation_forest.R")  # Ausreissercheck
+source("147_error_analysis_ranger_kernelshap.R")        # welche Features treiben Fehler?
+source("147_error_analysis_ranger_tabpfn.R")            # komplett andere Methodik
 ```
 
-`147_error_analysis_ranger.R` ist auf das hier gewinnende Modell (Ranger)
+`_models.R` speichert Modelle+Vorhersagen unter `error_analysis_models_path`,
+`_confidence.R` baut darauf auf und speichert abgeleitete Zeilen-Indizes
+(misclassified/hard_case/...) unter `error_analysis_indices_path` - die
+letzten drei Skripte laden beide Artefakte und lassen sich dadurch **einzeln
+und in beliebiger Reihenfolge** neu ausfuehren, ohne die anderen anzufassen.
+
+Das Muster (`_ranger`) ist auf das hier gewinnende Modell (Ranger)
 zugeschnitten. Gewinnt in einem neuen Projekt ein anderes Modell (z.B.
-LightGBM, siehe Phase 4/7), das Skript entsprechend anpassen (Primaermodell
-austauschen, Vergleichsmodelle bleiben strukturell andere Modellfamilien) -
-Vorlage dafuer ist die schlankere Variante ohne KernelSHAP/TabPFN
-(sinnvoll, solange noch kein Feature Engineering betrieben wird).
+LightGBM, siehe Phase 4/7), die Skripte entsprechend umbenennen/anpassen
+(Primaermodell austauschen, Vergleichsmodelle bleiben strukturell andere
+Modellfamilien) - Vorlage dafuer ist die schlankere Variante mit nur drei
+Skripten (`_models`/`_confidence`/`_isolation_forest`, ohne KernelSHAP/
+TabPFN), sinnvoll, solange noch kein Feature Engineering betrieben wird.
+
+**KernelSHAP kann ueberraschend lange dauern** (mehr als eine Stunde, je nach
+Klassenzahl/Stichprobengroesse `error_analysis_shap_sample_size`/
+`_background_size` in `000_config.R`) - vor einem produktiven Lauf mit einer
+kleinen Stichprobe (z.B. 15/15) testen, dass das Skript selbst korrekt
+durchlaeuft, dann erst mit der vollen Groesse (im Hintergrund) starten.
 
 Analysiert falsch klassifizierte/unsichere Zeilen des besten Modells:
 Konfidenz-Verteilung, Vergleich mit anderen Modellfamilien (stimmen sie bei
@@ -364,6 +387,13 @@ verlassen (die ist bei binaeren Aufgaben oft die alphabetisch erste
 Faktorstufe, nicht zwingend die Klasse, die Kaggle als "1"/Ereignis erwartet).
 Kaggle schreibt das erwartete Spaltenformat in `sample_submission.csv` vor -
 gegenpruefen, bevor die Datei hochgeladen wird.
+
+**Jede von `150` gespeicherte Modell-Datei ist an eine `run_id` gebunden**
+(`final_model_full_path(model_name, run_id)`, kein fixer Dateiname mehr) - ein
+erneuter Lauf ueberschreibt die vorherige Datei nicht mehr kommentarlos. Der
+Pfad wird als `model_artifact_path`-Hyperparameter in `experiments.db`
+geloggt; `155` findet ihn ueber `db_get_latest_model_artifact_path()`
+(`db_logging.R`) automatisch wieder - keine manuelle Pfadverwaltung noetig.
 
 ## Entscheidungsregeln im Ueberblick
 

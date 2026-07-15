@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
 })
 
 source("000_config.R")
+source(file.path(project_dir, "db_logging.R"))
 source(file.path(project_dir, "features", "utils.R"))
 source(file.path(project_dir, "features", "bmi.R"))
 source(file.path(project_dir, "features", "sleep.R"))
@@ -61,9 +62,34 @@ make_baseline_learner <- function(base_learner) {
 learner_full <- make_baseline_learner(base_learner_constructors[[model_name]]())
 learner_full$train(task_full)
 
+# --- Experiment-Tracking (SQLite) -------------------------------------------
+# run_id macht die gespeicherte Modell-Datei eindeutig (siehe
+# final_model_full_path() in 000_config.R) - ein neuer Lauf ueberschreibt die
+# vorherige Datei nicht mehr kommentarlos. Der Pfad wird als Hyperparameter
+# geloggt und von 155_predict_submission.R ueber
+# db_get_latest_model_artifact_path() wiedergefunden.
+db_con <- db_connect()
+db_proj_id <- db_get_or_create_project(db_con, project_name)
+db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "150_train_full_model.R")
+db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = paste0("Finales Training auf vollem Trainingsdatensatz (", model_name, ")"))
+
+model_path <- final_model_full_path(model_name, db_run_id)
 saveRDS(
   list(learner = learner_full, feature_levels = feature_levels, feature_set = feature_set),
-  final_model_full_path(model_name)
+  model_path
 )
 
-cat("\nGespeichert:", final_model_full_path(model_name), "\n")
+mconf_full <- db_create_model_config(
+  db_con, db_run_id,
+  task_type = "classif", algorithm = model_name, feature_set = feature_set,
+  preprocessing = "impute_median_mode",
+  class_weight_power = if (!is.null(weight_power)) weight_power else NA_real_,
+  task_id = task_full$id,
+  hyperparams = list(model_artifact_path = model_path)
+)
+
+db_finish_run(db_con, db_run_id)
+DBI::dbDisconnect(db_con)
+
+cat("\nGespeichert:", model_path, "\n")
+cat("Experiment-DB:", experiments_db_path, "(run_id", db_run_id, ")\n")

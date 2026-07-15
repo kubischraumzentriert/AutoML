@@ -346,3 +346,30 @@ db_log_benchmark_metrics <- function(con, mconf_id, rsmp_id, results_row, scores
   }
   invisible(NULL)
 }
+
+# Findet den Pfad der zuletzt gespeicherten Modell-Datei fuer einen
+# Algorithmus (siehe 150_train_full_model.R, das den Pfad als
+# "model_artifact_path"-Hyperparameter loggt). Ersetzt einen fixen
+# Dateinamen: final_model_full_path() (000_config.R) haengt die run_id an,
+# damit ein neuer Trainingslauf die vorherige Modell-Datei nicht
+# kommentarlos ueberschreibt - diese Funktion ist das Gegenstueck, das aus
+# der DB den zur run_id passenden Pfad zurueckholt. workflow_name grenzt auf
+# das Skript ein, das den Pfad geloggt hat, damit ein gleichnamiger
+# Algorithmus aus einem anderen Skript nicht versehentlich getroffen wird.
+db_get_latest_model_artifact_path <- function(con, algorithm, workflow_name = "150_train_full_model.R") {
+  result <- dbGetQuery(con, "
+    SELECT h.hparam_value AS model_path
+    FROM hyperparam h
+    JOIN model_config mc ON mc.mconf_id = h.hparam_mconf_id
+    JOIN run r ON r.run_id = mc.mconf_run_id
+    JOIN workflow wf ON wf.wf_id = r.run_wf_id
+    WHERE mc.mconf_algorithm = ? AND wf.wf_name = ? AND h.hparam_name = 'model_artifact_path'
+    ORDER BY r.run_started_at DESC
+    LIMIT 1
+  ", params = list(algorithm, workflow_name))
+
+  if (nrow(result) == 0) {
+    return(NA_character_)
+  }
+  result$model_path[1]
+}

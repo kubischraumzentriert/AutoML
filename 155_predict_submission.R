@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
 })
 
 source("000_config.R")
+source(file.path(project_dir, "db_logging.R"))
 source(file.path(project_dir, "features", "utils.R"))
 source(file.path(project_dir, "features", "bmi.R"))
 source(file.path(project_dir, "features", "sleep.R"))
@@ -22,11 +23,22 @@ source(file.path(project_dir, "features", "surrogate_guided.R"))
 model_name <- resolve_submission_model_name()
 feature_set <- model_feature_sets[[model_name]]
 
-if (!file.exists(final_model_full_path(model_name))) {
+# Der Modell-Pfad ist an eine run_id gebunden (siehe 000_config.R/
+# 150_train_full_model.R) - kein fixer Dateiname mehr. Wird ueber die zuletzt
+# in experiments.db geloggte model_artifact_path fuer diesen Algorithmus
+# gefunden; existiert noch keiner, wird 150 einmal ausgefuehrt.
+db_con <- db_connect()
+model_path <- db_get_latest_model_artifact_path(db_con, model_name)
+DBI::dbDisconnect(db_con)
+
+if (is.na(model_path) || !file.exists(model_path)) {
   source(file.path(project_dir, "150_train_full_model.R"))
+  db_con <- db_connect()
+  model_path <- db_get_latest_model_artifact_path(db_con, model_name)
+  DBI::dbDisconnect(db_con)
 }
 
-model_bundle <- readRDS(final_model_full_path(model_name))
+model_bundle <- readRDS(model_path)
 learner <- model_bundle$learner
 feature_levels <- model_bundle$feature_levels
 if ("feature_set" %in% names(model_bundle)) {

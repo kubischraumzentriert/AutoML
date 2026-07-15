@@ -163,6 +163,18 @@ Key-Value-Paare zu einer `model_config` (z.B. `num_iterations = 200`,
 `mtry.ratio = 0.377`). Ein neues Modell mit komplett anderen Parametern
 braucht keine Schema-Aenderung, nur passende Eintraege beim Logging.
 
+**Zweckentfremdung fuer Datei-Pfade**: `150_train_full_model.R` loggt hier
+zusaetzlich einen `model_artifact_path`-Eintrag - den Pfad der gespeicherten
+`.rds`-Modell-Datei fuer genau diesen Lauf. Grund: `final_model_full_path()`
+(`000_config.R`) haengt die `run_id` an den Dateinamen (z.B.
+`final_model_ranger_full_<run_id>.rds`), damit ein neuer Trainingslauf die
+vorherige Modell-Datei nicht kommentarlos ueberschreibt - vorher gab es
+dafuer keine Versionierung, jeder Lauf ueberschrieb denselben fixen Namen.
+`db_get_latest_model_artifact_path(con, algorithm)` (`db_logging.R`) holt den
+zur neuesten `run_id` passenden Pfad zurueck (siehe `155_predict_submission.R`).
+Kein Schema-Bruch: `hyperparam` ist bewusst eine generische Key-Value-Tabelle,
+"beliebige" Werte sind ihr dokumentierter Zweck.
+
 ### `resampling`
 
 Eine Validierungsstrategie: `rsmp_strategy` (`'cv'`/`'holdout'`/
@@ -199,11 +211,19 @@ Schema-Aenderung.
 **Wichtig**: Diese Tabellen werden **nicht** routinemaessig fuer jede
 `model_config` befuellt - bei CV ueber alle Zeilen x alle Konfigurationen
 waere das schnell im zweistelligen Millionenbereich. Stattdessen entscheidet
-das aufrufende Skript, welche Zeilen "interessant" genug sind (`db_log_predictions()`
-filtert selbst nicht). `147_error_analysis_ranger.R` loggt z.B. nur Zeilen,
-die falsch klassifiziert wurden **oder** eine Konfidenz unter
-`error_analysis_uncertainty_threshold` (`000_config.R`) hatten - 757 von
-13802 Eval-Zeilen, nicht alle.
+das aufrufende Skript, welche Zeilen geloggt werden (`db_log_predictions()`
+filtert selbst nicht) - i.d.R. nur der eine Holdout-Split in `147_error_analysis_ranger.R`,
+nicht jede Benchmark-/Tuning-Config.
+
+Seit 2026-07-15 loggt `147_error_analysis_ranger.R` fuer Ranger/LightGBM/LDA
+**alle** Eval-Zeilen (nicht mehr nur die falsch klassifizierten/unsicheren) -
+das macht `prediction`/`prediction_prob` gross genug fuer eine echte ROC-/
+PR-Kurve (siehe `008_curve_diagnostics.R`/`160`/`161`), waere eine reine
+Teilmenge dafuer systematisch verzerrt (die einfachen, hochkonfidenten
+richtigen Vorhersagen fehlten). TabPFN bleibt bei der gefilterten Teilmenge
+(nur "interessante" Zeilen, falsch klassifiziert **oder** Konfidenz unter
+`error_analysis_uncertainty_threshold` aus `000_config.R`) - es wird ohnehin
+nur auf dieser Teilmenge ausgewertet (CPU-Kontextlimit, siehe `095_tabpfn_benchmark.R`).
 
 ## Views (ebenfalls in `db_schema.sql`)
 
@@ -377,6 +397,27 @@ con <- DBI::dbConnect(RSQLite::SQLite(), "_artifacts/experiments.db")
 DBI::dbGetQuery(con, "SELECT * FROM v_best_per_algorithm ORDER BY bacc DESC")
 DBI::dbDisconnect(con)
 ```
+
+## ROC-/PR-Kurven (`008_curve_diagnostics.R`, `160`/`161`)
+
+Voraussetzung: `prediction`/`prediction_prob` enthalten fuer den jeweiligen
+Algorithmus vollstaendige Vorhersagen (alle Eval-Zeilen, nicht nur eine
+gefilterte Teilmenge - seit 2026-07-15 der Standard in `147_error_analysis_ranger.R`
+fuer Ranger/LightGBM/LDA, siehe oben).
+
+```r
+Rscript 160_plot_roc_curve.R   # _artifacts/roc_curve.png
+Rscript 161_plot_pr_curve.R    # _artifacts/pr_curve.png
+```
+
+Beide Skripte laden je Algorithmus (`algorithms_to_plot`) die zuletzt
+geloggten vollstaendigen Vorhersagen, berechnen per Schwellenwert-Sweep
+(`compute_classif_curves()`) ROC- bzw. PR-Kurvenpunkte und die Flaeche
+darunter (`curve_auc()`, Trapezregel) - als Cross-Check gegen den in
+`metric_result` geloggten `classif.auc`-Wert ausgegeben, falls vorhanden.
+Funktioniert auch bei >=3 Klassen als One-vs-Rest-Kurve fuer eine gewaehlte
+`positive_class` (in diesem 3-Klassen-Projekt standardmaessig `"unhealthy"`,
+anpassbar am Skriptanfang).
 
 ## Uebertragung auf ein neues Projekt
 

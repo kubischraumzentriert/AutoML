@@ -127,8 +127,14 @@ catboost_iterations <- 200
 class_weight_power_extended_grid <- c(1, 1.25, 1.5, 1.75, 2, 2.5, 3)
 class_weight_power_extended_results_path <- file.path(artifact_dir, "class_weight_power_extended_results.csv")
 
-final_model_full_path <- function(model_name) {
-  file.path(artifact_dir, paste0("final_model_", model_name, "_full.rds"))
+# run_id macht jede gespeicherte Modell-Datei eindeutig - ein neuer
+# Trainingslauf ueberschreibt nicht mehr kommentarlos die vorherige. Der zur
+# aktuellen run_id passende Pfad wird als "model_artifact_path"-Hyperparameter
+# in experiments.db geloggt (siehe 150_train_full_model.R) und von dort ueber
+# db_get_latest_model_artifact_path() (db_logging.R) wieder gefunden (siehe
+# 155_predict_submission.R) - kein fixer Dateiname mehr noetig.
+final_model_full_path <- function(model_name, run_id) {
+  file.path(artifact_dir, paste0("final_model_", model_name, "_full_", run_id, ".rds"))
 }
 submission_path <- file.path(project_dir, "submission.csv")
 submission_model_selection_path <- file.path(artifact_dir, "submission_model_selection.csv")
@@ -311,13 +317,24 @@ model_class_weight_power <- list(
   ranger = class_weight_power
 )
 
-# Fehleranalyse (siehe 147_error_analysis_ranger.R): Stichprobengroessen fuer
-# KernelSHAP (exakte Berechnung ueber alle Feature-Teilmengen ist bei mehr
-# Zeilen zu teuer) und Ergebnispfade.
+# Fehleranalyse (siehe 147_error_analysis_ranger_*.R): Stichprobengroessen
+# fuer KernelSHAP (exakte Berechnung ueber alle Feature-Teilmengen ist bei
+# mehr Zeilen zu teuer) und Ergebnispfade.
 error_analysis_shap_sample_size <- 100
 error_analysis_shap_background_size <- 100
 error_analysis_results_path <- file.path(artifact_dir, "error_analysis_results.csv")
 error_analysis_shap_importance_path <- file.path(artifact_dir, "error_analysis_shap_importance.csv")
+
+# Artefakte, die die Fehleranalyse-Skripte lose koppeln, statt alles in einem
+# Skript zu buendeln: 147_..._models.R trainiert einmal (manuell median/
+# modus-imputiert, siehe dort) und speichert Modelle + Vorhersagen hier,
+# 147_..._confidence.R baut darauf auf und speichert die abgeleiteten
+# Zeilen-Indizes (misclassified/hard_case/...) hier - Isolation Forest,
+# KernelSHAP und TabPFN laden beide Artefakte, statt selbst neu zu
+# trainieren. Vorteil: z.B. nur die DB-Logging-Zeilen in `_models.R` aendern
+# und testen, ohne KernelSHAP/TabPFN jedes Mal neu laufen zu lassen.
+error_analysis_models_path <- file.path(artifact_dir, "error_analysis_models.rds")
+error_analysis_indices_path <- file.path(artifact_dir, "error_analysis_indices.rds")
 
 # Schwelle, unterhalb derer eine Vorhersage als "unsicher" gilt (bei 3 Klassen
 # kein willkuerlicher Wert: darunter war nicht mal die vorhergesagte Klasse
