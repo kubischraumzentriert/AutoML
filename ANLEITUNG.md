@@ -216,16 +216,21 @@ Spielraum) UND konkrete inhaltliche Ideen fuer neue Merkmale vorhanden sind
 entdeckte Interaktionsfeatures (rpart-Ensemble als Scout) - nur relevant, wenn
 manuelle Feature-Ideen ausgehen; siehe Kopfkommentar der Datei.
 
-## Phase 7: Boosting-Vergleich (`040`/`080`)
+## Phase 7: Boosting-Vergleich (`080`/`081`, XGBoost braucht `040`)
 
 ```r
-source("080_boosting_benchmark.R")   # Ranger, LightGBM, XGBoost per CV
+source("080_boosting_benchmark.R")   # Ranger + LightGBM per CV (kein One-Hot)
+source("081_xgboost_benchmark.R")    # XGBoost per CV (braucht 040 One-Hot)
 ```
 
-`080` braucht fuer XGBoost eine Preprocessing-Pipeline aus `040_preprocessing.R`
-(One-Hot-Encoding) - `classif.xgboost` akzeptiert nur logical/integer/numeric,
-keine rohen Faktoren. Ranger/LightGBM brauchen das nicht (verarbeiten Faktoren
-nativ). Vor dem Start die Laufzeit grob abschaetzen (naechster Absatz).
+Der Vergleich ist bewusst auf zwei Skripte aufgeteilt: `080` deckt Ranger und
+LightGBM ab, die Faktoren nativ verarbeiten und KEINE Preprocessing-Pipeline
+brauchen. `081` deckt XGBoost ab, das als einziges eine One-Hot-Pipeline aus
+`040_preprocessing.R` braucht (`classif.xgboost` akzeptiert nur logical/integer/
+numeric, keine rohen Faktoren). So laesst sich der guenstige Ranger/LightGBM-
+Vergleich (`080`) laufen, ohne die XGBoost-Preprocessing-Abhaengigkeit
+mitzuziehen - `081` ist optional/nachgelagert. Vor dem Start die Laufzeit grob
+abschaetzen (naechster Absatz).
 
 **Laufzeit vorab schaetzen**: `estimate_cv_runtime()` (`db_logging.R`) liest
 bereits geloggte Holdout-Laufzeiten aus `experiments.db` und multipliziert mit

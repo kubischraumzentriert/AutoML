@@ -33,7 +33,8 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `050_pipeline_benchmark.R` | Benchmark der allgemeinen Preprocessing-Pipeline |
 | `060_regularized_linear.R` | Regularisierte lineare Modelle mit `cv.glmnet` |
 | `070_final_models.R` | Trainiert je Learner aus `model_feature_sets` das passende Feature-Set (inkl. Klassengewichtung aus `model_class_weight_power`) und speichert das finale Modell |
-| `080_boosting_benchmark.R` | Vergleicht XGBoost und LightGBM gegen die Ranger-Referenz (Rohfeatures, CV) |
+| `080_boosting_benchmark.R` | Vergleicht LightGBM gegen die Ranger-Referenz (Rohfeatures, native Faktoren, kein One-Hot, CV) |
+| `081_xgboost_benchmark.R` | XGBoost separat (braucht One-Hot aus `040`), Vergleich gegen die `080`-Referenz |
 | `090_ranger_tuning.R` | Random-Search-Tuning fuer Ranger (mtry.ratio, min.node.size, sample.fraction), Finalvergleich per CV |
 | `095_tabpfn_benchmark.R` | Explorativer TabPFN-Vergleich auf einem CPU-vertraeglichen Mini-Subset (eigenes `tabpfn_subset_size`) |
 | `100_lightgbm_tuning.R` | Bayesian-Optimization-Tuning fuer LightGBM (`mlr3mbo`), Finalvergleich per CV |
@@ -264,7 +265,7 @@ Erkenntnis: Feature Engineering hilft `glmnet` deutlich, besonders Elastic Net u
 
 ## Boosting-Benchmark
 
-`080_boosting_benchmark.R` vergleicht XGBoost und LightGBM gegen die Ranger-Referenz, alle drei auf Rohfeatures per 5-facher CV. LightGBM verarbeitet Faktoren nativ (wie Ranger), XGBoost braucht eine one-hot-encodierte Pipeline (wie bei `glmnet`). Beide mit `num.trees`/`nrounds`/`num_iterations = 200`, sonst Standardparameter:
+`080_boosting_benchmark.R` vergleicht LightGBM gegen die Ranger-Referenz, beide auf Rohfeatures per 5-facher CV und mit nativer Faktor-Behandlung (kein One-Hot noetig). XGBoost ist in `081_xgboost_benchmark.R` ausgelagert, weil es als einziges eine one-hot-encodierte Pipeline aus `040_preprocessing.R` braucht (wie bei `glmnet`) - so laesst sich der guenstige Ranger/LightGBM-Vergleich ohne diese Preprocessing-Abhaengigkeit laufen. Alle mit `num.trees`/`nrounds`/`num_iterations = 200`, sonst Standardparameter:
 
 | Modell | BAcc | MCC | Laufzeit (5-fache CV) |
 |---|---:|---:|---:|
@@ -583,7 +584,7 @@ Kein erneutes Hyperparameter-Tuning auf dem vollen Datensatz: `100_lightgbm_tuni
 1. ~~Ranger als feste Referenzbaseline behalten~~ - Ranger ist (wieder) das finale Modell, diesmal mit Klassengewichtung, finales Training auf vollem Datensatz abgeschlossen (siehe oben).
 2. ~~Feature Engineering in kleinere Feature-Familien aufteilen~~ - erledigt in `features/*.R`, `025`, `036` und `037`, fuer LightGBM in `110` bestaetigt (kein Zusatznutzen).
 3. ~~Preprocessing-Strategien explizit fuer LightGBM vergleichen~~ - erledigt in `120`: `""` behalten bleibt klar besser (bestaetigt bestehende Konfiguration).
-4. ~~Boosting-Kandidaten pruefen: XGBoost, LightGBM, CatBoost~~ - XGBoost/LightGBM erledigt in `080`, CatBoost in `125`, alle drei nochmal gewichtet in `140` (Ranger gewinnt).
+4. ~~Boosting-Kandidaten pruefen: XGBoost, LightGBM, CatBoost~~ - LightGBM erledigt in `080`, XGBoost in `081`, CatBoost in `125`, alle drei nochmal gewichtet in `140` (Ranger gewinnt).
 5. ~~LightGBM tunen~~ - erledigt in `100` (Bayesian Optimization via `mlr3mbo`), kein Zusatznutzen gegenueber Standardparametern.
 6. ~~Klassengewichtung pruefen~~ - erledigt in `105`/`135`, `power = 1.5` uebernommen; in `140` bestaetigt, dass Ranger davon noch staerker profitiert als LightGBM.
 7. ~~Adversarial Validation durchfuehren~~ - erledigt in `115`. Moderater, aber nicht per Mittelwert/Streuung erklaerbarer Shift (AUC 0.654) - als geprueftes Risiko akzeptiert, kein Handlungsbedarf.

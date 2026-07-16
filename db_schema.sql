@@ -164,11 +164,63 @@ CREATE INDEX IF NOT EXISTS idx_prediction_row ON prediction (pred_row_id);
 CREATE INDEX IF NOT EXISTS idx_prediction_prob_pred ON prediction_prob (pprob_pred_seq);
 
 -- Views ----------------------------------------------------------------
--- v_model_results: eine Zeile je model_config mit aggregierten BAcc/MCC-
--- Werten (mres_fold IS NULL), Hyperparametern als lesbarer Text - der
--- "flache" Ersatz fuer die bisherigen CSV-Exporte, aber aus den
--- normalisierten Tabellen gespeist.
-CREATE VIEW IF NOT EXISTS v_model_results AS
+-- Views werden bewusst per DROP VIEW IF EXISTS + CREATE VIEW (statt
+-- CREATE VIEW IF NOT EXISTS) definiert: db_connect() fuehrt dieses Schema bei
+-- JEDEM Verbindungsaufbau aus, und mit IF NOT EXISTS wuerde eine geaenderte
+-- View-Definition in einer bereits existierenden DB nie greifen (die alte
+-- Definition bliebe bestehen). Views halten keine Daten - Neuanlegen bei
+-- jedem Connect ist gefahrlos und macht diese Schema-Datei zur alleinigen
+-- Quelle der Wahrheit fuer die View-Koerper. (Tabellen dagegen behalten
+-- CREATE TABLE IF NOT EXISTS - die duerfen NICHT gedroppt werden.)
+
+-- v_metric_results: Langformat, eine Zeile je (model_config, Metrik) fuer die
+-- aggregierten Werte (mres_fold IS NULL). Der GENERISCHE Ersatz fuer die
+-- metrikspezifischen Pivot-Views unten: hier taucht JEDE geloggte Metrik auf
+-- (classif.auc, classif.logloss, classif.bacc, ...), ohne dass das Schema
+-- geaendert werden muss. Fuer ein Projekt mit anderer Primaermetrik als
+-- BAcc/MCC ist das die richtige Anlaufstelle (die Pivot-Views unten decken
+-- nur einen festen Metrik-Satz ab). Frueherer Reibungspunkt in
+-- playground-series-s6e5/s5e12 (AUC) und openml-adult-income (LogLoss).
+DROP VIEW IF EXISTS v_metric_results;
+CREATE VIEW v_metric_results AS
+SELECT
+  p.proj_name,
+  wf.wf_name,
+  r.run_id,
+  r.run_started_at,
+  r.run_git_commit,
+  mc.mconf_id,
+  mc.mconf_task_type,
+  mc.mconf_algorithm,
+  mc.mconf_feature_set,
+  mc.mconf_preprocessing,
+  mc.mconf_class_weight_power,
+  mc.mconf_task_id,
+  rs.rsmp_strategy,
+  rs.rsmp_folds,
+  rs.rsmp_ratio,
+  mr.mres_measure_name,
+  mr.mres_value,
+  mr.mres_elapsed_seconds,
+  (SELECT GROUP_CONCAT(h.hparam_name || '=' || h.hparam_value, ', ')
+     FROM hyperparam h WHERE h.hparam_mconf_id = mc.mconf_id) AS hyperparams
+FROM metric_result mr
+JOIN model_config mc ON mc.mconf_id = mr.mres_mconf_id
+JOIN run r ON r.run_id = mc.mconf_run_id
+JOIN workflow wf ON wf.wf_id = r.run_wf_id
+JOIN project p ON p.proj_id = wf.wf_proj_id
+JOIN resampling rs ON rs.rsmp_id = mr.mres_rsmp_id
+WHERE mr.mres_fold IS NULL;
+
+-- v_model_results: eine Zeile je model_config mit den gaengigen Metriken
+-- nebeneinander herauspivotet (aus den mres_fold IS NULL-Zeilen), plus
+-- Hyperparameter als lesbarer Text. Bequemlichkeits-View fuer die
+-- Standardmetriken - deckt jetzt BAcc/MCC (schwellenwertabhaengig) UND
+-- AUC/LogLoss/PRAUC (schwellenwertunabhaengig) ab, sodass alle bisher
+-- verwendeten Primaermetriken side-by-side sichtbar sind. Fuer eine hier
+-- nicht gelistete Metrik: v_metric_results (Langformat, generisch) nutzen.
+DROP VIEW IF EXISTS v_model_results;
+CREATE VIEW v_model_results AS
 SELECT
   p.proj_name,
   wf.wf_name,
@@ -187,6 +239,9 @@ SELECT
   rs.rsmp_ratio,
   MAX(CASE WHEN mr.mres_measure_name = 'classif.bacc' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS bacc,
   MAX(CASE WHEN mr.mres_measure_name = 'classif.mcc' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS mcc,
+  MAX(CASE WHEN mr.mres_measure_name = 'classif.auc' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS auc,
+  MAX(CASE WHEN mr.mres_measure_name = 'classif.logloss' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS logloss,
+  MAX(CASE WHEN mr.mres_measure_name = 'classif.prauc' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS prauc,
   MAX(mr.mres_elapsed_seconds) AS elapsed_seconds,
   (SELECT GROUP_CONCAT(h.hparam_name || '=' || h.hparam_value, ', ')
      FROM hyperparam h WHERE h.hparam_mconf_id = mc.mconf_id) AS hyperparams
@@ -200,7 +255,8 @@ GROUP BY mc.mconf_id;
 
 -- v_fold_detail: Einzelwerte je Fold (mres_fold IS NOT NULL) - fuer
 -- Varianz-/Stabilitaetsanalysen zwischen den Folds.
-CREATE VIEW IF NOT EXISTS v_fold_detail AS
+DROP VIEW IF EXISTS v_fold_detail;
+CREATE VIEW v_fold_detail AS
 SELECT
   p.proj_name,
   wf.wf_name,
@@ -223,9 +279,12 @@ JOIN project p ON p.proj_id = wf.wf_proj_id
 WHERE mr.mres_fold IS NOT NULL
 ORDER BY mc.mconf_id, mr.mres_measure_name, mr.mres_fold;
 
--- v_run_summary: ein Rollup je run - wie viele model_configs, bester
--- BAcc/MCC-Wert (ueber alle model_configs des Runs hinweg).
-CREATE VIEW IF NOT EXISTS v_run_summary AS
+-- v_run_summary: ein Rollup je run - wie viele model_configs, bester Wert je
+-- gaengiger Metrik. Fuer schwellenwertunabhaengige/kalibrierungssensitive
+-- Metriken (AUC hoeher=besser, LogLoss niedriger=besser) ist "bester Wert"
+-- richtungsabhaengig: best_auc = MAX, best_logloss = MIN.
+DROP VIEW IF EXISTS v_run_summary;
+CREATE VIEW v_run_summary AS
 SELECT
   p.proj_name,
   wf.wf_name,
@@ -236,7 +295,9 @@ SELECT
   r.run_git_commit,
   COUNT(DISTINCT mc.mconf_id) AS n_model_configs,
   MAX(CASE WHEN mr.mres_measure_name = 'classif.bacc' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS best_bacc,
-  MAX(CASE WHEN mr.mres_measure_name = 'classif.mcc' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS best_mcc
+  MAX(CASE WHEN mr.mres_measure_name = 'classif.mcc' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS best_mcc,
+  MAX(CASE WHEN mr.mres_measure_name = 'classif.auc' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS best_auc,
+  MIN(CASE WHEN mr.mres_measure_name = 'classif.logloss' AND mr.mres_fold IS NULL THEN mr.mres_value END) AS best_logloss
 FROM run r
 JOIN workflow wf ON wf.wf_id = r.run_wf_id
 JOIN project p ON p.proj_id = wf.wf_proj_id
@@ -245,9 +306,11 @@ LEFT JOIN metric_result mr ON mr.mres_mconf_id = mc.mconf_id
 GROUP BY r.run_id;
 
 -- v_best_per_algorithm: die bislang beste (hoechste BAcc) Konfiguration je
--- Algorithmus, ueber alle Runs/Projekte hinweg - direkt "was ist aktuell
--- unser bestes Modell je Algorithmus".
-CREATE VIEW IF NOT EXISTS v_best_per_algorithm AS
+-- Algorithmus - beibehalten fuer Rueckwaertskompatibilitaet und den
+-- BAcc-Standardfall. Fuer eine andere Metrik: v_best_per_algorithm_metric
+-- (richtungsabhaengig, generisch) nutzen.
+DROP VIEW IF EXISTS v_best_per_algorithm;
+CREATE VIEW v_best_per_algorithm AS
 SELECT * FROM (
   SELECT
     v.*,
@@ -257,11 +320,36 @@ SELECT * FROM (
 )
 WHERE rn = 1;
 
+-- v_best_per_algorithm_metric: generischer Ersatz - beste Konfiguration je
+-- (Projekt, Algorithmus, Metrik), RICHTUNGSABHAENGIG sortiert. Fehlermetriken
+-- (LogLoss, CE, Brier) sind niedriger=besser, alle anderen hoeher=besser -
+-- die CASE-Liste kodiert die "kleiner ist besser"-Metriken. Anders als
+-- v_best_per_algorithm (nur BAcc) funktioniert das fuer JEDE geloggte Metrik,
+-- ohne Schemaaenderung. Partitioniert zusaetzlich nach Projekt, damit
+-- projektuebergreifende Metriken (z.B. AUC in mehreren Projekten) nicht
+-- vermischt werden.
+DROP VIEW IF EXISTS v_best_per_algorithm_metric;
+CREATE VIEW v_best_per_algorithm_metric AS
+SELECT * FROM (
+  SELECT
+    v.*,
+    ROW_NUMBER() OVER (
+      PARTITION BY v.proj_name, v.mconf_algorithm, v.mres_measure_name
+      ORDER BY CASE
+        WHEN v.mres_measure_name IN ('classif.logloss', 'classif.ce', 'classif.bbrier', 'classif.mbrier') THEN v.mres_value
+        ELSE -v.mres_value
+      END
+    ) AS rn
+  FROM v_metric_results v
+)
+WHERE rn = 1;
+
 -- v_prediction_detail: eine Zeile je geloggter Einzelvorhersage (nur die
 -- "interessanten" Faelle, siehe prediction-Tabelle) mit Modellkontext und
 -- Wahrscheinlichkeit der vorhergesagten Klasse - der direkte Einstieg fuer
 -- Fehler-/Unsicherheitsanalysen ueber SQL statt CSV.
-CREATE VIEW IF NOT EXISTS v_prediction_detail AS
+DROP VIEW IF EXISTS v_prediction_detail;
+CREATE VIEW v_prediction_detail AS
 SELECT
   p.proj_name,
   wf.wf_name,
@@ -281,7 +369,8 @@ JOIN workflow wf ON wf.wf_id = r.run_wf_id
 JOIN project p ON p.proj_id = wf.wf_proj_id;
 
 -- Externe Leaderboard-Scores mit Modell- und Run-Kontext.
-CREATE VIEW IF NOT EXISTS v_submission_results AS
+DROP VIEW IF EXISTS v_submission_results;
+CREATE VIEW v_submission_results AS
 SELECT
   p.proj_name,
   wf.wf_name,

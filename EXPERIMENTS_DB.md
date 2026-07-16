@@ -243,14 +243,41 @@ nur auf dieser Teilmenge ausgewertet (CPU-Kontextlimit, siehe `095_tabpfn_benchm
 
 ## Views (ebenfalls in `db_schema.sql`)
 
+**Hinweis zur Aktualisierung**: Views werden per `DROP VIEW IF EXISTS` +
+`CREATE VIEW` definiert (nicht `CREATE VIEW IF NOT EXISTS`), damit eine
+geaenderte View-Definition in einer bereits existierenden DB beim naechsten
+`db_connect()` tatsaechlich greift. Views halten keine Daten - das
+Neuanlegen bei jedem Connect ist gefahrlos. (Tabellen behalten
+`CREATE TABLE IF NOT EXISTS` - die duerfen nicht gedroppt werden.)
+
+**Metrik-Abdeckung**: Die Pivot-Views (`v_model_results`, `v_run_summary`)
+und `v_best_per_algorithm` waren urspruenglich auf BAcc/MCC zugeschnitten.
+Fuer Projekte mit anderer Primaermetrik (AUC bei `playground-series-s6e5`/
+`s5e12`, LogLoss bei `openml-adult-income`) blieben deren Ergebnisse
+unsichtbar. Behoben (2026-07-16): Pivot-Views um AUC/LogLoss/PRAUC ergaenzt,
+plus zwei generische Langformat-Views (`v_metric_results`,
+`v_best_per_algorithm_metric`), die JEDE geloggte Metrik ohne Schemaaenderung
+abbilden.
+
+### `v_metric_results` (generisch, Langformat)
+
+Eine Zeile je (`model_config`, Metrik) fuer die aggregierten Werte
+(`mres_fold IS NULL`), mit vollem Modellkontext und Hyperparametern. Die
+richtige Anlaufstelle fuer eine Metrik, die die Pivot-Views unten nicht als
+benannte Spalte fuehren - hier taucht jede geloggte Metrik als Zeile auf
+(`mres_measure_name`/`mres_value`), unabhaengig vom Projekt.
+
 ### `v_model_results`
 
-Eine Zeile je `model_config` mit aggregiertem BAcc/MCC (aus den
-`mres_fold IS NULL`-Zeilen per `MAX(CASE WHEN ...)`-Pivot), Resampling-Info
-und allen Hyperparametern als ein zusammengefasster Text
-(`GROUP_CONCAT(hparam_name || '=' || hparam_value, ', ')`). Der normalisierte
-Ersatz fuer die bisherigen CSV-Exporte - eine Zeile pro getesteter
-Konfiguration, unabhaengig davon, aus welchem Skript sie stammt.
+Eine Zeile je `model_config` mit den gaengigen Metriken nebeneinander
+herauspivotet (aus den `mres_fold IS NULL`-Zeilen per `MAX(CASE WHEN ...)`),
+Resampling-Info und allen Hyperparametern als ein zusammengefasster Text
+(`GROUP_CONCAT(hparam_name || '=' || hparam_value, ', ')`). Deckt jetzt
+`bacc`, `mcc`, `auc`, `logloss`, `prauc` als Spalten ab (`NA`, wenn die
+Metrik fuer die Zeile nicht geloggt wurde). Der normalisierte Ersatz fuer die
+bisherigen CSV-Exporte - eine Zeile pro getesteter Konfiguration, unabhaengig
+davon, aus welchem Skript sie stammt. Fuer eine hier nicht gelistete Metrik:
+`v_metric_results`.
 
 ### `v_fold_detail`
 
@@ -261,9 +288,11 @@ kommt er nur von einem guenstigen Fold?").
 
 ### `v_run_summary`
 
-Ein Rollup je Run: Anzahl getesteter Model-Configs, bester BAcc/MCC-Wert im
-Run. Schneller Ueberblick "was kam bei diesem Skriptlauf im Wesentlichen
-heraus", ohne einzelne Model-Configs durchzugehen.
+Ein Rollup je Run: Anzahl getesteter Model-Configs, bester Wert je gaengiger
+Metrik. Richtungsabhaengig: `best_bacc`/`best_mcc`/`best_auc` sind `MAX`
+(hoeher=besser), `best_logloss` ist `MIN` (niedriger=besser). Schneller
+Ueberblick "was kam bei diesem Skriptlauf im Wesentlichen heraus", ohne
+einzelne Model-Configs durchzugehen.
 
 ### `v_prediction_detail`
 
@@ -282,6 +311,18 @@ Die aktuell beste (hoechste BAcc) Konfiguration je Algorithmus, ueber alle
 Runs/Skripte/Projekte hinweg - per `ROW_NUMBER() OVER (PARTITION BY
 mconf_algorithm ORDER BY bacc DESC)`. Direkte Antwort auf "was ist gerade
 unser bestes Ranger-Ergebnis, unser bestes LightGBM-Ergebnis, etc."
+Beibehalten fuer den BAcc-Standardfall/Rueckwaertskompatibilitaet - fuer eine
+andere Metrik siehe `v_best_per_algorithm_metric`.
+
+### `v_best_per_algorithm_metric` (generisch, richtungsabhaengig)
+
+Die beste Konfiguration je (`proj_name`, `mconf_algorithm`,
+`mres_measure_name`) - der generische Ersatz fuer `v_best_per_algorithm`.
+Sortiert richtungsabhaengig: Fehlermetriken (LogLoss, CE, Brier) niedriger=
+besser, alle anderen hoeher=besser (per `CASE` in der `ORDER BY`-Klausel
+kodiert). Funktioniert fuer jede geloggte Metrik ohne Schemaaenderung.
+Zusaetzlich nach Projekt partitioniert, damit dieselbe Metrik ueber mehrere
+Projekte hinweg nicht vermischt wird.
 
 ## Logging-Code (`db_logging.R`)
 

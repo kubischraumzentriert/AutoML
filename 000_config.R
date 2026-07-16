@@ -110,8 +110,14 @@ pipeline_benchmark_path <- file.path(artifact_dir, "pipeline_benchmark.rds")
 glmnet_results_path <- file.path(artifact_dir, "glmnet_results.csv")
 glmnet_benchmark_path <- file.path(artifact_dir, "glmnet_benchmark.rds")
 
+# 080 (Ranger + LightGBM, native Faktor-Behandlung, kein One-Hot noetig) und
+# 081 (XGBoost, braucht 040_preprocessing.R-One-Hot) getrennt - so laesst sich
+# der guenstige Teil ohne die XGBoost-Preprocessing-Abhaengigkeit laufen
+# (frueher gebuendelt in 080_boosting_benchmark.R, siehe TARGETS.md-Backlog).
 boosting_results_path <- file.path(artifact_dir, "boosting_results.csv")
 boosting_benchmark_path <- file.path(artifact_dir, "boosting_benchmark.rds")
+xgboost_results_path <- file.path(artifact_dir, "xgboost_results.csv")
+xgboost_benchmark_path <- file.path(artifact_dir, "xgboost_benchmark.rds")
 
 ranger_tuning_search_results_path <- file.path(artifact_dir, "ranger_tuning_search_results.csv")
 ranger_tuning_final_results_path <- file.path(artifact_dir, "ranger_tuning_final_results.csv")

@@ -196,18 +196,22 @@ Reibungspunkte aufgefallen, die sich noch nicht sicher genug generalisieren
 liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
 `TEMPLATE_FRICTION.md` im genannten Projekt:
 
-- **`080_boosting_benchmark.R` bündelt Learner mit unterschiedlichem
-  Preprocessing-Bedarf**: Ranger/LightGBM brauchen keine Encoding-Pipeline,
-  XGBoost zwingend (`classif.xgboost` akzeptiert nur logical/integer/
-  numeric, keine Faktoren). Aufteilen in zwei Skripte wuerde es erlauben,
-  nur den guenstigen Teil (Ranger/LightGBM) laufen zu lassen, ohne die
-  XGBoost-Preprocessing-Abhaengigkeit mitzuziehen.
-- **SQL-Views (`v_model_results`, `v_run_summary`, `v_best_per_algorithm`)
-  zeigen nur `classif.bacc`/`classif.mcc`**: `metric_result` ist generisch
-  (jede Metrik wird korrekt geloggt), aber die Convenience-Views sind auf
-  genau zwei Metriknamen zugeschnitten. Fuer ein Projekt mit anderer
-  Zielmetrik (z.B. AUC) muss man `metric_result` direkt abfragen statt die
-  Views zu nutzen.
+- ~~**`080_boosting_benchmark.R` bündelt Learner mit unterschiedlichem
+  Preprocessing-Bedarf**~~ **ERLEDIGT (2026-07-17)**: aufgeteilt in `080`
+  (Ranger + LightGBM, native Faktoren, kein One-Hot) und neu
+  `081_xgboost_benchmark.R` (XGBoost, sourct `040_preprocessing.R`). `080`
+  sourct `040` nicht mehr - der guenstige Teil laeuft ohne die
+  XGBoost-Preprocessing-Abhaengigkeit. README/ANLEITUNG/Config entsprechend
+  angepasst, end-to-end gegen das Template-eigene Projekt getestet.
+- ~~**SQL-Views (`v_model_results`, `v_run_summary`, `v_best_per_algorithm`)
+  zeigen nur `classif.bacc`/`classif.mcc`**~~ **ERLEDIGT (2026-07-17)**: zwei
+  generische Langformat-Views ergaenzt (`v_metric_results`,
+  `v_best_per_algorithm_metric` - Letzteres richtungsabhaengig sortiert,
+  LogLoss niedriger=besser), Pivot-Views um `auc`/`logloss`/`prauc` erweitert,
+  alle Views auf `DROP VIEW IF EXISTS` + `CREATE VIEW` umgestellt (sonst
+  greifen geaenderte Definitionen in bestehenden DBs nicht). Gegen echte
+  AUC/LogLoss-Daten (openml-adult-income) UND die BAcc/MCC-Template-DB
+  getestet. Siehe `EXPERIMENTS_DB.md`, Abschnitt "Views".
 - **`tnr("mbo")`s Initialdesign kann das Eval-Budget stillschweigend
   aufbrauchen**: Das Initialdesign skaliert mit ~4x Anzahl Suchraum-
   Parameter - wird der Suchraum erweitert, ohne das Budget (`*_tuning_evals`)
@@ -234,19 +238,9 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   neutral (Stack nur +0.00016 AUC vs. bestes Einzelmodell, unter dem
   Rausch-Band, bei ~19x hoeherem Rechenaufwand). Nicht als eigener Schritt
   ins Template zurueckgefuehrt - Aufwand/Nutzen sprach dagegen.
-- **SQL-Views (`db_schema.sql`) zeigen nur BAcc/MCC** (siehe Punkt 2 oben)
-  - jetzt ZWEI unabhaengige Projekte mit einer anderen Primaermetrik
-  (`playground-series-s6e5`/`playground-series-s5e12`: AUC;
-  `openml-adult-income`: LogLoss) haben diese Luecke konkret gespuert. Noch
-  nicht behoben (Risiko/Aufwand-Einschaetzung unveraendert), aber die
-  Dringlichkeit ist gestiegen.
-- **`080_boosting_benchmark.R` bündelt Learner mit unterschiedlichem
-  Preprocessing-Bedarf** (siehe Punkt 4 oben) - zweite unabhaengige
-  Bestaetigung in `openml-adult-income`: dort musste XGBoost zusaetzlich
-  NACH dem neuen `collapsefactors`-Schritt (siehe unten) one-hot-kodiert
-  werden, LightGBM/Ranger nicht - derselbe Preprocessing-Split wie bei
-  `Driver` in `playground-series-s6e5`, nur mit anderer Ursache
-  (Kalibrierung seltener Level statt Kardinalitaet allein).
+  (Die beiden folgenden Punkte - SQL-Views und `080`-Split - hatten nach
+  `openml-adult-income` eine zweite unabhaengige Bestaetigung und wurden
+  daraufhin umgesetzt, siehe die durchgestrichenen ERLEDIGT-Eintraege oben.)
 - **Kalibrierungssensitive Metriken (LogLoss) reagieren auf Trainings-
   Klassengewichtung anders als reine Rangfolge-Metriken (AUC)** - direkt
   verifiziert in `openml-adult-income` (mittlere vorhergesagte Wahrschein-
