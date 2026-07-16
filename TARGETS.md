@@ -218,3 +218,15 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Dimensionen + 10-20 sicherstellen, danach `batch_nr` sowie Spannweite/R²
   der Zielmetrik ueber die Archiv-Punkte pruefen (Plateau-Indikator), um
   eine Empfehlung "Budget erhoehen" vs. "vermutlich Plateau" abzuleiten.
+- **Logits-Stacking über bereits benchmarkte Modelle fehlt**: Das Template
+  waehlt bisher nur das beste EINZELNE Modell fuer die Submission
+  (`148_select_submission_model.R`), kombiniert die bereits vorhandenen
+  Benchmark-Modelle (LDA/Multinom/Ranger/LightGBM/XGBoost) aber nirgends zu
+  einem Stacking-Ensemble. Anlass: 1st-Place-Writeup zu
+  `playground-series-s6e5` zeigt, dass ein simpler Logistic-Regression-Meta-
+  Learner auf den Logits mehrerer Basismodelle nahe an ein komplexes
+  AutoML-Ensemble herankam - unser getuntes LightGBM liegt dort ~0.013 AUC
+  hinter dem Gewinner. Details, Abgrenzung (was bewusst NICHT übernommen
+  wurde, z.B. Original-Datensatz-Mischen) und ein konkreter Vorschlag
+  (`140_stack_ensemble.R`) siehe `TEMPLATE_FRICTION.md` in
+  `playground-series-s6e5`, Eintrag 6.
