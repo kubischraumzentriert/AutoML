@@ -87,6 +87,7 @@ run_timed_benchmark <- function(tasks, learners, resampling, measures) {
   run_id <- 1L
 
   for (task in tasks) {
+    task <- enable_class_stratification(task)
     task_resampling <- resampling$clone(deep = TRUE)
     task_resampling$instantiate(task)
 

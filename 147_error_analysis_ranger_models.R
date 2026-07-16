@@ -28,6 +28,7 @@ if (!file.exists(task_train_small_path)) {
 }
 
 task_train_small <- readRDS(task_train_small_path)
+task_train_small <- enable_class_stratification(task_train_small)
 task_weighted <- add_balanced_class_weights(task_train_small, class_weight_power)
 
 target_col_name <- task_weighted$target_names

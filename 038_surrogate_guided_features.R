@@ -25,6 +25,7 @@ if (!file.exists(task_train_small_path)) {
 }
 
 task_raw <- readRDS(task_train_small_path)
+task_raw <- enable_class_stratification(task_raw)
 
 make_baseline_learner <- function(base_learner) {
   as_learner(po("imputemedian") %>>% po("imputemode") %>>% base_learner)
@@ -149,7 +150,7 @@ finalize_task <- function(data, id) {
       !!target_col := as.factor(.data[[target_col]])
     )
 
-  as_task_classif(data, target = target_col, id = id)
+  enable_class_stratification(as_task_classif(data, target = target_col, id = id))
 }
 
 raw_data <- task_raw$data()

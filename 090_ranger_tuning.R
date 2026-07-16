@@ -22,6 +22,7 @@ if (!file.exists(task_train_small_path)) {
 }
 
 task_train_small <- readRDS(task_train_small_path)
+task_train_small <- enable_class_stratification(task_train_small)
 
 # Tuning-Zielmetrik = baseline_measure_ids[1] statt hart codiertem
 # classif.bacc - fuer dieses Projekt identisch (BAcc ist hier die

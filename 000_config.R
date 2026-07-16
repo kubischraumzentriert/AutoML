@@ -34,6 +34,24 @@ validation_ratio <- 0.80
 baseline_measure_ids <- c("classif.bacc", "classif.mcc")
 cv_folds <- 5
 
+# mlr3 stratifiziert anhand der Task-Rolle "stratum". Klassifikationstasks
+# erhalten deshalb ihre Zielspalte auch als Stratum, damit Holdout und CV die
+# Klassenanteile erhalten. Bereits gesetzte, projektspezifische Strata bleiben
+# dabei unveraendert bestehen.
+enable_class_stratification <- function(task) {
+  if (!inherits(task, "TaskClassif")) {
+    return(task)
+  }
+
+  roles <- task$col_roles
+  if (!all(task$target_names %in% roles$stratum)) {
+    roles$stratum <- unique(c(roles$stratum, task$target_names))
+    task$col_roles <- roles
+  }
+
+  task
+}
+
 glmnet_nfolds <- 3
 glmnet_nlambda <- 30
 

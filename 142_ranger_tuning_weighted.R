@@ -22,6 +22,7 @@ if (!file.exists(task_train_small_path)) {
 }
 
 task_train_small <- readRDS(task_train_small_path)
+task_train_small <- enable_class_stratification(task_train_small)
 task_weighted <- add_balanced_class_weights(task_train_small, class_weight_power)
 
 make_baseline_learner <- function(base_learner, id = NULL) {

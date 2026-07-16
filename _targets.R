@@ -58,7 +58,7 @@ finalize_task <- function(data, id) {
       across(where(is.character), as.factor),
       !!target_col := as.factor(.data[[target_col]])
     )
-  as_task_classif(data, target = target_col, id = id)
+  enable_class_stratification(as_task_classif(data, target = target_col, id = id))
 }
 
 build_combined_features <- function(train, families) {
@@ -163,7 +163,7 @@ list(
   }),
 
   tar_target(task_full, {
-    as_task_classif(train_full_model_data, target = target_col, id = paste0(task_id_prefix, "_full_", submission_model_name))
+    enable_class_stratification(as_task_classif(train_full_model_data, target = target_col, id = paste0(task_id_prefix, "_full_", submission_model_name)))
   }),
 
   tar_target(task_full_weighted, {

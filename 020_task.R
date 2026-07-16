@@ -29,6 +29,7 @@ task_train_small <- as_task_classif(
   target = target_col,
   id = task_id_prefix
 )
+task_train_small <- enable_class_stratification(task_train_small)
 
 saveRDS(task_train_small, task_train_small_path)
 

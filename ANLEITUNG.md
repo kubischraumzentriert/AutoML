@@ -112,6 +112,11 @@ AUC und BAcc sind symmetrisch bezueglich der Wahl der positiven Klasse (siehe
 Phase 12, dort ist die Wahl der richtigen Wahrscheinlichkeitsspalte fuer die
 Kaggle-Submission dagegen entscheidend).
 
+Der Task markiert die Zielspalte zudem als `stratum`. Damit erhalten alle
+klassifikationsbasierten Holdout- und CV-Resamplings im Workflow die
+Klassenanteile. Fuer Zeitreihen oder gruppierte Daten muss dieser Standard vor
+der Ausfuehrung durch ein passendes Zeit- bzw. Group-Resampling ersetzt werden.
+
 ## Phase 4: Baselines (`030_baseline.R`)
 
 ```r

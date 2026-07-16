@@ -44,7 +44,7 @@ finalize_task <- function(data, id) {
       !!target_col := as.factor(.data[[target_col]])
     )
 
-  as_task_classif(data, target = target_col, id = id)
+  enable_class_stratification(as_task_classif(data, target = target_col, id = id))
 }
 
 cat("=== Feature-Family Tasks ===\n")

@@ -32,6 +32,7 @@ combined[, is_test := factor(is_test, levels = c(0, 1))]
 combined[, names(combined)[sapply(combined, is.character)] := lapply(.SD, as.factor), .SDcols = is.character]
 
 task_adversarial <- as_task_classif(combined, target = "is_test", positive = "1", id = "adversarial_validation")
+task_adversarial <- enable_class_stratification(task_adversarial)
 
 # LightGBM verarbeitet fehlende Werte nativ (Property "missings"), daher ohne
 # Imputations-Pipeline - das vereinfacht auch den Zugriff auf importance().

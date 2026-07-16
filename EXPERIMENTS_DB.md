@@ -60,12 +60,15 @@ Skript-Wiederausfuehrung verlassen zu muessen.
   `classif.mcc`, `classif.auc`, ...) fuer eine Model-Config unter einer
   Resampling-Strategie - **sowohl aggregiert als auch pro Fold** (siehe
   unten).
+- **Submission-Result** (`submission_result`): ein externer Leaderboard-Score
+  zu einem finalen Modell, getrennt nach Public und Private Score. So bleibt
+  nachvollziehbar, welche Submission mit welchem Modell erzeugt wurde.
 
 ## Namenskonvention
 
 Uebernommen aus einem MES-Traceability-Referenzprojekt (Postgres-DDL), an
 SQLite angepasst. Jede Tabelle hat ein kurzes Praefix (`proj`, `wf`, `run`,
-`rconf`, `mconf`, `hparam`, `rsmp`, `mres`); alle Spalten der Tabelle tragen
+`rconf`, `mconf`, `hparam`, `rsmp`, `mres`, `subm`); alle Spalten der Tabelle tragen
 dieses Praefix, z.B. `mconf_algorithm`, `mconf_task_id`.
 
 | Spaltenmuster | Bedeutung | SQLite-Umsetzung |
@@ -197,6 +200,19 @@ Beide Varianten werden fuer dieselbe `model_config`/`resampling`-Kombination
 gespeichert (siehe `db_log_benchmark_metrics()` unten), damit sowohl "was
 war der Durchschnitt" als auch "wie stark hat es zwischen Folds gestreut"
 abfragbar ist, ohne die Rohwerte aus mlr3 erneut berechnen zu muessen.
+
+### `submission_result`
+
+Externe Ergebnisse einer erzeugten Submission, etwa vom Kaggle-Leaderboard.
+Die Tabelle referenziert die konkrete finale `model_config`, nicht einen
+Resampling-Lauf: `subm_public_score` ist das Zwischenfeedback waehrend eines
+Wettbewerbs, `subm_private_score` der nach Wettbewerbsschluss entscheidende
+Score. `subm_status` unterscheidet normale Einreichungen (`submitted`) von
+Late Submissions (`late_submission`).
+
+`db_log_submission_result()` legt den Eintrag an oder aktualisiert ihn bei
+einem erneuten Aufruf fuer dieselbe Modell-/Plattform-/Status-Kombination.
+Die Modellreferenz liefert `db_get_latest_model_config_id(con, algorithm)`.
 
 ### `prediction` / `prediction_prob`
 
@@ -375,6 +391,12 @@ WHERE mconf_algorithm = 'lightgbm' ORDER BY bacc DESC;
 
 -- Alle Hyperparameter einer bestimmten Model-Config nachschlagen
 SELECT hparam_name, hparam_value FROM hyperparam WHERE hparam_mconf_id = '<mconf_id>';
+
+-- Externe Scores der finalen Submission je Modell einsehen
+SELECT mconf_algorithm, subm_status, subm_public_score, subm_private_score
+FROM v_submission_results
+WHERE subm_platform = 'kaggle'
+ORDER BY subm_recorded_at DESC;
 
 -- Wie lange dauerten die einzelnen Runs eines Skripts (fuer Laufzeit-Planung)?
 SELECT run_started_at, run_finished_at, run_notes FROM run r

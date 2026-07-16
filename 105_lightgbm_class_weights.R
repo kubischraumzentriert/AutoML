@@ -21,6 +21,7 @@ if (!file.exists(task_train_small_path)) {
 }
 
 task_train_small <- readRDS(task_train_small_path)
+task_train_small <- enable_class_stratification(task_train_small)
 
 # power = 0 -> ungewichtet, power = 1 -> volle Balance. Dazwischen gedaempfte
 # Zwischenstufen, um einen BAcc/MCC-Mittelweg empirisch zu finden.
