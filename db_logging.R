@@ -23,12 +23,42 @@ is_threshold_independent_metric <- function(measure_id) {
   measure_id %in% threshold_independent_measures
 }
 
+# Verfeinerung (siehe openml-adult-income/TEMPLATE_FRICTION.md #2, direkt
+# empirisch verifiziert, nicht nur aus dem Metrik-Muster abgeleitet): die
+# obige "schwellenwertunabhaengig ⇒ Klassengewichtung fast egal"-Regel gilt
+# NICHT gleichermassen fuer alle threshold_independent_measures. Reine
+# Rangfolge-Metriken (AUC, PRAUC, Multiclass-AUC-Varianten) sind tatsaechlich
+# kaum betroffen. LogLoss misst dagegen direkt Wahrscheinlichkeits-
+# KALIBRIERUNG - Trainings-Klassengewichtung verschiebt den impliziten
+# Modell-Prior bewusst weg von der wahren Basisrate (Mechanismus wie bei
+# "Rare Events Logistic Regression", King & Zeng 2001), was die Fehlerbalance
+# (BAcc) verbessert, aber die Kalibrierung UND damit LogLoss messbar
+# verschlechtert. Direkt gemessen (Ranger, power=0/0.5/1): mittlere
+# vorhergesagte Wahrscheinlichkeit der Mehrheitsklasse driftete von -0.0046
+# (power=0, praktisch perfekt kalibriert) auf +0.0807 Abweichung zur wahren
+# Basisrate (power=1) - eine echte, monotone Verschlechterung, kein Rauschen.
+calibration_sensitive_measures <- c("classif.logloss")
+
 # Gibt am Skriptanfang eine kurze Einschaetzung aus, ob sich der jeweilige
 # Schritt fuer die aktuelle Zielmetrik (baseline_measure_ids[1]) lohnt -
-# statt dass man das nur in Kommentaren/Doku nachlesen kann.
-warn_if_threshold_step_low_value <- function(script_name, step_description) {
+# statt dass man das nur in Kommentaren/Doku nachlesen kann. is_weighting_step
+# = TRUE fuer Trainings-Klassengewichtung (105/135), FALSE (Default) fuer
+# Post-hoc-Schwellenwert-Tuning (130/146) - Letzteres bleibt fuer ALLE
+# threshold_independent_measures tatsaechlich wirkungslos (aendert nur den
+# Cutoff, nicht die zugrunde liegenden Wahrscheinlichkeiten), nur die
+# Gewichtung braucht die kalibrierungssensitive Sonderbehandlung.
+warn_if_threshold_step_low_value <- function(script_name, step_description, is_weighting_step = FALSE) {
   primary_metric <- baseline_measure_ids[1]
-  if (is_threshold_independent_metric(primary_metric)) {
+  if (is_weighting_step && primary_metric %in% calibration_sensitive_measures) {
+    cat(
+      "Hinweis (", script_name, "): Zielmetrik '", primary_metric, "' ist zwar schwellenwert-",
+      "unabhaengig, aber kalibrierungssensitiv - ", step_description, " kann sie trotzdem MESSBAR ",
+      "verschlechtern (Gewichtung verschiebt den Modell-Prior weg von der wahren Basisrate, siehe ",
+      "openml-adult-income/TEMPLATE_FRICTION.md #2). Anders als bei reinen Rangfolge-Metriken (AUC) ",
+      "hier NICHT unbesehen als 'wenig Effekt' annehmen - per CV gegenpruefen.\n",
+      sep = ""
+    )
+  } else if (is_threshold_independent_metric(primary_metric)) {
     cat(
       "Hinweis (", script_name, "): Zielmetrik '", primary_metric, "' ist schwellenwert-",
       "unabhaengig - ", step_description, " hat hier vermutlich wenig/keinen Effekt ",

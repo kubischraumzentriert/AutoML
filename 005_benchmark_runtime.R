@@ -39,6 +39,57 @@ warn_high_cardinality_factors <- function(task, threshold = 50) {
   invisible(high_card)
 }
 
+# Ergaenzt warn_high_cardinality_factors(): die rohe Levelzahl (> threshold)
+# ist nur ein Proxy fuer die eigentliche Absturzursache, kein zuverlaessiger
+# Indikator - siehe openml-adult-income/TEMPLATE_FRICTION.md #1. Dort
+# stuerzte LDA/Multinom sowohl an native.country (41 Level, UNTER der
+# 50er-Schwelle) als auch an niedrig-kardinalen Spalten (occupation: 14,
+# workclass: 8, marital.status: 7 Level) mit einzelnen seltenen Leveln ab -
+# die eigentliche Ursache ist ein Level, das (durch Zufall oder echte
+# Seltenheit) in mindestens einer Zielklasse gar nicht vorkommt, unabhaengig
+# von der Gesamt-Levelzahl der Spalte. Diese Funktion prueft das direkt per
+# Kreuztabelle, statt nur die Levelzahl zu zaehlen.
+warn_rare_factor_levels <- function(task, min_count_per_class = 1) {
+  feature_types <- task$feature_types
+  factor_cols <- feature_types[type %in% c("factor", "ordered"), id]
+  if (length(factor_cols) == 0) {
+    return(invisible(NULL))
+  }
+
+  target_col_name <- task$target_names[1]
+  data <- task$data(cols = c(factor_cols, target_col_name))
+  target_values <- data[[target_col_name]]
+
+  problems <- list()
+  for (col in factor_cols) {
+    tab <- table(data[[col]], target_values)
+    zero_rows <- rownames(tab)[apply(tab, 1, function(r) any(r < min_count_per_class))]
+    if (length(zero_rows) > 0) {
+      problems[[col]] <- zero_rows
+    }
+  }
+
+  if (length(problems) > 0) {
+    details <- paste(
+      vapply(names(problems), function(col) paste0(col, " (", paste(problems[[col]], collapse = ", "), ")"), character(1)),
+      collapse = "; "
+    )
+    warning(
+      "Faktor-Spalte(n) mit seltenen Leveln gefunden, die in mindestens einer ",
+      "Zielklasse mit weniger als ", min_count_per_class, " Beobachtung(en) vorkommen: ",
+      details, " - LDA/Multinom koennen daran abstuerzen (Dummy-Spalte konstant ",
+      "innerhalb einer Klasse), UNABHAENGIG von der Gesamt-Levelzahl der Spalte ",
+      "(siehe warn_high_cardinality_factors() - deren Schwelle allein reicht ",
+      "nicht aus). Erwaegen: po('collapsefactors') vor dem Klassifikator ",
+      "einfuegen, um seltene Level automatisch zusammenzufassen (siehe ",
+      "openml-adult-income/030_baseline.R fuer ein Anwendungsbeispiel).",
+      call. = FALSE
+    )
+  }
+
+  invisible(problems)
+}
+
 # Prueft, ob eine Korrekturregel "bei Uneinigkeit auf Modell B umschalten"
 # (z.B. ein staerkeres Modell A durch ein schwaecheres, aber manchmal
 # treffenderes Modell B ergaenzen) tatsaechlich sinnvoll waere. Die in der

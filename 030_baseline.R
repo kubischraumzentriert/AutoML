@@ -21,6 +21,10 @@ if (!file.exists(task_train_small_path)) {
 
 task_train_small <- readRDS(task_train_small_path)
 warn_high_cardinality_factors(task_train_small)
+# Ergaenzende Pruefung (siehe 005_benchmark_runtime.R): die rohe Levelzahl
+# allein reicht nicht, um LDA/Multinom-Abstuerze zu vermeiden - auch
+# niedrig-kardinale Spalten mit einzelnen seltenen Leveln koennen crashen.
+warn_rare_factor_levels(task_train_small)
 
 make_baseline_learner <- function(base_learner) {
   graph <- po("imputemedian") %>>%

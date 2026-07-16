@@ -229,4 +229,45 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   hinter dem Gewinner. Details, Abgrenzung (was bewusst NICHT übernommen
   wurde, z.B. Original-Datensatz-Mischen) und ein konkreter Vorschlag
   (`140_stack_ensemble.R`) siehe `TEMPLATE_FRICTION.md` in
-  `playground-series-s6e5`, Eintrag 6.
+  `playground-series-s6e5`, Eintrag 6. **Update (2026-07-16)**: in
+  `playground-series-s6e5` umgesetzt und per CV getestet - Ergebnis negativ/
+  neutral (Stack nur +0.00016 AUC vs. bestes Einzelmodell, unter dem
+  Rausch-Band, bei ~19x hoeherem Rechenaufwand). Nicht als eigener Schritt
+  ins Template zurueckgefuehrt - Aufwand/Nutzen sprach dagegen.
+- **SQL-Views (`db_schema.sql`) zeigen nur BAcc/MCC** (siehe Punkt 2 oben)
+  - jetzt ZWEI unabhaengige Projekte mit einer anderen Primaermetrik
+  (`playground-series-s6e5`/`playground-series-s5e12`: AUC;
+  `openml-adult-income`: LogLoss) haben diese Luecke konkret gespuert. Noch
+  nicht behoben (Risiko/Aufwand-Einschaetzung unveraendert), aber die
+  Dringlichkeit ist gestiegen.
+- **`080_boosting_benchmark.R` bündelt Learner mit unterschiedlichem
+  Preprocessing-Bedarf** (siehe Punkt 4 oben) - zweite unabhaengige
+  Bestaetigung in `openml-adult-income`: dort musste XGBoost zusaetzlich
+  NACH dem neuen `collapsefactors`-Schritt (siehe unten) one-hot-kodiert
+  werden, LightGBM/Ranger nicht - derselbe Preprocessing-Split wie bei
+  `Driver` in `playground-series-s6e5`, nur mit anderer Ursache
+  (Kalibrierung seltener Level statt Kardinalitaet allein).
+- **Kalibrierungssensitive Metriken (LogLoss) reagieren auf Trainings-
+  Klassengewichtung anders als reine Rangfolge-Metriken (AUC)** - direkt
+  verifiziert in `openml-adult-income` (mittlere vorhergesagte Wahrschein-
+  lichkeit driftet mit steigendem `class_weight_power` messbar von der
+  wahren Basisrate weg, Mechanismus wie bei "Rare Events Logistic
+  Regression"). **Bereits ins Template zurueckgefuehrt (2026-07-16)**:
+  `calibration_sensitive_measures`/`is_weighting_step`-Parameter in
+  `db_logging.R`s `warn_if_threshold_step_low_value()`, siehe Kommentar dort
+  fuer die Herleitung. Regressionsgetestet gegen das Template-eigene Projekt
+  (BAcc-Metrik, keine Verhaltensaenderung).
+- **Kardinalitaets-Schwelle (`warn_high_cardinality_factors()`, 50 Level)
+  reicht nicht aus** - `openml-adult-income` zeigte LDA/Multinom-Abstuerze
+  sowohl bei einer 41-Level-Spalte (unter der Schwelle) als auch bei
+  niedrig-kardinalen Spalten (7-14 Level) mit einzelnen seltenen, in einer
+  Klasse gar nicht vorkommenden Leveln. **Bereits ins Template
+  zurueckgefuehrt (2026-07-16)**: neue Funktion `warn_rare_factor_levels()`
+  in `005_benchmark_runtime.R` (Kreuztabellen-Check statt reiner
+  Levelzahl-Zaehlung), aus `030_baseline.R` aufgerufen. Regressionsgetestet
+  gegen das Template-eigene Projekt (loest korrekt keine Warnung aus).
+  `po("collapsefactors")` als Loesungsmuster (seltene Level automatisch
+  zusammenfassen) in `openml-adult-income/030_baseline.R`/
+  `040_preprocessing.R` demonstriert, noch nicht als Standardschritt ins
+  Template uebernommen (erst bei einem weiteren Projekt mit echten schiefen
+  Kategorien entscheiden, ob das generell sinnvoll ist).
