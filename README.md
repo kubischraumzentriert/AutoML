@@ -176,6 +176,26 @@ Die Feature-Funktionen liegen nach Familie getrennt in `features/*.R` (je eine F
 
 Erkenntnis: LDA verschlechtert sich deutlich und meldet Kollinearitaet. Ranger profitiert leicht. Die engineered Features sind daher kein Standardpfad, sondern eine experimentelle Feature-Familie.
 
+### Optionales Modul: leak-sicheres Target-Encoding (`features/target_encoding.R`)
+
+Fuer hochkardinale kategoriale Spalten, die sonst gedroppt oder grob per `collapsefactors` zusammengefasst werden muessten (z.B. `Driver` mit 887 Leveln in `playground-series-s6e5`, `native.country` mit 41 in `openml-adult-income`), bietet `features/target_encoding.R` ein **optionales** leak-sicheres Target-(Impact-)Encoding auf Basis von `mlr3pipelines::po("encodeimpact")`:
+
+- **`build_target_encoding_po(affect_cols, smoothing)`** - der reine Encoding-PipeOp (mit `impute_zero = TRUE` fuer Robustheit gegen im Trainings-Fold ungesehene Level).
+- **`build_target_encoded_pipeline(base_learner, affect_cols, smoothing)`** - kompletter GraphLearner: Imputation -> Target-Encoding -> Learner.
+
+**Leak-sicher** auf CV-Fold-Ebene (der PipeOp fittet die Impact-Tabelle nur auf den Trainingszeilen jedes Folds), **multiclass-faehig** (k numerische Spalten je Faktor, eine je Klasse - weit sparsamer als One-Hot bei hoher Kardinalitaet).
+
+**Kein Default - Entscheidungsregel** (A/B an `openml-adult-income`, `036_target_encoding_benchmark.R`, 5-fache CV, jeweils vs. natuerliche Baseline):
+
+| Fall | Empfehlung |
+|---|---|
+| Lineare Modelle (LDA/Multinom) | **Target-Encoding** - besser bei LogLoss/AUC und ~2x schneller als One-Hot |
+| Sehr hohe Kardinalitaet (One-Hot unpraktikabel) | **Target-Encoding** - macht die Spalte ueberhaupt erst nutzbar |
+| Baummodelle (Ranger/LightGBM), moderate Kardinalitaet | **native Faktoren** - Target-Encoding bringt nichts, ist teils sogar langsamer |
+| XGBoost, moderate Kardinalitaet | One-Hot gewinnt knapp bei Genauigkeit, Target-Encoding ist aber deutlich schneller |
+
+Robustheits-Nebenbefund: Target-Encoding mit `impute_zero=TRUE` war im A/B das einzige Encoding, das unter CV ohne zusaetzliche Absicherung durchlief - One-Hot (via `fixfactors`) und `collapsefactors` stuerzten an einem seltenen, per CV nur im Validierungs-Fold auftretenden Level ab. Details siehe `openml-adult-income/TEMPLATE_FRICTION.md` #3.
+
 ## Feature-Family-Benchmark
 
 `036_feature_family_benchmark.R` vergleicht den Roh-Task, jede Feature-Familie einzeln und den kombinierten Feature-Task mit denselben drei Baseline-Modellen:
