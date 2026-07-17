@@ -157,7 +157,11 @@ Angenommen, du willst `class_weight_power` von 1.5 auf 1.75 testen:
    vor hochkardinalen Faktor-Spalten (`warn_high_cardinality_factors()` in
    `005_benchmark_runtime.R`), die LDA/Multinom zum Absturz bringen koennen -
    bei einer Warnung die Spalte fuer diese Modelle ausschliessen oder sinnvoll
-   kodieren (Frequenz-/Zielkodierung).
+   kodieren (Frequenz-/Zielkodierung). Bei numerisch codierten hochkardinalen
+   IDs (z.B. Geo- oder Objekt-IDs) zunaechst eine zielwertfreie
+   Frequency-Encoding-Variante gegen die native/numerische Baseline testen:
+   `drivendata_richter` verbesserte sich damit deutlich, ohne Target-Encoding
+   zu benoetigen.
 7. `148_select_submission_model.R` ausfuehren, um datengetrieben (aus
    `experiments.db`) den Algorithmus mit dem besten Wert von
    `baseline_measure_ids[1]` auf dem Roh-Feature-Set vorzuschlagen. Ergebnis
@@ -170,6 +174,10 @@ Angenommen, du willst `class_weight_power` von 1.5 auf 1.75 testen:
    Rohfeatures - Abwaegungen wie BAcc-vs-MCC-Trade-offs, Feature-Set-Wahl oder
    Klassengewichtung (wie in diesem Projekt fuer Ranger dokumentiert) muss ein
    Mensch weiterhin selbst pruefen, bevor er sich auf den Vorschlag verlaesst.
+   Der finale Submission-Kandidat sollte aus dem besten CV-Ergebnis je
+   Feature-Set kommen, nicht pauschal aus einem bevorzugten Algorithmus:
+   `drivendata_richter` bestaetigte Ranger + Frequency-Encoding deutlich vor
+   LightGBM + Frequency-Encoding.
 
 ## Feature-Sets im finalen Workflow
 

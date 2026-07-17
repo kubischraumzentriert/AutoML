@@ -191,9 +191,12 @@ Fuer hochkardinale kategoriale Spalten, die sonst gedroppt oder grob per `collap
 |---|---|
 | Lineare Modelle (LDA/Multinom/glmnet) bei hoher Kardinalitaet (One-Hot unpraktikabel) MIT Signal | **Target-Encoding** - der klare Gewinnfall: macht das Modell ueberhaupt erst anwendbar und erreicht starke Werte (siehe Amazon-Beleg unten) |
 | Lineare Modelle, moderate Kardinalitaet | **Target-Encoding** - besser bei LogLoss/AUC und ~2x schneller als One-Hot |
-| Baummodelle mit nativem Kategorien-Handling (LightGBM/Ranger), JEDE Kardinalitaet | **native Faktoren** - schlaegt Target-Encoding selbst bei extremer Kardinalitaet (Amazon: LightGBM nativ 0.869 vs. bestes TE 0.847); TE bringt nichts und ist deutlich langsamer |
+| Baummodelle mit nativem Kategorien-Handling (LightGBM/Ranger), echte Kategorien mit stabiler Laufzeit | **native Faktoren zuerst testen** - schlaegt Target-Encoding selbst bei extremer Kardinalitaet (Amazon: LightGBM nativ 0.869 vs. bestes TE 0.847); TE bringt nichts und ist deutlich langsamer |
+| Hochkardinale ID-Codes, besonders numerisch codierte Geo-/Objekt-IDs | **Frequency-Encoding als schnellen A/B-Kandidaten testen** - zielwertfrei, leakage-arm und oft viel guenstiger als native riesige Faktoren |
 | Hohe Kardinalitaet OHNE Signal | **Spalte weglassen** - Target-Encoding kann kein Signal erzeugen (siehe Warnung unten) |
 | XGBoost, moderate Kardinalitaet | One-Hot gewinnt knapp bei Genauigkeit, Target-Encoding ist aber deutlich schneller |
+
+**Frequency-Encoding als Zwischenweg vor Target-Encoding.** `drivendata_richter` bestaetigte einen praktischen Sonderfall: `geo_level_2_id`/`geo_level_3_id` waren eigentlich kategoriale IDs, aber als Faktoren machten sie Ranger bereits auf 10% der Daten unhandlich. Als numerische Codes plus Frequency-Features stieg die 5-fache CV deutlich (Ranger Accuracy 0.7021 -> 0.7154, LightGBM 0.7015 -> 0.7097). Das Leaderboard bestaetigte die Richtung: LightGBM `geo_frequency` 0.7336, Ranger `geo_frequency` 0.7495 (Rang 437), jeweils ohne Target-Encoding. Lektion: Bei hochkardinalen ID-Spalten nicht sofort auf Target-Encoding springen; zuerst eine zielwertfreie Frequency-Variante gegen die native/numerische Baseline testen.
 
 **Wichtige Einschraenkung - Target-Encoding erzeugt kein Signal, es macht vorhandenes nur nutzbar.** Ob TE hilft, haengt davon ab, ob die Spalte ueberhaupt Signal traegt, NICHT nur von der Kardinalitaet. Demonstriert an `playground-series-s6e5`s `Driver` (887 Level, `037_target_encoding_driver.R`): Driver wurde urspruenglich gedroppt, TE macht ihn mechanisch nutzbar (LDA nutzt 2 TE-Spalten statt eines unmoeglichen 887-fach-One-Hot, laeuft sauber/leak-sicher), aber es HILFT nicht - AUC faellt leicht (LDA 0.8425 gedroppt -> 0.8410 TE; LightGBM 0.9403 -> 0.9372 TE; LightGBM mit Driver NATIV sogar 0.9229). Driver traegt schlicht kaum Signal fuer `PitNextLap` - kein Encoding kann das aendern. Das validiert zugleich die urspruengliche "Driver weglassen"-Entscheidung. Faustregel: bei einer hochkardinalen Spalte vor dem TE-Aufwand kurz pruefen, ob sie ueberhaupt diskriminiert (z.B. via Adversarial-/Feature-Importance oder einem schnellen native-LightGBM-Test).
 
@@ -563,6 +566,7 @@ Erkenntnis: Anders als bei LightGBM (`100`) findet das Tuning hier einen kleinen
 ## Modell-Erkenntnisse
 
 - Ranger war zunaechst die wichtigste Vergleichsbaseline, wurde von LightGBM abgeloest (Boosting-Benchmark) - und hat dann mit Klassengewichtung LightGBM (und CatBoost) wieder ueberholt (siehe oben). Lektion: Modellvergleiche ohne dieselbe Gewichtungs-/Preprocessing-Behandlung sind nicht belastbar, selbst wenn sie zuvor "eindeutig" aussahen.
+- Cross-Projekt-Bestaetigung (`drivendata_richter`, 2026-07-17): LightGBM darf kein automatischer Submission-Default sein. Ohne Target-Encoding, aber mit `geo_frequency`, war Ranger lokal besser (CV Accuracy 0.7154 vs. 0.7097) und auf dem Leaderboard klar besser (0.7495/Rang 437 vs. 0.7336/Rang 1414). Finale Modellwahl daher immer aus CV je Feature-Set ableiten, nicht aus "LightGBM ist meistens gut".
 - Lineare Modelle profitieren nicht automatisch von vielen abgeleiteten Features.
 - LDA reagiert empfindlich auf Kollinearitaet.
 - Unregularisierte multinomiale Regression ist schnell, aber nicht stark genug.
