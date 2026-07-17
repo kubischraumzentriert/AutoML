@@ -190,9 +190,12 @@ Fuer hochkardinale kategoriale Spalten, die sonst gedroppt oder grob per `collap
 | Fall | Empfehlung |
 |---|---|
 | Lineare Modelle (LDA/Multinom) | **Target-Encoding** - besser bei LogLoss/AUC und ~2x schneller als One-Hot |
-| Sehr hohe Kardinalitaet (One-Hot unpraktikabel) | **Target-Encoding** - macht die Spalte ueberhaupt erst nutzbar |
+| Sehr hohe Kardinalitaet MIT Signal (One-Hot unpraktikabel) | **Target-Encoding** - macht die Spalte ueberhaupt erst nutzbar |
+| Sehr hohe Kardinalitaet OHNE Signal | **Spalte weglassen** - Target-Encoding kann kein Signal erzeugen (siehe Warnung unten) |
 | Baummodelle (Ranger/LightGBM), moderate Kardinalitaet | **native Faktoren** - Target-Encoding bringt nichts, ist teils sogar langsamer |
 | XGBoost, moderate Kardinalitaet | One-Hot gewinnt knapp bei Genauigkeit, Target-Encoding ist aber deutlich schneller |
+
+**Wichtige Einschraenkung - Target-Encoding erzeugt kein Signal, es macht vorhandenes nur nutzbar.** Ob TE hilft, haengt davon ab, ob die Spalte ueberhaupt Signal traegt, NICHT nur von der Kardinalitaet. Demonstriert an `playground-series-s6e5`s `Driver` (887 Level, `037_target_encoding_driver.R`): Driver wurde urspruenglich gedroppt, TE macht ihn mechanisch nutzbar (LDA nutzt 2 TE-Spalten statt eines unmoeglichen 887-fach-One-Hot, laeuft sauber/leak-sicher), aber es HILFT nicht - AUC faellt leicht (LDA 0.8425 gedroppt -> 0.8410 TE; LightGBM 0.9403 -> 0.9372 TE; LightGBM mit Driver NATIV sogar 0.9229). Driver traegt schlicht kaum Signal fuer `PitNextLap` - kein Encoding kann das aendern. Das validiert zugleich die urspruengliche "Driver weglassen"-Entscheidung. Faustregel: bei einer hochkardinalen Spalte vor dem TE-Aufwand kurz pruefen, ob sie ueberhaupt diskriminiert (z.B. via Adversarial-/Feature-Importance oder einem schnellen native-LightGBM-Test).
 
 Robustheits-Nebenbefund: Target-Encoding mit `impute_zero=TRUE` war im A/B das einzige Encoding, das unter CV ohne zusaetzliche Absicherung durchlief - One-Hot (via `fixfactors`) und `collapsefactors` stuerzten an einem seltenen, per CV nur im Validierungs-Fold auftretenden Level ab. Details siehe `openml-adult-income/TEMPLATE_FRICTION.md` #3.
 
