@@ -189,13 +189,17 @@ Fuer hochkardinale kategoriale Spalten, die sonst gedroppt oder grob per `collap
 
 | Fall | Empfehlung |
 |---|---|
-| Lineare Modelle (LDA/Multinom) | **Target-Encoding** - besser bei LogLoss/AUC und ~2x schneller als One-Hot |
-| Sehr hohe Kardinalitaet MIT Signal (One-Hot unpraktikabel) | **Target-Encoding** - macht die Spalte ueberhaupt erst nutzbar |
-| Sehr hohe Kardinalitaet OHNE Signal | **Spalte weglassen** - Target-Encoding kann kein Signal erzeugen (siehe Warnung unten) |
-| Baummodelle (Ranger/LightGBM), moderate Kardinalitaet | **native Faktoren** - Target-Encoding bringt nichts, ist teils sogar langsamer |
+| Lineare Modelle (LDA/Multinom/glmnet) bei hoher Kardinalitaet (One-Hot unpraktikabel) MIT Signal | **Target-Encoding** - der klare Gewinnfall: macht das Modell ueberhaupt erst anwendbar und erreicht starke Werte (siehe Amazon-Beleg unten) |
+| Lineare Modelle, moderate Kardinalitaet | **Target-Encoding** - besser bei LogLoss/AUC und ~2x schneller als One-Hot |
+| Baummodelle mit nativem Kategorien-Handling (LightGBM/Ranger), JEDE Kardinalitaet | **native Faktoren** - schlaegt Target-Encoding selbst bei extremer Kardinalitaet (Amazon: LightGBM nativ 0.869 vs. bestes TE 0.847); TE bringt nichts und ist deutlich langsamer |
+| Hohe Kardinalitaet OHNE Signal | **Spalte weglassen** - Target-Encoding kann kein Signal erzeugen (siehe Warnung unten) |
 | XGBoost, moderate Kardinalitaet | One-Hot gewinnt knapp bei Genauigkeit, Target-Encoding ist aber deutlich schneller |
 
 **Wichtige Einschraenkung - Target-Encoding erzeugt kein Signal, es macht vorhandenes nur nutzbar.** Ob TE hilft, haengt davon ab, ob die Spalte ueberhaupt Signal traegt, NICHT nur von der Kardinalitaet. Demonstriert an `playground-series-s6e5`s `Driver` (887 Level, `037_target_encoding_driver.R`): Driver wurde urspruenglich gedroppt, TE macht ihn mechanisch nutzbar (LDA nutzt 2 TE-Spalten statt eines unmoeglichen 887-fach-One-Hot, laeuft sauber/leak-sicher), aber es HILFT nicht - AUC faellt leicht (LDA 0.8425 gedroppt -> 0.8410 TE; LightGBM 0.9403 -> 0.9372 TE; LightGBM mit Driver NATIV sogar 0.9229). Driver traegt schlicht kaum Signal fuer `PitNextLap` - kein Encoding kann das aendern. Das validiert zugleich die urspruengliche "Driver weglassen"-Entscheidung. Faustregel: bei einer hochkardinalen Spalte vor dem TE-Aufwand kurz pruefen, ob sie ueberhaupt diskriminiert (z.B. via Adversarial-/Feature-Importance oder einem schnellen native-LightGBM-Test).
+
+**Zweite wichtige Einschraenkung - `smoothing` ist ein kritischer, modell- UND kardinalitaetsabhaengiger Parameter, kein Set-and-Forget.** Demonstriert am kanonischen Target-Encoding-Datensatz `openml-amazon-access` (9 all-hochkardinale Kategorien, RESOURCE 7518 / MGR_ID 4243 Level, One-Hot ~15.600 Spalten - voellig unpraktikabel, `036`/`037`): der TE-AUC schwankt allein durch die Glaettung massiv (LightGBM+TE Holdout: `smoothing=1` -> 0.847, aber `smoothing=20` -> 0.779; glmnet+TE: `smoothing=0.1` -> **0.854**, `smoothing=20` -> 0.715). Das Optimum ist modellabhaengig (glmnet ~0.1, LightGBM ~1) - **einen Wert unbesehen zu uebernehmen ist riskant, die Glaettung gehoert gesweept**. Die Kernbotschaften dieses Datensatzes:
+- **TE-Gewinnfall bestaetigt (linear + extreme Kardinalitaet)**: glmnet erreicht mit guter Glaettung 0.854 AUC - praktisch gleichauf mit dem besten Baummodell - auf Daten, wo ein lineares Modell ohne TE gar nicht laufen koennte (One-Hot unmoeglich). Das ist der eigentliche Zahltag.
+- **GBM-natives Handling schlaegt TE**: LightGBM nativ (0.869) uebertrifft selbst optimal geglaettetes TE (0.847) UND ist ~5x schneller (35s vs. ~190s). Fuer Modelle mit nativem Kategorien-Handling lohnt TE also selbst bei extremer Kardinalitaet nicht - der "Amazon = TE-Klassiker"-Ruf bezieht sich auf aufwaendigere, getunte Multi-Encoding-Ansaetze, nicht auf ein einzelnes generisches Impact-Encoding.
 
 Robustheits-Nebenbefund: Target-Encoding mit `impute_zero=TRUE` war im A/B das einzige Encoding, das unter CV ohne zusaetzliche Absicherung durchlief - One-Hot (via `fixfactors`) und `collapsefactors` stuerzten an einem seltenen, per CV nur im Validierungs-Fold auftretenden Level ab. Details siehe `openml-adult-income/TEMPLATE_FRICTION.md` #3.
 
