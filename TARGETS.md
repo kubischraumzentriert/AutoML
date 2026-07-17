@@ -262,6 +262,25 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   gegen das Template-eigene Projekt (loest korrekt keine Warnung aus).
   `po("collapsefactors")` als Loesungsmuster (seltene Level automatisch
   zusammenfassen) in `openml-adult-income/030_baseline.R`/
-  `040_preprocessing.R` demonstriert, noch nicht als Standardschritt ins
-  Template uebernommen (erst bei einem weiteren Projekt mit echten schiefen
-  Kategorien entscheiden, ob das generell sinnvoll ist).
+  `040_preprocessing.R` demonstriert.
+  - **`collapsefactors` als Template-Standard: ENTSCHIEDEN NEIN (2026-07-17,
+    warn-only)**. Ein Sicherheits-Check am Template-eigenen `health_condition`
+    (Frage: schadet ein `collapsefactors`-Default auf Daten, die ihn nicht
+    brauchen?) fand einen klaren Blocker: `health_condition`s Faktoren
+    enthalten ein Leerstring-Level `""`, und `po("collapsefactors")` wandelt
+    dieses beim Kollabieren in `NA` um (686 NAs in `diet_type`, exakt die
+    `""`-Level-Groesse). Die schlanke Baseline-Pipeline (`impute` ohne
+    vorherige `""`->NA-Umwandlung) reicht das `NA` an LDA/Multinom weiter ->
+    Absturz. `health_condition` laeuft heute nur, WEIL `030` kein
+    `collapsefactors` enthaelt; als Default wuerde es das Template-eigene
+    Projekt brechen (es sei denn, man zoege auch `040`s `empty_factor_to_na`
+    mit rein). Diese Kontext-Abhaengigkeit ist das Argument gegen einen
+    bedingungslosen Default. **Loesung bleibt `warn_rare_factor_levels()`**
+    (erkennen + warnen, projektweise entscheiden), NICHT ein globaler
+    Preprocessing-Schritt. Nebenbefund (Entwarnung): dieselben Parameter
+    kollabierten im Adult-Projekt korrekt/sanft (`native.country` 41->5 usw.,
+    0 NAs) - der `absolute=20`-Schutz greift dort, der `target_level_count=2`-
+    Boden bindet nicht. Adult-Ergebnisse sind also nicht kompromittiert.
+    `target_level_count` (Default 2) ist aber der eigentlich bindende
+    Parameter, wenn `absolute` nicht schuetzt - bei kuenftiger Nutzung von
+    `collapsefactors` beachten.
