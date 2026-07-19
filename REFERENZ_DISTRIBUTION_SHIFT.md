@@ -105,6 +105,15 @@ statt ihn zu korrigieren.
   Shift wieder herein.
 - **Robuste Aggregate** über die shift-/lücken-behaftete Achse (Mittel/Median/
   Range statt einzelner Positionen).
+- **Domänen-Literatur durchsuchen** — der produktivste faire Hebel im
+  Aquaculture-Fall waren *domänenspezifische invariante* Indizes aus der
+  Fernerkundungs-Literatur (Wasserqualitäts-Indizes NDTI/NDCI/NDAVI, +0.048 LB),
+  nicht generische. Für invariante Features ist der CV-Screen verlässlich → billig
+  vorzufiltern, sparsam am LB zu bestätigen.
+- **Zeitreihen-/Saison-Features (harmonisch, Amplitude/Phase) brauchen genug
+  temporale Dichte**: bei nur wenigen Stützpunkten pro Zeile (Aquaculture: 4-6
+  Monate) sind die Fits zu verrauscht und schaden eher (robuste Aggregate fangen
+  die Saison-Info dann schon).
 
 **Starke physikalische Features vs. Invarianz — und die CV kann nicht wählen.**
 Standard-Priorität bleibt *invariante* (normierte) Features. Aber ein starker,
