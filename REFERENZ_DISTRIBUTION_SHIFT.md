@@ -56,6 +56,28 @@ die Gewichte auf wenige Zeilen → Reweighting hochvariabel/nutzlos.
 > Reweighting NICHT hilft** — Train und Test sind fast disjunkt, es gibt keinen
 > gemeinsamen Träger, auf den man umgewichten könnte. (Aquaculture: ESS 2.6 %.)
 
+**Falls man doch gewichtet — der Balance-Check (Classifier Two-Sample Test).**
+Nach dem Gewichten die Adversarial Validation erneut fahren, jetzt auf dem
+**gewichteten** Train vs. Test: `AUC → 0.5` (bzw. gewichtete standardisierte
+Mittelwertdifferenzen → 0) bestätigt, dass die Gewichtung die Verteilungen
+angeglichen hat. Das ist ein **Classifier Two-Sample Test (C2ST)** bzw. die
+**Covariate-Balance-Diagnostik** aus der Propensity-Score-/IPW-Methodik
+(`P(test|x)` ist ein Propensity-Score; Adversarial Validation *ist* ein C2ST).
+
+**Aber: Balance ≠ Präzision — zwei verschiedene Diagnosen.**
+
+| Diagnose | prüft | Ergebnis bei uns |
+|---|---|---|
+| **ESS** | Varianz / Überlappung | 2.6 % → zu wenig effektive Daten |
+| **Balance-Check (C2ST)** | Bias / Matching | nur *nach* Gewichtung sinnvoll |
+
+Selbst ein perfekter Balance-AUC von 0.5 lässt das ESS-Problem bestehen: man wäre
+**„balanciert, aber nutzlos"** (Verteilungen angeglichen, aber auf ~47 effektive
+Punkte gestützt → riesige Varianz). Und bei fast fehlender Überlappung erreicht
+der Check die 0.5 gar nicht (gewichtetes Train = wenige Spitzen ≠ breite
+Test-Verteilung). → **ESS ist der billigere Vorab-Filter; sie entscheidet den
+Fall schon, bevor man die Gewichtungs-+Balance-Schleife durchläuft.**
+
 ---
 
 ## 3. Handeln — Invarianz statt Korrektur
@@ -113,7 +135,8 @@ Private-LB verschlechtern. Faustregeln:
 
 1. Shift vermutet? → gestufte Adversarial Validation (roh → aggregat → gleiche Achse).
 2. Positiv-Rate auf ungelabeltem Test vs. Train-Basisrate prüfen.
-3. Reweighting nur nach ESS-Check (`ESS/n` groß genug?).
+3. Reweighting nur nach ESS-Check (`ESS/n` groß genug?); falls gewichtet, mit
+   Balance-Check (C2ST, AUC→0.5) verifizieren — aber Balance ≠ Präzision.
 4. Sonst: gain-invariante Repräsentation + robuste Aggregate.
 5. Maskierungs-bewusste CV bauen — aber wissen, dass sie Shift-Robustheit nicht misst.
 6. Feature-Set-Entscheidung auf den Leaderboard verlagern.
