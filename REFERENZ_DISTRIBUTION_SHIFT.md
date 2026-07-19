@@ -40,6 +40,17 @@ AUC ≫ 0.5 = Shift. Gestuft, um die Ursache zu **zerlegen** (Vorlage: Aquacultu
 *ungelabelten* Test von der Train-Basisrate weg = Shift-Symptom, vor jeder
 Submission prüfbar.
 
+**Ordnung des Shifts bestimmen (linear vs. nichtlinear ± CORAL).** Zwei
+Diskriminatoren gegeneinander laufen lassen: ein *linearer* (glmnet/LDA, sieht
+~bis 2. Ordnung) und ein *nichtlinearer* (LightGBM). Optional die Train-Features
+per **CORAL** (Kovarianz auf Test ausrichten) vorbehandeln. Muster:
+- linearer AUC → 0.5, nichtlinearer bleibt hoch ⇒ Shift ist **höherer Ordnung /
+  auf Träger-Ebene** (Marginalen-Form, Interaktionen), nicht affin — affine
+  Verfahren (CORAL) helfen einem flexiblen Modell dann NICHT.
+- beide fallen ⇒ Shift war zweiter Ordnung, affine Ausrichtung reicht.
+(Aquaculture: linear 0.92 → 0.50 nach CORAL, LightGBM 0.98 → 0.96 → klar höherer
+Ordnung.)
+
 ---
 
 ## 2. Entscheidung — lohnt Importance-Weighting? (ESS-Gate)
@@ -95,6 +106,15 @@ statt ihn zu korrigieren.
 - **Robuste Aggregate** über die shift-/lücken-behaftete Achse (Mittel/Median/
   Range statt einzelner Positionen).
 
+**Warum nicht CORAL / affine Ausrichtung?** CORAL (Kovarianz-Alignment) und
+verwandte Moment-Matching-Verfahren korrigieren nur bis **2. Ordnung** und
+erzeugen — wie Reweighting — keine Überlappung, wo keine ist. Bei einem
+Shift höherer Ordnung (siehe §1-Diagnostik) rotiert/skaliert CORAL die Features
+nur; ein Baummodell trennt danach fast unverändert weiter (Aquaculture:
+LightGBM-Adversarial 0.98 → 0.96 trotz perfekt angeglichener Kovarianz). Nur die
+*nichtlineare* Umformung der Repräsentation (invariante Features) verschiebt
+wirklich etwas.
+
 ---
 
 ## 4. Validieren — die maskierungs-bewusste CV UND ihre Grenze
@@ -133,7 +153,9 @@ Private-LB verschlechtern. Faustregeln:
 
 ## 6. Checkliste (Kurzform)
 
-1. Shift vermutet? → gestufte Adversarial Validation (roh → aggregat → gleiche Achse).
+1. Shift vermutet? → gestufte Adversarial Validation (roh → aggregat → gleiche
+   Achse); Ordnung via linear vs. nichtlinear ± CORAL (höhere Ordnung ⇒ affine
+   Verfahren zwecklos).
 2. Positiv-Rate auf ungelabeltem Test vs. Train-Basisrate prüfen.
 3. Reweighting nur nach ESS-Check (`ESS/n` groß genug?); falls gewichtet, mit
    Balance-Check (C2ST, AUC→0.5) verifizieren — aber Balance ≠ Präzision.
