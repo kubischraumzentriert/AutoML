@@ -174,6 +174,14 @@ soll (Zielspalte entfernt, neue Binaerspalte `is_test`). Interpretation:
   diese Spalten mit Vorsicht behandeln (ggf. ausschliessen oder robuster
   kodieren), CV-basierte Entscheidungen in spaeteren Phasen kritischer pruefen.
 
+**Bei hartem oder strukturellem Shift** (AUC ~0.9+, oder wenn die Feature-
+Importance nicht auf einzelne Spalten reduzierbar ist) reicht die reine
+Importance-Betrachtung nicht - dann dem Playbook `REFERENZ_DISTRIBUTION_SHIFT.md`
+folgen: gestufte Shift-Zerlegung (roh -> missing-robuste Aggregate -> gleiche
+Achse), ESS-Gate vor Importance-Weighting, Invarianz statt Korrektur, und - der
+zentrale Punkt - die CV kann Shift-Robustheit NICHT bewerten, die Feature-Set-
+Wahl gehoert dann auf ein shift-exponiertes Set (Leaderboard/Holdout).
+
 Diese Phase bewusst VOR Feature Engineering/Tuning einordnen - ein Shift
 wuerde sonst alle nachfolgenden CV-Vergleiche unbemerkt verzerren.
 
