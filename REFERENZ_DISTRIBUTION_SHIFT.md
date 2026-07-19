@@ -123,6 +123,14 @@ Bildet die Test-Bedingung (z. B. Lücken) beim Training und in der Validierung n
 (Vorlage: `masking.R`, `PipeOpMonthMask` mit getrennten Flags `mask_on_train` /
 `mask_on_predict`; Aggregate laufen NACH der Maskierung, sonst Leak).
 
+**Die Trainings-Maskierung ist essenziell, nicht optional** (empirisch, `039`):
+Ein Modell OHNE Maskierung lernt auf den vollen Daten und verlässt sich auf genau
+die Teile (z. B. Monate), die im Test fehlen — auf den lückigen Testdaten brechen
+seine Prognosen dann zusammen. Beleg (Aquaculture, test-artige Validierung):
+mask-train score-est 0.97 → ohne mask-train 0.85 → ohne mask + nur Rohpositionen
+0.61 (Positiv-Rate kollabiert auf 0.11). Die Maskierung ist die Augmentation, die
+dem Modell den Umgang mit den Lücken beibringt.
+
 **Kardinale Grenze — unbedingt merken:**
 
 > **Eine aus Train gebaute CV kann Shift-Robustheit NICHT bewerten.** Sie
