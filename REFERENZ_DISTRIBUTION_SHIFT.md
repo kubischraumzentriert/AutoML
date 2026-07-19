@@ -106,6 +106,20 @@ statt ihn zu korrigieren.
 - **Robuste Aggregate** über die shift-/lücken-behaftete Achse (Mittel/Median/
   Range statt einzelner Positionen).
 
+**Starke physikalische Features vs. Invarianz — und die CV kann nicht wählen.**
+Standard-Priorität bleibt *invariante* (normierte) Features. Aber ein starker,
+physikalisch begründeter Diskriminator kann imperfekte Invarianz **schlagen**,
+wenn die Störgröße, gegen die er nicht invariant ist, **klein** ist — und
+**schaden**, wenn sie groß ist. Beleg (Aquaculture, gleiche maskierte CV, gleicher
+Learner): **SDWI** (radar-basierter Wasser-Index ~VH+VV; Sentinel-1-Offsets klein)
+brachte **+0.036** LB; **AWEI** (optische Linearkombo; optische Bänder shiften
+stark) **−0.005** LB — obwohl die CV AWEI *stärker* favorisierte (+0.0031 vs.
++0.0013). Die CV kann also NICHT vorhersagen, welches nicht-invariante Feature
+transferiert. Konsequenz: nicht-invariante Features sind teure, unvorhersehbare
+Wetten (jede kostet einen echten LB-Slot); radar-/geometrie-basierte sind eher
+sicher (kleine Störgröße), rohe optische Linearkombinationen eher nicht. Normierte
+Ratio-Formen bleiben der risikoarme Default.
+
 **Warum nicht CORAL / affine Ausrichtung?** CORAL (Kovarianz-Alignment) und
 verwandte Moment-Matching-Verfahren korrigieren nur bis **2. Ordnung** und
 erzeugen — wie Reweighting — keine Überlappung, wo keine ist. Bei einem
