@@ -114,6 +114,16 @@ statt ihn zu korrigieren.
   temporale Dichte**: bei nur wenigen Stützpunkten pro Zeile (Aquaculture: 4-6
   Monate) sind die Fits zu verrauscht und schaden eher (robuste Aggregate fangen
   die Saison-Info dann schon).
+- **Varianzreduktion/Bagging hilft unter Shift MEHR als die CV zeigt.** Ein
+  Seed-/Augmentations-Ensemble derselben besten Pipeline (gleiche Features/Learner,
+  mehrere Zufalls-/Maskierungs-Ziehungen, Wahrscheinlichkeiten gemittelt) ist der
+  sauberste Rest-Hebel - Varianzreduktion, kein Feature-Raten, kein LB-Fischen.
+  Unter Shift sind Einzelmodelle instabiler, das Mitteln zahlt sich am geshifteten
+  Test STÄRKER aus als am Train-Holdout (Aquaculture: LB +0.013 vs. treuer,
+  TTA-freier Screen +0.0029). Achtung beim Screenen: wenn jeder Zweig die
+  Validierung eigenständig maskiert, entsteht ein TTA-Confound, der den Nutzen
+  überschätzt - für die realistische Deploy-Schätzung die Validierung EINMAL
+  maskieren und über alle Zweige teilen.
 
 **Starke physikalische Features vs. Invarianz — und die CV kann nicht wählen.**
 Standard-Priorität bleibt *invariante* (normierte) Features. Aber ein starker,
