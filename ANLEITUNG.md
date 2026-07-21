@@ -185,6 +185,28 @@ Wahl gehoert dann auf ein shift-exponiertes Set (Leaderboard/Holdout).
 Diese Phase bewusst VOR Feature Engineering/Tuning einordnen - ein Shift
 wuerde sonst alle nachfolgenden CV-Vergleiche unbemerkt verzerren.
 
+## Phase 5b: Probability-Kalibrierung vormerken
+
+Wenn die Wettbewerbsmetrik LogLoss/Brier oder eine Multi-Metric-Kombination mit
+LogLoss enthaelt, ist Kalibrierung ein spaeterer sauberer Hebel. Nicht vor den
+Baselines anwenden, aber frueh vormerken:
+
+- Alle relevanten Learner mit `predict_type = "prob"` trainieren.
+- Neben AUC auch LogLoss/Brier und mittlere vorhergesagte Wahrscheinlichkeit
+  tracken.
+- Nach Modell-/Feature-Auswahl OOF-Vorhersagen erzeugen und eine monotone
+  Kalibrierung testen.
+
+Fuer Details siehe `REFERENZ_PROBABILITY_CALIBRATION.md`. Wichtigster Punkt:
+Kalibrierung nie auf denselben Zeilen bewerten, auf denen sie gefittet wurde.
+Platt-Kalibrierung ist:
+
+```text
+p_cal = sigmoid(a + b * logit(p_raw))
+```
+
+Dabei sind `logit` und `sigmoid` Umkehrfunktionen, nicht dasselbe.
+
 ## Phase 6: Feature Engineering (optional, `025`/`035`-`038`)
 
 Nur durchfuehren, wenn Phase 4 (Baselines) noch klar unterhalb einer
