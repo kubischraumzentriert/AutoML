@@ -207,6 +207,12 @@ p_cal = sigmoid(a + b * logit(p_raw))
 
 Dabei sind `logit` und `sigmoid` Umkehrfunktionen, nicht dasselbe.
 
+Fairness-Regel fuer Wettbewerbe: Wenn ein lokal/OOF validierter Kalibrierungs-
+oder Ensemble-Kandidat einmal auf dem Leaderboard bestaetigt wurde, nicht weiter
+mit sehr aehnlichen Nachbarvarianten nachlegen. Weitere Submissions brauchen eine
+neue methodische Idee; reine Mikrovarianten wie minimale Regularisierungswerte,
+Clipping-Schwellen oder Temperaturwerte sind sonst schnell Leaderboard-Fitting.
+
 ## Phase 6: Feature Engineering (optional, `025`/`035`-`038`)
 
 Nur durchfuehren, wenn Phase 4 (Baselines) noch klar unterhalb einer

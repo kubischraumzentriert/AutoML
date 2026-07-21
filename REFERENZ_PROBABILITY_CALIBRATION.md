@@ -158,6 +158,28 @@ slope     = 1.12842835
 Lehre: Bei Probability-Challenges mit LogLoss-Anteil kann monotone
 Kalibrierung ein sauberer, leaderboard-bestaetigter Hebel sein.
 
+Ein spaeter kleiner Regularisierungsschritt (`lambda_l2 = 5`) wurde zuerst lokal
+gegen das bestehende Ensemble gescreent und danach mit eigener OOF-Platt-
+Kalibrierung gerechnet:
+
+| Kalibrierung | LogLoss | AUC | Mean Prob |
+|---|---:|---:|---:|
+| OOF Platt l2=5 | 0.266443 | 0.891031 | 0.150000 |
+| Raw OOF l2=5 | 0.268277 | 0.891031 | 0.139626 |
+| bisheriger OOF Platt | 0.267171 | 0.890448 | 0.150000 |
+
+Leaderboard-Bestaetigung:
+
+```text
+OOF Platt ohne l2: 0.696598220
+OOF Platt mit l2=5: 0.697156440
+```
+
+Wichtig ist die Reihenfolge: erst lokale/OOF-Evidenz, dann eine begruendete
+Submission. Nach der Bestaetigung wurde bewusst gestoppt, statt weitere
+Nachbarschaftswerte (`lambda_l2 = 3/8/10`) oder minimale Clipping-/Temperatur-
+Varianten ans Leaderboard zu schicken.
+
 ---
 
 ## 7. Entscheidungsregel
@@ -173,3 +195,7 @@ Kalibrierung als Submission-Kandidat nur verwenden, wenn:
 Nicht mehrere kleine Kalibrierungsvarianten ans Leaderboard schicken. Erst lokal
 OOF entscheiden, dann eine begruendete Submission.
 
+Wenn ein lokal validierter Kandidat auf dem Leaderboard bestaetigt wurde, ist
+ein expliziter Stopp fairer als eine Serie sehr aehnlicher Nachtests. Weitere
+Submissions brauchen eine neue methodische Idee, nicht nur einen Nachbarwert
+eines bereits bestaetigten Reglers.
