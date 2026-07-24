@@ -40,7 +40,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `100_lightgbm_tuning.R` | Bayesian-Optimization-Tuning fuer LightGBM (`mlr3mbo`), Finalvergleich per CV |
 | `105_lightgbm_class_weights.R` | Vergleicht balancierte Klassengewichte (`power`-Stufen 0 bis 1) fuer LightGBM per CV, inkl. Konfusionsmatrizen |
 | `110_lightgbm_feature_family_benchmark.R` | Wiederholt den Feature-Family-Vergleich (wie `036`) fuer LightGBM mit der aktuellen `class_weight_power`-Gewichtung |
-| `115_adversarial_validation.R` | Prueft per Adversarial Validation, ob Train und Test unterscheidbar sind (AUC + Feature Importance) |
+| `115_adversarial_validation.R` | Prueft per Adversarial Validation, ob Train und Test unterscheidbar sind (AUC + Feature Importance); zusaetzlich ESS/n der OOF-Propensity-Gewichte (Reweighting-Machbarkeit) und optionale Stufen (`adversarial_staged_exclude`), die verdaechtige Feature-Gruppen ausschliessen, um die Shift-treibende Gruppe zu isolieren |
 | `120_lightgbm_empty_string_preprocessing.R` | Vergleicht `""` behalten vs. `"" -> NA -> Imputation` fuer LightGBM (aktuelle `class_weight_power`-Gewichtung), per CV |
 | `125_catboost_benchmark.R` | Vergleicht CatBoost gegen LightGBM (beide mit aktueller `class_weight_power`-Gewichtung, Rohfeatures, CV) |
 | `130_threshold_tuning.R` | Sucht post-hoc Klassengewichte auf den Wahrscheinlichkeiten (`argmax(prob * weight)`) auf einem Tune-Split, vergleicht mit `class_weight_power` |

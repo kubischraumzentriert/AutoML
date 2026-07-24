@@ -80,6 +80,35 @@ cat("\nGespeichert:\n")
 cat("Ergebnisse:", adversarial_validation_results_path, "\n")
 cat("Importance:", adversarial_validation_importance_path, "\n")
 
+# --- ESS + gestufte Adversarial Validation (Rueckfuehrung aus Regression-018) --
+# ESS/n der OOF-Propensity-Gewichte (Reweighting-Machbarkeit) direkt aus einem
+# separaten resample() berechnet; optionale Stufen isolieren den Rest-Shift ohne
+# verdaechtige Feature-Gruppen. Additiv - beruehrt das bestehende Benchmark/DB-
+# Logging nicht; Default (adversarial_staged_exclude = list()) = nur Gesamt-AUC/ESS.
+compute_auc_ess <- function(task_adv) {
+  rr <- resample(task_adv, learner_adversarial$clone(deep = TRUE),
+                 rsmp("cv", folds = adversarial_validation_cv_folds))
+  pred <- rr$prediction()
+  p <- pred$prob[, "1"]; truth <- pred$truth == "1"
+  r <- rank(p, ties.method = "average")
+  n1 <- as.numeric(sum(truth)); n0 <- as.numeric(sum(!truth))  # numeric: n1*n0 sonst int-Overflow
+  auc <- (sum(r[truth]) - n1 * (n1 + 1) / 2) / (n1 * n0)
+  ptr <- pmin(0.999, pmax(0.001, p[!truth])); w <- ptr / (1 - ptr)
+  list(auc = auc, ess_ratio = (sum(w)^2 / sum(w^2)) / length(w))
+}
+base_ae <- compute_auc_ess(task_adversarial)
+staged <- data.table(stage = "all_features", auc = base_ae$auc, ess_ratio = base_ae$ess_ratio)
+for (nm in names(adversarial_staged_exclude)) {
+  keep <- setdiff(task_adversarial$feature_names, adversarial_staged_exclude[[nm]])
+  s <- compute_auc_ess(task_adversarial$clone(deep = TRUE)$select(keep))
+  staged <- rbind(staged, data.table(stage = paste0("ohne_", nm), auc = s$auc, ess_ratio = s$ess_ratio))
+}
+fwrite(staged, adversarial_staged_results_path)
+cat("\n=== Gestufte Adversarial Validation + ESS ===\n")
+print(staged)
+cat("ESS/n klein => Reweighting instabil/nutzlos; AUC-Abfall ueber Stufen zeigt die Shift-treibende Gruppe.\n")
+cat("Gestuft:", adversarial_staged_results_path, "\n")
+
 # --- Experiment-Tracking (SQLite) ------------------------------------------
 db_con <- db_connect()
 db_proj_id <- db_get_or_create_project(db_con, project_name)

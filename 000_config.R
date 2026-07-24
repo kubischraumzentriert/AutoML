@@ -143,6 +143,15 @@ adversarial_validation_importance_path <- file.path(artifact_dir, "adversarial_v
 adversarial_validation_iterations <- 100
 adversarial_validation_cv_folds <- 3
 
+# Gestufte Adversarial Validation + ESS (rueckgefuehrt aus dem Regression-018 /
+# credit-scoring-015): ESS/n der OOF-Propensity-Gewichte zeigt, ob Reweighting
+# stabil waere (klein => nutzlos); optionale Stufen schliessen verdaechtige
+# Feature-Gruppen aus, um zu sehen, welche den Shift treibt. Als benannte Liste
+# Gruppenname -> Spaltenvektor, z.B. list(ids = c("lender_id","country_id")).
+# Default leer -> nur Gesamt-AUC/ESS, kein Eingriff ins bestehende Benchmark/DB.
+adversarial_staged_exclude <- list()
+adversarial_staged_results_path <- file.path(artifact_dir, "adversarial_staged_results.csv")
+
 lightgbm_empty_string_results_path <- file.path(artifact_dir, "lightgbm_empty_string_results.csv")
 
 catboost_results_path <- file.path(artifact_dir, "catboost_results.csv")
