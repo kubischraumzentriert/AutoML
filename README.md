@@ -210,6 +210,26 @@ Fuer hochkardinale kategoriale Spalten, die sonst gedroppt oder grob per `collap
 
 Robustheits-Nebenbefund: Target-Encoding mit `impute_zero=TRUE` war im A/B das einzige Encoding, das unter CV ohne zusaetzliche Absicherung durchlief - One-Hot (via `fixfactors`) und `collapsefactors` stuerzten an einem seltenen, per CV nur im Validierungs-Fold auftretenden Level ab. Details siehe `openml-adult-income/TEMPLATE_FRICTION.md` #3.
 
+### Optionales Modul: Entitaets-Zeit-Historie (`features/entity_history.R`)
+
+Fuer **Panel-/Forecasting-Daten** (dieselbe Entitaet — z.B. Kunde, Ort — mit
+mehreren Zeilen ueber Zeit) bietet `features/entity_history.R` einen generischen,
+zeit-respektierenden Historie-Helper `add_entity_history()`. Er aggregiert je
+Entitaet nur VERGANGENE Ereignisse (strikt vor der Zeit der aktuellen Zeile); die
+Target-Historie zaehlt nur vergangene GELABELTE Ereignisse (Test-Prioren haben
+`target = NA`). Dadurch **leak-frei by construction** und exakt die Test-Situation
+gespiegelt.
+
+Erzeugt: `n_prior`, `time_since_last`, je Wert `prior_<v>_last/_mean/_mean_w{k}`,
+`ratio_<v>_to_prior`; bei Target zusaetzlich `prior_target_rate(_w{k})`,
+`prior_target_ever`, `time_since_last_positive`.
+
+**Kein Default — nur fuer Panel-/Forecasting-Daten**, nicht fuer i.i.d.-Tabellen.
+Rueckgefuehrt aus zwei unabhaengigen Faellen (geoai-drought Regression
+"legal-history"; african-credit-scoring Kunden-Default-Historie, wo
+`prior_default_rate` das dominante leak-freie Signal war und das Threshold-Tuning
+die Klassengewichtung subsumierte).
+
 ## Feature-Family-Benchmark
 
 `036_feature_family_benchmark.R` vergleicht den Roh-Task, jede Feature-Familie einzeln und den kombinierten Feature-Task mit denselben drei Baseline-Modellen:
