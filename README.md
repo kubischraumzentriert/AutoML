@@ -235,6 +235,24 @@ Duplikate mit Zeit-/Ziel-Variation). Manche Datensaetze sehen panel-faehig aus
 (Entitaets-ID + Datum), sind aber querschnittlich (jede Entitaet einmal), dann ist
 der Helper wirkungslos (Beleg: `drivendata-pump-it-up`, per Duplikat-Check verworfen).
 
+### Optionales Modul: ordinale Ziele + Quadratic Weighted Kappa (`ordinal_qwk.R`)
+
+Fuer **ordinale Ziele** (geordnete Klassen, z.B. Ratings) mit einer nicht-
+zerlegbaren, ordnungssensitiven Metrik (**QWK**) - ein Fall, den Multiclass falsch
+behandelt (ignoriert die Ordnung). `ordinal_qwk.R` bietet:
+- **`qwk(truth, response)`** - Quadratic Weighted Kappa (quadratische Gewichte).
+- **`optimize_ordinal_thresholds(pred, truth, levels)`** / `apply_ordinal_thresholds()`
+  - der bewaehrte Ansatz: das Ziel als **Regression** vorhersagen und die
+  kontinuierliche Ausgabe **QWK-optimal in ordinale Klassen runden** (Schnittpunkte
+  per Nelder-Mead auf -QWK gesucht).
+
+**Kernlektion (playground-s3e5 wine-quality):** bei nicht-zerlegbaren Metriken auf
+die ECHTE Metrik optimieren, nicht auf einen bequemen Proxy - QWK-naiv-gerundetes
+Tuning, MSE-basierte `cv_glmnet`-lambda-Wahl und MSE-Stacking fuehrten alle in die
+Irre. Regression+QWK-Runden schlug Multiclass (0.526 vs 0.469); SVR war auf den
+kleinen, dichten, numerischen Daten der staerkste Learner. Optionaler Baustein,
+vom Standard-Workflow nicht gesourct (rueckwirkungsfrei).
+
 ## Feature-Family-Benchmark
 
 `036_feature_family_benchmark.R` vergleicht den Roh-Task, jede Feature-Familie einzeln und den kombinierten Feature-Task mit denselben drei Baseline-Modellen:
