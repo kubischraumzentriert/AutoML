@@ -15,6 +15,13 @@ suppressPackageStartupMessages(library(data.table))
 # NUR fuer Panel-/Forecasting-Daten (wiederholte Entitaeten ueber Zeit), NICHT
 # fuer i.i.d.-Tabellen. Optionaler Baustein; vom Standard-Workflow nicht genutzt.
 #
+# ANWENDBARKEIT ZUERST PRUEFEN: dass die Daten wirklich Panel sind (Entitaets-
+# Duplikate mit Zeit-/Ziel-Variation). Manche Datensaetze sehen panel-faehig aus
+# (Entitaets-ID + Datum), sind aber QUERSCHNITTLICH (jede Entitaet einmal) - dann
+# ist dieser Helper wirkungslos. Beleg: drivendata-pump-it-up (Pumpen mit
+# construction_year/date_recorded, aber 0 Standorte mit Status-Wechsel -> kein
+# Panel; die Reparatur-Historie-Hypothese wurde per Duplikat-Check verworfen).
+#
 # Argumente:
 #   dt            data.table (unveraendert; gibt eine erweiterte Kopie zurueck).
 #   entity_cols   Spalte(n), die eine Entitaet identifizieren (z.B. "customer_id").

@@ -230,6 +230,11 @@ Rueckgefuehrt aus zwei unabhaengigen Faellen (geoai-drought Regression
 `prior_default_rate` das dominante leak-freie Signal war und das Threshold-Tuning
 die Klassengewichtung subsumierte).
 
+**Anwendbarkeit zuerst pruefen** — dass die Daten wirklich Panel sind (Entitaets-
+Duplikate mit Zeit-/Ziel-Variation). Manche Datensaetze sehen panel-faehig aus
+(Entitaets-ID + Datum), sind aber querschnittlich (jede Entitaet einmal), dann ist
+der Helper wirkungslos (Beleg: `drivendata-pump-it-up`, per Duplikat-Check verworfen).
+
 ## Feature-Family-Benchmark
 
 `036_feature_family_benchmark.R` vergleicht den Roh-Task, jede Feature-Familie einzeln und den kombinierten Feature-Task mit denselben drei Baseline-Modellen:
