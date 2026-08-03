@@ -292,3 +292,29 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     `target_level_count` (Default 2) ist aber der eigentlich bindende
     Parameter, wenn `absolute` nicht schuetzt - bei kuenftiger Nutzung von
     `collapsefactors` beachten.
+- **Per-Klassen-gewichteter Ensemble-Blend (2nd-place-SLSQP-Schritt) fuer
+  Multiklassen-BAcc** - Anlass: 2nd-Place-Writeup zu `playground-series-s6e7`
+  (health_condition, "Trusting CV & Mathematical Precision"). Deren zwei Hebel:
+  (1) per-Klassen-optimierte Blend-Gewichte (SLSQP, LogLoss-minimierend) ueber
+  viele Basismodelle, dann (2) metrik-optimale Klassen-Multiplikatoren
+  (Nelder-Mead) auf dem Blend. **Hebel (2) ist bereits ERLEDIGT** (commit
+  70745fb: `class_multiplier_tuning.R`, kontinuierlicher Optimizer in `130` -
+  auf health_condition-OOF raw argmax 0.872 -> 0.945, +0.074; der groesste
+  Einzelhebel, unabhaengig vom Ensemble). **Offen ist Hebel (1)**, der
+  per-Klassen-Blend. Prototypisch gegen health_condition-OOF (10%-Subset,
+  LightGBM + ranger, identische Folds, je + Multiplikatoren) gemessen:
+  Multiplikator uebertraegt sich voll aufs Ensemble (+0.077 BAcc); ein
+  GLEICHGEWICHTETES 2-Modell-Ensemble schlaegt das beste Einzelmodell aber
+  NICHT (0.9449 vs 0.9454, Verwaesserung durch das schwaechere ranger); der
+  per-Klassen-GEWICHTETE Blend behebt das (LogLoss 0.1040 -> 0.1000, BAcc
+  +0.0005 ueber bestem Einzel, gelernte LightGBM-Gewichte je Klasse
+  0.98/0.85/0.81). **Technik bestaetigt korrekt, aber Payoff an der
+  Rauschgrenze** mit zwei korrelierten Baummodellen - wie schon beim
+  Logits-Stacking-Eintrag oben (correlated bases). Der reale Sieger-Gewinn
+  kam von echter DIVERSITAET (18 Modelle inkl. FT-Transformer, das das
+  groesste Blend-Gewicht bekam), nicht vom Blend-Verfahren allein. Vorschlag:
+  erst ein diverses, nicht-baumbasiertes Mitglied (mlr3torch: FT-Transformer/
+  RealMLP) in den Benchmark aufnehmen, dann den per-Klassen-Blend (als
+  `140_weighted_blend.R`, Softmax-Gewichte je Klasse, LogLoss-optimiert)
+  gegen das beste Einzelmodell messen. Erst bei klarem Gewinn ODER 2-Projekt-
+  Bestaetigung zurueckfuehren.
