@@ -318,3 +318,25 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   `140_weighted_blend.R`, Softmax-Gewichte je Klasse, LogLoss-optimiert)
   gegen das beste Einzelmodell messen. Erst bei klarem Gewinn ODER 2-Projekt-
   Bestaetigung zurueckfuehren.
+- **Exact-value Target-Encoding auch auf NUMERISCHE Spalten (synthetische
+  Daten)** - Anlass: 4th-Place-Writeup zu `playground-series-s6e7`. Der
+  synthetische Generator resampelt Werte aus endlichem Support, daher wiederholen
+  sich auch numerische Werte und verhalten sich wie hochkardinale Kategorien.
+  Idee: fuer jede Spalte (kategorisch UND numerisch) x jede Klasse die
+  fold-lokale bedingte Klassenwahrscheinlichkeit des EXAKTEN Werts als Feature
+  (bei s6e7: 13 Spalten x 3 Klassen = 39 Features). Leck-sicher (Encoder nur auf
+  Trainings-Fold, Trainings-Encodings selbst out-of-fold). Bescheidener, aber
+  unabhaengig bestaetigter Gewinn (XGBoost OOF 0.9489 -> 0.9496). Passt in
+  `features/target_encoding.R` (das bisher nur Kategorien behandelt), aktivierbar
+  fuer numerische Spalten mit vielen Wiederholungen. Playground-/synthetik-typisch
+  -> vor Aktivierung pruefen, ob numerische Werte tatsaechlich stark wiederholen.
+- **Screening-Falle: hochkardinale/statistik-basierte Features NICHT auf einem
+  Zeilen-Subset screenen** - Anlass: 4th-Place-Writeup. Das exact-value-TE-Feature
+  sah auf einem 70k-Zeilen-Screen -0.0017, auf vollen Daten aber +0.0012 - das
+  Vorzeichen drehte. Per-Wert-Statistiken brauchen genug Wiederholungen; ein
+  `subset_fraction`-Subset (wir: 0.10) zerstoert genau das. **Regel: zum
+  Verbilligen Folds/Epochen reduzieren, nicht Zeilen** - gilt fuer Target-/
+  Frequency-Encoding und alles, was auf hochkardinalen Zaehlungen beruht. (Reine
+  Multiplikator-/Prior-Korrektur ist davon NICHT betroffen: Klassen-Priors bleiben
+  unter stratifiziertem Subsetting erhalten - deshalb war der `130`-Test auf 10%
+  aussagekraeftig, der TE-Test waere es nicht.)
