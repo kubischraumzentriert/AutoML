@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
+source(file.path(project_dir, "class_multiplier_tuning.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -45,28 +46,11 @@ for (cl in classes) {
   eval_ids <- c(eval_ids, ids[(n_train + n_tune + 1):n])
 }
 
-# Sucht Klassengewichte (argmax(prob * weight)), die BAcc auf `probs`/`truth`
-# maximieren. Eine Klasse bleibt bei Gewicht 1 fixiert (nur Verhaeltnisse
-# zaehlen).
-search_class_weights <- function(probs, truth, classes, grid) {
-  best_bacc <- -Inf
-  best_weights <- setNames(rep(1, length(classes)), classes)
-
-  grid_combinations <- expand.grid(replicate(length(classes) - 1, grid, simplify = FALSE))
-
-  for (i in seq_len(nrow(grid_combinations))) {
-    weights <- setNames(c(1, as.numeric(grid_combinations[i, ])), classes)
-    weighted_probs <- sweep(probs, 2, weights[colnames(probs)], `*`)
-    pred <- factor(colnames(weighted_probs)[max.col(weighted_probs, ties.method = "first")], levels = classes)
-    current_bacc <- bacc(truth, pred)
-    if (current_bacc > best_bacc) {
-      best_bacc <- current_bacc
-      best_weights <- weights
-    }
-  }
-
-  list(weights = best_weights, bacc = best_bacc)
-}
+# Klassen-Multiplikator-Suche (argmax(prob * multiplier), BAcc-maximierend)
+# liegt jetzt im wiederverwendbaren Modul class_multiplier_tuning.R:
+# tune_class_multipliers() nutzt das Grid (threshold_tuning_weight_grid) als
+# robusten STARTPUNKT und verfeinert kontinuierlich (Nelder-Mead) - das Grid
+# lief bei stark unbalancierten Zielen frueher in seine Obergrenze (6/6).
 
 evaluate_variant <- function(label, task_for_training) {
   learner <- lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations)
@@ -76,28 +60,27 @@ evaluate_variant <- function(label, task_for_training) {
   pred_tune <- learner$predict(task_for_training, row_ids = tune_ids)
   pred_eval <- learner$predict(task_for_training, row_ids = eval_ids)
 
-  probs_tune <- pred_tune$prob
-  probs_eval <- pred_eval$prob
-  truth_tune <- pred_tune$truth
-  truth_eval <- pred_eval$truth
+  probs_tune <- pred_tune$prob[, classes, drop = FALSE]
+  probs_eval <- pred_eval$prob[, classes, drop = FALSE]
+  truth_eval <- factor(as.character(pred_eval$truth), levels = classes)
 
   plain_bacc <- bacc(truth_eval, pred_eval$response)
   plain_mcc <- mcc(truth_eval, pred_eval$response)
 
-  search_result <- search_class_weights(probs_tune, truth_tune, classes, threshold_tuning_weight_grid)
-
-  weighted_probs_eval <- sweep(probs_eval, 2, search_result$weights[colnames(probs_eval)], `*`)
-  tuned_pred_eval <- factor(colnames(weighted_probs_eval)[max.col(weighted_probs_eval, ties.method = "first")], levels = classes)
-  tuned_bacc <- bacc(truth_eval, tuned_pred_eval)
-  tuned_mcc <- mcc(truth_eval, tuned_pred_eval)
+  # Multiplikatoren NUR auf dem Tune-Split suchen, auf dem Eval-Split anwenden.
+  tune_res <- tune_class_multipliers(probs_tune, pred_tune$truth, classes,
+                                     grid = threshold_tuning_weight_grid)
+  grid_pred_eval <- apply_class_multipliers(probs_eval, tune_res$grid_multipliers, classes)
+  cont_pred_eval <- apply_class_multipliers(probs_eval, tune_res$multipliers, classes)
 
   data.table(
     variante = label,
     bacc_plain = plain_bacc,
     mcc_plain = plain_mcc,
-    bacc_tuned = tuned_bacc,
-    mcc_tuned = tuned_mcc,
-    gewichte = paste(sprintf("%s=%.1f", names(search_result$weights), search_result$weights), collapse = ", ")
+    bacc_grid = bacc(truth_eval, grid_pred_eval),
+    bacc_tuned = bacc(truth_eval, cont_pred_eval),
+    mcc_tuned = mcc(truth_eval, cont_pred_eval),
+    gewichte = paste(sprintf("%s=%.2f", names(tune_res$multipliers), tune_res$multipliers), collapse = ", ")
   )
 }
 
@@ -108,16 +91,19 @@ results <- rbindlist(list(
 
 fwrite(results, threshold_tuning_results_path)
 
-cat("=== Schwellenwert-Tuning: argmax(prob) vs. argmax(prob * Gewicht) ===\n")
+cat("=== Multiklassen-Schwellenwert-Tuning: plain vs. Grid vs. kontinuierlich ===\n")
 print(results)
+cat(sprintf("\nKontinuierlich vs. Grid (BAcc): %+.4f / %+.4f (je Variante).\n",
+            results$bacc_tuned[1] - results$bacc_grid[1],
+            results$bacc_tuned[2] - results$bacc_grid[2]))
 cat("\nGespeichert:", threshold_tuning_results_path, "\n")
 
 # --- Experiment-Tracking (SQLite) ------------------------------------------
 # Kein run_timed_benchmark()-Ergebnis (custom Train/Tune/Eval-Split statt CV/
 # Holdout), daher manuelles Logging statt db_log_timed_benchmark(). Pro
-# Variante (ungewichtet/power) werden zwei model_configs angelegt - "plain"
-# (argmax(prob)) und "tuned" (argmax(prob * Gewicht)) - damit beide
-# Bewertungsvarianten unabhaengig abfragbar sind.
+# Variante (ungewichtet/power) werden drei model_configs angelegt - "plain"
+# (argmax(prob)), "tuned_grid" (Grid-Multiplikatoren) und "tuned_continuous"
+# (kontinuierlich verfeinert) - damit alle drei unabhaengig abfragbar sind.
 db_con <- db_connect()
 db_proj_id <- db_get_or_create_project(db_con, project_name)
 db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "130_threshold_tuning.R")
@@ -147,13 +133,22 @@ for (i in seq_len(nrow(results))) {
   db_log_metric_result(db_con, mconf_plain, db_rsmp_id, "classif.bacc", results$bacc_plain[i])
   db_log_metric_result(db_con, mconf_plain, db_rsmp_id, "classif.mcc", results$mcc_plain[i])
 
+  mconf_grid <- db_create_model_config(
+    db_con, db_run_id,
+    task_type = "classif", algorithm = "lightgbm", feature_set = "raw",
+    preprocessing = "none", class_weight_power = power, task_id = task_train_small$id,
+    hyperparams = list(num_iterations = lightgbm_tuning_final_iterations,
+                       threshold_strategy = "tuned_grid")
+  )
+  db_log_metric_result(db_con, mconf_grid, db_rsmp_id, "classif.bacc", results$bacc_grid[i])
+
   mconf_tuned <- db_create_model_config(
     db_con, db_run_id,
     task_type = "classif", algorithm = "lightgbm", feature_set = "raw",
     preprocessing = "none", class_weight_power = power, task_id = task_train_small$id,
     hyperparams = list(
       num_iterations = lightgbm_tuning_final_iterations,
-      threshold_strategy = "tuned",
+      threshold_strategy = "tuned_continuous",
       tuned_weights = results$gewichte[i]
     )
   )
