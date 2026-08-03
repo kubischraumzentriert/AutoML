@@ -16,9 +16,11 @@
 # schlechter werden als das Grid-Optimum).
 #
 # Bestaetigt an s6e7/health_condition (3-Klassen/BAcc, OOF): raw argmax
-# 0.872 -> Grid 0.937 -> kontinuierlich 0.946 (Grid rannte in 6/6, der
-# Optimizer fand fit ~20-38, unhealthy ~14-19). Vgl. 2nd-place-Loesung
-# (Nelder-Mead-Multiplikatoren als groesster Einzelhebel, +0.06 BAcc).
+# 0.872 -> Grid 0.936 -> Prior-Korrektur 1/prior 0.943 -> kontinuierlich 0.945
+# (Grid rannte in seine Decke 6/6; 1/prior liegt tuning-frei richtig und
+# schlaegt das Grid; der Optimizer holt nur noch +0.002 obendrauf). Vgl.
+# 2nd-place (getunte Multiplikatoren) und 4th-place (argmax(p/prior)) von
+# s6e7 - beide mit dem Metrik-aligned Entscheidungsschritt als groesstem Hebel.
 
 suppressPackageStartupMessages({
   library(mlr3measures)
@@ -40,6 +42,22 @@ apply_class_multipliers <- function(probs, multipliers, classes = colnames(probs
   factor(classes[max.col(wp, ties.method = "first")], levels = classes)
 }
 
+#' Prior-Korrektur in geschlossener Form: Multiplikatoren = 1 / Klassen-Prior,
+#' auf die Mehrheitsklasse (Faktor 1) normiert. `argmax(prob / prior)` ist die
+#' Bayes-optimale Entscheidungsregel fuer Balanced Accuracy (Makro-Recall) bei
+#' gut kalibrierten Wahrscheinlichkeiten - Zero-Tuning, kein Tune/Eval-Split
+#' noetig. Warnung: NICHT mit Trainings-Klassengewichtung stapeln (beide loesen
+#' dasselbe Problem -> Ueberkorrektur der Minderheitsklassen). Auf UNgewichtete
+#' Modelle anwenden. Verifiziert an s6e7/health_condition: schlaegt die reine
+#' Grid-Suche und liefert ~97% des Multiplikator-Hebels ohne Optimierung.
+#' @param truth Faktor der Trainings-/Tune-Labels (liefert die Priors).
+prior_correction_multipliers <- function(truth, classes = levels(truth)) {
+  truth <- factor(as.character(truth), levels = classes)
+  prior <- as.numeric(table(truth)[classes]) / length(truth)
+  ref <- which.max(prior)                       # Mehrheitsklasse -> Faktor 1
+  setNames(prior[ref] / prior, classes)
+}
+
 #' Sucht metrik-optimale Klassen-Multiplikatoren.
 #'
 #' Referenzklasse (die haeufigste in `truth`) bleibt bei Faktor 1 fixiert -
@@ -51,7 +69,8 @@ apply_class_multipliers <- function(probs, multipliers, classes = colnames(probs
 #' @param grid  Grid fuer die uebrigen Klassen (robuster Startpunkt/Fallback).
 #' @param extra_starts optionale weitere Startpunkte (Liste benannter Vektoren).
 #' @param metric_fn Metrik(truth, response), hoeher = besser.
-#' @return list(multipliers, bacc, grid_multipliers, grid_bacc, reference_class).
+#' @return list(multipliers, bacc, grid_multipliers, grid_bacc,
+#'   prior_multipliers, prior_bacc, reference_class).
 tune_class_multipliers <- function(probs, truth, classes = colnames(probs),
                                    grid = seq(0.5, 6, by = 0.5),
                                    extra_starts = list(),
@@ -72,13 +91,21 @@ tune_class_multipliers <- function(probs, truth, classes = colnames(probs),
     b <- score(m); if (b > grid_bacc) { grid_bacc <- b; grid_best <- m }
   }
 
-  # 2) Kontinuierliche Verfeinerung (Nelder-Mead), mult = exp(theta) > 0.
+  # 1b) Prior-Korrektur (1/prior) als prinzipieller, tuning-freier Startpunkt -
+  # schlaegt das Grid, wenn dieses in seine Obergrenze laeuft (Minderheitsfaktoren
+  # jenseits von 6). Referenz = dieselbe Mehrheitsklasse.
+  m_prior <- prior_correction_multipliers(truth, classes)
+  prior_bacc <- score(m_prior)
+
+  # 2) Kontinuierliche Verfeinerung (Nelder-Mead), mult = exp(theta) > 0 -
+  # geseedet von Grid-Optimum UND Prior-Korrektur (+ optionalen extra_starts).
   obj <- function(theta) { m <- base1; m[others] <- exp(theta); -score(m) }
   to_theta <- function(m) log(pmax(m[others], 1e-4))
-  starts <- c(list(to_theta(grid_best)), lapply(extra_starts, to_theta))
-  best <- grid_best; best_bacc <- grid_bacc
+  starts <- c(list(grid_best, m_prior), extra_starts)
+  if (prior_bacc > grid_bacc) { best <- m_prior; best_bacc <- prior_bacc }
+  else { best <- grid_best; best_bacc <- grid_bacc }
   for (st in starts) {
-    o <- tryCatch(optim(st, obj, method = "Nelder-Mead",
+    o <- tryCatch(optim(to_theta(st), obj, method = "Nelder-Mead",
                         control = list(maxit = 1000, reltol = 1e-11)),
                   error = function(e) NULL)
     if (is.null(o)) next
@@ -88,5 +115,6 @@ tune_class_multipliers <- function(probs, truth, classes = colnames(probs),
 
   list(multipliers = best, bacc = best_bacc,
        grid_multipliers = grid_best, grid_bacc = grid_bacc,
+       prior_multipliers = m_prior, prior_bacc = prior_bacc,
        reference_class = ref)
 }

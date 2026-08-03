@@ -68,8 +68,11 @@ evaluate_variant <- function(label, task_for_training) {
   plain_mcc <- mcc(truth_eval, pred_eval$response)
 
   # Multiplikatoren NUR auf dem Tune-Split suchen, auf dem Eval-Split anwenden.
+  # Prior-Korrektur (1/prior) ist tuning-frei, geschlossene Form; Grid und
+  # kontinuierlich zum Vergleich (kontinuierlich wird u.a. von 1/prior geseedet).
   tune_res <- tune_class_multipliers(probs_tune, pred_tune$truth, classes,
                                      grid = threshold_tuning_weight_grid)
+  prior_pred_eval <- apply_class_multipliers(probs_eval, tune_res$prior_multipliers, classes)
   grid_pred_eval <- apply_class_multipliers(probs_eval, tune_res$grid_multipliers, classes)
   cont_pred_eval <- apply_class_multipliers(probs_eval, tune_res$multipliers, classes)
 
@@ -77,6 +80,7 @@ evaluate_variant <- function(label, task_for_training) {
     variante = label,
     bacc_plain = plain_bacc,
     mcc_plain = plain_mcc,
+    bacc_prior = bacc(truth_eval, prior_pred_eval),
     bacc_grid = bacc(truth_eval, grid_pred_eval),
     bacc_tuned = bacc(truth_eval, cont_pred_eval),
     mcc_tuned = mcc(truth_eval, cont_pred_eval),
@@ -91,19 +95,22 @@ results <- rbindlist(list(
 
 fwrite(results, threshold_tuning_results_path)
 
-cat("=== Multiklassen-Schwellenwert-Tuning: plain vs. Grid vs. kontinuierlich ===\n")
+cat("=== Multiklassen-Schwellenwert-Tuning: plain vs. 1/prior vs. Grid vs. kontinuierlich ===\n")
 print(results)
-cat(sprintf("\nKontinuierlich vs. Grid (BAcc): %+.4f / %+.4f (je Variante).\n",
-            results$bacc_tuned[1] - results$bacc_grid[1],
-            results$bacc_tuned[2] - results$bacc_grid[2]))
+cat(sprintf("\n1/prior vs. Grid (BAcc): %+.4f / %+.4f  |  kontinuierlich vs. 1/prior: %+.4f / %+.4f\n",
+            results$bacc_prior[1] - results$bacc_grid[1], results$bacc_prior[2] - results$bacc_grid[2],
+            results$bacc_tuned[1] - results$bacc_prior[1], results$bacc_tuned[2] - results$bacc_prior[2]))
+cat("Hinweis: 1/prior ist tuning-frei (geschlossene Form) und nicht mit Trainings-",
+    "Klassengewichtung zu stapeln (Ueberkorrektur).\n", sep = "")
 cat("\nGespeichert:", threshold_tuning_results_path, "\n")
 
 # --- Experiment-Tracking (SQLite) ------------------------------------------
 # Kein run_timed_benchmark()-Ergebnis (custom Train/Tune/Eval-Split statt CV/
 # Holdout), daher manuelles Logging statt db_log_timed_benchmark(). Pro
-# Variante (ungewichtet/power) werden drei model_configs angelegt - "plain"
-# (argmax(prob)), "tuned_grid" (Grid-Multiplikatoren) und "tuned_continuous"
-# (kontinuierlich verfeinert) - damit alle drei unabhaengig abfragbar sind.
+# Variante (ungewichtet/power) werden vier model_configs angelegt - "plain"
+# (argmax(prob)), "prior_correction" (1/prior, geschlossene Form), "tuned_grid"
+# (Grid-Multiplikatoren) und "tuned_continuous" (kontinuierlich verfeinert) -
+# damit alle vier unabhaengig abfragbar sind.
 db_con <- db_connect()
 db_proj_id <- db_get_or_create_project(db_con, project_name)
 db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "130_threshold_tuning.R")
@@ -132,6 +139,15 @@ for (i in seq_len(nrow(results))) {
   )
   db_log_metric_result(db_con, mconf_plain, db_rsmp_id, "classif.bacc", results$bacc_plain[i])
   db_log_metric_result(db_con, mconf_plain, db_rsmp_id, "classif.mcc", results$mcc_plain[i])
+
+  mconf_prior <- db_create_model_config(
+    db_con, db_run_id,
+    task_type = "classif", algorithm = "lightgbm", feature_set = "raw",
+    preprocessing = "none", class_weight_power = power, task_id = task_train_small$id,
+    hyperparams = list(num_iterations = lightgbm_tuning_final_iterations,
+                       threshold_strategy = "prior_correction")
+  )
+  db_log_metric_result(db_con, mconf_prior, db_rsmp_id, "classif.bacc", results$bacc_prior[i])
 
   mconf_grid <- db_create_model_config(
     db_con, db_run_id,
