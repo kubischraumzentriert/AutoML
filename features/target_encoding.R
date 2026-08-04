@@ -66,3 +66,62 @@ build_target_encoded_pipeline <- function(base_learner, affect_cols = NULL, smoo
     base_learner
   as_learner(graph)
 }
+
+# --- Exact-value Target-Encoding fuer (typisch NUMERISCHE) Spalten -----------
+# Bei synthetischen Daten mit endlichem Support wiederholen sich auch numerische
+# Werte stark (jeder Wert mehrfach) -> der exakte Wert wirkt wie eine
+# hochkardinale Kategorie. Diese Helfer behandeln die uebergebenen Spalten als
+# solche und fuegen ihre leck-sichere Impact-Kodierung als ZUSAETZLICHE Features
+# hinzu (Originale bleiben erhalten, damit Baeume den rohen Wert UND die
+# Kodierung nutzen). Herkunft: Kaggle-s6e7-4th-place (dort +0.0007 XGBoost),
+# bestaetigt auf s6e8 (CV +0.0044 AUC, LB +0.0038). Zweite unabhaengige
+# Bestaetigung -> aus dem TARGETS.md-Backlog in den Workflow uebernommen.
+#
+# VORBEDINGUNG (unbedingt pruefen!): nur sinnvoll, wenn die Werte tatsaechlich
+# stark wiederholen (uniq_frac klein, z.B. < 0.01, jeder Wert mit vielen
+# Beobachtungen). Bei quasi-stetigen, kaum wiederholten Werten waere jeder Wert
+# quasi-eindeutig -> reines Overfitting. Und: NICHT auf einem Zeilen-Subset
+# screenen (Per-Wert-Statistiken brauchen Volumen; das Vorzeichen kann sonst
+# kippen - Folds/Epochen reduzieren, nicht Zeilen).
+#
+# LECK-SICHERHEIT: encodeimpact als Teil eines GraphLearners wird pro CV-Fold
+# nur auf Trainingszeilen gefittet und in $predict() angewandt (wie
+# build_target_encoding_po). NA/Leerstring werden ein eigenes Level
+# (Missingness-as-Signal). Generisch fuer binaer UND multiclass (je Klasse eine
+# Impact-Spalte <col>.<klasse>, kollidiert nicht mit den Originalnamen).
+# Laufzeit-Hinweis: encodeimpact auf sehr hochkardinalen (numerisch-als-Faktor)
+# Spalten ist spuerbar teurer als auf niedrigkardinalen Faktoren.
+build_exact_value_te_graph <- function(cols, smoothing = 1e-2, id_prefix = "evte") {
+  to_factor_na_level <- function(x) {
+    z <- as.character(x); z[is.na(z) | z == ""] <- "__NA__"; factor(z)
+  }
+  te_branch <-
+    po("select", id = paste0(id_prefix, "_select"), selector = selector_name(cols)) %>>%
+    po("colapply", id = paste0(id_prefix, "_as_factor"), applicator = to_factor_na_level) %>>%
+    po("encodeimpact", id = paste0(id_prefix, "_impact"), smoothing = smoothing, impute_zero = TRUE)
+  po("copy", outnum = 2, id = paste0(id_prefix, "_copy")) %>>%
+    gunion(list(
+      po("nop", id = paste0(id_prefix, "_keep")),
+      te_branch
+    )) %>>%
+    po("featureunion", id = paste0(id_prefix, "_union"))
+}
+
+# Kompletter GraphLearner: exact-value TE (Originale + Impact-Features) ->
+# Leerstring->NA -> Imputation -> base_learner. Spiegelt
+# build_target_encoded_pipeline(), nur mit Exact-value-TE statt regulaerem
+# Kategorie-TE. `exact_value_cols`: Spalten mit stark wiederholten Werten.
+build_exact_value_te_pipeline <- function(base_learner, exact_value_cols, smoothing = 1e-2) {
+  empty_factor_to_na <- function(x) {
+    if (!is.factor(x) && !is.ordered(x)) return(x)
+    y <- as.character(x); y[y == ""] <- NA_character_; factor(y)
+  }
+  graph <-
+    build_exact_value_te_graph(exact_value_cols, smoothing = smoothing) %>>%
+    po("colapply", id = "empty_factor_to_na", applicator = empty_factor_to_na,
+       affect_columns = selector_type(c("factor", "ordered"))) %>>%
+    po("imputemedian", id = "impute_numeric_median") %>>%
+    po("imputemode", id = "impute_factor_mode") %>>%
+    base_learner
+  as_learner(graph)
+}
