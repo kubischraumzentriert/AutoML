@@ -74,17 +74,42 @@ for (col in names(feature_levels)) {
 
 predictions <- learner$predict_newdata(test)
 
-# target_col direkt verwendet statt eines hartcodierten Zwischenspaltennamens
-# (frueher "health_condition" fest verdrahtet - bei einer Uebertragung auf
-# ein neues Projekt mit anderer Zielspalte war das leicht zu uebersehen).
-submission <- data.table(id = test_ids, response = predictions$response)
-setnames(submission, "id", id_col)
-setnames(submission, "response", target_col)
+# Submission-Format haengt an der ZIELMETRIK (baseline_measure_ids[1]):
+# - schwellenwert-UNABHAENGIG (AUC/LogLoss/PRAUC) + BINAER -> Wahrscheinlichkeit
+#   der positiven Klasse P(positive). Kaggle-AUC/-LogLoss erwarten prob, NICHT
+#   das Klassen-Label. Die positive Klasse kommt aus positive_class (000_config).
+# - sonst (BAcc/MCC/... ODER Multiclass) -> Klassen-Labels wie bisher.
+# (is_threshold_independent_metric() stammt aus db_logging.R.)
+prob_metric <- is_threshold_independent_metric(baseline_measure_ids[1])
 
-fwrite(submission, submission_path)
-
-cat("=== Submission erzeugt ===\n")
-cat("Zeilen:", nrow(submission), "\n")
-cat("Klassenverteilung:\n")
-print(table(submission[[target_col]]))
+if (prob_metric && !is.null(predictions$prob) && ncol(predictions$prob) == 2) {
+  classes <- colnames(predictions$prob)
+  pos <- if (!is.null(positive_class)) as.character(positive_class) else classes[length(classes)]
+  if (!pos %in% classes) {
+    stop("positive_class '", pos, "' ist keine der Klassen (", paste(classes, collapse = ", "), ").")
+  }
+  if (is.null(positive_class)) {
+    warning("positive_class ist NULL - nutze '", pos, "' als positive Klasse. ",
+            "Fuer eine prob-basierte Submission positive_class in 000_config.R setzen.")
+  }
+  submission <- data.table(test_ids, predictions$prob[, pos])
+  setnames(submission, c(id_col, target_col))
+  fwrite(submission, submission_path)
+  cat("=== Submission erzeugt (prob-Metrik ", baseline_measure_ids[1],
+      ": P(", target_col, "=", pos, ")) ===\n", sep = "")
+  cat("Zeilen:", nrow(submission), "  mean(pred):",
+      round(mean(submission[[target_col]]), 4), "\n")
+} else {
+  if (prob_metric && !is.null(predictions$prob)) {
+    warning("Prob-basierte Zielmetrik bei >2 Klassen: das Submission-Format ist ",
+            "wettbewerbsspezifisch (i.d.R. eine Spalte je Klasse). Es werden ",
+            "vorerst Labels ausgegeben - ggf. projektspezifisch anpassen.")
+  }
+  submission <- data.table(test_ids, as.character(predictions$response))
+  setnames(submission, c(id_col, target_col))
+  fwrite(submission, submission_path)
+  cat("=== Submission erzeugt (Labels) ===\n")
+  cat("Zeilen:", nrow(submission), "\nKlassenverteilung:\n")
+  print(table(submission[[target_col]]))
+}
 cat("\nGespeichert:", submission_path, "\n")

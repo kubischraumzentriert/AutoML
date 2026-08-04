@@ -10,6 +10,13 @@ sample_submission_path <- file.path(project_dir, "sample_submission.csv")
 id_col <- "id"
 target_col <- "health_condition"
 
+# Positive Klasse fuer BINAERE Aufgaben mit wahrscheinlichkeitsbasierter
+# Zielmetrik (AUC/LogLoss): dann gibt 155_predict_submission.R P(positive) aus
+# statt Klassen-Labels, und die positive Klasse wird in 020_task.R gesetzt.
+# NULL = Multiclass ODER label-basierte Metrik (BAcc/MCC) -> Labels wie bisher
+# (dieses Projekt: health_condition, 3-Klassen/BAcc -> NULL, rueckwirkungsfrei).
+positive_class <- NULL
+
 # Experiment-Tracking (SQLite, siehe db_schema.sql/db_logging.R)
 project_name <- "playground-series-s6e7-health-condition"
 

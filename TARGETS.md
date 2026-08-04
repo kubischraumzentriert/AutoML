@@ -330,6 +330,15 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   bleiben, leck-sicher pro CV-Fold, generisch binaer+multiclass). VORBEDINGUNG vor
   Aktivierung: pruefen, dass die Werte tatsaechlich stark wiederholen (sonst
   Overfitting). Laufzeit: encodeimpact auf hochkardinal-numerisch ist teurer.
+- ~~**155-Submission gibt immer Klassen-Labels aus**~~ **ERLEDIGT**: Anlass s6e8
+  (binaer/AUC). `155_predict_submission.R` gab `$response` (Labels) aus - fuer
+  wahrscheinlichkeitsbasierte Metriken (AUC/LogLoss) braucht Kaggle aber
+  Wahrscheinlichkeiten. Jetzt metrik-abhaengig: `is_threshold_independent_metric(
+  baseline_measure_ids[1])` + binaer -> P(positive) (positive Klasse aus
+  `positive_class` in 000_config, in 020_task gesetzt), sonst Labels wie bisher.
+  150 setzt `predict_type="prob"`, falls der Learner es kann. Rueckwirkungsfrei
+  fuer das Eigenprojekt (health_condition, BAcc/multiclass -> weiter Labels;
+  getestet). Multiclass-prob (Spalte je Klasse) bleibt projektspezifisch.
 - **Screening-Falle: hochkardinale/statistik-basierte Features NICHT auf einem
   Zeilen-Subset screenen** - Anlass: 4th-Place-Writeup. Das exact-value-TE-Feature
   sah auf einem 70k-Zeilen-Screen -0.0017, auf vollen Daten aber +0.0012 - das

@@ -60,6 +60,10 @@ make_baseline_learner <- function(base_learner) {
 }
 
 learner_full <- make_baseline_learner(base_learner_constructors[[model_name]]())
+# Wahrscheinlichkeiten aktivieren, falls der Learner sie kann: fuer prob-
+# basierte Submissions (AUC/LogLoss) zwingend, fuer label-basierte (BAcc)
+# rueckwirkungsfrei (155 nimmt dann weiter das argmax-Label = $response).
+if ("prob" %in% learner_full$predict_types) learner_full$predict_type <- "prob"
 learner_full$train(task_full)
 
 # --- Experiment-Tracking (SQLite) -------------------------------------------
