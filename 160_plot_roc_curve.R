@@ -18,10 +18,11 @@ algorithms_to_plot <- c("ranger", "lightgbm", "lda")
 # compute_classif_curves() braucht keine binaere Aufgabe: "truth == positive"
 # fasst bei >=3 Klassen automatisch alle anderen Klassen als "negativ"
 # zusammen - das Ergebnis ist eine One-vs-Rest-Kurve fuer genau DIESE eine
-# Klasse. Dieses Projekt hat 3 Klassen (at-risk/unhealthy/fit) - hier bewusst
-# "unhealthy" gewaehlt (klinisch relevanteste Klasse), bei Bedarf anpassen
-# oder das Skript in einer Schleife ueber alle Klassen laufen lassen.
-positive_class <- "unhealthy"
+# Klasse. Positive Klasse: bei BINAEREN Aufgaben aus 000_config.R
+# (positive_class); bei Multiclass (positive_class = NULL) hier eine Klasse
+# fuer die One-vs-Rest-Kurve waehlen (Default: klinisch relevanteste Klasse
+# des Template-Eigenprojekts).
+if (is.null(positive_class)) positive_class <- "unhealthy"
 
 con <- db_connect()
 
