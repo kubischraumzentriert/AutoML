@@ -377,21 +377,26 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   `sentinel_to_na(dt, sentinel_values)`-Helfer analog zu
   `empty_factor_to_na()`), sobald ein 2. Projekt mit numerischen Sentinels
   auftritt.
-- **Target-Leakage-Audit als Workflow-Guard fehlt** - Anlass:
+- ~~**Target-Leakage-Audit als Workflow-Guard fehlt**~~ **ERLEDIGT**: Anlass
   `CreditScoringChallenge` (African Credit Scoring, stark unbalanciert, ~1.8%
   positive Klasse). Die naive Baseline erreichte F1 0.88 - getrieben durch einen
   Ex-post-Leak (`interest_ratio`, nur nach Kreditvergabe bekannt). Nach
   Bereinigung sank der ehrliche Wert auf F1 ~0.413, extern am Leaderboard fast
-  exakt bestaetigt (0.4191, Δ+0.006). Ein systematischer Guard haette das
-  sofort gefangen: Feature-Importance-Konzentration >50% auf ein einzelnes
-  Feature, Within-Stratum-Target-Trennung, Determinismus-Check
-  (`feature==wert -> P(target) in {0,1}`). Bisher kein "audit"-Baustein dieser
-  Art im Template - ein zu guter Baseline-Score auf einer schweren/unbalancierten
-  Aufgabe ist ein Warnsignal, das sich generisch pruefen liesse (vgl.
-  [[project_target_leak_audit]] im persoenlichen Memory: dieselbe Lektion
-  bereits einmal ausserhalb dieses Templates bestaetigt). 1-Projekt-Kandidat
-  hier, aber mit externer Zweitbestaetigung - starker Kandidat fuer eine
-  frueh(er)e Rueckfuehrung als eigener `0xx_target_leak_audit.R`-Baustein.
+  exakt bestaetigt (0.4191, Δ+0.006). Externe Zweitbestaetigung ausserhalb dieses
+  Templates: [[project_target_leak_audit]] im persoenlichen Memory.
+  Umgesetzt als `015_target_leak_audit.R` (vor `020_task.R`, bewusst auf vollen
+  Daten - Determinismus-/Stratum-Befunde brauchen Volumen): (1)
+  Feature-Importance-Konzentration (LightGBM-Gain-Share >50%), (2)
+  Determinismus-Check (`P(Ziel=Klasse|Feature=Wert)` bei ausreichender
+  Gruppengroesse), (3) optionale Within-Stratum-Zieltrennung
+  (`leak_audit_stratify_cols`), (4) Ehrlich-vs-aufgeblasen-Zerlegung
+  (gepaarter Holdout, mit/ohne Verdaechtige, DB-geloggt als `custom_split`
+  analog `130`). Schritt 5 (Verfuegbarkeit zur Entscheidungszeit) bleibt bewusst
+  manuelles Urteil, das Skript listet nur die Leitfragen. Rueckwirkungsfrei
+  getestet gegen das Template-eigene Projekt (health_condition, volle 690088
+  Zeilen): kein Feature ueberschreitet 50% Gain-Share (Top: stress_level 42.9%,
+  sleep_duration 34.8%), kein Determinismus-Fund - Audit korrekt unauffaellig,
+  siehe README "Target-Leakage-Audit".
 - **Nested/gepooltes per-Fold-Threshold-Tuning fehlt** - Anlass:
   `CreditScoringChallenge`, Verfeinerung zu `130_threshold_tuning.R`. Aktuell nur
   ein einzelner stratifizierter 3-Wege-Split (Train/Tune/Eval) - keine

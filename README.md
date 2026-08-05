@@ -22,6 +22,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `006_tuning_diagnostics.R` | `diagnose_mbo_search()` - prueft nach `tnr("mbo")`-Laeufen auf echte sequenzielle Verfeinerung vs. reines Initialdesign, Plateau-Indikator |
 | `008_curve_diagnostics.R` | Helferfunktionen fuer ROC-/PR-Kurven aus in `experiments.db` geloggten Vorhersagen (Schwellenwert-Sweep, AUC per Trapezregel); funktioniert bei >=3 Klassen als One-vs-Rest (siehe Notiz unten) |
 | `010_eda.R` | Datenueberblick auf 10%-Subset mit `skimr` |
+| `015_target_leak_audit.R` | Prueft eine zu gute Baseline auf Target-Leakage: Feature-Importance-Konzentration, Determinismus-Check (`P(Ziel\|Feature=Wert)`), optionale Within-Stratum-Zieltrennung, Ehrlich-vs-aufgeblasen-Zerlegung (mit/ohne Verdaechtige) - bewusst auf vollen Daten, kein Subset |
 | `020_task.R` | Erzeugt den Rohfeature-`TaskClassif` |
 | `025_feature_engineering.R` | Erzeugt je Feature-Familie (`features/*.R`) einen eigenen Task, den kombinierten Feature-Task (alle Familien) und den ausgewaehlten Feature-Task (Aktivitaet+Cardio+Schlaf) |
 | `030_baseline.R` | Autarke Baseline mit LDA, Multinom und Ranger |
@@ -122,6 +123,31 @@ Wir verwenden aktuell:
 - Matthews Correlation Coefficient (`classif.mcc`)
 
 Accuracy wurde bewusst nicht als Hauptmetrik gewaehlt, weil die Zielvariable unausgewogen ist. Im 10%-Subset liegt `at-risk` bei ca. 86%.
+
+## Target-Leakage-Audit
+
+`015_target_leak_audit.R` prueft, BEVOR man in Baselines/Feature Engineering investiert, ob eine (spaetere) zu gute Baseline auf einen Leak statt auf echtes Signal zurueckgeht. Anlass: `CreditScoringChallenge` (African Credit Scoring, ~1.8% positive Klasse) - eine naive Baseline erreichte dort F1 0.88, getrieben durch einen Ex-post-Leak (`interest_ratio`, ein Feature, das erst nach der Kreditvergabe bekannt ist). Nach Bereinigung sank der ehrliche Wert auf F1 ~0.41, extern am Leaderboard fast exakt bestaetigt (0.4191). **Wichtig**: CV<->Leaderboard-Uebereinstimmung faengt einen Leak NICHT - das Artefakt steckt meist auch in den Testdaten, ein Leak taeuscht also konsistent hohe CV- UND LB-Werte vor.
+
+Vier automatisierte Schritte (bewusst auf **vollen** Daten, kein Subset - Determinismus-/Stratum-Befunde brauchen Volumen, sonst droht dieselbe Screening-Falle wie bei exact-value Target-Encoding):
+
+1. **Feature-Importance-Konzentration**: ein LightGBM-Fit, traegt ein einzelnes Feature `> leak_audit_importance_share_threshold` (Default 50%) der Gain-Importance?
+2. **Determinismus**: fuer Spalten mit ueberschaubarer Kardinalitaet, `P(Ziel=Klasse | Feature=Wert)` - liegt ein Wert bei (nahezu) 100% Reinheit mit ausreichend grosser Gruppe (`leak_audit_determinism_min_n`)?
+3. **Within-Stratum-Zieltrennung** (optional, `leak_audit_stratify_cols`): trennt ein verdaechtiges numerisches Feature die Zielklassen sogar INNERHALB einer eigentlich neutralen Kategorie? Braucht projektspezifisches Wissen, welche Spalte "neutral" sein sollte - ohne Konfiguration uebersprungen.
+4. **Ehrlich-vs-aufgeblasen-Zerlegung**: gepaarter Holdout-Split, Zielmetrik (`baseline_measure_ids`) mit vs. ohne die Verdaechtigen aus Schritt 1+2.
+
+**Schritt 5 (Verfuegbarkeit zur Entscheidungszeit)** ist bewusst NICHT automatisiert - das Skript listet die Verdaechtigen und die Leitfragen (ex-ante vs. ex-post bekannt? nur definitorisch mit dem Ziel gekoppelt?), das Urteil bleibt fachlich.
+
+**Ergebnis am Template-eigenen Projekt** (`health_condition`, volle 690088 Zeilen):
+
+| Feature | Gain-Share |
+|---|---:|
+| stress_level | 42.9% |
+| sleep_duration | 34.8% |
+| physical_activity_level | 16.1% |
+| bmi | 2.0% |
+| (9 weitere) | < 1% je |
+
+Kein einzelnes Feature ueberschreitet die 50%-Schwelle, keine Wert-Gruppe zeigt exakten Determinismus (`n>=30`) - Audit unauffaellig, Zerlegung (Schritt 4) entsprechend uebersprungen. Bemerkenswert bleibt, dass `stress_level` und `sleep_duration` zusammen bereits ~78% der Gain-Importance tragen - kein Leak-Befund, aber ein Hinweis, dass die meisten anderen Features fuer LightGBM kaum Zusatzsignal liefern (deckt sich mit dem Feature-Family-Benchmark oben).
 
 ## Baseline-Ergebnisse
 

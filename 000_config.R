@@ -159,6 +159,25 @@ adversarial_validation_cv_folds <- 3
 adversarial_staged_exclude <- list()
 adversarial_staged_results_path <- file.path(artifact_dir, "adversarial_staged_results.csv")
 
+# Target-Leak-Audit (015): eine zu gute Baseline auf einer schweren/
+# unbalancierten Aufgabe ist ein Warnsignal, kein Erfolg - siehe README
+# "Target-Leakage-Audit". CV<->LB-Uebereinstimmung faengt einen Leak NICHT
+# (das Artefakt steckt auch in den Testdaten) - nur ein Feature-Audit tut das.
+leak_audit_importance_share_threshold <- 0.50  # 1 Feature traegt >50% der Gain-Importance
+leak_audit_suspect_top_n <- 8                  # max. Anzahl Verdaechtiger fuer die Zerlegung
+leak_audit_determinism_min_n <- 30             # Mindestgruppengroesse fuer einen Determinismus-Fund
+leak_audit_determinism_eps <- 1e-9             # Toleranz um Anteil = 1 (numerische Rundung)
+leak_audit_cardinality_max <- 30               # nur Spalten mit <= so vielen eindeutigen Werten pruefen
+# Optional: kategoriale Spalten, gegen die verdaechtige NUMERISCHE Features per
+# Within-Stratum-Trennung geprueft werden (siehe README, Schritt 2 des Audits).
+# Default leer = dieser Schritt wird uebersprungen (projektspezifisches Wissen
+# noetig, welche Spalte "eigentlich neutral" sein sollte).
+leak_audit_stratify_cols <- character(0)
+leak_audit_importance_path <- file.path(artifact_dir, "leak_audit_importance.csv")
+leak_audit_determinism_path <- file.path(artifact_dir, "leak_audit_determinism.csv")
+leak_audit_stratum_path <- file.path(artifact_dir, "leak_audit_within_stratum.csv")
+leak_audit_decomposition_path <- file.path(artifact_dir, "leak_audit_decomposition.csv")
+
 lightgbm_empty_string_results_path <- file.path(artifact_dir, "lightgbm_empty_string_results.csv")
 
 catboost_results_path <- file.path(artifact_dir, "catboost_results.csv")
