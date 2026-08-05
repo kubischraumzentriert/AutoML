@@ -352,3 +352,52 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Multiplikator-/Prior-Korrektur ist davon NICHT betroffen: Klassen-Priors bleiben
   unter stratifiziertem Subsetting erhalten - deshalb war der `130`-Test auf 10%
   aussagekraeftig, der TE-Test waere es nicht.)
+- ~~**`150_train_full_model.R`/`155_predict_submission.R` sourcen unbedingt
+  hartcodierte Feature-Familien-Dateien**~~ **ERLEDIGT**: Zwei unabhaengige
+  Uebertragungen (`playground-series-s6e5`, `playground-series-s5e12`, Letzteres
+  explizit als "drittes Auftreten, sollte generalisiert werden" markiert)
+  scheiterten beim Kopieren von `150`/`155` auf ein neues Projekt ohne (oder mit
+  anderen) Feature-Familien-Dateien - die Skripte sourcten unbedingt `bmi.R`,
+  `sleep.R`, `activity.R`, `hydration.R`, `cardio.R`, `interactions.R`,
+  `surrogate_guided.R` per Namen, obwohl `TARGETS.md`s eigene
+  Uebertragungs-Checkliste erlaubt, `feature_families` leer zu lassen. Jetzt:
+  beide Skripte laden alle `features/*.R` per Glob
+  (`list.files(..., pattern = "\\.R$")`) statt einzelner Dateinamen - bei einem
+  neuen Projekt werden genau die vorhandenen Dateien geladen, kein "file not
+  found" mehr. Rueckwirkungsfrei getestet (alle bisherigen `add_*_features`-/
+  `build_*_po`-Funktionen bleiben nach dem Glob-Sourcing verfuegbar).
+- **Fehlwert-Sentinels (numerisch, z.B. `-9999`) werden vom Template nicht
+  erkannt** - Anlass: `geoai-aquaculture-pond-identification-challenge`
+  (Sentinel-codierte fehlende Monate in Fernerkundungsdaten). Die
+  Imputationspipelines (`imputemedian`/`imputemode`) fangen nur echtes `NA` ab,
+  nicht numerische Sentinel-Werte - die wirken sonst wie extreme, aber gueltige
+  Messwerte. Projekt-lokal in `000_config.R` geloest (Sentinel-Liste ->
+  `sentinel_to_na()`-Transformation vor der Pipeline), noch nicht generalisiert.
+  1-Projekt-Kandidat; ins Template uebernehmen (z.B. als
+  `sentinel_to_na(dt, sentinel_values)`-Helfer analog zu
+  `empty_factor_to_na()`), sobald ein 2. Projekt mit numerischen Sentinels
+  auftritt.
+- **Target-Leakage-Audit als Workflow-Guard fehlt** - Anlass:
+  `CreditScoringChallenge` (African Credit Scoring, stark unbalanciert, ~1.8%
+  positive Klasse). Die naive Baseline erreichte F1 0.88 - getrieben durch einen
+  Ex-post-Leak (`interest_ratio`, nur nach Kreditvergabe bekannt). Nach
+  Bereinigung sank der ehrliche Wert auf F1 ~0.413, extern am Leaderboard fast
+  exakt bestaetigt (0.4191, Δ+0.006). Ein systematischer Guard haette das
+  sofort gefangen: Feature-Importance-Konzentration >50% auf ein einzelnes
+  Feature, Within-Stratum-Target-Trennung, Determinismus-Check
+  (`feature==wert -> P(target) in {0,1}`). Bisher kein "audit"-Baustein dieser
+  Art im Template - ein zu guter Baseline-Score auf einer schweren/unbalancierten
+  Aufgabe ist ein Warnsignal, das sich generisch pruefen liesse (vgl.
+  [[project_target_leak_audit]] im persoenlichen Memory: dieselbe Lektion
+  bereits einmal ausserhalb dieses Templates bestaetigt). 1-Projekt-Kandidat
+  hier, aber mit externer Zweitbestaetigung - starker Kandidat fuer eine
+  frueh(er)e Rueckfuehrung als eigener `0xx_target_leak_audit.R`-Baustein.
+- **Nested/gepooltes per-Fold-Threshold-Tuning fehlt** - Anlass:
+  `CreditScoringChallenge`, Verfeinerung zu `130_threshold_tuning.R`. Aktuell nur
+  ein einzelner stratifizierter 3-Wege-Split (Train/Tune/Eval) - keine
+  per-Fold-Schwellenwahl mit gepoolter Auswertung auf den ausgelassenen Folds.
+  Die im Projekt umgesetzte "Nested"-Variante war dort die Grundlage einer fast
+  perfekten CV-LB-Kalibrierung. Kein Muss (der bestehende 3-Wege-Split
+  funktioniert), aber ein dokumentierter, funktionierender
+  Verfeinerungsvorschlag fuer `class_multiplier_tuning.R`/`130`. 1-Projekt-
+  Kandidat, niedrigere Prioritaet.

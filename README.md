@@ -43,7 +43,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `115_adversarial_validation.R` | Prueft per Adversarial Validation, ob Train und Test unterscheidbar sind (AUC + Feature Importance); zusaetzlich ESS/n der OOF-Propensity-Gewichte (Reweighting-Machbarkeit) und optionale Stufen (`adversarial_staged_exclude`), die verdaechtige Feature-Gruppen ausschliessen, um die Shift-treibende Gruppe zu isolieren |
 | `120_lightgbm_empty_string_preprocessing.R` | Vergleicht `""` behalten vs. `"" -> NA -> Imputation` fuer LightGBM (aktuelle `class_weight_power`-Gewichtung), per CV |
 | `125_catboost_benchmark.R` | Vergleicht CatBoost gegen LightGBM (beide mit aktueller `class_weight_power`-Gewichtung, Rohfeatures, CV) |
-| `130_threshold_tuning.R` | Sucht post-hoc Klassengewichte auf den Wahrscheinlichkeiten (`argmax(prob * weight)`) auf einem Tune-Split, vergleicht mit `class_weight_power` |
+| `130_threshold_tuning.R` | Sucht post-hoc Klassengewichte auf den Wahrscheinlichkeiten (`argmax(prob * weight)`, `class_multiplier_tuning.R`: Grid-Startpunkt + geschlossene `1/prior`-Korrektur + kontinuierliche Nelder-Mead-Verfeinerung) auf einem Tune-Split, vergleicht mit `class_weight_power` |
 | `135_lightgbm_class_weight_power_extended.R` | Setzt die `power`-Kurve aus `105` ueber 1 hinaus fort, findet das innere BAcc-Maximum |
 | `140_ensemble_candidates_weighted.R` | Vergleicht LightGBM, Ranger und XGBoost mit derselben `power=1.5`-Gewichtung (CV) |
 | `142_ranger_tuning_weighted.R` | Wiederholt `090` auf dem `power=1.5`-gewichteten Task (Random Search), Finalvergleich per CV |
@@ -55,7 +55,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `147_error_analysis_ranger_kernelshap.R` | Laedt Modelle+Indizes-Artefakte: KernelSHAP-Fehleranalyse (welche Features treiben Ranger in die falsche Klasse?) |
 | `147_error_analysis_ranger_tabpfn.R` | Laedt Modelle+Indizes-Artefakte: TabPFN-Vergleich auf den "interessanten" Zeilen (CPU-Kontextlimit) |
 | `150_train_full_model.R` | Trainiert `submission_model_name` (aktuell Ranger, Rohfeatures, `power=1.5`) auf dem vollen Trainingsdatensatz. Jede Modell-Datei ist an eine `run_id` gebunden (kein fixer Dateiname, siehe `final_model_full_path()`) und wird als `model_artifact_path`-Hyperparameter in `experiments.db` geloggt |
-| `155_predict_submission.R` | Findet den Pfad des zuletzt trainierten Modells ueber `db_get_latest_model_artifact_path()`, wendet es auf `test.csv` an und schreibt `submission.csv` im Format von `sample_submission.csv` |
+| `155_predict_submission.R` | Findet den Pfad des zuletzt trainierten Modells ueber `db_get_latest_model_artifact_path()`, wendet es auf `test.csv` an und schreibt `submission.csv` im Format von `sample_submission.csv`. Metrik-abhaengig: bei schwellenwert-unabhaengiger Zielmetrik (AUC/LogLoss) + binaerer Aufgabe wird `P(positive_class)` geschrieben, sonst Klassen-Labels |
 | `160_plot_roc_curve.R` | ROC-Kurve(n) je Algorithmus aus den in `experiments.db` geloggten Vorhersagen, als PNG gespeichert, AUC-Cross-Check gegen `metric_result` |
 | `161_plot_pr_curve.R` | Precision-Recall-Kurve(n) je Algorithmus, analog zu `160` |
 
@@ -69,6 +69,9 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > [`REFERENZ_PROBABILITY_CALIBRATION.md`](REFERENZ_PROBABILITY_CALIBRATION.md):
 > OOF-Kalibrierung, Platt-Scaling und die Fairness-Regel "lokal validieren,
 > einmal bestaetigen, dann keine Mikrovarianten ans Leaderboard schicken".
+> Fuer neuronale Tabellenmodelle (FT-Transformer) als Ensemble-Diversitaet siehe
+> [`NEURAL_DEPLOY.md`](NEURAL_DEPLOY.md): R-only-Policy, wann sich ein neuronales
+> Modell lohnt, und der Python-GPU-Export-Workflow fuer Kaggle.
 
 Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
 
@@ -209,6 +212,36 @@ Fuer hochkardinale kategoriale Spalten, die sonst gedroppt oder grob per `collap
 - **GBM-natives Handling schlaegt TE**: LightGBM nativ (0.869) uebertrifft selbst optimal geglaettetes TE (0.847) UND ist ~5x schneller (35s vs. ~190s). Fuer Modelle mit nativem Kategorien-Handling lohnt TE also selbst bei extremer Kardinalitaet nicht - der "Amazon = TE-Klassiker"-Ruf bezieht sich auf aufwaendigere, getunte Multi-Encoding-Ansaetze, nicht auf ein einzelnes generisches Impact-Encoding.
 
 Robustheits-Nebenbefund: Target-Encoding mit `impute_zero=TRUE` war im A/B das einzige Encoding, das unter CV ohne zusaetzliche Absicherung durchlief - One-Hot (via `fixfactors`) und `collapsefactors` stuerzten an einem seltenen, per CV nur im Validierungs-Fold auftretenden Level ab. Details siehe `openml-adult-income/TEMPLATE_FRICTION.md` #3.
+
+### Optionales Modul: Exact-value Target-Encoding fuer NUMERISCHE Spalten
+
+Ergaenzt `features/target_encoding.R` um `build_exact_value_te_graph()` /
+`build_exact_value_te_pipeline()`. Bei **synthetischen** Datensaetzen (v.a.
+Kaggle Playground) resampelt der Generator oft aus endlichem Support, sodass
+sich auch numerische Werte stark wiederholen und wie eine hochkardinale
+Kategorie wirken. Der Helfer behandelt die uebergebenen Spalten als solche
+(numerisch-als-Faktor + `encodeimpact`) und fuegt ihre Impact-Kodierung als
+**zusaetzliche** Features hinzu (Originale bleiben erhalten). Leak-sicher pro
+CV-Fold, generisch fuer binaer und multiclass.
+
+**Herkunft und Bestaetigung (2 unabhaengige Projekte)**: Kaggle-s6e7-4th-place-
+Loesung (XGBoost OOF 0.9489 -> 0.9496), zweite Bestaetigung an
+`playground-series-s6e8` (Smartphone Addiction, binaer/AUC): CV +0.0044 AUC,
+**Leaderboard 0.96353 -> 0.96731 (+0.0038)** — der CV-Gewinn trug fast exakt
+aufs Leaderboard durch.
+
+**VORBEDINGUNG vor Aktivierung**: pruefen, dass die Werte tatsaechlich stark
+wiederholen (z.B. `uniq_frac` je Spalte klein, jeder Wert mit vielen
+Beobachtungen) — sonst ist jeder Wert quasi-eindeutig und das Encoding erzeugt
+reines Overfitting statt Signal.
+
+**Screening-Falle (live bestaetigt, `s6e8`)**: Per-Wert-Statistiken brauchen
+Volumen. Dieselbe Pipeline gab auf einem 30k-Zeilen-Screen **-0.0027 AUC**
+(Vorzeichen negativ), auf 138k **+0.0025 AUC** (positiv) — nur die Datenmenge
+entschied ueber Nutzen/Schaden. **Regel: hochkardinale/statistik-basierte
+Features NIEMALS auf einem Zeilen-Subset screenen** — zum Verbilligen Folds
+oder Epochen reduzieren, nicht Zeilen. Das gilt fuer Target-/Frequency-
+Encoding und alles, was auf hochkardinalen Zaehlungen beruht.
 
 ### Optionales Modul: Entitaets-Zeit-Historie (`features/entity_history.R`)
 
@@ -443,16 +476,18 @@ Erkenntnis: Der Unterschied ist fuer LightGBM sogar noch groesser als bei den ur
 
 ## Schwellenwert-Tuning
 
-Idee: Statt (oder zusaetzlich zu) Klassengewichten beim Training koennte man die vorhergesagten Wahrscheinlichkeiten nachtraeglich mit klassenspezifischen Gewichten multiplizieren (`argmax(prob * weight)`) und dieses Gewicht auf einem separaten Tune-Split direkt auf BAcc optimieren. `130_threshold_tuning.R` testet das mit einem stratifizierten 3-Wege-Split (60% Train / 20% Tune / 20% Eval):
+Idee: Statt (oder zusaetzlich zu) Klassengewichten beim Training koennte man die vorhergesagten Wahrscheinlichkeiten nachtraeglich mit klassenspezifischen Gewichten multiplizieren (`argmax(prob * weight)`) und dieses Gewicht auf einem separaten Tune-Split direkt auf BAcc optimieren. `130_threshold_tuning.R` testet das mit einem stratifizierten 3-Wege-Split (60% Train / 20% Tune / 20% Eval).
 
-| Variante | BAcc (argmax) | MCC (argmax) | BAcc (Gewicht getunt) | MCC (Gewicht getunt) | Gefundene Gewichte |
+**Update (Playground-s6e7/s6e8-Cross-Projekt, `class_multiplier_tuning.R`)**: Das urspruengliche Suchgitter (`threshold_tuning_weight_grid = seq(0.5, 6, by = 0.5)`) wurde um zwei Bausteine ergaenzt: eine **geschlossene `1/prior`-Korrektur** (`argmax(prob / Klassen-Prior)`, die Bayes-optimale Regel fuer Balanced Accuracy bei gut kalibrierten Wahrscheinlichkeiten — tuning-frei) als zusaetzlicher Startpunkt, und eine **kontinuierliche Nelder-Mead-Verfeinerung** ab dem besten Startpunkt (Grid- ODER Prior-Optimum). Kontinuierlich ist damit per Konstruktion nie schlechter als Grid/Prior:
+
+| Variante | BAcc (argmax) | BAcc (`1/prior`) | BAcc (Grid) | BAcc (kontinuierlich) | Gefundene Gewichte (kontinuierlich) |
 |---|---:|---:|---:|---:|---|
-| LightGBM ungewichtet trainiert | 0.8735 | 0.8626 | 0.9291 | 0.8330 | fit=6.0, unhealthy=6.0 |
-| LightGBM `power=1.5` trainiert (aktueller Stand) | 0.9351 | 0.8181 | 0.9428 | 0.7903 | fit=4.0, unhealthy=3.5 |
+| LightGBM ungewichtet trainiert | 0.8735 | 0.9385 | 0.9291 | 0.9415 | at-risk=1.0, fit=19.67, unhealthy=47.91 |
+| LightGBM `power=1.5` trainiert (aktueller Stand) | 0.9351 | 0.9346 | 0.9428 | 0.9428 | at-risk=1.0, fit=4.09, unhealthy=3.30 |
 
-**Wichtiger methodischer Befund**: Beim ungewichtet trainierten Modell treffen die gefundenen Gewichte (6.0/6.0) exakt den Rand des Suchgitters (`threshold_tuning_weight_grid = seq(0.5, 6, by = 0.5)`) — dort gibt es kein inneres Optimum, reines BAcc-Maximieren ohne Gegengewicht treibt die Gewichte prinzipiell unbegrenzt weiter (im Grenzfall werden Minderheitsklassen fast immer vorhergesagt, Recall steigt, Precision/MCC kollabieren). Beim bereits mit `power=1.5` trainierten Modell liegt das gefundene Optimum dagegen deutlich innerhalb des Gitters (4.0/3.5) — die Trainingsgewichtung nimmt dem Threshold-Tuning einen Teil der Notwendigkeit ab, an den Rand zu laufen. Post-hoc-Threshold-Tuning ist damit **kein unabhaengiger zusaetzlicher Hebel**, sondern derselbe BAcc/MCC-Trade-off wie bei `class_weight_power`, nur ueber einen anderen Mechanismus (Nachbearbeitung der Wahrscheinlichkeiten statt Trainingsgewichte) erreicht.
+**Wichtiger methodischer Befund**: Beim ungewichtet trainierten Modell laeuft das reine Grid an seine Obergrenze (BAcc-optimale Minderheitsfaktoren liegen bei 19.7/47.9, weit ueber der Grid-Decke 6) — `1/prior` liegt dort naeher am Optimum als das Grid (0.9385 vs. 0.9291) und ist zusaetzlich tuning-frei. Beim bereits mit `power=1.5` trainierten Modell dreht sich das Bild: `1/prior` ist dort **schlechter** als das Grid (0.9346 vs. 0.9428) — Trainings-Klassengewichtung und `1/prior`-Korrektur loesen dasselbe Problem und ueberkorrigieren gemeinsam. **Regel: `1/prior` nur auf ungewichtete Modelle anwenden, nicht zusaetzlich zu einer bereits gewichteten Trainingsphase stacken.** Der kontinuierliche Optimizer ist gegen beide Faelle robust (findet beim gewichteten Modell die kleinen Restfaktoren 4.09/3.30, beim ungewichteten die grossen 19.67/47.91) und bleibt die sicherste Standardwahl.
 
-**Entscheidung**: Threshold-Tuning wird nicht zusaetzlich zur Trainings-Klassengewichtung eingesetzt — das Stacken beider Mechanismen drueckt MCC weiter (0.790) fuer kaum zusaetzlichen BAcc-Gewinn (0.943 vs. 0.935), ohne einen neuen Freiheitsgrad zu erschliessen. `class_weight_power` bleibt der einzige Regler fuer den BAcc/MCC-Trade-off. (Zahlen aktualisiert auf `power=1.5`; die fruehere Tabelle stammte noch von `power=1`, die Kernaussage war und ist aber unveraendert.)
+**Entscheidung**: Threshold-Tuning wird nicht zusaetzlich zur Trainings-Klassengewichtung eingesetzt — das Stacken beider Mechanismen erschliesst keinen neuen Freiheitsgrad, nur denselben BAcc/MCC-Trade-off ueber einen anderen Mechanismus. `class_weight_power` bleibt der primaere Regler; `130` dient als Absicherung/Verfeinerung obendrauf, nicht als Ersatz.
 
 ## Schwellenwert-Tuning fuer Ranger
 
@@ -653,7 +688,7 @@ Diese Zuordnung ist in `model_feature_sets` und `model_class_weight_power` (`000
 
 ## Finales Training & Submission
 
-`150_train_full_model.R` trainiert `submission_model_name` (aktuell `ranger`: Rohfeatures, Standardparameter, `class_weight_power = 1.5`) auf dem **vollen** Trainingsdatensatz (`train.csv`, 690088 Zeilen statt des 10%-Subsets) und speichert Modell + Feature-Set + Faktorstufen der Merkmale gemeinsam (`_artifacts/final_model_<modell>_full.rds`) - Letzteres, damit `155_predict_submission.R` `test.csv` exakt mit demselben Feature-Set und denselben Kategorie-Stufen verarbeitet, unabhaengig davon, ob im Test-Set zufaellig alle Stufen vorkommen. `155` erzeugt daraus `submission.csv` im Format von `sample_submission.csv` (Spalten `id`, `health_condition`).
+`150_train_full_model.R` trainiert `submission_model_name` (aktuell `ranger`: Rohfeatures, Standardparameter, `class_weight_power = 1.5`) auf dem **vollen** Trainingsdatensatz (`train.csv`, 690088 Zeilen statt des 10%-Subsets) und speichert Modell + Feature-Set + Faktorstufen der Merkmale gemeinsam (`_artifacts/final_model_<modell>_full.rds`) - Letzteres, damit `155_predict_submission.R` `test.csv` exakt mit demselben Feature-Set und denselben Kategorie-Stufen verarbeitet, unabhaengig davon, ob im Test-Set zufaellig alle Stufen vorkommen. `150`/`155` laden `features/*.R` per Glob statt hartcodierter Dateinamen (zwei unabhaengige Uebertragungen - s6e5, s5e12 - scheiterten sonst an fehlenden Feature-Familien-Dateien in einem neuen Projekt). `155` erzeugt daraus `submission.csv` im Format von `sample_submission.csv` (Spalten `id`, `health_condition`) - **metrik-abhaengig**: bei binaerer Aufgabe mit schwellenwert-unabhaengiger Zielmetrik (AUC/LogLoss) wird stattdessen `P(positive_class)` geschrieben (`150` setzt dafuer `predict_type="prob"`, falls der Learner es unterstuetzt), sonst wie bisher Klassen-Labels.
 
 Vorhergesagte Klassenverteilung auf `test.csv` (295753 Zeilen, Ranger): `at-risk` 81.8%, `unhealthy` 10.9%, `fit` 7.25% (Rohverteilung im Training war ca. 86/8/6%) - naeher an der Rohverteilung als LightGBMs Vorhersage, passend zu Rangers besserer Precision/MCC in der CV.
 
