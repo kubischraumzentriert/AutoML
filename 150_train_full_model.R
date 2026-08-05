@@ -11,14 +11,15 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
-source(file.path(project_dir, "features", "utils.R"))
-source(file.path(project_dir, "features", "bmi.R"))
-source(file.path(project_dir, "features", "sleep.R"))
-source(file.path(project_dir, "features", "activity.R"))
-source(file.path(project_dir, "features", "hydration.R"))
-source(file.path(project_dir, "features", "cardio.R"))
-source(file.path(project_dir, "features", "interactions.R"))
-source(file.path(project_dir, "features", "surrogate_guided.R"))
+# Alle features/*.R laden statt einzelne Familien-Dateien hartzucodieren -
+# bei einem neuen Projekt ohne (oder mit anderen) Feature-Familien sourct das
+# unveraendert genau die vorhandenen Dateien, statt beim Kopieren mit "file
+# not found" abzustuerzen (zwei unabhaengige Uebertragungen - s6e5, s5e12 -
+# scheiterten hier bis das generalisiert wurde). Dateien enthalten nur
+# Funktionsdefinitionen, Ladereihenfolge ist daher unerheblich.
+for (f in list.files(file.path(project_dir, "features"), pattern = "\\.R$", full.names = TRUE)) {
+  source(f)
+}
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)

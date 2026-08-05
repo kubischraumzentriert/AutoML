@@ -11,14 +11,12 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
-source(file.path(project_dir, "features", "utils.R"))
-source(file.path(project_dir, "features", "bmi.R"))
-source(file.path(project_dir, "features", "sleep.R"))
-source(file.path(project_dir, "features", "activity.R"))
-source(file.path(project_dir, "features", "hydration.R"))
-source(file.path(project_dir, "features", "cardio.R"))
-source(file.path(project_dir, "features", "interactions.R"))
-source(file.path(project_dir, "features", "surrogate_guided.R"))
+# Alle features/*.R laden statt einzelne Familien-Dateien hartzucodieren -
+# siehe 150_train_full_model.R fuer die Begruendung (zwei unabhaengige
+# Uebertragungen, s6e5/s5e12, scheiterten an fehlenden Feature-Dateien).
+for (f in list.files(file.path(project_dir, "features"), pattern = "\\.R$", full.names = TRUE)) {
+  source(f)
+}
 
 model_name <- resolve_submission_model_name()
 feature_set <- model_feature_sets[[model_name]]
