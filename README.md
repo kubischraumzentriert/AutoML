@@ -149,6 +149,19 @@ Vier automatisierte Schritte (bewusst auf **vollen** Daten, kein Subset - Determ
 
 Kein einzelnes Feature ueberschreitet die 50%-Schwelle, keine Wert-Gruppe zeigt exakten Determinismus (`n>=30`) - Audit unauffaellig, Zerlegung (Schritt 4) entsprechend uebersprungen. Bemerkenswert bleibt, dass `stress_level` und `sleep_duration` zusammen bereits ~78% der Gain-Importance tragen - kein Leak-Befund, aber ein Hinweis, dass die meisten anderen Features fuer LightGBM kaum Zusatzsignal liefern (deckt sich mit dem Feature-Family-Benchmark oben).
 
+**Cross-Projekt-Bestaetigung (2026-08-05, PumpItUp + geoai-aquaculture, 2. und 3. Bestaetigungsprojekt):** Der Guard wurde auf zwei reale (nicht-synthetische), externe Projekte aus unterschiedlichen Domaenen angewandt - beide korrekt unauffaellig:
+
+| Projekt | Plattform | Zeilen | Top-Feature (Gain-Share) | Befund |
+|---|---|---:|---|---|
+| PumpItUp (Wasserpumpen, 3 Klassen/Accuracy) | DrivenData | 59400 | `ward` 28.5% | kein Leak |
+| geoai-aquaculture (Fernerkundung, binaer/AUC+Fbeta) | Zindi | 1822 | `re3_08` 27.5% | kein Leak |
+
+Diese zweite/dritte Bestaetigung deckte zwei generische Luecken auf, die am Template-eigenen (rein synthetischen) Projekt nie sichtbar wurden und jetzt behoben sind:
+
+- **Datumsspalten** (`Date`/`IDate`/`POSIXct`, z.B. aus `fread()`) liess `as_task_classif()` bisher abstuerzen ("Must be a subset of..."). Jetzt werden sie numerisch konvertiert (Tage/Sekunden seit Epoch) statt fallengelassen - ein Datum kann selbst leak-relevant sein (z.B. "erfasst am" nach dem Ausgang), PumpItUps `date_recorded` bestaetigt das (2.5e-3 Gain-Share, unauffaellig aber mitgeprueft).
+- **Rein kontinuierliche Feature-Saetze** (z.B. geoais 144 Spektralindizes ohne jede Spalte `<= leak_audit_cardinality_max`) liessen Schritt 2 abstuerzen (`rbindlist(list())` erzeugt eine spaltenlose Tabelle). Jetzt expliziter Kurzschluss mit Hinweistext statt Absturz.
+- Ausserdem generalisiert: `enable_class_stratification()` (aus `000_config.R`) ist keine harte Abhaengigkeit mehr - das Skript setzt die Stratum-Rolle jetzt direkt, laeuft also auch in aelteren Projekt-Kopien ohne diesen Helfer (PumpItUp/geoai hatten ihn nicht).
+
 ## Baseline-Ergebnisse
 
 Die Roh-Baseline laesst leere Strings in kategorialen Features als eigene Faktorstufe bestehen.

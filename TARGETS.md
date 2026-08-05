@@ -396,7 +396,14 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   getestet gegen das Template-eigene Projekt (health_condition, volle 690088
   Zeilen): kein Feature ueberschreitet 50% Gain-Share (Top: stress_level 42.9%,
   sleep_duration 34.8%), kein Determinismus-Fund - Audit korrekt unauffaellig,
-  siehe README "Target-Leakage-Audit".
+  siehe README "Target-Leakage-Audit". **2./3. Bestaetigung (2026-08-05,
+  PumpItUp + geoai-aquaculture)**: auf zwei reale, externe Projekte angewandt,
+  beide korrekt unauffaellig - deckte zwei generische Bugs auf (Datumsspalten
+  liessen `as_task_classif()` abstuerzen; rein kontinuierliche Feature-Saetze
+  ohne jede niedrigkardinale Spalte liessen Schritt 2 abstuerzen), beide
+  behoben. `enable_class_stratification()` ist jetzt keine harte Abhaengigkeit
+  mehr (direkter `set_col_roles()`-Aufruf) - laeuft auch in Projekt-Kopien ohne
+  diesen Helfer.
 - **Nested/gepooltes per-Fold-Threshold-Tuning fehlt** - Anlass:
   `CreditScoringChallenge`, Verfeinerung zu `130_threshold_tuning.R`. Aktuell nur
   ein einzelner stratifizierter 3-Wege-Split (Train/Tune/Eval) - keine
