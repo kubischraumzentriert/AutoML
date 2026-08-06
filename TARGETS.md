@@ -403,7 +403,20 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   ohne jede niedrigkardinale Spalte liessen Schritt 2 abstuerzen), beide
   behoben. `enable_class_stratification()` ist jetzt keine harte Abhaengigkeit
   mehr (direkter `set_col_roles()`-Aufruf) - laeuft auch in Projekt-Kopien ohne
-  diesen Helfer.
+  diesen Helfer. **Sensitivitaetstest (2026-08-05, Regressions-Template,
+  identische Suspects-Logik)**: an einem bekannten, deterministischen Leak
+  (OpenML 42712 Bike-Sharing, `casual+registered==count` exakt) fand der Guard
+  den dominanten Leak-Anteil korrekt (94.7% Gain-Share, RMSE-Zerlegung 3.12 ->
+  32.50), liess aber einen SCHWAECHEREN Mit-Leaker (5.3%, unter der 50%-
+  Einzelschwelle) durchrutschen - die "ehrliche" Zahl war noch ~20% zu
+  optimistisch. **Bekannte Grenze: nur Einzelfeature-Konzentration, keine
+  gemeinsam wirkenden Leak-Paare** - bewusst nicht automatisch nachgeschaerft
+  (Risiko, legitime starke Feature-Gruppen faelschlich auszuschliessen;
+  Schritt 5 faengt den Rest ab). Details/Backlog-Kandidat (kumulative
+  Top-k-Schwelle) siehe `WORKFLOW_GUARDS.md`/`BACKLOG.md` im
+  Regressions-Template - noch nicht unabhaengig an einem Klassifikations-
+  projekt bestaetigt, dieselbe Code-Logik (`share > threshold`) gilt aber
+  identisch hier.
 - **Nested/gepooltes per-Fold-Threshold-Tuning fehlt** - Anlass:
   `CreditScoringChallenge`, Verfeinerung zu `130_threshold_tuning.R`. Aktuell nur
   ein einzelner stratifizierter 3-Wege-Split (Train/Tune/Eval) - keine
