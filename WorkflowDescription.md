@@ -14,6 +14,101 @@ Jeder Abschnitt entspricht einer Phase der `TARGETS.md`-Checkliste
 "Uebertragung auf einen neuen Kaggle-Wettbewerb", aber ausführlicher: mit
 Beispielbefehlen, erwarteten Ausgabeformen und Entscheidungsregeln.
 
+## Workflow-Diagramm
+
+Ueberblick ueber den kompletten Ablauf inkl. aller Entscheidungspunkte, die
+kein Skript automatisch trifft. Rauten = Entscheidung, Rechtecke = Skript/
+Schritt, Doppelrahmen = externes Playbook-Dokument, Kapseln = Start/Ende.
+Details zu jeder Phase stehen unten im jeweiligen Abschnitt.
+
+```mermaid
+flowchart TD
+    Start(["Neues Kaggle-Projekt"]) --> Prep["Phase 0: Kaggle-Overview lesen<br/>Zielspalte, Metrik-Wortlaut, Submission-Format"]
+    Prep --> Config["Phase 1: 000_config.R ausfuellen<br/>id_col, target_col, baseline_measure_ids"]
+
+    Config --> LeakAudit["015: Target-Leak-Audit<br/>(volles Dataset, kein Subset)"]
+    LeakAudit --> DLeak{"Feature &gt;50% Gain-Share<br/>oder Determinismus:<br/>P(Klasse gegeben Wert) = 0 oder 1?"}
+    DLeak -- "ja" --> LeakFix["Feature entfernen/pruefen<br/>(honest-vs-inflated Vergleich)"]
+    LeakFix --> LeakAudit
+    DLeak -- "nein" --> EDA["Phase 2: 010_eda.R<br/>Zeilen/Spalten, Klassenverteilung, Missing-Rate"]
+
+    EDA --> DPanel{"Zeitreihe oder gruppierte<br/>Entitaeten (Panel-Daten)?"}
+    DPanel -- "ja" --> GroupCV["Standard-Stratum-CV ersetzen<br/>durch Zeit- oder Group-Resampling"]
+    DPanel -- "nein" --> Task["Phase 3: 020_task.R<br/>stratifizierter Task, subset_fraction"]
+    GroupCV --> Task
+
+    Task --> Baseline["Phase 4: 030_baseline.R<br/>LDA / Multinom / Ranger per Holdout"]
+    Baseline --> DCard{"Faktor-Spalte<br/>&gt;50 Auspraegungen?"}
+    DCard -- "ja" --> CardFix["Fuer LDA/Multinom ausschliessen<br/>oder kodieren (sonst Absturz)"]
+    DCard -- "nein" --> AdvVal
+    CardFix --> AdvVal["Phase 5: 115_adversarial_validation.R<br/>Train vs. Test unterscheidbar?"]
+
+    AdvVal --> DShift{"Adversarial-Validation-AUC?"}
+    DShift -- "um 0.5" --> Calib
+    DShift -- "0.6 bis 0.7" --> ShiftCare["Treiber-Spalten vorsichtig behandeln,<br/>CV-Entscheidungen kritischer pruefen"]
+    DShift -- "0.9 oder mehr, strukturell" --> ShiftPlaybook[["REFERENZ_DISTRIBUTION_SHIFT.md<br/>gestufte Zerlegung, ESS-Gate,<br/>Invarianz statt Korrektur"]]
+    ShiftCare --> Calib
+    ShiftPlaybook --> Calib
+
+    Calib["Phase 5b: Kalibrierung vormerken<br/>(nur falls LogLoss/Brier in Metrik)"] --> DFeat{"Baseline hat Spielraum<br/>UND konkrete Feature-Idee?"}
+
+    DFeat -- "nein" --> Boosting
+    DFeat -- "ja" --> FeatEng["Phase 6: 025 / 035-038<br/>Feature-Familie(n) bauen"]
+    FeatEng --> DFamImp{"Familie verbessert<br/>Holdout spuerbar?"}
+    DFamImp -- "nein" --> RawFeat["Rohfeatures behalten<br/>(negatives Ergebnis ist valide)"]
+    DFamImp -- "ja" --> CVConfirm["037: 5-fache CV bestaetigt Auswahl"]
+    CVConfirm --> SelFam["selected_families uebernehmen<br/>(000_config.R)"]
+    RawFeat --> Boosting
+    SelFam --> Boosting
+
+    Boosting["Phase 7: 080 / 081<br/>Ranger/LightGBM nativ + XGBoost One-Hot via 040"] --> Tuning["Phase 8: 090 / 100 Tuning<br/>tnr(mbo), Budget &gt;= 4x Suchraum-Dimension"]
+
+    Tuning --> DMbo{"diagnose_mbo_search():<br/>echte Verfeinerung UND<br/>unabhaengige CV-Gegenprobe besser?"}
+    DMbo -- "nein" --> KeepDefault["Tuning verwerfen,<br/>Default-Hyperparameter behalten"]
+    DMbo -- "ja" --> AdoptTuning["Getunte Hyperparameter uebernehmen"]
+
+    KeepDefault --> ClassWeight
+    AdoptTuning --> ClassWeight["Phase 9: 105 / 135<br/>class_weight_power-Gitter"]
+
+    ClassWeight --> DMetric{"is_threshold_independent_metric()?"}
+    DMetric -- "unabhaengig, AUC/LogLoss" --> SkipThresh["Klassengewichtung: niedrige Prioritaet.<br/>Phase 10 UEBERSPRINGEN"]
+    DMetric -- "abhaengig, BAcc/MCC/Acc/F1" --> ThreshTune["Phase 10: 130 / 146<br/>Schwellenwert-Tuning, hohe Prioritaet"]
+
+    SkipThresh --> ErrorAnalysis
+    ThreshTune --> ErrorAnalysis["Phase 11: 147-Kette<br/>models, dann confidence, isolation_forest,<br/>kernelshap, tabpfn"]
+
+    ErrorAnalysis --> DRescue{"Modell B rettet auffaellig<br/>viele Fehler von Modell A?"}
+    DRescue -- "ja, pruefen" --> Disagreement["check_disagreement_accuracy():<br/>P(B richtig, wenn A und B uneinig)"]
+    Disagreement --> DCorrect{"Korrekturregel lohnt sich?"}
+    DCorrect -- "nein" --> NoCorrect["War Mehrheitsklassen-Bias,<br/>keine Korrekturregel"]
+    DCorrect -- "ja" --> UseCorrect["Korrektur-/Ensemble-Regel uebernehmen"]
+    DRescue -- "nein" --> Boundary
+    NoCorrect --> Boundary
+    UseCorrect --> Boundary
+
+    Boundary{"Modelluebergreifend identische,<br/>selbstsichere Fehler?"}
+    Boundary -- "ja" --> StopTuning["Strukturelle Grenze:<br/>weiteres Tuning bringt wenig, stoppen"]
+    Boundary -- "nein" --> NeuralGate
+    StopTuning --> NeuralGate
+
+    NeuralGate{"Optional, NEURAL_DEPLOY.md:<br/>GBMs zu korreliert, ca. 0.99,<br/>Blend bringt kaum mehr?"}
+    NeuralGate -- "nein" --> SelectModel
+    NeuralGate -- "ja" --> FTProto["FT-Transformer-Prototyp<br/>(mlr3torch, R/CPU, Sample)"]
+    FTProto --> DDecorr{"Dekorreliert, ca. 0.9x,<br/>UND konkurrenzfaehig?"}
+    DDecorr -- "nein" --> NoNeural["Kein neuronales Modell,<br/>GBM-Ensemble ist final"]
+    DDecorr -- "ja" --> PyExport["Python-GPU-Export<br/>(Kaggle-Notebook, s6e8-Vorlage)"]
+    NoNeural --> SelectModel
+    PyExport --> SelectModel
+
+    SelectModel["Phase 12a: 148_select_submission_model.R<br/>Vorschlag aus experiments.db"] --> FullTrain["Phase 12b: 150_train_full_model.R<br/>Training auf VOLLEM train.csv"]
+    FullTrain --> Predict["Phase 12c: 155_predict_submission.R"]
+
+    Predict --> DProb{"Wahrscheinlichkeits-Submission,<br/>AUC oder LogLoss?"}
+    DProb -- "ja" --> ProbCol["Richtige Klassenspalte explizit waehlen,<br/>NICHT mlr3-Default positive class"]
+    DProb -- "nein, Klassenlabel" --> Done
+    ProbCol --> Done(["submission.csv"])
+```
+
 ## Phase 0: Vorbereitung
 
 1. Projektordner mit `train.csv`, `test.csv`, `sample_submission.csv` von

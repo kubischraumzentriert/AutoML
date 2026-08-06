@@ -15,7 +15,7 @@ source(file.path(project_dir, "db_logging.R"))
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
 
-# Erster Baustein der Fehleranalyse (siehe ANLEITUNG.md Phase 11): trainiert
+# Erster Baustein der Fehleranalyse (siehe WorkflowDescription.md Phase 11): trainiert
 # die drei Vergleichsmodelle EINMAL auf dem Holdout-Split, speichert Modelle +
 # Vorhersagen als Artefakt und loggt vollstaendig nach experiments.db. Die
 # nachgelagerten Skripte (_confidence.R, _isolation_forest.R, _kernelshap.R,

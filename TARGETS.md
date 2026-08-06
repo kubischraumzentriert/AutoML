@@ -113,7 +113,7 @@ Angenommen, du willst `class_weight_power` von 1.5 auf 1.75 testen:
 
 ## Checkliste: Uebertragung auf einen neuen Kaggle-Wettbewerb
 
-> **Ausfuehrlichere Fassung**: siehe [`ANLEITUNG.md`](ANLEITUNG.md) - dieselbe
+> **Ausfuehrlichere Fassung**: siehe [`WorkflowDescription.md`](WorkflowDescription.md) - dieselbe
 > Checkliste, aber mit Beispielbefehlen, erwarteten Ausgaben und
 > Entscheidungsregeln pro Schritt, damit sie auch ohne KI-Unterstuetzung
 > nachvollziehbar ist.

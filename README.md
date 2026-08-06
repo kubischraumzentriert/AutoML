@@ -65,7 +65,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > **Ausfuehrliche Anleitung**: siehe [`TARGETS.md`](TARGETS.md) - Grundkonzepte, Befehlsuebersicht, ein durchgerechnetes Beispiel und eine Checkliste fuer die Uebertragung auf einen neuen Wettbewerb.
 > Fuer eine ausfuehrlichere, Schritt-fuer-Schritt-Fassung dieser Checkliste
 > (Beispielbefehle, erwartete Ausgaben, Entscheidungsregeln je Phase - auch
-> ohne KI-Unterstuetzung nachvollziehbar) siehe [`ANLEITUNG.md`](ANLEITUNG.md).
+> ohne KI-Unterstuetzung nachvollziehbar) siehe [`WorkflowDescription.md`](WorkflowDescription.md).
 > Fuer Probability-Challenges mit LogLoss/Brier-Anteil siehe ausserdem
 > [`REFERENZ_PROBABILITY_CALIBRATION.md`](REFERENZ_PROBABILITY_CALIBRATION.md):
 > OOF-Kalibrierung, Platt-Scaling und die Fairness-Regel "lokal validieren,
