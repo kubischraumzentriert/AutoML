@@ -4,6 +4,17 @@ Dieses Unterprojekt entwickelt eine wiederverwendbare AutoML-Struktur fuer Kaggl
 
 Der aktuelle Datensatz stammt aus `playground-series-s6e7` und beschreibt Gesundheits- und Lifestyle-Merkmale. Zielvariable ist `health_condition` mit drei Klassen: `at-risk`, `unhealthy`, `fit`.
 
+> **Einstieg / Kontext erfassen**: vor dem Deep-Dive in einzelne Skripte oder
+> Phasen-Text zuerst [`WorkflowDescription.md`](WorkflowDescription.md) ansehen
+> - dort steht ein Mermaid-Diagramm mit dem kompletten Ablauf inkl. aller
+> Entscheidungspunkte (Metrik-Typ, Adversarial-Shift, Feature-Auswahl,
+> Tuning-Verwerfung, Rescue-Rate-Falle, Neural-Gate). Gilt auch fuer eine
+> KI-Session, die hier den Kontext erfassen soll: das Diagramm ist der
+> guenstigste Einstiegspunkt, kompakter als 12 Phasen-Abschnitte oder
+> Skript-Code einzeln zu lesen. Fuer automatisierte Agenten (Codex, Claude
+> Code, etc.) siehe zusaetzlich [`AGENTS.md`](AGENTS.md) - u.a. die Pflicht,
+> das Diagramm bei Aenderungen an der Ablauflogik mitzuziehen.
+
 ## Zielbild
 
 Die Projektstruktur trennt bewusst mehrere Ebenen:
