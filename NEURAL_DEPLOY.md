@@ -84,3 +84,29 @@ LightGBM+TE `0.96731` -> 3-GBM-Blend `0.96775` -> +FT-Transformer (Python/GPU)
 `0.96810`. Der dekorrelierte FT holte `+0.00035`, was die zu 0.99 korrelierten
 GBMs nicht konnten - die Diversitaets-These bestaetigt. Genau dafuer, und nur
 dafuer, gibt es den Python-Export.
+
+## Geprueft und verworfen: `nnet` als billigerer neuronaler Kandidat (s6e8, 2026-08-06)
+
+`nnet` (Base-R-MLP, einlagig, IMMER CPU - kein GPU-Pfad im Paket) waere ein
+Kandidat gewesen, der die ganze Python-GPU-Export-Kette ueberfluessig macht,
+weil er klein genug ist, um direkt in R auf voller Groesse zu laufen. Getestet
+auf demselben Holdout-Split wie die GBMs (20%-Sample, exact-value TE, One-Hot
++ skaliert fuer `nnet`, Skript `nnet_diversity_check.R` im Projektordner):
+
+| Modell | AUC (Holdout) |
+|---|---:|
+| CatBoost | 0.9612 |
+| XGBoost | 0.9609 |
+| LightGBM | 0.9599 |
+| ranger | 0.9577 |
+| **nnet** | **0.9566** |
+
+`nnet` ist das schwaechste der fuenf Modelle (auch unter ranger) UND mit
+0.976 zu stark mit dem GBM-Mittel korreliert (GBMs untereinander: 0.988-0.991)
+- Blend4(+nnet) `0.9617` vs. Blend3(GBM) `0.9616` ist Rauschen. Vermutete
+Ursache: eine einzelne versteckte Schicht ohne Embeddings/Attention lernt
+strukturell eine aehnliche Funktion wie die Baeume, statt eine andere Sicht
+auf die Daten zu bekommen - anders als der FT-Transformer, dessen Embeddings/
+Attention-Mechanismus genau das leisten. **Kein Diversitaetsgewinn, Kandidat
+verworfen** - fuer neuronale Diversitaet bleibt der FT-Transformer-Weg
+(oben) die richtige Wahl trotz des Python-Export-Aufwands.
