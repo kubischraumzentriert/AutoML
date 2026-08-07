@@ -110,3 +110,49 @@ auf die Daten zu bekommen - anders als der FT-Transformer, dessen Embeddings/
 Attention-Mechanismus genau das leisten. **Kein Diversitaetsgewinn, Kandidat
 verworfen** - fuer neuronale Diversitaet bleibt der FT-Transformer-Weg
 (oben) die richtige Wahl trotz des Python-Export-Aufwands.
+
+**Nachtrag - `mlr3torch`-MLP/TabResNet als "billigerer Torch-Ersatz" geprueft
+und ohne Testlauf verworfen**: `classif.mlp` und `classif.tab_resnet` (die
+einzigen zwei weiteren fertigen Architekturen in `mlr3torch` neben
+`classif.ft_transformer`) haben laut `feature_types` **beide KEIN natives
+`factor`** - nur `integer`/`numeric`/`lazy_tensor`. Nur `classif.ft_transformer`
+hat eingebaute Kategorie-Embeddings. Ein direkter `classif.mlp`-Einsatz mit
+integer-kodierten Kategorien haette dieselbe strukturelle Schwaeche wie
+`nnet` reproduziert; echte Embeddings gaebe es nur ueber eine selbstgebaute
+Graph-Architektur (`po("torch_ingress_categ")` + `po("torch_ingress_num")`),
+was den erhofften Vorteil ("billiger als FT-Transformer") wieder aufhebt.
+Deshalb ohne Testlauf abgebrochen, bevor Rechenzeit investiert wurde.
+
+## Geprueft: TabPFN als echtes Blend-Mitglied (nicht nur Fehleranalyse, s6e8, 2026-08-06)
+
+Anderer Lernansatz als `nnet`/GBMs (vortrainiertes In-Context-Learning statt
+additive Baeume) - Skript `tabpfn_diversity_check.R` im Projektordner, gleicher
+Holdout-Split, aber bewusst kleine Eval-Stichprobe (n=2000) und ein
+klassenstratifizierter Kontext von 999 Zeilen (Konvention aus `095_tabpfn_
+benchmark.R`/`147_error_analysis_ranger_tabpfn.R`), da TabPFN kontextlimitiert
+ist und ueber den gehosteten TabPFN-Dienst laeuft (bestehender lokaler
+Auth-Token unter `~/.cache/tabpfn/auth_token`, kein neuer Login noetig).
+
+| Modell | AUC (n=2000) |
+|---|---:|
+| XGBoost | 0.9649 |
+| CatBoost | 0.9646 |
+| LightGBM | 0.9636 |
+| **TabPFN** | **0.9352** |
+| Blend3 (GBM) | 0.9652 |
+| Blend4 (+TabPFN) | 0.9634 |
+
+**Korrelation TabPFN-GBM-Mittel: 0.899** - echte Dekorrelation, genau im
+Zielbereich "~0.9x statt ~0.99" (GBMs untereinander: 0.989-0.992). Die
+Diversitaets-These bestaetigt sich hier tatsaechlich, anders als bei `nnet`.
+**Aber**: TabPFN ist mit AUC 0.9352 spuerbar schwaecher (~0.03 unter den
+GBMs) - erwartbar, da es nur 999 statt der ~78k GBM-Trainingszeilen sah.
+Im **gleichgewichteten** Blend4 ueberwiegt die Schwaeche den Dekorrelations-
+vorteil: Blend4 (0.9634) < Blend3 (0.9652) - das bekannte Muster "ein
+schwaecheres Modell verwaessert einen gleichgewichteten Blend".
+**Nicht weiterverfolgt** (Nutzer-Entscheidung 2026-08-06), aber zwei
+plausible Hebel fuer eine spaetere Session, falls das Signal doch genutzt
+werden soll: (a) gewichtsoptimierter statt gleichgewichteter Blend (TabPFN
+niedrig gewichten, analog zur SLSQP-Blend-Lehre aus s6e7-4th-place), (b)
+groesserer Kontext als 999 Zeilen, falls der Dienst das zulaesst - wuerde
+die Luecke zu den GBMs vermutlich verkleinern, kostet aber mehr API-Zeit.
