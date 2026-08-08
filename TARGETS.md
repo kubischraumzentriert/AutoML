@@ -436,3 +436,55 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Kriterium aus `adr/README.md` (echte Alternative + versehentlich umkehrbar),
   aber noch nicht zu eigenen ADR-Dateien ausgebaut - niedrige Prioritaet,
   keine akute Verwechslungsgefahr beobachtet.
+- **Drei Ideen aus "Automated Machine Learning" (Hutter/Kotthoff/Vanschoren
+  2019, offenes Springer-Buch) geprueft (2026-08-08)** - Kap. 1
+  (Hyperparameter Optimization), Kap. 2 (Meta-Learning), Kap. 6
+  (Auto-sklearn):
+  - **Caruana-Greedy-Ensemble-Selection: 2-Projekt-Kriterium ERFUELLT,
+    bereit zum Backporten.** Statt ein Einzelmodell zu waehlen
+    (`148_select_submission_model.R`) oder wenige Modelle gleichzugewichten,
+    einen Pool bereits trainierter Modelle per gieriger Vorwaertsauswahl
+    (mit Wiederholung erlaubt, Caruana et al. 2004, wie in Auto-sklearn)
+    zu einem Ensemble kombinieren. Verifiziert an ZWEI unabhaengigen,
+    bewusst unterschiedlichen OpenML-Datensaetzen (Skript-Pool in
+    `ML_Learning/openml-bank-marketing-ensemble-test/`, kein eigenes
+    Projekt-Repo, standalone): bank-marketing (id 1461, 45211 Zeilen, stark
+    unbalanciert ~11.7% positiv, gemischt kategorial/numerisch) und
+    electricity (id 151, 45312 Zeilen, balanciert ~42.5%/57.5%,
+    ueberwiegend numerisch). Pool je 45 Modelle (15 LightGBM/10 XGBoost/10
+    CatBoost/10 ranger, variierte Hyperparameter), 3-Wege-Split
+    Train/Valid/Test, Selektion NUR auf Valid, Test bleibt bis zum Schluss
+    unberuehrt.
+    | Datensatz | bestes Einzelmodell | Blend gleichgewichtet (45) | Greedy-Ensemble |
+    |---|---:|---:|---:|
+    | bank-marketing | 0.9326 | 0.9307 | **0.9348** |
+    | electricity | 0.9740 | 0.9515 | **0.9743** |
+    Greedy-Ensemble schlaegt in BEIDEN Faellen das beste Einzelmodell UND
+    (deutlich staerker) den naiven Gleichgewichts-Blend - bestaetigt erneut
+    "ein schwaecheres Modell verwaessert einen gleichgewichteten Blend",
+    zeigt aber auch den Ausweg: die Methode konzentriert sich adaptiv auf
+    wenige starke Modelle (electricity: `lgb_8` 27x von 34 gewaehlt), statt
+    naiv gleichzugewichten. Laufzeit je Test ~7 Minuten (45-Modell-Pool),
+    weit unter der 30-Minuten-Schwelle aus `adr/002-r-only-python-gpu-export.md`.
+    **Integrationsaufwand vor dem echten Backport**: Benchmark-Skripte
+    (`080`/`090`/`100` etc.) loggen aktuell nur die finale Metrik nach
+    `experiments.db`, nicht die Vorhersagen jedes einzelnen Kandidaten auf
+    einem gemeinsamen Holdout - das braeuchte die Selektion aber. Ein neues
+    Modul (Arbeitstitel `149_ensemble_selection.R`, zwischen `148` und `150`)
+    muesste diese Vorhersagen systematisch sammeln koennen. Noch nicht
+    gebaut - naechste Session.
+  - **Meta-Learning-Warmstart fuer `tnr("mbo")` aus der zentralen
+    `experiments.db`** (Kap. 2/6, Auto-sklearn-Rezept: Meta-Features des
+    neuen Datensatzes berechnen, k=25 aehnlichste Projekte per L1-Distanz
+    im Meta-Feature-Raum finden, deren beste bekannte Konfigurationen als
+    Startpunkt statt reinem Zufalls-Initialdesign nutzen). Noch NICHT
+    geprueft/prototypisiert - die zentrale DB (16 Projekte, siehe
+    `adr/001-local-project-db-central-merge.md`) waere jetzt die
+    Datengrundlage dafuer. 0-Projekt-Kandidat, naechster Schritt: Prototyp
+    + Verifikation an einem OpenML-Datensatz wie bei der Ensemble-Selection.
+  - **Successive Halving/Hyperband fuer die Tuning-Skripte** (Kap. 1.4):
+    Kandidaten-Konfigurationen mit kleinem Budget starten, schlechtere
+    Haelfte verwerfen, Budget verdoppeln, wiederholen - statt jede
+    `mbo`-Kandidatenkonfiguration voll zu evaluieren. Wuerde direkt die
+    Tuning-Laufzeit adressieren (`mlr3hyperband`-Paket existiert dafuer).
+    Noch NICHT geprueft/prototypisiert. 0-Projekt-Kandidat.
