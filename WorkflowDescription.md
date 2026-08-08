@@ -105,8 +105,10 @@ flowchart TD
 
     Predict --> DProb{"Wahrscheinlichkeits-Submission,<br/>AUC oder LogLoss?"}
     DProb -- "ja" --> ProbCol["Richtige Klassenspalte explizit waehlen,<br/>NICHT mlr3-Default positive class"]
-    DProb -- "nein, Klassenlabel" --> Done
-    ProbCol --> Done(["submission.csv"])
+    DProb -- "nein, Klassenlabel" --> SubmissionDone
+    ProbCol --> SubmissionDone(["submission.csv"])
+    SubmissionDone --> MergeDB["Projekt in zentrale experiments.db uebernehmen:<br/>Rscript merge_project_experiments.R<br/>(im Template, idempotent, separater Aufruf)"]
+    MergeDB --> Done(["Ende"])
 ```
 
 ## Phase 0: Vorbereitung
@@ -535,6 +537,21 @@ erneuter Lauf ueberschreibt die vorherige Datei nicht mehr kommentarlos. Der
 Pfad wird als `model_artifact_path`-Hyperparameter in `experiments.db`
 geloggt; `155` findet ihn ueber `db_get_latest_model_artifact_path()`
 (`db_logging.R`) automatisch wieder - keine manuelle Pfadverwaltung noetig.
+
+**Letzter Schritt nach Abschluss (oder an sinnvollen Zwischenstaenden): dieses
+Projekt in die zentrale experiments.db uebernehmen.**
+
+```r
+Rscript <Pfad-zum-Template>/merge_project_experiments.R
+```
+
+Das Skript findet Projekt-DBs automatisch unter den bekannten Wurzeln
+(`R_Workspace`, `ML_Learning`) und ist idempotent (bereits gemergte Projekte
+werden per `proj_name`, DB-seitig `UNIQUE`, uebersprungen) - gefahrlos
+mehrfach ausfuehrbar. Bewusst ein **separater Aufruf**, keine eingebaute
+Referenz im Projektordner selbst (siehe `EXPERIMENTS_DB.md`: Projektordner
+bleiben dadurch eigenstaendig, kein Rueckverweis auf das Template-Repo noetig,
+keine Schreibkonkurrenz waehrend aktiver Arbeit an mehreren Projekten).
 
 ## Entscheidungsregeln im Ueberblick
 

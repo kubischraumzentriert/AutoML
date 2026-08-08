@@ -426,3 +426,13 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   funktioniert), aber ein dokumentierter, funktionierender
   Verfeinerungsvorschlag fuer `class_multiplier_tuning.R`/`130`. 1-Projekt-
   Kandidat, niedrigere Prioritaet.
+- **Zwei implizite Architekturentscheidungen als ADR-Kandidaten vorgemerkt
+  (2026-08-08, noch nicht umgesetzt)**: (a) `targets`-Pipeline deckt bewusst
+  nur den finalen Produktionspfad ab, die explorativen Skripte (`030`-`147`)
+  bleiben ausserhalb des Graphen - bisher nur in `README.md`-Prosa begruendet;
+  (b) beide Templates (Klassifikation/Regression) halten ihr `experiments.db`-
+  Schema bewusst identisch, um kuenftige Cross-Template-Analysen/-Merges zu
+  ermoeglichen - ebenfalls nur Prosa. Beide erfuellen das Befoerderungs-
+  Kriterium aus `adr/README.md` (echte Alternative + versehentlich umkehrbar),
+  aber noch nicht zu eigenen ADR-Dateien ausgebaut - niedrige Prioritaet,
+  keine akute Verwechslungsgefahr beobachtet.

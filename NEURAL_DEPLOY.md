@@ -156,3 +156,71 @@ werden soll: (a) gewichtsoptimierter statt gleichgewichteter Blend (TabPFN
 niedrig gewichten, analog zur SLSQP-Blend-Lehre aus s6e7-4th-place), (b)
 groesserer Kontext als 999 Zeilen, falls der Dienst das zulaesst - wuerde
 die Luecke zu den GBMs vermutlich verkleinern, kostet aber mehr API-Zeit.
+
+## Gewichtsoptimierter Blend statt Gleichgewichtung getestet, UND CPU-Laufzeit-Beleg gegen Voll-Training (s6e8, 2026-08-08)
+
+Hebel (a) aus dem TabPFN-Abschnitt oben, aber auf den FT-Transformer
+angewendet: Skript `ft_blend_weight_optimization.R`/`_step2.R` im
+Projektordner. Softmax-Reparametrisierung + Nelder-Mead (kein neues Paket,
+gleiches Muster wie `class_multiplier_tuning.R`) statt SLSQP, optimiert
+direkt auf Holdout-AUC.
+
+**Schritt 1** (GBMs UND FT beide auf 20%-Stichprobe, gleicher Split):
+
+| Modell | AUC |
+|---|---:|
+| CatBoost | 0.9612 |
+| XGBoost | 0.9609 |
+| LightGBM | 0.9599 |
+| FT-Transformer (15 Epochen, d_token=64) | 0.9578 |
+| Blend4 gleichgewichtet | 0.9614 |
+| Blend4 gewichtsoptimiert | 0.9617 (FT-Gewicht 0.009) |
+
+FT-GBM-Korrelation 0.986 - deutlich hoeher als beim vollskalierten
+Kaggle-FT (dort implizit dekorreliert genug fuer +0.00035) und auch hoeher
+als TabPFNs 0.899. Bei reduzierter Kapazitaet (wenige Epochen, kleines
+`d_token`) konvergiert der FT-Transformer offenbar zu einer generischeren,
+den GBMs aehnlicheren Loesung statt einer eigenstaendigen Repraesentation -
+weniger Training heisst hier nicht nur schwaecher, sondern auch weniger
+dekorreliert.
+
+**Schritt 2** (GBMs auf ~95% der Daten neu trainiert/95.0%, 656.801 Zeilen;
+FT-Vorhersagen aus Schritt 1 unveraendert wiederverwendet - kein Leakage,
+da der Holdout `iva` in beiden Schritten identisch bleibt):
+
+| Modell | AUC Schritt 1 (20%) | AUC Schritt 2 (~95%) |
+|---|---:|---:|
+| LightGBM | 0.9599 | 0.9648 |
+| XGBoost | 0.9609 | 0.9649 |
+| CatBoost | 0.9612 | 0.9640 |
+| FT (unveraendert) | 0.9578 | 0.9578 |
+| Blend4 gleichgewichtet | 0.9614 | 0.9642 |
+| **FT-Gewicht optimiert** | 0.009 | **0.0004 (praktisch 0)** |
+| Blend4 gewichtsoptimiert | 0.9617 | 0.9651 (nur +0.0002 ueber bestem Einzelmodell) |
+
+Bestaetigt die Erwartung exakt: mit staerkeren GBMs (mehr Daten) waechst
+der Abstand zum (unveraenderten) 20%-FT, der Optimierer draengt FT auf
+praktisch null zurueck. Der optimierte Blend schlaegt das beste
+Einzelmodell nur noch um Rauschen.
+
+**Laufzeit-Beleg gegen CPU-Volltraining**: GBMs skalieren fast linear
+(657k Zeilen: 366.9s vs. 104k Zeilen: 63.1s, Faktor ~5.8x bei ~6.3x mehr
+Zeilen). Der FT-Transformer brauchte fuer nur **15 Epochen, d_token=64,
+auf 20% der Daten bereits 1994.8s (~33 Minuten)** - schon ueber der unten
+festgehaltenen 30-Minuten-Schwelle, und das bei weitem nicht auf
+Kaggle-Produktionsniveau (40-80 Epochen, `d_token=128`, 100% Daten). Eine
+Hochrechnung auf Produktionseinstellungen liegt im Bereich mehrerer
+Stunden - handfeste Bestaetigung, warum der Python-GPU-Export-Weg (oben)
+fuer den FT-Transformer bei diesem Projekt der richtige bleibt, kein
+Alternativweg ueber laengeres CPU-Training.
+
+**Faustregel (siehe auch `adr/002-r-only-python-gpu-export.md`)**: liegt
+die hochgerechnete CPU-Laufzeit eines neuronalen Modells bei
+Produktionseinstellungen ueber ca. 30 Minuten, gilt CPU-Training fuer
+dieses Projekt als nicht praktikabel - Python-GPU-Export nutzen oder das
+neuronale Modell fuer dieses Projekt verwerfen. Immer den Ziel-Algorithmus
+SELBST an ein bis zwei kleinen Stichprobengroessen timen, um die
+Skalierung zu extrapolieren - ein anderer, billigerer Algorithmus (rpart/
+LDA) ist dafuer KEIN verlaesslicher Proxy (andere Skalierungscharakteristik,
+bei neuronalen Netzen zusaetzlich ein fixer Overhead pro Epoche, der nicht
+mit der Zeilenzahl schrumpft).
