@@ -41,7 +41,7 @@ flowchart TD
     Baseline --> DCard{"Faktor-Spalte<br/>&gt;50 Auspraegungen?"}
     DCard -- "ja" --> CardFix["Fuer LDA/Multinom ausschliessen<br/>oder kodieren (sonst Absturz)"]
     DCard -- "nein" --> AdvVal
-    CardFix --> AdvVal["Phase 5: 115_adversarial_validation.R<br/>Train vs. Test unterscheidbar?"]
+    CardFix --> AdvVal["Phase 5: 115_adversarial_validation.R<br/>Train vs. Test unterscheidbar?<br/>+ univariate Drift-Tests je Feature"]
 
     AdvVal --> DShift{"Adversarial-Validation-AUC?"}
     DShift -- "um 0.5" --> Calib
@@ -270,6 +270,18 @@ soll (Zielspalte entfernt, neue Binaerspalte `is_test`). Interpretation:
   Feature-Importance-Tabelle zeigt, welche Spalten den Unterschied treiben -
   diese Spalten mit Vorsicht behandeln (ggf. ausschliessen oder robuster
   kodieren), CV-basierte Entscheidungen in spaeteren Phasen kritischer pruefen.
+
+**Univariate Drift-Tests (`univariate_drift.R`, direkt im Anschluss)**:
+Ergaenzt die Adversarial-AUC um einen KS-Test (stetige Features) bzw.
+Chi-Quadrat-Test (kategoriale Features) je Spalte, mit Benjamini-Hochberg-
+Korrektur ueber alle Features. Sagt WELCHE Features driften (mit
+Effektgroesse D bzw. Cramers V), waehrend die Adversarial-AUC nur "insgesamt
+trennbar ja/nein/wie stark" sagt - im Sensitivitaetstest (siehe `TARGETS.md`)
+trennte die AUC nicht zwischen echtem Markt-Drift und stabiler Kalender-
+struktur, die univariaten Tests taten es. Wichtig: p-Wert und Effektgroesse
+zusammen lesen, nicht nur den p-Wert - bei grossen Datensaetzen wird sonst
+auch eine praktisch irrelevante Abweichung "signifikant" (im Template-eigenen
+Projekt z.B. `gender` mit p_adj_BH ~1e-297, aber Cramers V nur 0.037).
 
 **Bei hartem oder strukturellem Shift** (AUC ~0.9+, oder wenn die Feature-
 Importance nicht auf einzelne Spalten reduzierbar ist) reicht die reine

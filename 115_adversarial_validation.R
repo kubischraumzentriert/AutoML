@@ -11,6 +11,7 @@ suppressPackageStartupMessages({
 source("000_config.R")
 source(file.path(project_dir, "005_benchmark_runtime.R"))
 source(file.path(project_dir, "db_logging.R"))
+source(file.path(project_dir, "univariate_drift.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -21,6 +22,15 @@ dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
 # Shift, CV-basierte Entscheidungen mit Vorsicht behandeln.
 train <- fread(train_path)
 test <- fread(test_path)
+
+# Rohe Feature-Spalten fuer die univariaten Drift-Tests weiter unten sichern,
+# bevor train/test fuer den Adversarial-Task veraendert werden.
+univariate_feature_cols <- intersect(
+  setdiff(names(train), c(id_col, target_col)),
+  setdiff(names(test), c(id_col, target_col))
+)
+train_features_raw <- train[, ..univariate_feature_cols]
+test_features_raw <- test[, ..univariate_feature_cols]
 
 train[, (target_col) := NULL]
 train[, is_test := 0L]
@@ -79,6 +89,13 @@ print(importance_dt)
 cat("\nGespeichert:\n")
 cat("Ergebnisse:", adversarial_validation_results_path, "\n")
 cat("Importance:", adversarial_validation_importance_path, "\n")
+
+# --- Univariate Drift-Tests (siehe univariate_drift.R) ----------------------
+# Ergaenzt die Adversarial-AUC: sagt WELCHE Features driften (mit
+# Effektgroesse), nicht nur ob insgesamt trennbar - siehe TARGETS.md fuer die
+# Verifikation an 2 OpenML-Datensaetzen/3 Szenarien.
+report_univariate_drift(train_features_raw, test_features_raw, univariate_drift_results_path,
+                        alpha = univariate_drift_alpha)
 
 # --- ESS + gestufte Adversarial Validation (Rueckfuehrung aus Regression-018) --
 # ESS/n der OOF-Propensity-Gewichte (Reweighting-Machbarkeit) direkt aus einem

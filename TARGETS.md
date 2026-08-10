@@ -488,3 +488,37 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     `mbo`-Kandidatenkonfiguration voll zu evaluieren. Wuerde direkt die
     Tuning-Laufzeit adressieren (`mlr3hyperband`-Paket existiert dafuer).
     Noch NICHT geprueft/prototypisiert. 0-Projekt-Kandidat.
+- **Univariate Drift-Tests: geprueft, verifiziert UND ins Template
+  zurueckgefuehrt (2026-08-08)** - Herkunft: "Introducing MLOps"
+  (Treveil/Dataiku 2020, offenes O'Reilly-Kapitel-Werk), Kap. 7. Domain-
+  Classifier (== unsere bestehende Adversarial Validation) und univariate
+  statistische Tests (Kolmogorov-Smirnov je stetigem Feature, Chi-Quadrat je
+  kategorialem Feature) sind komplementaer: die Adversarial-AUC sagt nur
+  "insgesamt trennbar ja/nein/wie stark", die univariaten Tests sagen WELCHE
+  Features driften, mit Effektgroesse (KS-D bzw. Cramers V).
+  **Verifikation** (Standalone-Skript `ML_Learning/openml-drift-detection-
+  test/010_univariate_drift_test.R`, kein Git-Projekt), 3 Szenarien mit
+  bekanntem Ground Truth (wie beim Leak-Audit-Sensitivitaetstest):
+  | Szenario | Ground Truth | Adversarial-AUC | Univariate Tests |
+  |---|---|---:|---|
+  | A) electricity (id 151), chronologischer Split | echter Zeit-Drift erwartet | 1.0000 | 6/8 signifikant - Marktpreise/-nachfrage (D=0.43-0.57) ja, Kalenderstruktur (day/period) korrekt NICHT |
+  | B) bank-marketing (id 1461), Zufalls-Split | KEIN Drift (Spezifitaets-Kontrolle) | 0.4991 | 0/16 signifikant nach BH-Korrektur - keine Fehlalarme |
+  | C) bank-marketing, Split nach Feature-Median | konstruierter Drift, 1 Feature garantiert verschoben | 1.0000 | Split-Feature korrekt Rang 1 (D=1.000), 14/16 signifikant inkl. korrelierter Features (bis Cramers V=0.39) |
+  Fall A zeigt den eigentlichen Mehrwert: die Adversarial-AUC (1.0, komplett
+  trennbar) unterscheidet NICHT zwischen echtem Markt-Drift und stabiler
+  Kalenderstruktur - die univariaten Tests tun es. Fall B bestaetigt, dass die
+  BH-Korrektur noetig UND wirksam ist (einzelne rohe p-Werte lagen bei
+  ~0.02-0.1, nichts ueberlebt die Korrektur).
+  **Ins Template zurueckgefuehrt**: neues Modul `univariate_drift.R`
+  (`run_univariate_drift_tests()`/`report_univariate_drift()`, generisch fuer
+  beliebige zwei Datensaetze mit gleichen Spalten), eingebunden in
+  `115_adversarial_validation.R` direkt nach dem Feature-Importance-Block.
+  Neue Config-Variablen `univariate_drift_results_path`/`univariate_drift_alpha`
+  in `000_config.R`. End-to-end gegen das Template-eigene Projekt
+  (health_condition) regressionsgetestet: 2 von 13 Features signifikant
+  (`gender` p_adj_BH~1e-297, aber Cramers V nur 0.037 - genau die
+  "grosse-Datensaetze-Falle" aus dem Buch, hier live demonstriert), Rest des
+  Skripts (Benchmark, DB-Logging) laeuft unveraendert weiter durch. Auch
+  identisch ins Regressions-Template zurueckgefuehrt (`018_adversarial_
+  validation.R`), dort ebenfalls end-to-end getestet (0/12 signifikant,
+  konsistent mit Adversarial-AUC ~0.499 am Template-eigenen Projekt).

@@ -159,6 +159,13 @@ adversarial_validation_cv_folds <- 3
 adversarial_staged_exclude <- list()
 adversarial_staged_results_path <- file.path(artifact_dir, "adversarial_staged_results.csv")
 
+# Univariate Drift-Tests (KS je stetigem Feature, Chi-Quadrat je kategorialem
+# Feature, BH-korrigiert) - Ergaenzung zur Adversarial-Validation-AUC, siehe
+# univariate_drift.R. Sagt WELCHE Features driften, nicht nur ob insgesamt
+# trennbar. An 2 OpenML-Datensaetzen/3 Szenarien verifiziert, siehe TARGETS.md.
+univariate_drift_results_path <- file.path(artifact_dir, "univariate_drift_results.csv")
+univariate_drift_alpha <- 0.05
+
 # Target-Leak-Audit (015): eine zu gute Baseline auf einer schweren/
 # unbalancierten Aufgabe ist ein Warnsignal, kein Erfolg - siehe README
 # "Target-Leakage-Audit". CV<->LB-Uebereinstimmung faengt einen Leak NICHT
