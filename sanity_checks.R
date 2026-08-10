@@ -1,20 +1,27 @@
 # Drei Modell-Sanity-Checks nach Huyen (2022) "Designing Machine Learning
 # Systems", Kap. 6 "Evaluation Methods" - ergaenzen die bestehende
-# Fehleranalyse (147-Kette) um Fragen, die eine reine Holdout-Metrik nicht
-# beantwortet: ist das Modell robust gegen kleine, realistische Stoerungen
-# (Perturbation), reagiert es NICHT auf Spalten ohne kausale Bedeutung
-# (Invarianz), und bewegt es sich bei einem Feature mit bekannter monotoner
-# Domainbeziehung in die erwartete Richtung (Directional Expectation)?
-# Verifiziert an synthetischer Ground Truth + 2 realen Projekten
-# (health_condition, drivendata-pump-it-up), siehe TARGETS.md. Theoretischer
+# Fehleranalyse um Fragen, die eine reine Holdout-Metrik nicht beantwortet:
+# ist das Modell robust gegen kleine, realistische Stoerungen (Perturbation),
+# reagiert es NICHT auf Spalten ohne kausale Bedeutung (Invarianz), und
+# bewegt es sich bei einem Feature mit bekannter monotoner Domainbeziehung in
+# die erwartete Richtung (Directional Expectation)? Verifiziert an
+# synthetischer Ground Truth + 2 realen Projekten (health_condition,
+# drivendata-pump-it-up), siehe TARGETS.md (Klassifikation). Theoretischer
 # Hintergrund/Mechanik je Test: REFERENZ_MODEL_SANITY_CHECKS.md.
 #
-# Alle drei Funktionen sind modell-agnostisch (predict_fn/predict_prob_fn als
-# Parameter) - nur die Konfiguration (welche Spalten, welche Richtung) ist
-# projektspezifisch, siehe 000_config.R.
+# Aufgabentyp-unabhaengig (identisch in beide Templates uebernommen, wie
+# univariate_drift.R): alle drei Funktionen sind modell-agnostisch
+# (predict_fn/predict_prob_fn als Parameter) - nur die Konfiguration (welche
+# Spalten, welche Richtung, higher_is_better) ist projektspezifisch, siehe
+# 000_config.R.
 
+# higher_is_better: TRUE fuer Metriken wie BAcc/AUC (hoeher=besser), FALSE
+# fuer Fehlermetriken wie RMSE/MAE (niedriger=besser) - bestimmt nur das
+# Vorzeichen von `drop` (immer positiv = "wurde schlechter", unabhaengig von
+# der Metrik-Richtung).
 run_perturbation_test <- function(predict_fn, data, perturb_cols, truth, metric_fn,
-                                   noise_sd_frac = 0.05, n_reps = 5, seed = 1) {
+                                   noise_sd_frac = 0.05, n_reps = 5, seed = 1,
+                                   higher_is_better = TRUE) {
   set.seed(seed)
   baseline_pred <- predict_fn(data)
   baseline_metric <- metric_fn(truth, baseline_pred)
@@ -29,25 +36,58 @@ run_perturbation_test <- function(predict_fn, data, perturb_cols, truth, metric_
     metric_fn(truth, predict_fn(perturbed))
   }, numeric(1))
 
+  drop <- if (higher_is_better) baseline_metric - mean(reps) else mean(reps) - baseline_metric
   list(
     baseline_metric = baseline_metric,
     perturbed_metric_mean = mean(reps),
     perturbed_metric_sd = stats::sd(reps),
-    drop = baseline_metric - mean(reps)
+    drop = drop
   )
 }
 
-run_invariance_test <- function(predict_fn, data, invariant_col, n_reps = 5, seed = 1) {
+# Fuer kategoriale Responses (Klassifikation): flip_rate = Anteil geaenderter
+# Klassen-Labels. Fuer numerische Responses (Regression): flip_rate = Anteil
+# der Zeilen, deren Vorhersage sich um mehr als `tolerance` aendert (Default
+# 0 - bei einem Tree-Ensemble, das die Spalte in KEINEM Split verwendet, ist
+# die Vorhersage exakt bitidentisch, kein Rauschen zu erwarten). Zusaetzlich
+# mean_abs_change als Magnitude-Diagnostik (nur bei numerischer Response
+# sinnvoll, bei kategorialer NA).
+run_invariance_test <- function(predict_fn, data, invariant_col, n_reps = 5, seed = 1,
+                                 tolerance = 0) {
   set.seed(seed)
   baseline_pred <- predict_fn(data)
+  is_numeric_response <- is.numeric(baseline_pred)
 
-  flip_rates <- vapply(seq_len(n_reps), function(i) {
+  reps <- lapply(seq_len(n_reps), function(i) {
     perturbed <- data
     perturbed[[invariant_col]] <- sample(data[[invariant_col]])
-    mean(as.character(predict_fn(perturbed)) != as.character(baseline_pred))
-  }, numeric(1))
+    perturbed_pred <- predict_fn(perturbed)
+    if (is_numeric_response) {
+      diff <- abs(perturbed_pred - baseline_pred)
+      list(flip_rate = mean(diff > tolerance), mean_abs_change = mean(diff))
+    } else {
+      list(flip_rate = mean(as.character(perturbed_pred) != as.character(baseline_pred)), mean_abs_change = NA_real_)
+    }
+  })
+  flip_rates <- vapply(reps, function(r) r$flip_rate, numeric(1))
+  mean_abs_changes <- vapply(reps, function(r) r$mean_abs_change, numeric(1))
 
-  list(flip_rate_mean = mean(flip_rates), flip_rate_sd = stats::sd(flip_rates))
+  list(
+    flip_rate_mean = mean(flip_rates), flip_rate_sd = stats::sd(flip_rates),
+    mean_abs_change = if (is_numeric_response) mean(mean_abs_changes) else NA_real_
+  )
+}
+
+# Verschiebt ein numerisches Feature um `delta`, erhaelt den urspruenglichen
+# Typ (wichtig fuer int-typisierte Spalten wie Zaehler/Codes - mlr3s
+# predict_newdata()-Typcheck verweigert sonst numeric->integer mit
+# Nachkommastellen, siehe TARGETS.md/PumpItUp-Erfahrung).
+build_numeric_shift_fn <- function(delta) {
+  function(x) {
+    shifted <- x + delta
+    if (is.integer(x)) shifted <- as.integer(round(shifted))
+    shifted
+  }
 }
 
 # shift_fn: function(x) -> x, verschoben "in die erwartete positive Richtung"

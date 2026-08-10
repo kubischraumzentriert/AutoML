@@ -709,6 +709,16 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     `REFERENZ_MODEL_SANITY_CHECKS.md` (theoretischer Hintergrund, analog zu
     `REFERENZ_PROBABILITY_CALIBRATION.md`). **Committet und gepusht**
     (`87c4751`).
+  - **Cross-Template-Port nach Regression (2026-08-10, gleicher Tag,
+    separater Auftrag)**: `sanity_checks.R` dabei aufgabentyp-unabhaengig
+    generalisiert (`higher_is_better`-Flag, numerische/kategoriale
+    Invarianz-Erkennung, `build_numeric_shift_fn()` mit Integer-Erhalt) und
+    identisch in beide Templates uebernommen, wie `univariate_drift.R`.
+    Dritte unabhaengige Projekt-Bestaetigung des Directional-Musters
+    (road-accident-risk, `num_reported_accidents`: 10.2% substanzielle
+    Verletzungen) - siehe Regressions-`BACKLOG.md` fuer die vollen Zahlen
+    und einen echten Design-Fund (numerische Invarianz braucht ein
+    Magnitude-Gate, nicht nur flip_rate, bei grossen Boosting-Ensembles).
 
 - **`lightgbm_tuning_evals`-Budget-Ablation (2026-08-10, aus der mlr3mbo-
   Literaturbewertung, `C:\Git\literatur\bewertung.md`) - gemessen, Ergebnis

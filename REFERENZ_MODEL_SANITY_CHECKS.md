@@ -92,6 +92,20 @@ Aussage.
 **Entscheidungsregel**: `flip_rate > invariance_warn_flip_rate` (Default
 0.05) => Warnung.
 
+**Regressions-Nachtrag (Cross-Template-Port, 2026-08-10)**: bei einer
+numerischen Response (Regression statt Klassenlabels) kann die reine
+`flip_rate` irrefuehrend hoch sein, ohne dass etwas Substanzielles vorliegt.
+Bei einem grossen Boosting-Ensemble (100+ Baeume) reicht es, dass EIN Baum
+irgendwo auf der gemischten Spalte splittet, damit sich die Vorhersage
+minimal (aber ungleich Null) aendert - `road-accident-risk`/`public_road`
+zeigte flip_rate=0.499 bei `mean_abs_change`=0.0009 (verschwindend klein
+gegen RMSE~0.056). Deshalb gibt `run_invariance_test()` bei numerischer
+Response zusaetzlich `mean_abs_change` zurueck; das Regressions-Template
+gated die Warnung auf `flip_rate > invariance_warn_flip_rate UND
+mean_abs_change > invariance_warn_magnitude_threshold`. Bei kategorialer
+Response (Klassifikation) ist das kein Thema (harte Klassengrenzen, keine
+Rundungsartefakte) - dort bleibt reine `flip_rate` aussagekraeftig.
+
 ---
 
 ## 3. Directional Expectation Test

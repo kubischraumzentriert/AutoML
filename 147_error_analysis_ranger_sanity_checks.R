@@ -84,8 +84,7 @@ if (length(directional_expectation_specs)) {
     shift_fn <- if (identical(spec$type, "ordinal")) {
       build_ordinal_shift_fn(spec$level_order)
     } else {
-      delta <- spec$delta
-      function(x) x + delta
+      build_numeric_shift_fn(spec$delta)
     }
     predict_prob_fn <- function(nd) predict_prob(nd, spec$favorable_class)
 
