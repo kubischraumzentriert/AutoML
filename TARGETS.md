@@ -705,5 +705,40 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     NA/Sentinel-Zeilen beim Directional-Test sauberer heraus als der erste
     Standalone-Prototyp), danach wieder auf leere Defaults zurueckgesetzt
     (Template bleibt default-inert, wie bei `segment_metric_cols`).
-    `WorkflowDescription.md`/`README.md` aktualisiert. **Noch NICHT
-    committet/gepusht** (User-Freigabe steht aus).
+    `WorkflowDescription.md`/`README.md` aktualisiert. Neues
+    `REFERENZ_MODEL_SANITY_CHECKS.md` (theoretischer Hintergrund, analog zu
+    `REFERENZ_PROBABILITY_CALIBRATION.md`). **Committet und gepusht**
+    (`87c4751`).
+
+- **`lightgbm_tuning_evals`-Budget-Ablation (2026-08-10, aus der mlr3mbo-
+  Literaturbewertung, `C:\Git\literatur\bewertung.md`) - gemessen, Ergebnis
+  gemischt, Template-Default NICHT geaendert.** mlr3mbo-Paper legte nahe,
+  dass der aktuelle Default `lightgbm_tuning_evals=25` knapp am/unter dem
+  Init-Design-Bedarf liegt (Init-Design fuer den 5-Parameter-Suchraum =
+  20 Punkte, live bestaetigt). Standalone-Ablation `lightgbm_budget_
+  ablation.R` (Repo-Root, nach Auswertung wieder entfernt): Budget 25 vs. 45
+  (Faustregel aus `006_tuning_diagnostics.R`: >=4x5 Parameter + 10-20),
+  gleicher Suchraum/Seed, gegen health_condition.
+  - Budget 25 (aktueller Default): 6 Batches (nur 5 echte Verfeinerungs-
+    schritte nach dem Init-Design), Suchphase 642.9 Sek.
+  - Budget 45: 26 Batches (25 echte Verfeinerungsschritte), Suchphase
+    1051.2 Sek. (+64% Laufzeit).
+  - Finalvergleich (5-fache CV): Default-LightGBM BAcc 0.8788/MCC 0.8631;
+    getunt mit Budget 25 BAcc 0.8749/MCC 0.8567; getunt mit Budget 45
+    BAcc 0.8778/MCC 0.8536.
+  - **Gemischtes Bild**: mehr Budget verbessert die Zielmetrik der Tuning-
+    Suche selbst leicht (BAcc 0.8749->0.8778), aber MCC sinkt leicht
+    (0.8567->0.8536) - kein eindeutiger Gewinn. **Beide getunten Varianten
+    bleiben unter dem UNGETUNTEN Default** (0.8788) - bestaetigt die
+    laengst dokumentierte Lehre "Tuning bringt marginale Gewinne, LightGBM-
+    Default schlaegt oft getuned" (siehe oben, mehrfach unabhaengig
+    beobachtet), diesmal zusaetzlich mit einer harten Zahl zur Budget-
+    Sensitivitaet selbst.
+  - **Entscheidung: Template-Default bleibt bei 25.** Ein groesseres Budget
+    erzeugt zwar nachweisbar mehr echte BO-Verfeinerung (26 vs. 6 Batches),
+    aber der Effekt auf die tatsaechliche Zielmetrik ist hier klein/gemischt
+    und rechtfertigt nicht +64% Laufzeit als neuen Template-weiten Default.
+    `006_tuning_diagnostics.R`s bestehende Warnung bei `n_batches==1` leistet
+    bereits das Richtige (pro-Projekt-Entscheidung ermoeglichen, statt einen
+    global teureren Default zu erzwingen) - kein Aenderungsbedarf am
+    Diagnose-Skript oder am Default.

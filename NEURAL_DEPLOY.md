@@ -123,6 +123,30 @@ Graph-Architektur (`po("torch_ingress_categ")` + `po("torch_ingress_num")`),
 was den erhofften Vorteil ("billiger als FT-Transformer") wieder aufhebt.
 Deshalb ohne Testlauf abgebrochen, bevor Rechenzeit investiert wurde.
 
+**Korrektur (2026-08-10, Literaturbewertung `C:\Git\literatur\bewertung.md`,
+mlr3torch-Paper arXiv 2604.18152)**: die obige Praemisse ("selbstgebaute
+Graph-Architektur hebt den Kostenvorteil auf") war zu pessimistisch. Das
+Paper zeigt ein dokumentiertes, ~5-zeiliges Multi-Input-Beispiel mit genau
+dieser Architektur:
+```r
+path_num <- po("select_1", selector = selector_type("numeric")) %>>%
+  po("torch_ingress_num") %>>% nn("tokenizer_num", d_token = 10)
+path_categ <- po("select_2", selector = selector_type("factor")) %>>%
+  po("torch_ingress_categ") %>>% nn("tokenizer_categ", d_token = 10)
+graph <- list(path_num, path_categ) %>>% nn("merge_cat", dim = 2)
+```
+`nn("tokenizer_categ")` ist derselbe Tokenizer-Baustein aus Gorishniy et al.
+2021 (FT-Transformer-Originalpaper), den `classif.ft_transformer` intern
+nutzt - kein Eigenbau, sondern dokumentiertes Idiom. Ein "billiger" embedded-
+MLP (Tokenizer+Concat+kleiner Head, OHNE Attention-Layer) waere damit
+guenstig baubar. Aendert NICHTS an s6e8 selbst (dort funktioniert der
+GPU-FT-Transformer bereits, LB 0.96810, kein Bedarf fuer eine CPU-
+Alternative) - aber die "Kostenvorteil-hebt-sich-auf"-Begruendung fuer
+KUENFTIGE GPU-lose Projekte mit Neural-Diversity-Bedarf gilt so nicht mehr.
+Bewusst NICHT prototypisiert (kein aktuelles Projekt braucht es) - nur die
+Praemisse korrigiert, damit eine kuenftige Session nicht wieder davon
+ausgeht, dass echte Embeddings zwingend teuren Eigenbau brauchen.
+
 ## Geprueft: TabPFN als echtes Blend-Mitglied (nicht nur Fehleranalyse, s6e8, 2026-08-06)
 
 Anderer Lernansatz als `nnet`/GBMs (vortrainiertes In-Context-Learning statt
