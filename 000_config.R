@@ -427,6 +427,50 @@ segment_metric_cols <- character(0)
 segment_metric_warn_gap <- 0.05
 segment_metrics_path <- file.path(artifact_dir, "segment_metrics.csv")
 
+# Modell-Sanity-Checks (147_error_analysis_ranger_sanity_checks.R, siehe
+# sanity_checks.R und TARGETS.md): Perturbation-/Invarianz-/Directional-
+# Expectation-Tests nach Huyen (2022) Kap. 6, verifiziert an synthetischer
+# Ground Truth + 2 realen Projekten (health_condition, drivendata-pump-it-up).
+# Bauen wie die Segmentmetriken auf `error_analysis_models_path` auf (kein
+# erneutes Training). Alle drei Listen default leer -> Skript uebersprungen,
+# kein Eingriff ins bestehende Fehleranalyse-Logging.
+
+# Perturbation: numerische Spalten (MUESSEN dbl-typisiert sein - int-Spalten
+# wie z.B. Codes/Zaehler wuerden beim Rausch-Hinzufuegen den mlr3-Typcheck
+# beim predict_newdata verletzen, siehe TARGETS.md/PumpItUp-Erfahrung).
+perturbation_test_cols <- character(0)
+perturbation_noise_sd_frac <- 0.05
+perturbation_warn_drop <- 0.05
+
+# Invarianz: Spalten, die laut fachlicher Einschaetzung KEINE kausale
+# Bedeutung fuer die Zielgroesse haben sollten (Kandidaten-Check, keine
+# endgueltige Aussage - siehe TARGETS.md).
+invariance_test_cols <- character(0)
+invariance_warn_flip_rate <- 0.05
+
+# Directional Expectation: Liste von Specs, je eine pro Feature mit bekannter
+# monotoner Domainbeziehung. Jede Spec:
+#   feature           - Spaltenname
+#   type              - "numeric" (+ delta) oder "ordinal" (+ level_order,
+#                        aufsteigend sortiert, siehe build_ordinal_shift_fn())
+#   delta             - nur bei type="numeric": Verschiebungsgroesse
+#   level_order       - nur bei type="ordinal": aufsteigende Stufen-Reihenfolge
+#   direction         - "increasing" (P(favorable_class) soll bei der
+#                        Verschiebung nicht SINKEN) oder "decreasing" (soll
+#                        nicht STEIGEN)
+#   favorable_class   - Klasse, deren P beobachtet wird
+# Beispiel (health_condition, NICHT aktiv - siehe TARGETS.md fuer die
+# tatsaechlich gemessenen Zahlen):
+#   list(feature = "stress_level", type = "ordinal",
+#        level_order = c("low", "medium", "high"), direction = "decreasing",
+#        favorable_class = "fit")
+directional_expectation_specs <- list()
+directional_warn_violation_rate <- 0.30
+directional_effect_threshold <- 0.05
+directional_warn_effect_share <- 0.05
+
+sanity_check_results_path <- file.path(artifact_dir, "sanity_check_results.csv")
+
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "<task_id_prefix>_sleep_weighted_p1.5")
 # ein feature_set-Label fuer model_config ab. Referenziert task_id_prefix

@@ -67,6 +67,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `147_error_analysis_ranger_kernelshap.R` | Laedt Modelle+Indizes-Artefakte: KernelSHAP-Fehleranalyse (welche Features treiben Ranger in die falsche Klasse?) |
 | `147_error_analysis_ranger_tabpfn.R` | Laedt Modelle+Indizes-Artefakte: TabPFN-Vergleich auf den "interessanten" Zeilen (CPU-Kontextlimit) |
 | `147_error_analysis_ranger_segments.R` | Laedt das Modelle-Artefakt: Segmentmetriken (BAcc/MCC je `segment_metric_cols`-Spalte, Slice-Based Evaluation) fuer alle drei Vergleichsmodelle, warnt bei Untergruppen-Luecke (Simpson-Paradoxon-Guard) |
+| `147_error_analysis_ranger_sanity_checks.R` | Laedt das Modelle-Artefakt: Perturbation-/Invarianz-/Directional-Expectation-Tests (Huyen 2022 Kap. 6, siehe `sanity_checks.R`) auf dem Ranger-Modell, per `perturbation_test_cols`/`invariance_test_cols`/`directional_expectation_specs` konfiguriert, warnt ueber Schwellen in `000_config.R` |
 | `150_train_full_model.R` | Trainiert `submission_model_name` (aktuell Ranger, Rohfeatures, `power=1.5`) auf dem vollen Trainingsdatensatz. Jede Modell-Datei ist an eine `run_id` gebunden (kein fixer Dateiname, siehe `final_model_full_path()`) und wird als `model_artifact_path`-Hyperparameter in `experiments.db` geloggt |
 | `155_predict_submission.R` | Findet den Pfad des zuletzt trainierten Modells ueber `db_get_latest_model_artifact_path()`, wendet es auf `test.csv` an und schreibt `submission.csv` im Format von `sample_submission.csv`. Metrik-abhaengig: bei schwellenwert-unabhaengiger Zielmetrik (AUC/LogLoss) + binaerer Aufgabe wird `P(positive_class)` geschrieben, sonst Klassen-Labels |
 | `160_plot_roc_curve.R` | ROC-Kurve(n) je Algorithmus aus den in `experiments.db` geloggten Vorhersagen, als PNG gespeichert, AUC-Cross-Check gegen `metric_result` |
@@ -85,6 +86,12 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > Fuer neuronale Tabellenmodelle (FT-Transformer) als Ensemble-Diversitaet siehe
 > [`NEURAL_DEPLOY.md`](NEURAL_DEPLOY.md): R-only-Policy, wann sich ein neuronales
 > Modell lohnt, und der Python-GPU-Export-Workflow fuer Kaggle.
+> Fuer den theoretischen Hintergrund der `147_error_analysis_ranger_
+> sanity_checks.R`-Tests (Perturbation/Invarianz/Directional Expectation)
+> siehe [`REFERENZ_MODEL_SANITY_CHECKS.md`](REFERENZ_MODEL_SANITY_CHECKS.md):
+> Behavioral-Testing-Hintergrund nach Huyen (2022), Mechanik je Test,
+> Ground-Truth-Verifikation, und wann diese Trust-Checks (kein Metrik-Hebel)
+> sich lohnen.
 
 Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
 

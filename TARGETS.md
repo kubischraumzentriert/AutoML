@@ -627,32 +627,83 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   fuer einen synthetischen Playground-Datensatz ohne bekannte
   Subgruppenprobleme).
 - **Drei weitere Ideen aus "Designing Machine Learning Systems" (Huyen 2022),
-  Kap. 6 "Evaluation Methods" - noch NICHT geprueft/prototypisiert,
-  0-Projekt-Kandidaten (2026-08-10)**: im Gegensatz zu Slice-Based
-  Evaluation (oben, bereits umgesetzt) weniger klar auf unseren Kontext
-  zugeschnitten, daher zurueckgestellt statt sofort verifiziert:
-  - **Perturbation-Tests**: kleine, realistische Stoerungen auf die
-    Test-Features anwenden (z.B. Rauschen auf numerische Spalten,
-    Rundungsfehler) und pruefen, ob die Zielmetrik stark einbricht - ein
-    Modell, das nur auf exakt sauberen Daten funktioniert, ist fragiler als
-    eines mit aehnlicher CV-Metrik, das Stoerungen uebersteht. Waere fuer
-    Kaggle-Wettbewerbe interessant, weil Test-Daten leicht andere
-    Erhebungsartefakte haben koennen als Train.
-  - **Invarianz-Tests**: eine Eingabe-Spalte gezielt aendern, bei der sich
-    die Vorhersage NICHT aendern sollte (z.B. eine Kennung ohne kausale
-    Bedeutung), und pruefen ob sich die Vorhersage trotzdem aendert - waere
-    ein weiterer, gezielter Test fuer das, was die Adversarial-Validation/
-    univariaten Drift-Tests indirekt schon abdecken (spurious correlations),
-    aber direkter auf einzelne Features anwendbar.
-  - **Directional-Expectation-Tests**: bei einem Feature mit bekannter
-    monotoner Domainbeziehung (z.B. "mehr Schlaf sollte die Gesundheits-
-    einschaetzung nicht verschlechtern") gezielt erhoehen/verringern und
-    pruefen, ob sich die Vorhersage in die erwartete Richtung bewegt - ein
-    Sanity-Check, der ueber reine Feature-Importance (WAS wichtig ist)
-    hinausgeht und prueft, ob die gelernte RICHTUNG plausibel ist.
-  Alle drei brauchen vor einer Verifikation zuerst eine Projekt-spezifische
-  Festlegung, was "kleine Stoerung"/"irrelevantes Feature"/"bekannte
-  Monotonie" konkret bedeutet - anders als Segmentmetriken (generisch ueber
-  `segment_metric_cols` konfigurierbar) waere das vermutlich nicht 1:1 als
-  generisches Template-Modul umsetzbar, sondern eher ein pro-Projekt-Muster
-  mit Beispielcode in `WorkflowDescription.md`.
+  Kap. 6 "Evaluation Methods" - geprueft/prototypisiert und VERIFIZIERT
+  (2026-08-10, Update)**: Perturbation-, Invarianz- und
+  Directional-Expectation-Tests. Standalone-Skripte in
+  `ML_Learning\health-condition-huyen-sanity-tests\` (kein Git-Projekt):
+  `perturbation_test.R`/`invariance_test.R`/`directional_test.R` (generische
+  Helper), `010_verify_ground_truth.R` (Ground-Truth-Verifikation, analog zur
+  Leak-Audit-Methodik: fuer jeden Test ein bewusst kaputtes vs. ein sauberes
+  Modell konstruiert, Sensitivitaet+Spezifitaet geprueft - alle drei trennen
+  korrekt), `020_run_against_health_condition.R`/`021_directional_deep_dive.R`
+  (echter, deskriptiver Lauf gegen das 147-Ranger-Modell des
+  Template-eigenen Projekts, kein erneutes Training noetig).
+  - **Perturbation-Test**: 5% relative SD-Rauschen auf alle numerischen
+    Features -> BAcc 0.9491 -> 0.9186 (Drop 0.0305). Ground Truth
+    (exact-value-TE-Lookup vs. glm auf glattem Feature): Drop 0.355 vs. 0.000
+    - der Test trennt fragile von robusten Modellen sauber. Auf
+    health_condition: moderater, unauffaelliger Drop.
+  - **Invarianz-Test** (Spalte `gender` gemischt): flip_rate=0.0012 (praktisch
+    invariant). Ground Truth (Modell mit injiziertem Leak-Proxy vs. Modell
+    ohne): flip_rate 0.502 vs. 0.000 - Test funktioniert. Kandidaten-Check,
+    keine endgueltige fachliche Aussage.
+  - **Directional-Expectation-Test** (ordinale Stufen-Verschiebung
+    low->medium->high etc.): Ground Truth (korrektes vs. vorzeichen-
+    invertiertes Modell) trennt perfekt (violation_rate 0.000 vs. 1.000).
+    Auf health_condition drei Features geprueft, **echter Befund**:
+    `physical_activity_level` und `smoking_alcohol` zeigen die erwartete
+    Richtung im Mittel, Verletzungen sind ueberwiegend rauschartig-klein
+    (Median-Betrag ~0.005, nur 1.3-1.5% der Verletzungen >0.05). Bei
+    `stress_level` dagegen sind die Verletzungen SUBSTANZIELLER: 38% der
+    betroffenen Zeilen verletzen die Erwartung (P(fit) steigt trotz mehr
+    Stress), Median-Betrag 0.013, 14.4% der Verletzungen >0.05 (~3.4% aller
+    Zeilen mit einer Wahrscheinlichkeits-Verschiebung >0.05 in die falsche
+    Richtung). Aggregat-Richtung stimmt (mean_diff -0.05 ueber alle Zeilen),
+    aber eine nicht-triviale Minderheit widerspricht deutlich - plausibel
+    durch Interaktionseffekte mit anderen Features (Ranger-Ensemble lernt
+    keine globale Monotonie), aber genau der Fall, den dieser Test laut
+    Huyen finden soll (Richtung WAS wichtig ist reicht nicht).
+  - **Genericity-Einschaetzung (Korrektur der 2026-08-10-Ersteinschaetzung
+    oben im Diff)**: alle drei Mechanismen sind GENERISCH (Rauschen/Mischen/
+    Stufen-Shift + Metrik-Vergleich braucht kein projektspezifisches Wissen im
+    Code) - nur die KONFIGURATION ist projektspezifisch (welche Spalten,
+    welche Richtung/Stufenordnung), exakt wie bei `segment_metric_cols` oder
+    `leak_audit_stratify_cols` bereits im Template. Die urspruengliche
+    Einschaetzung "eher pro-Projekt-Muster als generisches Modul" war zu
+    vorsichtig.
+  - **Zweites reales Projekt bestaetigt (ADR-003, gleicher Tag)**: PumpItUp
+    (DrivenData, `drivendata-pump-it-up`, status_group 3-Klassen). Kein
+    147-Artefakt dort vorhanden -> eigenes schnelles Ranger-Modell trainiert
+    (num.trees=100, `030_run_against_pumpitup.R`, ~22 Sek. Trainingszeit,
+    kein Hintergrundlauf noetig). Perturbation (4 dbl-Features, 5% Rauschen):
+    BAcc 0.6579->0.6474 (Drop 0.0105, unauffaellig). Invarianz
+    (`public_meeting` gemischt): flip_rate 0.0048 (unauffaellig). Directional
+    (`construction_year` +10 Jahre -> P(functional) soll nicht sinken,
+    n=11610 Zeilen mit bekanntem Baujahr): **bestaetigt dasselbe Muster wie
+    health_condition** - Aggregat-Richtung stimmt (mean_diff +0.0050), aber
+    violation_rate=0.4629, davon 11.4% mit Betrag >0.05 (~5.3% ALLER Zeilen
+    mit substanzieller Verletzung >0.05 Wahrscheinlichkeitspunkte,
+    Vergleichswert health_condition/stress_level: ~3.4%). **Zwei unabhaengige,
+    domaenefremde Projekte (synthetisches Gesundheits-Playground vs. reale
+    Infrastrukturdaten) zeigen dasselbe qualitative Bild: ein Tree-Ensemble
+    erzwingt keine globale Monotonie, und der Directional-Test findet
+    zuverlaessig eine nicht-triviale Verletzungs-Minderheit (3-5% aller
+    Zeilen), waehrend Perturbation/Invarianz auf beiden Projekten unauffaellig
+    blieben** (Spezifitaet bestaetigt, kein falscher Alarm).
+  - **Status: bestaetigt UND gebackportet (2026-08-10, gleicher Tag)**.
+    Neues `sanity_checks.R` (3 generische Funktionen + `build_ordinal_shift_fn()`)
+    + `147_error_analysis_ranger_sanity_checks.R` (laedt das Modelle-Artefakt,
+    kein erneutes Training, optional per Config-Listen aktiviert, default
+    leer -> uebersprungen, analog zu `_segments.R`). Config-Ergaenzung in
+    `000_config.R`: `perturbation_test_cols`/`perturbation_noise_sd_frac`/
+    `perturbation_warn_drop`, `invariance_test_cols`/`invariance_warn_flip_rate`,
+    `directional_expectation_specs`/`directional_warn_violation_rate`/
+    `directional_effect_threshold`/`directional_warn_effect_share`.
+    End-to-end gegen health_condition regressionsgetestet (Config temporaer
+    mit den in dieser Session gemessenen Werten befuellt, Ergebnisse
+    reproduzieren die obigen Zahlen; die integrierte Version filtert
+    NA/Sentinel-Zeilen beim Directional-Test sauberer heraus als der erste
+    Standalone-Prototyp), danach wieder auf leere Defaults zurueckgesetzt
+    (Template bleibt default-inert, wie bei `segment_metric_cols`).
+    `WorkflowDescription.md`/`README.md` aktualisiert. **Noch NICHT
+    committet/gepusht** (User-Freigabe steht aus).

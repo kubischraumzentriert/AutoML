@@ -464,6 +464,7 @@ source("147_error_analysis_ranger_isolation_forest.R")  # Ausreissercheck
 source("147_error_analysis_ranger_kernelshap.R")        # welche Features treiben Fehler?
 source("147_error_analysis_ranger_tabpfn.R")            # komplett andere Methodik
 source("147_error_analysis_ranger_segments.R")          # Slice-Based Evaluation, siehe unten
+source("147_error_analysis_ranger_sanity_checks.R")     # Perturbation/Invarianz/Directional, siehe unten
 ```
 
 **Segmentmetriken (`_segments.R`, optional, per `segment_metric_cols` in
@@ -477,6 +478,23 @@ mit bekanntem Ground Truth verifiziert (echte, feature-gekoppelte Label-
 Qualitaetsunterschiede korrekt erkannt, reiner Zufalls-Kontroll-Split korrekt
 still), siehe `TARGETS.md`. Analoges Muster existiert im Regressions-
 Template als `125_segment_metrics.R`.
+
+**Sanity-Checks (`_sanity_checks.R`, optional, per `perturbation_test_cols`/
+`invariance_test_cols`/`directional_expectation_specs` in `000_config.R`
+aktiviert, siehe `sanity_checks.R`)**: drei Modell-Sanity-Checks nach Huyen
+(2022) Kap. 6 - Perturbation (Rauschen auf numerische Features, Metrik-
+Drop), Invarianz (Spalte mischen, die kausal irrelevant sein sollte,
+Flip-Rate) und Directional Expectation (Feature in bekannter monotoner
+Domainrichtung verschieben, Verletzungsrate der erwarteten Vorhersage-
+Richtung). Reine Trust-/Sanity-Checks, kein Metrik-Hebel. An synthetischer
+Ground Truth (bewusst kaputte vs. saubere Modelle) UND 2 realen Projekten
+(health_condition, drivendata-pump-it-up) verifiziert: Perturbation/
+Invarianz blieben auf beiden unauffaellig, Directional Expectation fand auf
+beiden dasselbe Muster - Richtung im Aggregat korrekt, aber 3-5% aller
+Zeilen mit einer substanziellen (>0.05) Gegenrichtungs-Verletzung, plausibel
+durch Feature-Interaktionen im Tree-Ensemble (keine erzwungene globale
+Monotonie). Siehe `TARGETS.md` fuer die vollen Zahlen, `REFERENZ_MODEL_
+SANITY_CHECKS.md` fuer den theoretischen Hintergrund je Test.
 
 `_models.R` speichert Modelle+Vorhersagen unter `error_analysis_models_path`,
 `_confidence.R` baut darauf auf und speichert abgeleitete Zeilen-Indizes
