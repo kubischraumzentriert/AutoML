@@ -473,15 +473,45 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     Modul (Arbeitstitel `149_ensemble_selection.R`, zwischen `148` und `150`)
     muesste diese Vorhersagen systematisch sammeln koennen. Noch nicht
     gebaut - naechste Session.
-  - **Meta-Learning-Warmstart fuer `tnr("mbo")` aus der zentralen
-    `experiments.db`** (Kap. 2/6, Auto-sklearn-Rezept: Meta-Features des
-    neuen Datensatzes berechnen, k=25 aehnlichste Projekte per L1-Distanz
-    im Meta-Feature-Raum finden, deren beste bekannte Konfigurationen als
-    Startpunkt statt reinem Zufalls-Initialdesign nutzen). Noch NICHT
-    geprueft/prototypisiert - die zentrale DB (16 Projekte, siehe
-    `adr/001-local-project-db-central-merge.md`) waere jetzt die
-    Datengrundlage dafuer. 0-Projekt-Kandidat, naechster Schritt: Prototyp
-    + Verifikation an einem OpenML-Datensatz wie bei der Ensemble-Selection.
+  - **Meta-Learning-Warmstart fuer `tnr("mbo")`: geprueft, verifiziert -
+    NEGATIVES Ergebnis, NICHT ins Template uebernommen (2026-08-08/10).**
+    Auto-sklearn-Rezept (Feurer et al.): Meta-Features des neuen Datensatzes
+    berechnen, k aehnlichste Referenz-Datensaetze per L1-Distanz im
+    Meta-Feature-Raum finden, deren beste bekannte Konfigurationen als
+    Initialdesign fuer `tnr("mbo")` injizieren (`instance$eval_batch()`)
+    statt reinem Zufalls-Initialdesign. **Standalone-Skripte** (`ML_Learning/
+    openml-drift-detection-test/020_meta_learning_warmstart_test.R` +
+    `021_..._electricity.R`, kein Git-Projekt): Offline-Referenzpool aus 8
+    OpenML-Datensaetzen (credit-g, phoneme, spambase, kc1, diabetes,
+    kr-vs-kp, blood-transfusion, ilpd; 6 einfache/statistische Meta-Features,
+    je beste LightGBM-Konfiguration per 20-Punkte-Zufallssuche), Online-
+    Vergleich Baseline (Zufalls-Init) vs. Warmstart mit EXAKT demselben
+    Gesamtbudget (fairer Vergleich per Terminator, unabhaengig von
+    `mlr3mbo`-Interna) an 2 unabhaengigen Ziel-Datensaetzen, je 3 Seeds:
+    | Ziel-Datensatz | Finales AUC Baseline | Finales AUC Warmstart | Differenz | Frueh (erste 6 Evals) |
+    |---|---:|---:|---:|---|
+    | bank-marketing (id 1461) | 0.9279 | 0.9280 | +0.0001 | Baseline 0.9233 vs. Warmstart 0.9252 |
+    | electricity (id 151) | 0.9502 | 0.9504 | +0.0002 | **exakt gleich** (0.9477 vs. 0.9477) |
+    Kein messbarer Effekt, weder finales AUC noch Konvergenzgeschwindigkeit,
+    an BEIDEN Ziel-Datensaetzen - klar innerhalb der Seed-zu-Seed-Streuung.
+    **Iterationsdetail**: der erste Lauf (Budget=20, 4 Hyperparameter, k=3,
+    5-Datensatz-Pool) zeigte GP-Surrogat-Fehler ("number of experiments must
+    be larger than the spatial dimension" - zu wenige injizierte Punkte fuer
+    die Suchraum-Dimension) und ein widerspruechliches Signal (finaler
+    Vorteil, aber schlechtere fruehe Konvergenz); nach Fix (Suchraum auf 3
+    Hyperparameter reduziert, Budget 30, Pool auf 8 Datensaetze/k=4
+    erweitert) verschwand der GP-Fehler, aber auch praktisch der gesamte
+    Effekt - spricht dafuer, dass Lauf 1 Rauschen war, nicht ein echtes
+    Signal. **Plausible Gruende (keine Ausreden, fuer kuenftige Versuche
+    dokumentiert)**: unser Referenzpool (8 Datensaetze/6 einfache Meta-
+    Features) ist winzig gegenueber Auto-sklearns Original (140 Datensaetze/
+    38 Meta-Features inkl. Landmarking); bei Budget=30 auf nur 3
+    Hyperparametern deckt reines Zufalls-Initialdesign den Suchraum schon
+    gut ab (der Warmstart-Vorteil ist in der Literatur am groessten bei sehr
+    kleinen Budgets/hochdimensionalen Raeumen); LightGBM ist relativ robust
+    gegenueber der genauen Hyperparameter-Wahl. **Nicht weiterverfolgt** -
+    anders als Ensemble-Selection und die univariaten Drift-Tests wird diese
+    Idee NICHT ins Template zurueckgefuehrt.
   - **Successive Halving/Hyperband fuer die Tuning-Skripte** (Kap. 1.4):
     Kandidaten-Konfigurationen mit kleinem Budget starten, schlechtere
     Haelfte verwerfen, Budget verdoppeln, wiederholen - statt jede
