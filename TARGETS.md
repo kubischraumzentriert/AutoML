@@ -512,6 +512,20 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     gegenueber der genauen Hyperparameter-Wahl. **Nicht weiterverfolgt** -
     anders als Ensemble-Selection und die univariaten Drift-Tests wird diese
     Idee NICHT ins Template zurueckgefuehrt.
+    **Referenzpool in der zentralen DB gesichert (2026-08-10)**, fuer einen
+    kuenftigen zweiten Versuch (z.B. groesserer Pool, mehr Meta-Features)
+    ohne erneute OpenML-Abfragen: Skript `build_meta_learning_reference_pool.R`
+    (Template-Root, analog zu `merge_project_experiments.R` ein Template-
+    Utility, kein nummeriertes Projekt-Skript) loggt die 8 Referenz-
+    Datensaetze als eigenes "Projekt" `meta-learning-reference-pool` in
+    `experiments.db` - Meta-Features als `run_config`-Key-Value-Paare je
+    `run`, beste bekannte LightGBM-Konfiguration als `model_config`/
+    `hyperparam`/`metric_result`, alles ueber die bereits bestehenden
+    `db_logging.R`-Funktionen (kein neues Tabellenschema noetig). Bewusst
+    KEIN echtes Kaggle-Projekt - wird von `merge_project_experiments.R`s
+    Auto-Discovery nicht aufgegriffen (die durchsucht Projekt-eigene
+    `_artifacts/experiments.db`-Dateien, dieses "Projekt" existiert nur in
+    der zentralen DB selbst). Abfragebeispiel im Skript-Header.
   - **Successive Halving fuer LightGBM-Tuning: geprueft, verifiziert -
     NEGATIVES/uneindeutiges Ergebnis, NICHT ins Template uebernommen
     (2026-08-10).** Kap. 1.4: Kandidaten-Konfigurationen mit kleinem Budget
@@ -612,3 +626,33 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   laeuft sauber, keine Luecke ueber der Schwelle (unauffaellig, plausibel
   fuer einen synthetischen Playground-Datensatz ohne bekannte
   Subgruppenprobleme).
+- **Drei weitere Ideen aus "Designing Machine Learning Systems" (Huyen 2022),
+  Kap. 6 "Evaluation Methods" - noch NICHT geprueft/prototypisiert,
+  0-Projekt-Kandidaten (2026-08-10)**: im Gegensatz zu Slice-Based
+  Evaluation (oben, bereits umgesetzt) weniger klar auf unseren Kontext
+  zugeschnitten, daher zurueckgestellt statt sofort verifiziert:
+  - **Perturbation-Tests**: kleine, realistische Stoerungen auf die
+    Test-Features anwenden (z.B. Rauschen auf numerische Spalten,
+    Rundungsfehler) und pruefen, ob die Zielmetrik stark einbricht - ein
+    Modell, das nur auf exakt sauberen Daten funktioniert, ist fragiler als
+    eines mit aehnlicher CV-Metrik, das Stoerungen uebersteht. Waere fuer
+    Kaggle-Wettbewerbe interessant, weil Test-Daten leicht andere
+    Erhebungsartefakte haben koennen als Train.
+  - **Invarianz-Tests**: eine Eingabe-Spalte gezielt aendern, bei der sich
+    die Vorhersage NICHT aendern sollte (z.B. eine Kennung ohne kausale
+    Bedeutung), und pruefen ob sich die Vorhersage trotzdem aendert - waere
+    ein weiterer, gezielter Test fuer das, was die Adversarial-Validation/
+    univariaten Drift-Tests indirekt schon abdecken (spurious correlations),
+    aber direkter auf einzelne Features anwendbar.
+  - **Directional-Expectation-Tests**: bei einem Feature mit bekannter
+    monotoner Domainbeziehung (z.B. "mehr Schlaf sollte die Gesundheits-
+    einschaetzung nicht verschlechtern") gezielt erhoehen/verringern und
+    pruefen, ob sich die Vorhersage in die erwartete Richtung bewegt - ein
+    Sanity-Check, der ueber reine Feature-Importance (WAS wichtig ist)
+    hinausgeht und prueft, ob die gelernte RICHTUNG plausibel ist.
+  Alle drei brauchen vor einer Verifikation zuerst eine Projekt-spezifische
+  Festlegung, was "kleine Stoerung"/"irrelevantes Feature"/"bekannte
+  Monotonie" konkret bedeutet - anders als Segmentmetriken (generisch ueber
+  `segment_metric_cols` konfigurierbar) waere das vermutlich nicht 1:1 als
+  generisches Template-Modul umsetzbar, sondern eher ein pro-Projekt-Muster
+  mit Beispielcode in `WorkflowDescription.md`.
