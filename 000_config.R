@@ -415,6 +415,18 @@ error_analysis_uncertainty_threshold <- 0.5
 # sondern nur auf den "interessanten" Zeilen (siehe error_analysis_uncertainty_threshold).
 error_analysis_tabpfn_context_size <- 999
 
+# Segmentmetriken (147_error_analysis_ranger_segments.R): baut auf dem
+# `error_analysis_models_path`-Artefakt auf (kein erneutes Training). Prueft
+# je Spalte in `segment_metric_cols`, ob BAcc/MCC in einer Untergruppe deutlich
+# von der Gesamt-BAcc abweicht - eine Gesamtmetrik kann eine schwache
+# Untergruppen-Performance verstecken (Simpson-Paradoxon), siehe TARGETS.md.
+# Default leer -> Segmentmetriken uebersprungen, kein Eingriff ins bestehende
+# Fehleranalyse-Logging. Segmentspalten muessen unter den Modell-Features
+# liegen (im `eval_imputed`-Teil des Artefakts enthalten).
+segment_metric_cols <- character(0)
+segment_metric_warn_gap <- 0.05
+segment_metrics_path <- file.path(artifact_dir, "segment_metrics.csv")
+
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "<task_id_prefix>_sleep_weighted_p1.5")
 # ein feature_set-Label fuer model_config ab. Referenziert task_id_prefix

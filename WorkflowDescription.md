@@ -75,7 +75,7 @@ flowchart TD
     DMetric -- "abhaengig, BAcc/MCC/Acc/F1" --> ThreshTune["Phase 10: 130 / 146<br/>Schwellenwert-Tuning, hohe Prioritaet"]
 
     SkipThresh --> ErrorAnalysis
-    ThreshTune --> ErrorAnalysis["Phase 11: 147-Kette<br/>models, dann confidence, isolation_forest,<br/>kernelshap, tabpfn"]
+    ThreshTune --> ErrorAnalysis["Phase 11: 147-Kette<br/>models, dann confidence, isolation_forest,<br/>kernelshap, tabpfn, segments"]
 
     ErrorAnalysis --> DRescue{"Modell B rettet auffaellig<br/>viele Fehler von Modell A?"}
     DRescue -- "ja, pruefen" --> Disagreement["check_disagreement_accuracy():<br/>P(B richtig, wenn A und B uneinig)"]
@@ -451,7 +451,7 @@ i.d.R. ueberspringen (siehe Phase 9).
 
 ## Phase 11: Fehleranalyse (`147`)
 
-Fuenf lose gekoppelte Skripte statt eines Monolithen - jedes laedt das
+Sechs lose gekoppelte Skripte statt eines Monolithen - jedes laedt das
 Ergebnis des vorherigen als `.rds`-Artefakt, statt selbst neu zu trainieren.
 Das hat sich als wichtig erwiesen: eine kleine Aenderung am DB-Logging
 (letzter Schritt) erforderte vorher, KernelSHAP und TabPFN (die teuersten
@@ -463,7 +463,20 @@ source("147_error_analysis_ranger_confidence.R")        # Rescue-Rate, "einig fa
 source("147_error_analysis_ranger_isolation_forest.R")  # Ausreissercheck
 source("147_error_analysis_ranger_kernelshap.R")        # welche Features treiben Fehler?
 source("147_error_analysis_ranger_tabpfn.R")            # komplett andere Methodik
+source("147_error_analysis_ranger_segments.R")          # Slice-Based Evaluation, siehe unten
 ```
+
+**Segmentmetriken (`_segments.R`, optional, per `segment_metric_cols` in
+`000_config.R` aktiviert)**: eine Gesamt-Metrik kann eine schwache
+Untergruppen-Performance verstecken (Simpson-Paradoxon) - berechnet BAcc/MCC
+je konfigurierter Segment-Spalte fuer alle drei Vergleichsmodelle und warnt
+bei einer BAcc-Luecke ueber `segment_metric_warn_gap` (Default 0.05) zum
+Segment-Mittel. Segmentspalten muessen unter den Modell-Features liegen
+(Teil von `eval_imputed` im `_models.R`-Artefakt). An 2 OpenML-Datensaetzen
+mit bekanntem Ground Truth verifiziert (echte, feature-gekoppelte Label-
+Qualitaetsunterschiede korrekt erkannt, reiner Zufalls-Kontroll-Split korrekt
+still), siehe `TARGETS.md`. Analoges Muster existiert im Regressions-
+Template als `125_segment_metrics.R`.
 
 `_models.R` speichert Modelle+Vorhersagen unter `error_analysis_models_path`,
 `_confidence.R` baut darauf auf und speichert abgeleitete Zeilen-Indizes

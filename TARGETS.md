@@ -512,12 +512,26 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     gegenueber der genauen Hyperparameter-Wahl. **Nicht weiterverfolgt** -
     anders als Ensemble-Selection und die univariaten Drift-Tests wird diese
     Idee NICHT ins Template zurueckgefuehrt.
-  - **Successive Halving/Hyperband fuer die Tuning-Skripte** (Kap. 1.4):
-    Kandidaten-Konfigurationen mit kleinem Budget starten, schlechtere
-    Haelfte verwerfen, Budget verdoppeln, wiederholen - statt jede
-    `mbo`-Kandidatenkonfiguration voll zu evaluieren. Wuerde direkt die
-    Tuning-Laufzeit adressieren (`mlr3hyperband`-Paket existiert dafuer).
-    Noch NICHT geprueft/prototypisiert. 0-Projekt-Kandidat.
+  - **Successive Halving fuer LightGBM-Tuning: geprueft, verifiziert -
+    NEGATIVES/uneindeutiges Ergebnis, NICHT ins Template uebernommen
+    (2026-08-10).** Kap. 1.4: Kandidaten-Konfigurationen mit kleinem Budget
+    (Boosting-Runden) starten, schlechtere Haelfte verwerfen, Budget
+    verdoppeln, wiederholen (`lgb.train(..., init_model=)` fuer
+    Fortsetzung statt Neustart) - statt jede Kandidatenkonfiguration voll
+    zu evaluieren. **Standalone-Skript** (`ML_Learning/openml-drift-
+    detection-test/030_successive_halving_test.R`): 16 Kandidaten,
+    Budget-Stufen 25->50->100->200->400 (klassisches eta=2-Schema) vs.
+    Baseline (aktuelles Template-Muster: mehrere Kandidaten, jeder direkt
+    auf vollem Budget) mit EXAKT demselben Gesamtbudget an kumulierten
+    Boosting-Runden (1200), Bewertung auf einem separaten TEST-Set
+    (weder fuer SH-Eliminierung noch Baseline-Auswahl verwendet), 3 Seeds:
+    | Ziel-Datensatz | SH TEST-AUC | Baseline TEST-AUC | Differenz |
+    |---|---:|---:|---:|
+    | bank-marketing (id 1461) | 0.9307 | 0.9322 | -0.0015 |
+    | electricity (id 151) | 0.9801 | 0.9776 | +0.0025 |
+    Gegensaetzliche Richtung an den beiden Datensaetzen, beide Effekte
+    winzig gegenueber der Seed-Streuung - kein robuster Effekt, aehnlich
+    dem Meta-Learning-Warmstart-Befund oben. **Nicht weiterverfolgt.**
 - **Univariate Drift-Tests: geprueft, verifiziert UND ins Template
   zurueckgefuehrt (2026-08-08)** - Herkunft: "Introducing MLOps"
   (Treveil/Dataiku 2020, offenes O'Reilly-Kapitel-Werk), Kap. 7. Domain-
@@ -552,3 +566,49 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   identisch ins Regressions-Template zurueckgefuehrt (`018_adversarial_
   validation.R`), dort ebenfalls end-to-end getestet (0/12 signifikant,
   konsistent mit Adversarial-AUC ~0.499 am Template-eigenen Projekt).
+- **Segmentmetriken (Slice-Based Evaluation): geprueft, verifiziert UND ins
+  Template zurueckgefuehrt (2026-08-10)** - Herkunft: "Designing Machine
+  Learning Systems" (Chip Huyen, O'Reilly 2022), Kap. 6 "Model Development
+  and Offline Evaluation". Kernargument: eine Gesamt-Metrik kann eine
+  schwache Untergruppen-Performance verstecken oder sogar verkehrt anzeigen
+  (Simpson-Paradoxon - Modell A kann in JEDER Untergruppe schlechter sein
+  als Modell B und trotzdem insgesamt besser abschneiden, wenn die
+  Gruppengroessen unterschiedlich sind; Buch-Beispiel: Berkeley-
+  Zulassungsdaten 1973). **Bestehende Asymmetrie zwischen den Templates**:
+  das Regressions-Template hat das schon (`125_segment_metrics.R`,
+  `segment_metric_cols`), das Klassifikations-Template hatte es nicht -
+  genau die Art Luecke, die unsere ADR-003-Frage "was uebertragen wir
+  zwischen Templates" eigentlich systematisch schliessen sollte.
+  **Verifikation** (Standalone-Skript `ML_Learning/openml-drift-detection-
+  test/040_segment_metrics_test.R`), Ground-Truth-Design analog zum Leak-
+  Audit-/Drift-Sensitivitaetstest: zwei synthetische Segment-Spalten je
+  Datensatz - `noise_segment` (an ein ECHTES Feature gekoppelt per Median-
+  Split, 45% der Trainings-Labels in einer Haelfte zufaellig geflippt,
+  Auswertung gegen die ECHTEN/ungeflippten Test-Labels) mit erwarteter
+  BAcc-Luecke, und `control_segment` (reiner Zufalls-Split) ohne erwartete
+  Luecke. **Wichtige Lektion aus einem fehlgeschlagenen ersten Versuch**:
+  eine Segmentzugehoerigkeit rein zufaellig (unabhaengig von den Features X)
+  zu vergeben und NUR dort Label-Rauschen einzufuegen erzeugt KEINEN
+  erkennbaren Effekt - das Modell lernt aus X, kann also keine
+  Systematik fuer ein X-unabhaengiges Label lernen. Erst als das Rauschen an
+  ein echtes Feature gekoppelt wurde (Median-Split), entstand ein
+  lernbarer, segment-spezifischer Qualitaetsunterschied:
+  | Datensatz | noise_segment-Luecke (BAcc) | control_segment-Luecke |
+  |---|---:|---:|
+  | bank-marketing (id 1461) | **0.0566** (korrekt geflaggt) | 0.0181 (korrekt still) |
+  | electricity (id 151) | **0.1122** (korrekt geflaggt) | 0.0018 (korrekt still) |
+  Sensitivitaet UND Spezifitaet an beiden Datensaetzen bestaetigt.
+  **Ins Template zurueckgefuehrt**: neues Skript
+  `147_error_analysis_ranger_segments.R` (Teil der 147-Fehleranalyse-Kette,
+  laedt das `error_analysis_models_path`-Artefakt statt neu zu trainieren,
+  wie die uebrigen 147-Skripte), neue Config-Variablen
+  `segment_metric_cols`/`segment_metric_warn_gap`/`segment_metrics_path` in
+  `000_config.R` (Default: `segment_metric_cols` leer -> uebersprungen, wie
+  im Regressions-Vorbild). Berechnet BAcc/MCC je Segment fuer alle drei
+  147-Vergleichsmodelle (Ranger/LightGBM/LDA), warnt bei einer BAcc-Luecke
+  ueber `segment_metric_warn_gap` (Default 0.05) zum zeilengewichteten
+  Segment-Mittel. End-to-end gegen das Template-eigene Projekt
+  (health_condition, Segmente `gender`/`diet_type`) regressionsgetestet:
+  laeuft sauber, keine Luecke ueber der Schwelle (unauffaellig, plausibel
+  fuer einen synthetischen Playground-Datensatz ohne bekannte
+  Subgruppenprobleme).
