@@ -85,6 +85,22 @@ ensemble_prob_conf <- Reduce(`+`, probs_conf[best_selected_at_step]) / length(be
 ensemble_bacc_conf <- bacc_from_probs(ensemble_prob_conf, truth_conf)
 cat(sprintf("\nGreedy-Ensemble Bestaetigungs-BAcc: %.4f\n", ensemble_bacc_conf))
 
+# Zusammensetzung fuer 156_train_full_ensemble.R speichern - NUR die
+# eindeutigen Kandidaten + wie oft jeder gewaehlt wurde (=Gewicht). Nicht
+# jede Wiederholung einzeln, damit 156 jedes Modell nur EINMAL auf vollen
+# Daten trainiert, statt denselben Kandidaten mehrfach neu zu fitten.
+unique_selected <- unique(best_selected_at_step)
+selected_composition <- lapply(unique_selected, function(idx) {
+  list(spec = pool$candidate_specs[[idx]], label = pool$labels[idx],
+       weight = sum(best_selected_at_step == idx))
+})
+saveRDS(
+  list(selected_composition = selected_composition, target_col_name = pool$target_col_name,
+       class_names = class_names, confirmation_bacc = ensemble_bacc_conf),
+  ensemble_composition_path
+)
+cat("Ensemble-Zusammensetzung gespeichert:", ensemble_composition_path, "\n")
+
 # --- Zusammenfassung ---------------------------------------------------------
 summary_dt <- data.table(
   approach = c("best_single", "equal_blend", "greedy_ensemble"),

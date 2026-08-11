@@ -491,6 +491,13 @@ ensemble_candidate_pool_path <- file.path(artifact_dir, "ensemble_candidate_pool
 ensemble_selection_rounds <- 50L
 ensemble_selection_valid_ratio <- 0.5
 ensemble_selection_results_path <- file.path(artifact_dir, "ensemble_selection_results.csv")
+# Eindeutige Kandidaten+Gewichte aus 149 (fuer 156_train_full_ensemble.R -
+# retrainiert nur diese, nicht den gesamten 24er-Pool, auf vollen Daten).
+ensemble_composition_path <- file.path(artifact_dir, "ensemble_composition.rds")
+final_ensemble_full_path <- function(run_id) {
+  file.path(artifact_dir, paste0("final_model_ensemble_full_", run_id, ".rds"))
+}
+submission_ensemble_path <- file.path(project_dir, "submission_ensemble.csv")
 
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "<task_id_prefix>_sleep_weighted_p1.5")
