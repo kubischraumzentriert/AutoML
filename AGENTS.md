@@ -69,6 +69,57 @@ das ADR in BEIDEN Repos pruefen/aktualisieren, siehe `adr/README.md`.
 - Rechenintensive Skripte im Hintergrund starten und Fortschritt per
   Log-Datei pruefen, nicht die Konsole blockieren.
 
+## Mittelfristiges Ziel: publikationsfaehiger AutoML-Workflow
+
+Dieses Repo soll nicht nur als Kaggle-/OpenML-Arbeitsordner wachsen, sondern
+als Kandidat fuer eine spaetere Publikation betrachtet werden. Der derzeit
+plausibelste Beitrag ist **kein neuer AutoML-Algorithmus**, sondern ein
+reproduzierbarer, diagnoseorientierter Human-in-the-loop-AutoML-Workflow fuer
+tabellarische Klassifikation mit `mlr3`, `targets`, Experiment-Logging und
+Trust-Gates.
+
+Arbeitshypothese fuer kuenftige Sessions:
+
+- Paper-Narrativ: "A reproducible trust-centered AutoML workflow for tabular
+  classification in R/mlr3".
+- Staerkster Kern: die Trust-/Diagnose-Schicht aus Target-Leak-Audit,
+  Adversarial Validation, univariaten Drift-Tests, Segmentmetriken und
+  Modell-Sanity-Checks (Perturbation/Invarianz/Directional Expectation).
+- Zweiter Kern: die disziplinierte Template-Evolution nach ADR-003
+  (Backport erst nach >=2-Projekt-Bestaetigung oder No-op-Beleg), um
+  Template-Overfitting zu vermeiden.
+- Wahrscheinlich passender Publikationstyp: Workshop-/Experience-Paper,
+  Software-Paper oder angewandtes AutoML-Workflow-Paper. Fuer ein starkes
+  Forschungs-Paper fehlt Stand jetzt noch eine breite systematische
+  Evaluation und algorithmische Neuheit.
+
+Naechste Schritte, die bei neuen Arbeiten mitgedacht werden sollen:
+
+1. Systematische Evaluation vorbereiten: 8-15 diverse OpenML/Kaggle/
+   DrivenData-Datensaetze mit demselben Workflow durchlaufen lassen.
+2. Fuer jeden Datensatz dieselben Artefakte sammeln: Baseline, Tuning,
+   ggf. Ensemble, Laufzeit, manuelle Eingriffe, Drift-/Leak-/Segment-/
+   Sanity-Befunde.
+3. Eine Ergebnistabelle pflegen: Welche Workflow-Komponente wurde auf
+   welchem Projekt bestaetigt, war neutral, oder wurde verworfen?
+4. Greedy Ensemble Selection als groessten offenen Backport-Kandidaten
+   priorisieren, weil sie bereits an zwei OpenML-Datensaetzen positiv
+   verifiziert ist, aber noch nicht in den Template-Workflow integriert wurde.
+5. Negative Ergebnisse explizit behalten, insbesondere den Meta-Learning-
+   Warmstart-Befund: kleine Referenzpools bringen hier bisher praktisch
+   keinen messbaren Vorteil.
+6. Bei jeder neuen Methode pruefen, ob sie Score-Hebel, Trust-Gate,
+   Workflow-Automatisierung oder reine Dokumentation ist. Diese Rolle spaeter
+   fuer eine Publikation klar trennen.
+
+Prueffrage beim Einstieg in eine neue Session:
+
+```text
+Traegt die geplante Arbeit zum Publikationsziel bei, und falls ja: erzeugt sie
+eine auswertbare Evidenzzeile (Datensatz, Methode, Metrik, Laufzeit, Befund,
+Backport-Status)?
+```
+
 ## Aufwandskennzahl fuer Antworten
 
 Ab Beginn einer neuen Session soll der Agent den geschaetzten relativen
