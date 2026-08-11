@@ -89,22 +89,37 @@ Pool aus 45 Modellen/4 Familien):
 | bank-marketing (stark unbalanciert) | 0.9326 | 0.9307 | **0.9348** |
 | electricity (balanciert) | 0.9740 | 0.9515 | **0.9743** |
 
-**Klassifikations-Template** (health_condition, 3-Klassen-BAcc, Pool aus 24
-Modellen/3 Familien):
+**Template-Projekte und weitere Anwendungen** (24er-Grid-Pool aus 3 Familien,
+ausser wo anders vermerkt):
 
-| Ansatz | Bestaetigungs-BAcc |
-|---|---:|
-| Bestes Einzelmodell | 0.8806 |
-| Gleichgewichteter Blend (24) | 0.8680 |
-| **Greedy-Ensemble (36 Modelle)** | **0.8822** |
+| Projekt | Metrik | bestes Einzelmodell | Blend gleichgewichtet | Greedy-Ensemble |
+|---|---|---:|---:|---:|
+| health_condition (Klassifikation) | BAcc | 0.8806 | 0.8680 | **0.8822** |
+| road-accident-risk (Regression) | RMSE | 0.0565 | 0.0572 | **0.0564** |
+| s6e6 (Methodik-Test, geschlossene Episode) | BAcc | 0.9582 | 0.9546 | **0.9615** |
+| s6e8 (24er-Grid-Pool, rohe Features) | AUC | 0.9557 | 0.9430 | **0.9559** |
+| **s6e8 (3 bereits abgestimmte GBMs + TE)** | AUC | 0.9650 | **0.9654** | 0.9654 (=Blend) |
 
-In allen drei Faellen: Greedy-Ensemble > bestes Einzelmodell > Blend. Auf
-health_condition konzentrierte sich die Selektion fast ausschliesslich auf
-Ranger-Varianten (28+7+1 von 36) - konsistent damit, dass Ranger hier laengst
-die staerkste Familie ist. Auf electricity dominierte ein einzelnes
-LightGBM-Modell (27 von 34 Wahlen). Beide Faelle zeigen: die Methode
-konzentriert sich adaptiv auf wenige starke Modelle, statt naiv alle
-gleichzugewichten.
+In sechs von sieben Faellen (inkl. der 2 Ground-Truth-Datensaetze):
+Greedy-Ensemble > bestes Einzelmodell > Blend. Bei health_condition
+konzentrierte sich die Selektion fast ausschliesslich auf Ranger-Varianten
+(28+7+1 von 36) - konsistent damit, dass Ranger dort laengst die staerkste
+Familie ist. Bei electricity dominierte ein einzelnes LightGBM-Modell (27
+von 34 Wahlen). Diese Faelle zeigen: die Methode konzentriert sich adaptiv
+auf wenige starke Modelle, statt naiv alle gleichzugewichten.
+
+**Negativer/neutraler Fall: s6e8 mit den bereits abgestimmten Modellen**
+(2026-08-11, `149b_ensemble_selection_tuned_gbms.R`, Standalone-Skript im
+Projekt) - hier KEIN Gewinn ueber den bestehenden Equal-Weight-Blend
+(Differenz 0.00001, reines Rauschen), obwohl Greedy weiterhin das beste
+Einzelmodell schlaegt. Direkter Beleg fuer die Grenze in Abschnitt 5: nur 3
+Kandidaten, alle bereits stark abgestimmt und hoch korreliert (~0.99, siehe
+NEURAL_DEPLOY.md-Analog dieses Projekts) - die impliziten Greedy-Gewichte
+(40% LightGBM/35% XGBoost/25% CatBoost) liegen nah genug an Gleichgewichtung
+(33/33/33), dass kein messbarer Unterschied entsteht. Bestaetigt: Greedy
+braucht einen GROSSEN, DIVERSEN Pool, um sein Potenzial zu zeigen - bei
+wenigen, bereits optimierten, aehnlichen Modellen reduziert es sich auf
+etwa das, was ein einfacher Blend ohnehin liefert.
 
 ## 5. Grenzen der Methode
 
@@ -120,7 +135,11 @@ gleichzugewichten.
   aus dem waehlen, was im Pool vorhanden ist. Ein Pool aus lauter aehnlichen/
   schwachen Modellen bringt keinen Ensemble-Gewinn (vgl. die generelle
   Lehre "generische Diversitaets-Hebel bringen bei niedrigem Shift/hoher
-  Korrelation wenig", `project_covariate_shift_reweighting`-Memory).
+  Korrelation wenig", `project_covariate_shift_reweighting`-Memory). **Empirisch
+  belegt** (s6e8, Abschnitt 4): bei nur 3 bereits stark abgestimmten, hoch
+  korrelierten Kandidaten liefert Greedy praktisch dasselbe Ergebnis wie ein
+  einfacher Equal-Weight-Blend (Differenz 0.00001) - der Nutzen kommt aus der
+  Poolgroesse/-diversitaet, nicht aus dem Algorithmus selbst.
 - **Rechenkosten skalieren mit Poolgroesse x Rundenzahl x Klassenzahl** - bei
   diesem Template noch handhabbar (18.7 Min. fuer 24 Kandidaten,
   Klassifikation), waechst aber mit groesseren Pools/mehr Runden linear.

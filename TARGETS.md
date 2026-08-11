@@ -519,6 +519,16 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     Naechster Schritt bei Bedarf: `156_train_full_ensemble.R`/`157_predict_
     ensemble_submission.R` (Arbeitstitel) analog zu den bestehenden `150`/
     `155`, die die `best_selected_at_step`-Liste aus `149` uebernehmen.
+  - **Weitere Anwendungen (2026-08-11)**: road-accident-risk (Regression,
+    RMSE-Version, 4. Bestaetigung), s6e6 (Methodik-Test, 5. Bestaetigung),
+    s6e8 mit frischem 24er-Grid-Pool (6. Bestaetigung). **Negativer/neutraler
+    Fall**: s6e8 mit den bereits abgestimmten, hoch korrelierten GBMs
+    (LightGBM+XGBoost+CatBoost, exact-value TE, kein FT-Transformer) zeigt
+    KEINEN Gewinn ueber den bestehenden Equal-Weight-Blend (0.9654 beide,
+    Differenz 0.00001) - Greedy braucht einen grossen/diversen Pool, um sein
+    Potenzial zu zeigen; bei wenigen, bereits stark abgestimmten, aehnlichen
+    Modellen bringt es nichts zusaetzlich. Volle Zahlen + Einordnung in
+    `REFERENZ_ENSEMBLE_SELECTION.md` Abschnitt 4/5.
   - **Meta-Learning-Warmstart fuer `tnr("mbo")`: geprueft, verifiziert -
     NEGATIVES Ergebnis, NICHT ins Template uebernommen (2026-08-08/10).**
     Auto-sklearn-Rezept (Feurer et al.): Meta-Features des neuen Datensatzes
