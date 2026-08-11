@@ -94,6 +94,11 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > Behavioral-Testing-Hintergrund nach Huyen (2022), Mechanik je Test,
 > Ground-Truth-Verifikation, und wann diese Trust-Checks (kein Metrik-Hebel)
 > sich lohnen.
+> Fuer den theoretischen Hintergrund von `148_ensemble_candidate_pool.R` +
+> `149_ensemble_selection.R` siehe
+> [`REFERENZ_ENSEMBLE_SELECTION.md`](REFERENZ_ENSEMBLE_SELECTION.md): Caruana
+> et al. (2004), warum "greedy", warum ein getrennter Selektions-/
+> Bestaetigungs-Split noetig ist, und die Grenzen der Methode.
 
 Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
 

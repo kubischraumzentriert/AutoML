@@ -511,7 +511,7 @@ auf der unberuehrten Bestaetigungsmenge. An 2 unabhaengigen OpenML-
 Datensaetzen verifiziert (bank-marketing/electricity, Standalone-Skripte),
 gegen health_condition regressionsgetestet: Greedy-Ensemble > bestes
 Einzelmodell > gleichgewichteter Blend, siehe `TARGETS.md` fuer die vollen
-Zahlen.
+Zahlen, `REFERENZ_ENSEMBLE_SELECTION.md` fuer den theoretischen Hintergrund.
 
 `_models.R` speichert Modelle+Vorhersagen unter `error_analysis_models_path`,
 `_confidence.R` baut darauf auf und speichert abgeleitete Zeilen-Indizes

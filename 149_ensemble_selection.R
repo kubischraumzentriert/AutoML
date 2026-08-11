@@ -12,6 +12,7 @@ source(file.path(project_dir, "db_logging.R"))
 # sklearn) - verifiziert an 2 unabhaengigen OpenML-Datensaetzen
 # (bank-marketing/electricity, siehe TARGETS.md). Baut auf dem
 # `148_ensemble_candidate_pool.R`-Artefakt auf, kein erneutes Training.
+# Theoretischer Hintergrund: REFERENZ_ENSEMBLE_SELECTION.md.
 if (!file.exists(ensemble_candidate_pool_path)) {
   stop("Kandidaten-Pool fehlt. Erst 148_ensemble_candidate_pool.R ausfuehren.")
 }

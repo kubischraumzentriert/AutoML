@@ -1,0 +1,139 @@
+# Referenz: Caruana Greedy Ensemble Selection
+
+Theoretischer Hintergrund zu `148_ensemble_candidate_pool.R` +
+`149_ensemble_selection.R` (Klassifikation) bzw. `127_ensemble_candidate_
+pool.R` + `129_ensemble_selection.R` (Regression). Der Code dokumentiert das
+WAS; diese Referenz erklaert das WARUM. Quelle: Caruana, Niculescu-Mizil,
+Crew, Ksikes (2004), *"Ensemble Selection from Libraries of Models"*, ICML
+- dieselbe Methode, die spaeter in Auto-sklearn (Feurer et al.) eingesetzt
+wurde. Verifiziert an 2 unabhaengigen OpenML-Datensaetzen (bank-marketing,
+electricity) und gegen beide Template-eigenen Projekte regressionsgetestet,
+siehe TARGETS.md/BACKLOG.md fuer die vollen Zahlen.
+
+---
+
+## 1. Welches Problem loest das?
+
+Nach dem Training mehrerer Modelle (verschiedene Algorithmen, verschiedene
+Hyperparameter) gibt es normalerweise zwei Standardoptionen:
+
+1. **Ein Einzelmodell waehlen** (das mit der besten Validierungs-Metrik) -
+   verschenkt Information aus allen anderen Modellen.
+2. **Alle (oder eine Handvoll) gleichgewichtet mischen** - ein schwaches
+   Modell im Pool verwaessert das Ergebnis (mehrfach in diesem Template
+   beobachtet, siehe `project_mlr3_automl_template`-Memory: "ein schwaecheres
+   Modell verwaessert einen gleichgewichteten Blend").
+
+Ensemble Selection ist ein dritter Weg: aus einem **Pool** bereits
+trainierter Modelle wird eine **Teilmenge mit Wiederholung** automatisch so
+zusammengestellt, dass der resultierende (gleichgewichtete) Durchschnitt
+dieser Teilmenge die Zielmetrik auf einer Validierungsmenge maximiert. Das
+Verfahren entscheidet selbst, wie viele und welche Modelle beitragen sollen
+- inklusive der Moeglichkeit, ein einzelnes starkes Modell effektiv hoeher zu
+gewichten, indem es mehrfach in die Teilmenge aufgenommen wird.
+
+## 2. Der Algorithmus (Greedy Forward Selection mit Wiederholung)
+
+```text
+1. Start: leeres Ensemble.
+2. Wiederhole bis zur maximalen Ensemblegroesse (Rundenzahl):
+   a. Fuer JEDEN Kandidaten im Pool: probiere ihn testweise zum aktuellen
+      Ensemble hinzuzufuegen, berechne die Validierungsmetrik des
+      resultierenden (gleichgewichteten) Durchschnitts.
+   b. Nimm den Kandidaten mit der besten Validierungsmetrik dauerhaft ins
+      Ensemble auf (auch wenn er schon drin ist - Wiederholung erlaubt).
+   c. Merke dir den Ensemble-Stand mit der bisher besten Validierungsmetrik.
+3. Finales Ensemble = der beste gemerkte Stand (nicht zwingend der letzte).
+```
+
+**Warum "greedy" (gierig)**: in jeder Runde wird die Entscheidung getroffen,
+die IM MOMENT am besten aussieht - ohne zurueckzuschauen (kein Entfernen
+bereits gewaehlter Modelle) und ohne vorauszuplanen (keine Suche nach der
+global besten Kombination). Das ist eine bewusste Naeherung: die wirklich
+optimale Teilmenge+Gewichtung aus einem Pool von N Modellen exakt zu finden,
+ist kombinatorisch nicht handhabbar (2^N Teilmengen, dazu kontinuierliche
+Gewichte). Greedy kostet nur "probiere alle N Kandidaten einmal pro Runde"
+(linear in der Poolgroesse je Runde) und kommt in der Praxis meist nah ans
+Optimum - ohne Garantie. Dasselbe Prinzip wie bei der Splitwahl in einem
+einzelnen Decision-Tree-Knoten (lokal optimal, nicht global garantiert).
+
+**Warum Wiederholung erlaubt ist**: ohne Wiederholung koennte jedes Modell
+nur einmal gewaehlt werden, was einer Einzelgewichtung von `1/Ensemblegroesse`
+entspraeche. Mit Wiederholung kann ein besonders starkes Modell mehrfach
+gewaehlt werden - das entspricht einer hoeheren effektiven Gewichtung im
+Durchschnitt, ohne dass der Algorithmus explizit Gewichte optimieren muss
+(einfacher, robuster gegen Overfitting der Gewichte selbst als eine direkte
+Gewichtsoptimierung waere).
+
+## 3. Warum ein separater Selektions-/Bestaetigungs-Split noetig ist
+
+Die Selektion selbst ist ein Suchprozess mit vielen Freiheitsgraden (bei 24
+Kandidaten und 50 Runden werden potenziell tausende Zwischenstaende
+verglichen) - wird sie auf derselben Menge bewertet, auf der sie am Ende
+berichtet wird, ueberpasst sich die Selektion an diese Menge, aehnlich wie
+Hyperparameter-Tuning auf dem falschen Split optimistisch verzerrt waere
+(siehe auch den mlr-org-Tutorial-Befund zu `instance$result_y` in
+`project_mlr3_automl_template`-Memory). Deshalb: der bereits vom Training
+getrennte Eval-/Holdout-Split (aus `147`/`120`) wird NOCHMAL geteilt -
+Selektionsmenge (steuert die gierige Auswahl) und Bestaetigungsmenge
+(bewertet ausschliesslich das fertige Ergebnis, sieht die Selektion nie).
+
+## 4. Empirische Ergebnisse
+
+**Ground-Truth-Verifikation** (2 unabhaengige OpenML-Datensaetze, Standalone-
+Skripte in `ML_Learning/openml-bank-marketing-ensemble-test/`, binaere AUC,
+Pool aus 45 Modellen/4 Familien):
+
+| Datensatz | bestes Einzelmodell | Blend gleichgewichtet | Greedy-Ensemble |
+|---|---:|---:|---:|
+| bank-marketing (stark unbalanciert) | 0.9326 | 0.9307 | **0.9348** |
+| electricity (balanciert) | 0.9740 | 0.9515 | **0.9743** |
+
+**Klassifikations-Template** (health_condition, 3-Klassen-BAcc, Pool aus 24
+Modellen/3 Familien):
+
+| Ansatz | Bestaetigungs-BAcc |
+|---|---:|
+| Bestes Einzelmodell | 0.8806 |
+| Gleichgewichteter Blend (24) | 0.8680 |
+| **Greedy-Ensemble (36 Modelle)** | **0.8822** |
+
+In allen drei Faellen: Greedy-Ensemble > bestes Einzelmodell > Blend. Auf
+health_condition konzentrierte sich die Selektion fast ausschliesslich auf
+Ranger-Varianten (28+7+1 von 36) - konsistent damit, dass Ranger hier laengst
+die staerkste Familie ist. Auf electricity dominierte ein einzelnes
+LightGBM-Modell (27 von 34 Wahlen). Beide Faelle zeigen: die Methode
+konzentriert sich adaptiv auf wenige starke Modelle, statt naiv alle
+gleichzugewichten.
+
+## 5. Grenzen der Methode
+
+- **Kein globales Optimum garantiert** (siehe Abschnitt 2) - ein anderer
+  Startpunkt oder eine andere Rundenreihenfolge koennte zu einer anderen,
+  moeglicherweise besseren Teilmenge fuehren. In der Praxis meist nah genug
+  am Optimum, um den Aufwand nicht zu rechtfertigen.
+- **Braucht eine ausreichend grosse Selektionsmenge** - bei einem kleinen
+  Datensatz kann sich die Selektion an eine zu kleine Validierungsmenge
+  ueberanpassen (deshalb der separate Bestaetigungs-Split, Abschnitt 3, statt
+  nur der Selektionsmenge zu vertrauen).
+- **Setzt einen diversen, bereits guten Pool voraus** - die Methode kann nur
+  aus dem waehlen, was im Pool vorhanden ist. Ein Pool aus lauter aehnlichen/
+  schwachen Modellen bringt keinen Ensemble-Gewinn (vgl. die generelle
+  Lehre "generische Diversitaets-Hebel bringen bei niedrigem Shift/hoher
+  Korrelation wenig", `project_covariate_shift_reweighting`-Memory).
+- **Rechenkosten skalieren mit Poolgroesse x Rundenzahl x Klassenzahl** - bei
+  diesem Template noch handhabbar (18.7 Min. fuer 24 Kandidaten,
+  Klassifikation), waechst aber mit groesseren Pools/mehr Runden linear.
+
+## 6. Entscheidungsregel
+
+- Lohnt sich, wenn bereits ein **diverser Pool** trainierter Modelle
+  existiert (verschiedene Algorithmen und/oder Hyperparameter) und ein
+  einfacher Gleichgewichts-Blend bisher schlechter war als das beste
+  Einzelmodell (das Verwaesserungs-Symptom).
+- Immer mit **getrenntem Selektions-/Bestaetigungs-Split** verifizieren, nie
+  nur die Selektionsmenge berichten.
+- Ergebnis (Verteilung der gewaehlten Modelle) selbst ist diagnostisch
+  wertvoll: eine starke Konzentration auf 1-2 Modelle bestaetigt oft eine
+  bereits bekannte "staerkste Familie"; eine breite Streuung deutet auf
+  echte, komplementaere Diversitaet im Pool hin.
