@@ -506,6 +506,19 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     `ensemble_selection_results_path`. DB-Logging analog zu den uebrigen
     Finalvergleich-Skripten (drei `model_config`-Zeilen: best_single/
     equal_blend/greedy_ensemble).
+    **Offene Luecke (2026-08-11, beim Nachziehen des WorkflowDescription.md-
+    Diagramms aufgefallen)**: `148_ensemble_candidate_pool.R`/`149_ensemble_
+    selection.R` sind nur EIN Analyse-/Bestaetigungsschritt (Phase 11b im
+    Diagramm) - `150_train_full_model.R`/`155_predict_submission.R` koennen
+    bisher nur EIN benanntes Einzelmodell (`submission_model_name`) auf den
+    vollen Daten trainieren und deployen, keine gewichtete Multi-Modell-
+    Komposition. Gewinnt das Greedy-Ensemble auf der Bestaetigungsmenge,
+    fehlt noch der Schritt "die ausgewaehlten Kandidaten (mit Multiplizitaet)
+    auf VOLLEN Daten neu trainieren + gewichtet mitteln + als submission.csv
+    schreiben" - bisher manueller Nachbau noetig, kein eigenes Deploy-Skript.
+    Naechster Schritt bei Bedarf: `156_train_full_ensemble.R`/`157_predict_
+    ensemble_submission.R` (Arbeitstitel) analog zu den bestehenden `150`/
+    `155`, die die `best_selected_at_step`-Liste aus `149` uebernehmen.
   - **Meta-Learning-Warmstart fuer `tnr("mbo")`: geprueft, verifiziert -
     NEGATIVES Ergebnis, NICHT ins Template uebernommen (2026-08-08/10).**
     Auto-sklearn-Rezept (Feurer et al.): Meta-Features des neuen Datensatzes

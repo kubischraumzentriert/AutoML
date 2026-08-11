@@ -97,8 +97,13 @@ flowchart TD
     FTProto --> DDecorr{"Dekorreliert, ca. 0.9x,<br/>UND konkurrenzfaehig?"}
     DDecorr -- "nein" --> NoNeural["Kein neuronales Modell,<br/>GBM-Ensemble ist final"]
     DDecorr -- "ja" --> PyExport["Python-GPU-Export<br/>(Kaggle-Notebook, s6e8-Vorlage)"]
-    NoNeural --> SelectModel
-    PyExport --> SelectModel
+    NoNeural --> EnsembleSelection
+    PyExport --> EnsembleSelection
+
+    EnsembleSelection["Phase 11b: 148_ensemble_candidate_pool.R<br/>+ 149_ensemble_selection.R<br/>Caruana Greedy Ensemble Selection"] --> DEnsembleWins{"Greedy-Ensemble schlaegt<br/>bestes Einzelmodell (Bestaetigungsmenge)?"}
+    DEnsembleWins -- "ja, aber noch keine Deploy-Automatisierung" --> EnsembleGap["OFFEN: 150/155 koennen bisher nur EIN\nbenanntes Modell auf vollen Daten trainieren+\ndeployen, keine gewichtete Multi-Modell-\nKomposition - manueller Nachbau noetig\noder Deploy-Skript ergaenzen (siehe TARGETS.md)"]
+    DEnsembleWins -- "nein" --> SelectModel
+    EnsembleGap --> SelectModel
 
     SelectModel["Phase 12a: 148_select_submission_model.R<br/>Vorschlag aus experiments.db"] --> FullTrain["Phase 12b: 150_train_full_model.R<br/>Training auf VOLLEM train.csv"]
     FullTrain --> Predict["Phase 12c: 155_predict_submission.R"]
