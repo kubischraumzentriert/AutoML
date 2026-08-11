@@ -101,9 +101,9 @@ flowchart TD
     PyExport --> EnsembleSelection
 
     EnsembleSelection["Phase 11b: 148_ensemble_candidate_pool.R<br/>+ 149_ensemble_selection.R<br/>Caruana Greedy Ensemble Selection"] --> DEnsembleWins{"Greedy-Ensemble schlaegt<br/>bestes Einzelmodell (Bestaetigungsmenge)?"}
-    DEnsembleWins -- "ja, aber noch keine Deploy-Automatisierung" --> EnsembleGap["OFFEN: 150/155 koennen bisher nur EIN\nbenanntes Modell auf vollen Daten trainieren+\ndeployen, keine gewichtete Multi-Modell-\nKomposition - manueller Nachbau noetig\noder Deploy-Skript ergaenzen (siehe TARGETS.md)"]
+    DEnsembleWins -- "ja" --> EnsembleDeploy["Phase 12a-Alt: 156_train_full_ensemble.R<br/>+ 157_predict_ensemble_submission.R<br/>nur eindeutige Kandidaten, gewichtet gemittelt"]
     DEnsembleWins -- "nein" --> SelectModel
-    EnsembleGap --> SelectModel
+    EnsembleDeploy --> SubmissionDone2(["submission_ensemble.csv"])
 
     SelectModel["Phase 12a: 148_select_submission_model.R<br/>Vorschlag aus experiments.db"] --> FullTrain["Phase 12b: 150_train_full_model.R<br/>Training auf VOLLEM train.csv"]
     FullTrain --> Predict["Phase 12c: 155_predict_submission.R"]
@@ -517,6 +517,20 @@ Datensaetzen verifiziert (bank-marketing/electricity, Standalone-Skripte),
 gegen health_condition regressionsgetestet: Greedy-Ensemble > bestes
 Einzelmodell > gleichgewichteter Blend, siehe `TARGETS.md` fuer die vollen
 Zahlen, `REFERENZ_ENSEMBLE_SELECTION.md` fuer den theoretischen Hintergrund.
+
+**Ensemble Deploy (`156_train_full_ensemble.R` + `157_predict_ensemble_
+submission.R`)**: schliesst den Loop, wenn Greedy gewinnt. `_train_full_
+ensemble.R` liest die in `149` gespeicherten eindeutigen Kandidaten+Gewichte
+(`ensemble_composition_path`) und trainiert NUR diese (nicht jede
+Wiederholung einzeln) auf dem vollen `train.csv` - deutlich teurer als die
+Pool-Suche (55k-Stichprobe): bei health_condition 127 Minuten fuer 3
+Ranger-Modelle auf 690k Zeilen, vorab zu niedrig geschaetzt. `_predict_
+ensemble_submission.R` mittelt die Testvorhersagen aller Mitglieder
+GEWICHTET (Gewicht = Selektionshaeufigkeit aus `149`) und schreibt
+`submission_ensemble.csv` - **nicht** `submission.csv`, die bestehende
+Einzelmodell-Submission bleibt unangetastet. End-to-end gegen
+health_condition verifiziert: Zeilenzahl korrekt, 94% Uebereinstimmung mit
+der Einzelmodell-Submission (sinnvoll unterschiedlich).
 
 `_models.R` speichert Modelle+Vorhersagen unter `error_analysis_models_path`,
 `_confidence.R` baut darauf auf und speichert abgeleitete Zeilen-Indizes

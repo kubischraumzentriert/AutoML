@@ -506,19 +506,22 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     `ensemble_selection_results_path`. DB-Logging analog zu den uebrigen
     Finalvergleich-Skripten (drei `model_config`-Zeilen: best_single/
     equal_blend/greedy_ensemble).
-    **Offene Luecke (2026-08-11, beim Nachziehen des WorkflowDescription.md-
-    Diagramms aufgefallen)**: `148_ensemble_candidate_pool.R`/`149_ensemble_
-    selection.R` sind nur EIN Analyse-/Bestaetigungsschritt (Phase 11b im
-    Diagramm) - `150_train_full_model.R`/`155_predict_submission.R` koennen
-    bisher nur EIN benanntes Einzelmodell (`submission_model_name`) auf den
-    vollen Daten trainieren und deployen, keine gewichtete Multi-Modell-
-    Komposition. Gewinnt das Greedy-Ensemble auf der Bestaetigungsmenge,
-    fehlt noch der Schritt "die ausgewaehlten Kandidaten (mit Multiplizitaet)
-    auf VOLLEN Daten neu trainieren + gewichtet mitteln + als submission.csv
-    schreiben" - bisher manueller Nachbau noetig, kein eigenes Deploy-Skript.
-    Naechster Schritt bei Bedarf: `156_train_full_ensemble.R`/`157_predict_
-    ensemble_submission.R` (Arbeitstitel) analog zu den bestehenden `150`/
-    `155`, die die `best_selected_at_step`-Liste aus `149` uebernehmen.
+    **Luecke geschlossen (2026-08-11, gleicher Tag)**: `149_ensemble_
+    selection.R` speichert jetzt zusaetzlich die eindeutigen ausgewaehlten
+    Kandidaten+Gewichte (`ensemble_composition_path`, nicht jede Wiederholung
+    einzeln). Neues `156_train_full_ensemble.R` trainiert nur diese
+    eindeutigen Kandidaten auf dem VOLLEN Trainingsdatensatz (690k Zeilen -
+    deutlich teurer als die 55k-Suchstichprobe: 127 Minuten fuer 3 Ranger-
+    Modelle, `num.trees=200`, Kostenschaetzung vorab war zu niedrig, siehe
+    [[feedback_runtime_cost_awareness]]-Lehre). Neues `157_predict_ensemble_
+    submission.R` mittelt die Testvorhersagen GEWICHTET (Gewicht = wie oft
+    in `149` gewaehlt) und schreibt `submission_ensemble.csv` (bestehende
+    `submission.csv` bleibt unangetastet). End-to-end gegen health_condition
+    verifiziert: 295753 Zeilen (= test.csv), Klassenverteilung plausibel,
+    94.06% Uebereinstimmung mit der bestehenden Einzelmodell-Submission
+    (sinnvoll unterschiedlich, nicht identisch/kaputt). Der Entscheidungs-
+    Loop ist damit vollstaendig geschlossen: 148/149 entscheiden, 156/157
+    deployen.
   - **Weitere Anwendungen (2026-08-11)**: road-accident-risk (Regression,
     RMSE-Version, 4. Bestaetigung), s6e6 (Methodik-Test, 5. Bestaetigung),
     s6e8 mit frischem 24er-Grid-Pool (6. Bestaetigung). **Negativer/neutraler
