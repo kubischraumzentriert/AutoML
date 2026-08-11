@@ -471,6 +471,27 @@ directional_warn_effect_share <- 0.05
 
 sanity_check_results_path <- file.path(artifact_dir, "sanity_check_results.csv")
 
+# Caruana-Greedy-Ensemble-Selection (148_ensemble_candidate_pool.R +
+# 149_ensemble_selection.R, siehe TARGETS.md): statt ein Einzelmodell zu
+# waehlen (148_select_submission_model.R) oder wenige Modelle
+# gleichzugewichten, ein Pool trainierter Modelle per gieriger
+# Vorwaertsauswahl (mit Wiederholung erlaubt, Caruana et al. 2004) zu einem
+# Ensemble kombinieren. An 2 unabhaengigen OpenML-Datensaetzen verifiziert
+# (bank-marketing/electricity, siehe TARGETS.md) - Backport-Kriterium
+# erfuellt. Baut auf `error_analysis_models_path` (147, train/eval-Split +
+# manuell imputierte Daten) auf, kein neuer Split.
+# ensemble_pool_n_per_family: Anzahl Kandidaten je Modellfamilie
+# (Ranger/LightGBM/CatBoost) im Kandidaten-Pool.
+ensemble_pool_n_per_family <- 8L
+ensemble_candidate_pool_path <- file.path(artifact_dir, "ensemble_candidate_pool.rds")
+# ensemble_selection_rounds: max. Ensemblegroesse (mit Wiederholung) der
+# gierigen Selektion. ensemble_selection_valid_ratio: Anteil des 147-Eval-
+# Splits, der fuer die Selektion selbst verwendet wird (Rest = unberuehrte
+# Bestaetigungsmenge, verhindert Ueberanpassung der Selektion an sich selbst).
+ensemble_selection_rounds <- 50L
+ensemble_selection_valid_ratio <- 0.5
+ensemble_selection_results_path <- file.path(artifact_dir, "ensemble_selection_results.csv")
+
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "<task_id_prefix>_sleep_weighted_p1.5")
 # ein feature_set-Label fuer model_config ab. Referenziert task_id_prefix

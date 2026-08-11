@@ -465,6 +465,8 @@ source("147_error_analysis_ranger_kernelshap.R")        # welche Features treibe
 source("147_error_analysis_ranger_tabpfn.R")            # komplett andere Methodik
 source("147_error_analysis_ranger_segments.R")          # Slice-Based Evaluation, siehe unten
 source("147_error_analysis_ranger_sanity_checks.R")     # Perturbation/Invarianz/Directional, siehe unten
+source("148_ensemble_candidate_pool.R")                 # Kandidaten-Pool, siehe unten
+source("149_ensemble_selection.R")                      # Greedy-Ensemble-Selection, siehe unten
 ```
 
 **Segmentmetriken (`_segments.R`, optional, per `segment_metric_cols` in
@@ -495,6 +497,21 @@ Zeilen mit einer substanziellen (>0.05) Gegenrichtungs-Verletzung, plausibel
 durch Feature-Interaktionen im Tree-Ensemble (keine erzwungene globale
 Monotonie). Siehe `TARGETS.md` fuer die vollen Zahlen, `REFERENZ_MODEL_
 SANITY_CHECKS.md` fuer den theoretischen Hintergrund je Test.
+
+**Ensemble Selection (`148_ensemble_candidate_pool.R` + `149_ensemble_
+selection.R`)**: Caruana-Greedy-Ensemble-Selection (Caruana et al. 2004, wie
+in Auto-sklearn) statt Einzelmodell-Wahl (`148_select_submission_model.R`)
+oder festem Gleichgewichts-Blend. `_candidate_pool.R` trainiert einen Pool
+aus 24 Kandidaten (8 Ranger/8 LightGBM/8 CatBoost, variierte Hyperparameter)
+auf dem `_models.R`-Split und speichert deren Wahrscheinlichkeits-Matrizen
+auf dem Eval-Split. `_selection.R` splittet diesen Eval-Split weiter in
+Selektions-/Bestaetigungsmenge (klassenstratifiziert) und waehlt gierig
+Modelle mit Wiederholung aus (Selektions-BAcc-Optimierung), bewertet aber
+auf der unberuehrten Bestaetigungsmenge. An 2 unabhaengigen OpenML-
+Datensaetzen verifiziert (bank-marketing/electricity, Standalone-Skripte),
+gegen health_condition regressionsgetestet: Greedy-Ensemble > bestes
+Einzelmodell > gleichgewichteter Blend, siehe `TARGETS.md` fuer die vollen
+Zahlen.
 
 `_models.R` speichert Modelle+Vorhersagen unter `error_analysis_models_path`,
 `_confidence.R` baut darauf auf und speichert abgeleitete Zeilen-Indizes

@@ -473,6 +473,39 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     Modul (Arbeitstitel `149_ensemble_selection.R`, zwischen `148` und `150`)
     muesste diese Vorhersagen systematisch sammeln koennen. Noch nicht
     gebaut - naechste Session.
+    **Update (2026-08-11): gebackportet.** Statt die bestehenden
+    Benchmark-Skripte umzubauen (groesserer Eingriff, mehr Risiko), neues
+    `148_ensemble_candidate_pool.R`: baut auf dem `147`-Artefakt auf
+    (train/eval-Split + manuell imputierte Daten, kein neuer Split),
+    trainiert einen Pool aus 24 Kandidaten (8 Ranger/8 LightGBM/8 CatBoost,
+    variierte Hyperparameter per `expand.grid`+Zufallsstichprobe, analog zur
+    Standalone-Verifikation, aber 3 statt 4 Familien - kein XGBoost als
+    neue Abhaengigkeit) und speichert die Wahrscheinlichkeits-Matrizen aller
+    Kandidaten auf dem Eval-Split. Laufzeit: 18.7 Minuten (24 Kandidaten,
+    Ranger mit `num.trees=200` dominiert die Zeit, ~45s je Modell) - unter
+    der 30-Minuten-Schwelle aus `adr/002-r-only-python-gpu-export.md`.
+    Neues `149_ensemble_selection.R`: generalisiert die binaere AUC-Version
+    aus der Standalone-Verifikation auf 3-Klassen-BAcc mit
+    Wahrscheinlichkeits-Matrizen (elementweise gemittelt, Klasse = Argmax).
+    Splittet den 147-Eval-Split weiter in Selektions-/Bestaetigungsmenge
+    (`ensemble_selection_valid_ratio`, Default 0.5, klassenstratifiziert) -
+    die Selektion darf nicht auf denselben Zeilen laufen, auf denen sie
+    bewertet wird. **Ergebnis gegen health_condition (3. Bestaetigung nach
+    bank-marketing/electricity, hier als Regressionstest gegen das
+    Template-eigene Projekt, kein neues externes Datenset noetig)**:
+    Bestes Einzelmodell (Selektions-BAcc) = `ranger_3`, Bestaetigungs-BAcc
+    0.8806; gleichgewichteter Blend (alle 24) 0.8680 (schlechter als das
+    beste Einzelmodell - bestaetigt erneut "ein schwaecheres Modell
+    verwaessert einen gleichgewichteten Blend"); **Greedy-Ensemble 0.8822**
+    (36 Modelle, davon `ranger_3` 28x, `ranger_6` 7x, `ranger_8` 1x -
+    konzentriert sich fast ausschliesslich auf Ranger, konsistent damit,
+    dass Ranger hier laengst die staerkste Familie ist, siehe die
+    `147_error_analysis_ranger_*`-Namensgebung). Config-Ergaenzung in
+    `000_config.R`: `ensemble_pool_n_per_family`/`ensemble_candidate_pool_path`/
+    `ensemble_selection_rounds`/`ensemble_selection_valid_ratio`/
+    `ensemble_selection_results_path`. DB-Logging analog zu den uebrigen
+    Finalvergleich-Skripten (drei `model_config`-Zeilen: best_single/
+    equal_blend/greedy_ensemble).
   - **Meta-Learning-Warmstart fuer `tnr("mbo")`: geprueft, verifiziert -
     NEGATIVES Ergebnis, NICHT ins Template uebernommen (2026-08-08/10).**
     Auto-sklearn-Rezept (Feurer et al.): Meta-Features des neuen Datensatzes
