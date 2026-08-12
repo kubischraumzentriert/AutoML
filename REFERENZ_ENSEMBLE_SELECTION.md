@@ -217,6 +217,38 @@ Einordnung:
    beim health_condition-Fall (dort ~0.072, weit ausserhalb jeder
    plausiblen Erklaerung).
 
+**7. Datenpunkt, andere Metrikklasse: `tweet` (Poisson-/Tweedie-Devianz +
+Exposure-Offset, 2026-08-12)** - erste Anwendung ausserhalb von BAcc/AUC/
+RMSE. Eigene Theoriedoku mit Literaturherleitung:
+`ML_Learning/tweet/REFERENZ_ENSEMBLE_SELECTION_TWEEDIE.md` (kein Git-Repo,
+daher hier nur die Kurzfassung). Kernfrage: traegt der Algorithmus mit
+Devianz statt RMSE/BAcc? Ja, unveraendert - Devianz ist wie RMSE ein
+zeilenweiser Mittelwert (additiv zerlegbar), im Gegensatz zu QWK
+(`project_nondecomposable_metric`-Memory). Vollmodell-Deploy auf dem
+externen, literaturvergleichbaren Holdout (135.603 Zeilen, French Motor
+freMTPL2):
+
+| Familie | GLM (voll) | Referenz-LightGBM | **Greedy-Ensemble** |
+|---|---:|---:|---:|
+| Poisson-Devianz | 0.3208 (D²=0.032) | 0.3045 (D²=0.081) | **0.2931 (D²=0.115)** |
+| Tweedie-Devianz (p_eval=1.5) | 60.09 (D²=0.051) | 59.52 (D²=0.060) | **56.10 (D²=0.114)** |
+
+Achtes/neuntes Datenpunkt-Paar, beide klar Greedy > bestes Einzelmodell >
+Blend, auf vollen Daten (nicht nur Subset) verifiziert. Zusaetzlich eine
+neue methodische Lehre, die in den bisherigen Anwendungen so nicht auftrat:
+ein Kandidat mit schlechter EINZEL-Metrik (LightGBM bei extremem Tweedie-
+Power p=1.9, Solo-Devianz 1148 - Rang 15 von 16) trug trotzdem 9/29 Gewicht
+im besten Ensemble bei. Ursache (siehe Tweedie-Doku Abschnitt 5b): 97%
+seiner Solo-Devianz kamen aus dem obersten 1% der Zeilen (grosse Schaeden,
+wo er fast immer ~0 vorhersagt), waehrend er auf der dominanten 96%-
+Nullmasse das BESTE Modell im Pool war - wirkt im Ensemble als impliziter
+Shrinkage-Effekt. **Wichtiger Vorbehalt**: das Ensemble gewinnt aggregiert,
+ist aber bei den seltenen, praktisch wichtigen Schadenhoehen selbst
+konservativer (mean_mu=90) als GLM allein (mean_mu=165, wahr: 1826) - ein
+echter Trade-off zwischen aggregierter Metrik und Tail-Genauigkeit, den
+eine Metrik-Zerlegung (Nullmasse vs. positiv) aufdeckt, die die
+Gesamtzahl allein verschleiert haette.
+
 **Einordnung**: kein Widerspruch zur Methode, sondern eine Bestaetigung
 ihrer eigenen Grenze (Abschnitt 5) auf echten LB-Daten statt nur lokal -
 Feature-Engineering (TE) dominiert hier die Wahl der Aggregationsmethode
