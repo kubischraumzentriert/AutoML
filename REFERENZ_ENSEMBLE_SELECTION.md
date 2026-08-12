@@ -96,19 +96,40 @@ ausser wo anders vermerkt):
 |---|---|---:|---:|---:|
 | health_condition (Klassifikation, **korrigiert**, siehe unten) | BAcc | 0.9484 | **0.9524** | 0.9484 |
 | road-accident-risk (Regression) | RMSE | 0.0565 | 0.0572 | **0.0564** |
-| s6e6 (Methodik-Test, geschlossene Episode) | BAcc | 0.9582 | 0.9546 | **0.9615** |
-| s6e8 (24er-Grid-Pool, rohe Features) | AUC | 0.9557 | 0.9430 | **0.9559** |
+| s6e6 (Methodik-Test, geschlossene Episode, **korrigiert**, siehe unten) | BAcc | **0.9638** | 0.9580 | 0.9633 |
+| s6e8 (24er-Grid-Pool, rohe Features, **korrigiert**, siehe unten) | AUC | 0.9556 | 0.9433 | **0.9560** |
 | **s6e8 (3 bereits abgestimmte GBMs + TE)** | AUC | 0.9650 | **0.9654** | 0.9654 (=Blend) |
 
-Vier von sieben Faellen (inkl. der 2 Ground-Truth-Datensaetze):
-Greedy-Ensemble > bestes Einzelmodell > Blend. Bei electricity dominierte
-ein einzelnes LightGBM-Modell (27 von 34 Wahlen). Diese Faelle zeigen: die
-Methode konzentriert sich adaptiv auf wenige starke Modelle, statt naiv
-alle gleichzugewichten. In den uebrigen drei Faellen (health_condition
-korrigiert, s6e8 mit abgestimmten GBMs, s.u.) liegt der einfache Blend
-gleichauf oder vorn - beide Male, weil der Pool nach einer Korrektur/schon
-von Haus aus aus wenigen, starken, AEHNLICHEN Kandidaten bestand statt aus
-einem echt diversen Feld mit klaren Staerkeunterschieden.
+Nach Korrektur des Gewichtungsbugs (s.u.) in vier von sieben Faellen (inkl.
+der 2 Ground-Truth-Datensaetze) Greedy-Ensemble klar vorn: bank-marketing,
+electricity, road-accident-risk, s6e8-Grid-Pool. Bei electricity dominierte
+ein einzelnes LightGBM-Modell (27 von 34 Wahlen). In zwei Faellen
+(health_condition korrigiert, s6e8 mit abgestimmten GBMs) liegt der einfache
+Blend gleichauf oder vorn - weil der Pool nach einer Korrektur/schon von
+Haus aus aus wenigen, starken, AEHNLICHEN Kandidaten bestand statt aus einem
+echt diversen Feld mit klaren Staerkeunterschieden. **Neu bei s6e6
+(korrigiert)**: das beste Einzelmodell liegt hauchduenn vorn (0.9638 vs.
+0.9633 Greedy, Differenz 0.0005 - bei ~11.5k Bestaetigungszeilen
+(SE ~ 0.0018) statistisches Rauschen, praktisch ein Gleichstand). Kein
+Widerspruch zur Kernthese, sondern eine dritte Variante desselben Musters:
+je staerker/homogener der (korrekt gewichtete) Pool, desto naeher ruecken
+Greedy und bestes Einzelmodell zusammen - der Blend faellt dabei am
+deutlichsten zurueck (0.9580), weil er die schwachen Kandidaten nicht
+herausfiltert.
+
+**Gegenprobe s6e8 (24er-Grid-Pool, 2026-08-12)**: derselbe Weighted-Fix
+(`149_ensemble_selection.R` im s6e8-Projekt hatte den Gewichtsschritt
+urspruenglich komplett ausgelassen, nicht nur teilweise wie bei s6e6)
+angewendet und explizit neu gelaufen statt nur die alte AUC-Unempfindlichkeits-
+Annahme fortzuschreiben. Ergebnis bestaetigt die Annahme statt sie zu
+widerlegen: greedy 0.9560 / single 0.9556 / blend 0.9433 - praktisch
+identisch zu den ungewichteten Vorwerten (0.9559/0.9557/0.9430), Rangfolge
+unveraendert. Guter Kontrast zu health_condition/s6e6 (BAcc, dort hat der
+Fix die Rangfolge veraendert): bestaetigt nochmal empirisch statt nur
+theoretisch, dass AUC als rangbasierte Metrik gegenueber Klassengewichtung
+weitgehend unempfindlich ist - der Fix war hier trotzdem richtig (keine
+schweigend fehlerhafte Grundlage mehr), hat aber wie erwartet kein
+Ergebnis veraendert.
 
 **Echter Bug + Korrektur: health_condition (2026-08-12)**, aufgedeckt durch
 eine tatsaechliche Kaggle-Einreichung, nicht durch lokale Diagnostik: der
