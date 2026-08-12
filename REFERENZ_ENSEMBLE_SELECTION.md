@@ -65,6 +65,18 @@ Durchschnitt, ohne dass der Algorithmus explizit Gewichte optimieren muss
 (einfacher, robuster gegen Overfitting der Gewichte selbst als eine direkte
 Gewichtsoptimierung waere).
 
+**Kein CV-OOF-Stacking**: eine naheliegende Verwechslung ist, dass die
+Kandidaten per Cross-Validation trainiert werden und ihre Out-of-Fold-
+Vorhersagen (die zusammen den GESAMTEN Trainingsdatensatz abdecken) fuer
+die Selektion genutzt werden - das ist die klassische Stacking-Variante.
+Diese Implementierung macht das NICHT: jeder Kandidat wird EINMAL auf
+einem festen Trainings-Split trainiert und nur auf dem dazugehoerigen,
+separaten Eval-/Holdout-Split bewertet (aus `147`/`120`/`140` je nach
+Projekt) - einfacher und guenstiger als OOF, aber dateneffizienter waere
+OOF gewesen (jede Zeile trueg zur Bewertung bei, nicht nur der
+Eval-Anteil). Bewusste Vereinfachung, kein Versehen - konsistent mit dem
+Rest des Templates, das ebenfalls feste Holdout-Splits statt OOF nutzt.
+
 ## 3. Warum ein separater Selektions-/Bestaetigungs-Split noetig ist
 
 Die Selektion selbst ist ein Suchprozess mit vielen Freiheitsgraden (bei 24
