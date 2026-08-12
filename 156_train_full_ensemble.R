@@ -39,6 +39,11 @@ train[, (target_col_name) := as.factor(get(target_col_name))]
 feature_levels <- lapply(train[, ..feature_char_cols], levels)
 
 task_full <- as_task_classif(train, target = target_col_name, id = paste0(task_id_prefix, "_full_ensemble"))
+# Gewichtet, IDENTISCH zum etablierten Deployment-Pfad (150_train_full_
+# model.R nutzt denselben add_balanced_class_weights()-Helfer) - behebt
+# denselben Bug wie in 148_ensemble_candidate_pool.R (siehe dort/TARGETS.md):
+# ungewichtetes Training kostete bei diesem Projekt ~0.07-0.09 BAcc.
+task_full_weighted <- add_balanced_class_weights(task_full, class_weight_power)
 
 make_baseline_learner <- function(base_learner) {
   as_learner(po("imputemedian") %>>% po("imputemode") %>>% base_learner)
@@ -47,23 +52,27 @@ make_baseline_learner <- function(base_learner) {
 # Identischer Kandidaten-Aufbau wie 148_ensemble_candidate_pool.R, nur jetzt
 # mit Imputations-Pipeline (148 nutzte bereits manuell imputierte Daten aus
 # dem 147-Artefakt; hier wird auf rohem train.csv wie in 150 trainiert).
+# use_weighted signalisiert, ob der Basis-Learner Gewichte unterstuetzt
+# (z.B. LDA nicht - kommt hier aber nicht vor, alle drei Familien
+# unterstuetzen weights_learner).
 make_candidate_learner <- function(family, params) {
   if (family == "ranger") {
-    make_baseline_learner(lrn(
+    base <- lrn(
       "classif.ranger", predict_type = "prob", seed = seed, respect.unordered.factors = "order",
       num.trees = 200, mtry.ratio = params$mtry.ratio, min.node.size = params$min.node.size
-    ))
+    )
   } else if (family == "lightgbm") {
-    make_baseline_learner(lrn(
+    base <- lrn(
       "classif.lightgbm", predict_type = "prob", num_iterations = 200,
       num_leaves = params$num_leaves, learning_rate = params$learning_rate, feature_fraction = params$feature_fraction
-    ))
+    )
   } else {
-    make_baseline_learner(lrn(
+    base <- lrn(
       "classif.catboost", predict_type = "prob", logging_level = "Silent",
       depth = params$depth, learning_rate = params$learning_rate, iterations = params$iterations
-    ))
+    )
   }
+  list(learner = make_baseline_learner(base), use_weighted = "weights" %in% base$properties)
 }
 
 cat(sprintf("=== Ensemble-Volltraining: %d eindeutige Kandidaten ===\n", length(composition$selected_composition)))
@@ -71,9 +80,10 @@ t0 <- Sys.time()
 trained_members <- lapply(composition$selected_composition, function(member) {
   cat(sprintf("  %s (Gewicht %d/%d) ...\n", member$label, member$weight,
               sum(vapply(composition$selected_composition, function(m) m$weight, integer(1)))))
-  learner <- make_candidate_learner(member$spec$family, member$spec$params)
-  learner$train(task_full)
-  list(learner = learner, weight = member$weight, label = member$label)
+  built <- make_candidate_learner(member$spec$family, member$spec$params)
+  fit_task <- if (built$use_weighted) task_full_weighted else task_full
+  built$learner$train(fit_task)
+  list(learner = built$learner, weight = member$weight, label = member$label)
 })
 cat(sprintf("Ensemble-Training fertig: %.1f Minuten\n", as.numeric(Sys.time() - t0, units = "mins")))
 

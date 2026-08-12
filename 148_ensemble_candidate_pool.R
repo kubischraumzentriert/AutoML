@@ -29,10 +29,23 @@ models <- readRDS(error_analysis_models_path)
 
 target_col_name <- models$target_col_name
 feature_cols <- models$feature_cols
+
+# Gewichteter Task, IDENTISCH zum Muster in 147_error_analysis_ranger_
+# models.R - train_imputed enthaelt die "weight"-Spalte (class_weight_power,
+# siehe 000_config.R), die frueher hier faelschlich weggelassen wurde
+# (siehe TARGETS.md: der ganze Pool lief dadurch ungewichtet, ~0.07-0.09
+# BAcc unter dem etablierten gewichteten Ranger-Deployment). Nicht jeder
+# Learner unterstuetzt Gewichte (z.B. LDA nicht) - hier per
+# `"weights" %in% learner$properties` je Kandidat geprueft, mit Fallback auf
+# den ungewichteten Task.
 train_task <- as_task_classif(
   models$train_imputed[, c(target_col_name, feature_cols), with = FALSE],
   target = target_col_name, id = "ensemble_pool_train"
 )
+train_task_weighted <- train_task$clone()
+train_task_weighted$cbind(data.table(weight = models$train_imputed$weight))
+train_task_weighted$set_col_roles("weight", roles = "weights_learner")
+
 eval_newdata <- models$eval_imputed[, c(target_col_name, feature_cols), with = FALSE]
 truth <- models$truth
 class_names <- train_task$class_names
@@ -77,16 +90,22 @@ t0 <- Sys.time()
 prob_list <- vector("list", length(candidate_specs))
 labels <- character(length(candidate_specs))
 families <- character(length(candidate_specs))
+n_weighted <- 0L
 for (i in seq_along(candidate_specs)) {
   spec <- candidate_specs[[i]]
   learner <- make_learner(spec$family, spec$params)
-  learner$train(train_task)
-  pred <- learner$predict_newdata(eval_newdata, task = train_task)
+  use_weighted <- "weights" %in% learner$properties
+  if (use_weighted) n_weighted <- n_weighted + 1L
+  fit_task <- if (use_weighted) train_task_weighted else train_task
+  learner$train(fit_task)
+  pred <- learner$predict_newdata(eval_newdata, task = fit_task)
   prob_list[[i]] <- pred$prob[, class_names, drop = FALSE]
   labels[i] <- sprintf("%s_%d", spec$family, i)
   families[i] <- spec$family
   if (i %% 5 == 0) cat(sprintf("  %d/%d Kandidaten fertig (%.0fs)\n", i, length(candidate_specs), as.numeric(Sys.time() - t0, units = "secs")))
 }
+cat(sprintf("Gewichtet trainiert: %d/%d Kandidaten (class_weight_power=%.2f)\n",
+            n_weighted, length(candidate_specs), class_weight_power))
 cat(sprintf("Pool-Training fertig: %.1f Minuten\n", as.numeric(Sys.time() - t0, units = "mins")))
 
 saveRDS(

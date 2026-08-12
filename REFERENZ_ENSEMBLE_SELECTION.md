@@ -94,19 +94,57 @@ ausser wo anders vermerkt):
 
 | Projekt | Metrik | bestes Einzelmodell | Blend gleichgewichtet | Greedy-Ensemble |
 |---|---|---:|---:|---:|
-| health_condition (Klassifikation) | BAcc | 0.8806 | 0.8680 | **0.8822** |
+| health_condition (Klassifikation, **korrigiert**, siehe unten) | BAcc | 0.9484 | **0.9524** | 0.9484 |
 | road-accident-risk (Regression) | RMSE | 0.0565 | 0.0572 | **0.0564** |
 | s6e6 (Methodik-Test, geschlossene Episode) | BAcc | 0.9582 | 0.9546 | **0.9615** |
 | s6e8 (24er-Grid-Pool, rohe Features) | AUC | 0.9557 | 0.9430 | **0.9559** |
 | **s6e8 (3 bereits abgestimmte GBMs + TE)** | AUC | 0.9650 | **0.9654** | 0.9654 (=Blend) |
 
-In sechs von sieben Faellen (inkl. der 2 Ground-Truth-Datensaetze):
-Greedy-Ensemble > bestes Einzelmodell > Blend. Bei health_condition
-konzentrierte sich die Selektion fast ausschliesslich auf Ranger-Varianten
-(28+7+1 von 36) - konsistent damit, dass Ranger dort laengst die staerkste
-Familie ist. Bei electricity dominierte ein einzelnes LightGBM-Modell (27
-von 34 Wahlen). Diese Faelle zeigen: die Methode konzentriert sich adaptiv
-auf wenige starke Modelle, statt naiv alle gleichzugewichten.
+Vier von sieben Faellen (inkl. der 2 Ground-Truth-Datensaetze):
+Greedy-Ensemble > bestes Einzelmodell > Blend. Bei electricity dominierte
+ein einzelnes LightGBM-Modell (27 von 34 Wahlen). Diese Faelle zeigen: die
+Methode konzentriert sich adaptiv auf wenige starke Modelle, statt naiv
+alle gleichzugewichten. In den uebrigen drei Faellen (health_condition
+korrigiert, s6e8 mit abgestimmten GBMs, s.u.) liegt der einfache Blend
+gleichauf oder vorn - beide Male, weil der Pool nach einer Korrektur/schon
+von Haus aus aus wenigen, starken, AEHNLICHEN Kandidaten bestand statt aus
+einem echt diversen Feld mit klaren Staerkeunterschieden.
+
+**Echter Bug + Korrektur: health_condition (2026-08-12)**, aufgedeckt durch
+eine tatsaechliche Kaggle-Einreichung, nicht durch lokale Diagnostik: der
+Nutzer submittete das Greedy-Ensemble (LB 0.87504) und verglich es mit einer
+frueheren Einzelmodell-Submission (LB 0.94740) - eine Luecke von ~0.072,
+weit ausserhalb jeder plausiblen Stichprobenvarianz. Ursache: der 24er-
+Kandidaten-Pool (`148_ensemble_candidate_pool.R`) liess beim Bauen des
+Trainings-Tasks die Gewichtsspalte aus dem `147`-Artefakt versehentlich weg
+- der GESAMTE Pool trainierte dadurch ungewichtet, waehrend das etablierte
+Einzelmodell-Deployment mit `class_weight_power=1.5` gewichtet (laut Memory
+der groesste BAcc-Hebel dieses Projekts). Nach dem Fix (`148`/`156` nutzen
+jetzt denselben `add_balanced_class_weights()`-Helfer wie `150`) sprangen
+alle lokalen Zahlen von ~0.87-0.88 auf ~0.94-0.95 - nah am bekannten
+LB-Referenzwert. **Und die Rangfolge kehrte sich um**: mit korrekter
+Gewichtung gewinnt der Blend (0.9524) knapp vor Greedy (0.9484, gleichauf
+mit dem besten Einzelmodell). Die urspruengliche Tabellenzeile ("Greedy
+0.8822 > Einzel 0.8806 > Blend 0.8680") war korrekt GERECHNET, aber auf
+einem fehlerhaft aufgebauten (ungewichteten) Pool - eine Lehre fuer sich:
+eine Methode kann intern konsistent und korrekt implementiert sein UND
+trotzdem auf einer schlechten Datengrundlage falsche Schlussfolgerungen
+liefern. **Praktische Lehre**: wo verfuegbar, einen echten externen
+Referenzwert (hier: eine tatsaechliche Leaderboard-Submission) nutzen, um
+lokale Holdout-Zahlen zu pruefen - ein stillschweigend weggelassener,
+etablierter Preprocessing-Schritt erzeugt keinen Fehler, nur eine leise,
+systematisch falsche Zahl.
+
+**LB-Bestaetigung nach dem Fix**: die korrigierte Greedy-Ensemble-Submission
+erzielte **LB 0.94884** - schlaegt den bekannten Einzelmodell-Referenzwert
+(0.94740) um +0.00144, und liegt nah an der lokalen Schaetzung (0.9484,
+Abweichung nur +0.0004). Trotz des lokal knapp vorn liegenden Blends
+(0.9524) hat sich der Nutzer bewusst fuer das guenstigere Greedy-Ensemble
+entschieden (4 statt 24 Modelle neu zu trainieren) - und das zahlt sich auf
+dem echten Leaderboard aus. Sauberer Doppelbeleg: (1) der Bug-Fix war
+korrekt (Score-Sprung von 0.875 auf 0.949, wie erwartet), (2) Greedy-
+Ensemble-Selection liefert hier einen echten, wenn auch kleinen,
+LB-bestaetigten Gewinn ueber das beste Einzelmodell.
 
 **Negativer/neutraler Fall: s6e8 mit den bereits abgestimmten Modellen**
 (2026-08-11, `149b_ensemble_selection_tuned_gbms.R`, Standalone-Skript im

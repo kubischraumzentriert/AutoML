@@ -522,6 +522,65 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     (sinnvoll unterschiedlich, nicht identisch/kaputt). Der Entscheidungs-
     Loop ist damit vollstaendig geschlossen: 148/149 entscheiden, 156/157
     deployen.
+    **Echter Bug gefunden + behoben (2026-08-12), aufgedeckt durch eine
+    Kaggle-Einreichung**: der Nutzer reichte `submission_ensemble.csv` ein
+    (LB 0.87504, Rang ~2022) und verglich mit einer fruehen Einzelmodell-
+    Submission vom 15.07. (LB **0.94740**) - eine Luecke von ~0.072, viel zu
+    gross fuer reines Stichprobenrauschen. Ursache: `148_ensemble_candidate_
+    pool.R` baute den Trainings-Task OHNE die Gewichtsspalte aus dem
+    `147`-Artefakt (`train_imputed[, c(target_col_name, feature_cols)]` liess
+    `"weight"` versehentlich weg), obwohl `147` selbst gewichtet trainiert -
+    der GESAMTE 24er-Pool, die Selektion und das erste deployte Ensemble
+    liefen dadurch ungewichtet, waehrend das etablierte Einzelmodell-
+    Deployment (`150`/`155`) mit `class_weight_power=1.5` gewichtet - laut
+    Memory der mit Abstand groesste BAcc-Hebel dieses Projekts (~0.87 roh vs.
+    ~0.94-0.95 gewichtet, deckt sich fast exakt mit der beobachteten Luecke).
+    **Fix**: `148` und `156` nutzen jetzt `add_balanced_class_weights()`
+    (identischer Helfer wie `150`), mit einem `"weights" %in% learner$
+    properties`-Check je Kandidat (Fallback ungewichtet, falls ein Learner
+    keine Gewichte unterstuetzt - kommt bei Ranger/LightGBM/CatBoost hier
+    nicht vor). **Korrigierte Zahlen** (24 Kandidaten, alle gewichtet
+    trainiert, 60.2 Min. Pool-Training statt 18.7 - Gewichtung kostet
+    spuerbar Laufzeit):
+
+    | Ansatz | Bestaetigungs-BAcc (korrigiert) |
+    |---|---:|
+    | Gleichgewichteter Blend (24) | **0.9524** |
+    | Greedy-Ensemble (10 Positionen, 4 eindeutige Modelle) | 0.9484 |
+    | Bestes Einzelmodell (lightgbm_10) | 0.9484 |
+
+    Passt jetzt gut zum bekannten LB-Referenzwert (0.9474). **Neuer, echter
+    Befund**: mit korrekter Gewichtung gewinnt der EINFACHE BLEND lokal
+    ueber Greedy (0.9524 vs. 0.9484) - Umkehrung des urspruenglichen
+    (fehlerhaften) Ergebnisses. Plausibler Mechanismus: Gewichtung macht alle
+    24 Kandidaten deutlich staerker UND aehnlicher (weniger "schwaches Glied"
+    zum Vermeiden) - genau die in `REFERENZ_ENSEMBLE_SELECTION.md` Abschnitt
+    5 dokumentierte Grenze der Methode (braucht einen diversen Pool mit
+    echtem Staerke-Unterschied). Nutzer entschied sich trotzdem fuer das
+    guenstigere Greedy-Ensemble (4 statt 24 Modelle neu zu trainieren, der
+    Abstand zum Blend ist klein und bei n=6902 nicht sicher robust).
+    `156`/`157` erneut gelaufen (17.7 Min. statt 127 - nur noch 1 Ranger statt
+    3): neue `submission_ensemble.csv` stimmt jetzt zu **98.15%** mit der
+    bekannten guten Einzelmodell-Submission ueberein (vorher 94.06%) -
+    starke Bestaetigung, dass der Fix korrekt war. **Lehre**: ein lokaler
+    Holdout-Wert kann durch das stille Weglassen eines etablierten,
+    kritischen Preprocessing-Schritts systematisch verzerrt sein, ohne dass
+    ein Fehler auftritt - ein echter, bekannter Referenzwert (hier: eine
+    tatsaechliche LB-Einreichung) ist der zuverlaessigste Weg, das
+    aufzudecken. Betraf ausschliesslich health_condition (BAcc + Klassen-
+    gewichtung) - die anderen Bestaetigungen (bank-marketing/electricity/
+    road-accident-risk/s6e6/s6e8) sind von diesem spezifischen Bug nicht
+    betroffen (kein `class_weight_power`-Konzept in der Regression, AUC ist
+    gewichtungsunempfindlich bei s6e8, s6e6 hatte Gewichtung bereits korrekt
+    gesetzt).
+    **LB-Bestaetigung**: die korrigierte Greedy-Ensemble-Submission erzielte
+    **0.94884** - schlaegt den bekannten Einzelmodell-Referenzwert (0.94740)
+    um +0.00144 und liegt nah an der lokalen Schaetzung (0.9484, Abweichung
+    nur +0.0004). Sauberer Doppelbeleg: der Bug-Fix war korrekt (Sprung von
+    0.875 auf 0.949 wie erwartet), UND Greedy-Ensemble-Selection liefert
+    hier einen echten, LB-bestaetigten Gewinn ueber das beste Einzelmodell -
+    trotz des lokal knapp vorn liegenden Blends, fuer den sich der Nutzer
+    aus Kostengruenden bewusst nicht entschieden hat.
   - **Weitere Anwendungen (2026-08-11)**: road-accident-risk (Regression,
     RMSE-Version, 4. Bestaetigung), s6e6 (Methodik-Test, 5. Bestaetigung),
     s6e8 mit frischem 24er-Grid-Pool (6. Bestaetigung). **Negativer/neutraler
