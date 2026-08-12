@@ -180,6 +180,37 @@ braucht einen GROSSEN, DIVERSEN Pool, um sein Potenzial zu zeigen - bei
 wenigen, bereits optimierten, aehnlichen Modellen reduziert es sich auf
 etwa das, was ein einfacher Blend ohnehin liefert.
 
+**LB-Bestaetigung s6e8, 24er-Grid-Pool (2026-08-12)**: das Greedy-Ensemble
+aus dem rohen 24er-Pool (Abschnitt 4, korrigierte Zeile, lokale
+Bestaetigungs-AUC 0.9560) wurde tatsaechlich eingereicht - erster echter
+End-to-End-Deploy fuer s6e8 (neue `149c_train_full_ensemble.R`/`149d_predict_
+ensemble_submission.R`, analog zu `156`/`157`, **bewusst OHNE** das
+exact-value Target-Encoding der bestehenden Submissions, weil die Selektion
+selbst nie mit TE validiert wurde - dieselbe "kein stillschweigender
+Pipeline-Unterschied zwischen Validierung und Deploy"-Lehre wie beim
+health_condition-Bug). Ergebnis: **LB 0.96266**. Zwei Referenzpunkte zur
+Einordnung:
+
+1. **Lokal-zu-LB-Sprung erwartungsgemaess positiv** (0.9560 -> 0.96266,
+   +0.0067) - passt zum bereits in `000_config.R` dokumentierten Muster
+   dieses Projekts, dass ein Voll-Training auf 100% der Daten (statt der
+   20%-`subset_fraction`, auf der `147`/`149` validieren) den Score deutlich
+   ueber die kleine Holdout-Schaetzung hebt (dort: LB 0.9635 vs. 10%-CV
+   0.952 fuers Einzelmodell, +0.0115 in dieselbe Richtung).
+2. **Vergleich zum TE-Blend**: der Nutzer submittete zum Vergleich auch
+   `157_blend_submission.R` (die 3 bereits abgestimmten, TE-erweiterten
+   GBMs aus Abschnitt 4/`149b`) - **LB 0.96775**. Luecke zum rohen Ensemble:
+   **+0.0051**, sehr nah am dokumentierten TE-Effekt (`exact_value_te.R`:
+   +0.0044 AUC lokal). Sauber erklaerte, kleine Luecke - kein Bug-Signal wie
+   beim health_condition-Fall (dort ~0.072, weit ausserhalb jeder
+   plausiblen Erklaerung).
+
+**Einordnung**: kein Widerspruch zur Methode, sondern eine Bestaetigung
+ihrer eigenen Grenze (Abschnitt 5) auf echten LB-Daten statt nur lokal -
+Feature-Engineering (TE) dominiert hier die Wahl der Aggregationsmethode
+(Greedy vs. Blend). Die bestehende TE-Blend-Submission bleibt die bessere
+Wahl fuer diesen Wettbewerb; `submission_ensemble.csv` ersetzt sie nicht.
+
 ## 5. Grenzen der Methode
 
 - **Kein globales Optimum garantiert** (siehe Abschnitt 2) - ein anderer
