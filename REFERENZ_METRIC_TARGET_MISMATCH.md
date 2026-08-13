@@ -17,7 +17,7 @@ Gütekriterien.
 |---|---|---|---|---|
 | `health_condition` | 3-Klassen/BAcc | Klassengewichtung/Multiplikator auf BAcc | MCC | BAcc↔MCC-Trade-off: BAcc-Optimum ist NICHT das MCC-Optimum, Klassengewichtung + Prior-Korrektur NICHT stapeln |
 | `tweet` (Poisson/Tweedie) | Regression, Nullmasse | RMSE als Bewertungsgröße angenommen | Poisson-/Tweedie-Devianz | RMSE-Spanne über Prädiktoren <1%, Devianz-Spanne >100% (Tweedie: +15497%) - RMSE trennt kaum, waere sogar das bessere Modell verworfen |
-| `openml-yeast-multilabel` + `openml-scene-multilabel` | Multi-Label | Schwellenwert je Label auf BAcc getunt | Hamming Loss / Subset Accuracy | BAcc stieg klar (+0.07 bis +0.08), Hamming Loss/Subset Accuracy wurden SCHLECHTER (2/2 unabhängige Datensätze) |
+| `openml-yeast-multilabel` + `openml-scene-multilabel` + `openml-birds-multilabel` | Multi-Label | Schwellenwert je Label auf BAcc getunt | Hamming Loss / Subset Accuracy | 3/3 unabhängige Datensätze: Accuracy-getunte Schwelle gewinnt in allen vier Multi-Label-Metriken (Hamming Loss, Subset Accuracy, Makro-/Mikro-F1); BAcc-getunt verschlechtert Hamming Loss/Subset Accuracy trotz besserer BAcc, teils sogar trotz besserer Makro-/Mikro-F1 (birds) |
 
 Alle drei Fälle sind strukturell derselbe Fehler: **eine Metrik A wird
 verbessert, in der Annahme, das verbessere auch Metrik B — aber A und B
@@ -58,9 +58,22 @@ Binärklassifikatoren (Binary Relevance), Schwellenwert je Label gesucht.
   Subset Accuracy UND beide F1-Werte gegenueber der ungetunten 0.5-
   Schwelle, in BEIDEN unabhaengigen Projekten.
 
-Volle Zahlen: `ML_Learning/openml-yeast-multilabel/README.md` und
-`ML_Learning/openml-scene-multilabel/README.md` (beide Standalone, kein
-Git).
+Volle Zahlen: `ML_Learning/openml-yeast-multilabel/README.md`,
+`ML_Learning/openml-scene-multilabel/README.md` und
+`ML_Learning/openml-birds-multilabel/README.md` (alle drei Standalone,
+kein Git). Drittes Projekt (`birds`, 19 Labels, Bioakustik) lieferte den
+sauberten Beleg: Accuracy-getunte Schwelle gewann dort in ALLEN VIER
+Multi-Label-Metriken gleichzeitig gegenueber Default UND BAcc-Tuning.
+
+**Zusatz-Randbedingung aus `birds`**: bei extrem seltenen Labels (dort:
+6-9 positive Zeilen im GESAMTEN Datensatz von 645) brachte JEDES
+Threshold-Tuning nichts oder war sogar leicht negativ - zu wenige
+Beispiele im Tune-Split fuer eine verlaessliche Schwellensuche. Kein
+Widerspruch zur Regel, aber eine praktische Grenze: Per-Label-Threshold-
+Tuning braucht eine Mindestanzahl positiver Beispiele im Tune-Split
+(Faustregel aus diesem Fall: einstellige Anzahl ist zu wenig), sonst
+bleibt die Default-Schwelle die vernuenftigere Wahl fuer dieses konkrete
+Label.
 
 ## 4. Praktische Regel
 
@@ -87,5 +100,6 @@ Verfuegbarkeit zur Entscheidungszeit"-Frage beim Target-Leak-Audit.
 - `health_condition`: `TARGETS.md`, Abschnitt Multiklassen-BAcc-
   Multiplikator-Tuning.
 - `tweet`: `MLR3_Regression/DEVIANCE_MEASURES.md` Abschnitt 1/7.
-- `openml-yeast-multilabel` + `openml-scene-multilabel`: siehe deren
-  READMEs (`ML_Learning/`, beide Standalone-Projekte ohne Git).
+- `openml-yeast-multilabel` + `openml-scene-multilabel` +
+  `openml-birds-multilabel`: siehe deren READMEs (`ML_Learning/`, alle
+  drei Standalone-Projekte ohne Git).
