@@ -109,6 +109,13 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > unabhaengigen OpenML-Datensaetzen verifiziert) und
 > `021_multilabel_workflow.R`. Default `label_cols <- character(0)` -
 > rueckwirkungsfrei fuer den bestehenden Single-Target-Workflow.
+> Fuer die formale Quantifizierung/Herausforderung der Generalisierungsluecke
+> (CV- vs. Test-Score-Verteilung, Referenzbereich aus ungetunten Baselines,
+> nach Jason Brownlees "Data Science Diagnostic Checklist") siehe
+> [`REFERENZ_GENERALIZATION_GAP.md`](REFERENZ_GENERALIZATION_GAP.md). Modul
+> (`generalization_gap.R`) liegt bisher nur bei `openml-steel-plates-fault`
+> (1. Projekt-Bestaetigung, ADR-003: 2. Projekt noch offen vor Backport als
+> nummeriertes Pipeline-Skript).
 
 Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
 

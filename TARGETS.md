@@ -870,3 +870,20 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     bereits das Richtige (pro-Projekt-Entscheidung ermoeglichen, statt einen
     global teureren Default zu erzwingen) - kein Aenderungsbedarf am
     Diagnose-Skript oder am Default.
+
+- **Generalisierungsluecke formal quantifizieren/herausfordern (2026-08-13,
+  aus einem Abgleich der Jason-Brownlee-"Data Science Diagnostic
+  Checklist" gegen den Template-Stand) - Modul gebaut, synthetisch UND an 1
+  echtem Projekt verifiziert, NOCH NICHT ins Template zurueckgefuehrt.**
+  Siehe [`REFERENZ_GENERALIZATION_GAP.md`](REFERENZ_GENERALIZATION_GAP.md)
+  fuer Theorie/Herkunft/Mechanismus. Synthetisch (`rpart`, 60-Konfig-
+  "Winner's Curse"-Suche): korrekt als auffaellig erkannt (z=-3.12), eine
+  feste Config korrekt nicht (z=+2.30). Real (`openml-steel-plates-fault`,
+  1941 Zeilen, 7-Klassen): Referenzbereich aus 4 ungetunten Baselines zeigt
+  eine Hintergrund-Luecke von -0.039 BAcc; die getunten Ranger-/LightGBM-
+  Modelle aus `090`/`100` liegen mit z=-1.63/z=-0.39 beide innerhalb des
+  Referenzbereichs - kein Beleg fuer Test-Harness-Optimismus durch die
+  Suche (plausibles Negativergebnis, bestaetigt indirekt das
+  `AutoTuner`-Design von `090`/`100`). **Status: ADR-003 - 2. Projekt-
+  Bestaetigung noch offen, bevor ein Backport als nummeriertes
+  Pipeline-Skript entschieden wird.**
