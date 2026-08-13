@@ -99,6 +99,10 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > [`REFERENZ_ENSEMBLE_SELECTION.md`](REFERENZ_ENSEMBLE_SELECTION.md): Caruana
 > et al. (2004), warum "greedy", warum ein getrennter Selektions-/
 > Bestaetigungs-Split noetig ist, und die Grenzen der Methode.
+> Fuer die generelle Lehre "Tuning-Ziel muss zur Bewertungsmetrik passen"
+> (3-fach bestaetigt: BAcc↔MCC bei health_condition, RMSE-vs-Devianz bei
+> tweet, BAcc-vs-Hamming-Loss bei Multi-Label) siehe
+> [`REFERENZ_METRIC_TARGET_MISMATCH.md`](REFERENZ_METRIC_TARGET_MISMATCH.md).
 
 Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
 
