@@ -103,6 +103,12 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > (3-fach bestaetigt: BAcc↔MCC bei health_condition, RMSE-vs-Devianz bei
 > tweet, BAcc-vs-Hamming-Loss bei Multi-Label) siehe
 > [`REFERENZ_METRIC_TARGET_MISMATCH.md`](REFERENZ_METRIC_TARGET_MISMATCH.md).
+> Fuer Aufgaben mit MEHREREN nicht-exklusiven Zielspalten (Multi-Label,
+> `label_cols` in `000_config.R` setzen statt `target_col`) siehe
+> `multilabel.R` (Binary Relevance + Accuracy-Threshold-Tuning, an 3
+> unabhaengigen OpenML-Datensaetzen verifiziert) und
+> `021_multilabel_workflow.R`. Default `label_cols <- character(0)` -
+> rueckwirkungsfrei fuer den bestehenden Single-Target-Workflow.
 
 Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
 

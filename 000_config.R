@@ -427,6 +427,21 @@ segment_metric_cols <- character(0)
 segment_metric_warn_gap <- 0.05
 segment_metrics_path <- file.path(artifact_dir, "segment_metrics.csv")
 
+# Multi-Label-Klassifikation (021_multilabel_workflow.R, siehe multilabel.R
+# und REFERENZ_METRIC_TARGET_MISMATCH.md fuer den theoretischen Hintergrund).
+# Verifiziert an 3 unabhaengigen OpenML-Standalone-Projekten (yeast/scene/
+# birds - Protein/Bild/Bioakustik). NUR aktiv, wenn ein Projekt mehrere
+# nicht-exklusive Zielspalten hat (Binary Relevance statt eines einzelnen
+# `target_col`) - Default leer, kein Eingriff in den bestehenden Single-
+# Target-Workflow (regressionsgetestet gegen health_condition: bei leerem
+# label_cols laeuft 020_task.R/030_baseline.R/etc. unveraendert).
+label_cols <- character(0)
+multilabel_train_ratio <- 0.6
+multilabel_tune_ratio <- 0.2
+multilabel_threshold_grid <- seq(0.05, 0.95, by = 0.01)
+multilabel_results_path <- file.path(artifact_dir, "multilabel_results.csv")
+multilabel_per_label_results_path <- file.path(artifact_dir, "multilabel_per_label_results.csv")
+
 # Modell-Sanity-Checks (147_error_analysis_ranger_sanity_checks.R, siehe
 # sanity_checks.R und TARGETS.md): Perturbation-/Invarianz-/Directional-
 # Expectation-Tests nach Huyen (2022) Kap. 6, verifiziert an synthetischer
