@@ -514,6 +514,21 @@ final_ensemble_full_path <- function(run_id) {
 }
 submission_ensemble_path <- file.path(project_dir, "submission_ensemble.csv")
 
+# Generalisierungsluecke (136_generalization_gap.R, siehe generalization_gap.R
+# und REFERENZ_GENERALIZATION_GAP.md fuer Theorie/Herkunft): stratifizierter
+# Split von task_train_small in einen CV-Trainingsanteil und einen komplett
+# unberuehrten Testanteil (eigener Split, GETRENNT von validation_ratio - der
+# Zweck ist, echten Train/Test-Grenz-Optimismus zu messen, nicht eine normale
+# Holdout-Bewertung). Referenzbereich aus den ungetunten Learnern in
+# base_learner_constructors, Kandidaten aus den 090/100-Tuning-Instanzen
+# (falls vorhanden - sonst wird der jeweilige Kandidat uebersprungen). An 2
+# unabhaengigen OpenML-Datensaetzen verifiziert (steel-plates-fault/
+# satimage-multiclass, siehe REFERENZ_GENERALIZATION_GAP.md) - beide Male
+# kein Beleg fuer Test-Harness-Optimismus durch die Suche in 090/100.
+generalization_gap_test_ratio <- 0.2
+generalization_gap_n_boot <- 200
+generalization_gap_results_path <- file.path(artifact_dir, "generalization_gap_results.csv")
+
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "<task_id_prefix>_sleep_weighted_p1.5")
 # ein feature_set-Label fuer model_config ab. Referenziert task_id_prefix

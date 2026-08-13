@@ -89,27 +89,47 @@ Ein erster Modul-Entwurf koppelte das Flagging zusaetzlich an
 (wilcox_p=0.62 trotz realem Effekt, siehe Abschnitt 2) faelschlich als
 unauffaellig durchgehen lassen. Korrigiert: z-Score allein ist das Gate.
 
-## 4. Reale Anwendung (1 Projekt, ADR-003: 2. Projekt noch offen)
+## 4. Reale Anwendung (2 Projekte, ADR-003 erfuellt)
 
-`openml-steel-plates-fault` (7-Klassen-Multiclass, 1941 Zeilen, siehe
+**`openml-steel-plates-fault`** (7-Klassen-Multiclass, 1941 Zeilen, siehe
 `ML_Learning/openml-steel-plates-fault/README.md`): Referenzbereich aus
 LDA/Multinom/Ranger-Default/LightGBM-Default zeigt eine "normale"
 Hintergrund-Luecke von -0.039 BAcc (SD 0.017) bei diesem kleinen,
 unbalancierten Datensatz. Die per Suche getunten Ranger-/LightGBM-Modelle
 (`090`/`100`, bestes von 20/25 Kandidaten nach CV-Score) liegen mit z=-1.63
 bzw. z=-0.39 BEIDE innerhalb des Referenzbereichs - kein Beleg fuer
-zusaetzlichen Test-Harness-Optimismus durch die Suche. Plausibles,
-informatives Negativergebnis: bestaetigt indirekt, dass das
-`AutoTuner`-Innen-/Aussen-Resampling in `090`/`100` seinen Zweck erfuellt.
+zusaetzlichen Test-Harness-Optimismus durch die Suche.
+
+**`openml-satimage-multiclass`** (6-Klassen-Multiclass, 6430 Zeilen, siehe
+`ML_Learning/openml-satimage-multiclass/`): Referenzbereich zeigt eine
+deutlich kleinere/engere Hintergrund-Luecke (+0.013 BAcc, SD 0.008) -
+passend zur Erwartung, dass CV-Rauschen mit der Datensatzgroesse sinkt
+(Vorzeichen positiv statt negativ, bei nur 5 CV-Fold-Werten pro Projekt
+eher Stichprobenrauschen als ein echtes Muster). Getunte Kandidaten: z=1.03
+bzw. z=0.50, ebenfalls unauffaellig.
+
+Beide Male ein plausibles, informatives Negativergebnis: bestaetigt
+indirekt, dass das `AutoTuner`-Innen-/Aussen-Resampling in `090`/`100`
+seinen Zweck erfuellt. **Einschraenkung**: beide realen Anwendungen (plus
+der Regressionstest gegen `health_condition`, Abschnitt 5) zeigen bisher
+nur die "unauffaellig"-Seite - dass das Modul einen echten Fall erkennen
+KANN, ist bisher nur synthetisch bewiesen (Abschnitt 3), nicht an echten
+Daten.
 
 ## 5. Status
 
-Modul (`generalization_gap.R`) UND Anwendungsskript (`135_...R`) liegen
-bisher nur im Projekt selbst (`ML_Learning/openml-steel-plates-fault/`),
-NICHT im Template-Pipeline-Workflow. Per ADR-003 braucht es eine zweite
-unabhaengige Projekt-Bestaetigung (oder einen dokumentierten No-Op-Beweis
-gegen ein bestehendes Projekt) vor einem Backport als nummeriertes
-Pipeline-Skript.
+**Backportiert (2026-08-13)** als `136_generalization_gap.R` +
+Config-Ergaenzungen (`000_config.R`: `generalization_gap_test_ratio`,
+`generalization_gap_n_boot`, `generalization_gap_results_path`).
+Referenzbereich wird generisch aus `base_learner_constructors` gebaut,
+Kandidaten aus den `090`/`100`-Tuning-Instanzen extrahiert (`result_
+learner_param_vals`, Baum-/Iterationszahl auf den Finalwert ueberschrieben)
+- ueberspringt automatisch, falls `090`/`100` fuer ein Projekt noch nicht
+gelaufen sind. Regressionsgetestet gegen das Template-eigene Projekt
+(`health_condition`): laeuft fehlerfrei durch, Ergebnis unauffaellig (siehe
+Abschnitt 4). Nimmt eine klassenresponse-basierte Zielmetrik an (BAcc/MCC/
+Accuracy) - bei einer wahrscheinlichkeitsbasierten Metrik (AUC/LogLoss)
+noch nicht abgedeckt (siehe Kopfkommentar in `136_generalization_gap.R`).
 
 ## 6. Quellen
 

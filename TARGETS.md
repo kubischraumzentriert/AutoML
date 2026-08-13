@@ -884,6 +884,33 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Modelle aus `090`/`100` liegen mit z=-1.63/z=-0.39 beide innerhalb des
   Referenzbereichs - kein Beleg fuer Test-Harness-Optimismus durch die
   Suche (plausibles Negativergebnis, bestaetigt indirekt das
-  `AutoTuner`-Design von `090`/`100`). **Status: ADR-003 - 2. Projekt-
-  Bestaetigung noch offen, bevor ein Backport als nummeriertes
-  Pipeline-Skript entschieden wird.**
+  `AutoTuner`-Design von `090`/`100`). **2. Bestaetigung
+  (openml-satimage-multiclass, 6430 Zeilen): ebenfalls unauffaellig**
+  (z=1.03/z=0.50) - dabei auffaellig kleinere/engere Hintergrund-Luecke
+  (+0.013, SD 0.008) als bei steel-plates-fault, passend zur Erwartung
+  "Luecke schrumpft mit Datensatzgroesse". **ERLEDIGT (2026-08-13):
+  ADR-003-Schwelle erfuellt, als `136_generalization_gap.R` +
+  Config-Ergaenzungen ins Template zurueckgefuehrt** (Referenzbereich aus
+  `base_learner_constructors`, Kandidaten aus den `090`/`100`-Tuning-
+  Instanzen extrahiert). Regressionsgetestet gegen das Template-eigene
+  Projekt (`health_condition`, groesster der drei getesteten Datensaetze):
+  erneut unauffaellig, mit der bisher engsten Luecke (+0.0025, SD 0.0032) -
+  3/3 durchgehend konsistent, kein Fall hat bisher tatsaechlich geflaggt
+  (nur synthetisch bewiesen, siehe `REFERENZ_GENERALIZATION_GAP.md`
+  Abschnitt 3).
+
+- **Drei weitere Luecken aus dem Brownlee-Checklisten-Abgleich (2026-08-13,
+  siehe `REFERENZ_GENERALIZATION_GAP.md` Abschnitt 1 fuer die vollstaendige
+  Tabelle) - noch NICHT begonnen:**
+  - **§3 Split-Size-Sensitivity-Analysis**: kein Modul prueft, ob der
+    gewaehlte Train/Test-Split selbst repraesentativ ist (Verteilungs-/
+    Performance-Vergleich ueber mehrere zufaellige Split-Wiederholungen,
+    VOR dem eigentlichen Modellieren).
+  - **§11 Lern-/Validierungs-/Loss-Kurven**: klassische Overfitting-
+    Diagnose durch Variation von Trainingsgroesse bzw. Modellkapazitaet.
+    `008_curve_diagnostics.R` ist trotz aehnlichem Namen KEIN Kandidat
+    dafuer - das sind ROC-/PR-Schwellenwert-Kurven, ein anderes Konzept.
+  - **§14 Seed-Varianz & Hyperparameter-Rausch-Stabilitaet**: teilweise
+    abgedeckt durch `sanity_checks.R` (Feature-Rausch-Perturbation,
+    Feature-Invarianz) - fehlt: Stabilitaet gegenueber Seed-Wechsel selbst
+    und gegenueber Hyperparameter-Jitter.
