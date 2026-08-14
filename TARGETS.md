@@ -1080,3 +1080,164 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   `090`/`100`/`092`/`136`) lokal fehlerfrei durch. Der eigentliche
   GitHub-Actions-Runner (Paket-Cache, Laufzeit dort) ist von hier aus nicht
   testbar - erste echte Bestaetigung erst nach dem naechsten Push.
+
+- **Ranger-Absturz bei leerer Zielklasse - Root Cause bestaetigt (2026-08-14),
+  Absicherung als konkreter Vorschlag vorgelegt, NOCH NICHT umgesetzt.**
+  Nachtrag zum obigen Spawn-Task (`classif.ranger` stuerzt auf eine
+  Zielspalte mit einer leeren Faktorstufe `""` ab, LDA/Multinom nicht).
+
+  **Frage 1 - warum ausgerechnet Ranger, nicht LDA/Multinom?** Per Minimal-
+  Repro isoliert (mehrere Varianten gegeneinander getestet: mit/ohne
+  `respect.unordered.factors="order"`, mit/ohne Faktor-Feature-Spalten,
+  Zielklassenname `""` vs. ein gleich seltenes `"rare"` mit n=1) - **die
+  Ursache liegt NICHT an der Seltenheit der Klasse (n=1 mit einem normalen
+  Namen wie `"rare"` crasht NICHT), sondern ausschliesslich am woertlichen
+  Klassennamen `""`, und ausschliesslich in ranger's eigenem R-Code, nicht in
+  mlr3/mlr3learners/mlr3pipelines:**
+  `ranger::ranger()`s Nachbearbeitung fuer Wahrscheinlichkeits-Forests
+  (`R/ranger.R` im `imbs-hl/ranger`-Repo, im `oob.error`-Zweig fuer
+  `treetype == 9`) macht:
+  ```r
+  colnames(result$predictions) <- unique(y)
+  if (is.factor(y)) {
+    result$predictions <- result$predictions[, levels(droplevels(y)), drop = FALSE]
+  }
+  ```
+  `colnames<-` legt die Spalte `""` korrekt an (verifiziert:
+  `colnames(m) <- unique(y)` erzeugt tatsaechlich eine Spalte mit dem
+  woertlichen Namen `""`). Der Absturz passiert erst bei der anschliessenden
+  Indizierung `result$predictions[, levels(droplevels(y)), drop = FALSE]`:
+  **R's `[`-Operator behandelt einen Spaltennamen `""` bei der
+  Character-Indizierung nie als echten Treffer, selbst wenn eine Spalte
+  tatsaechlich `""` heisst** - reproduziert in einem isolierten 5-Zeilen-
+  R-Schnipsel (`m[, "", drop = FALSE]` wirft `subscriptOutOfBoundsError`,
+  obwohl `match("", colnames(m))` den richtigen Index liefert). Das ist
+  reines Basis-R-Verhalten (Character-Matching in `[.default]` behandelt
+  `""` als "kein Name angegeben", nicht als literalen String), keine
+  mlr3-Eigenheit. `ranger::ranger()` crasht also **immer**, sobald ein
+  Zielwert exakt `""` ist - unabhaengig von Seltenheit, Feature-Spalten oder
+  Parametern. LDA (`MASS::lda`/`predict.lda`) und Multinom (`nnet::
+  multinom`/`predict.multinom`) durchlaufen einen komplett anderen
+  Vorhersage-Code-Pfad ohne diese Spaltennamen-Indizierung und sind davon
+  nicht betroffen - deshalb liefen sie in der urspruenglichen Debug-Session
+  durch. **Fazit: ein bestaetigter Implementierungs-Grenzfall in
+  `ranger` selbst (keine mlr3pipelines-Interna, kein "erwartbares" Verhalten
+  bei seltenen Klassen im Allgemeinen) - jede andere, nicht-leere
+  Klassenbezeichnung mit n=1 crasht NICHT.** Verifikationsskripte lagen in
+  der Session unter `repro_ranger_crash{2,3,4,5,6}.R` (Scratch, nicht
+  eingecheckt) - kleinstes crashendes Beispiel: 400 Zeilen, 2 numerische
+  Features, `classif.ranger` (Default-Parameter) in einer `imputemedian %>>%
+  imputemode`-Pipeline, stratifizierter `rsmp("holdout")`, Zielspalte mit
+  genau 1 Zeile Klasse `""`.
+
+  **Frage 2 - Verteidigungsvorschlag (Code + Fehlermeldungstext, NOCH NICHT
+  eingebaut):** neue Funktion `check_target_column()`, analog zu
+  `warn_rare_factor_levels()` in `005_benchmark_runtime.R`, aber fuer die
+  ZIELSPALTE statt Feature-Spalten, aufgerufen in `020_task.R` direkt nach
+  `train <- fread(train_path)` (also auf der vollen Rohspalte, bevor
+  `slice_sample`/`as.factor()` greifen - faengt so auch Faelle ab, in denen
+  eine kaputte Zeile durch Zufall aus dem 10%-Subset herausfaellt und der
+  Fehler sich unbemerkt bis `150_train_full_model.R` auf dem VOLLEN
+  Datensatz durchschleicht). Zwei harte Stops (NA, leerer String - beide
+  waeren sonst als eigene, spaeter fatale Faktorstufe still durchgereicht)
+  und eine Warnung (extrem seltene, aber gueltige Klasse - kein Ranger-Bug,
+  aber ein bekanntes Stabilitaetsrisiko fuer stratifizierte Splits/BAcc-MCC):
+
+  ```r
+  # Prueft die ZIELSPALTE selbst (Ergaenzung zu warn_rare_factor_levels(),
+  # die nur FEATURE-Spalten prueft) auf NA, leere Faktorstufen ("") und
+  # extrem seltene Klassen, BEVOR ein mlr3-Task gebaut wird. Anlass: ein
+  # Fixture-Bug im CI-Smoke-Test erzeugte durch einen fwrite/fread-Rundweg
+  # eine einzelne Zeile mit leerem String "" im Ziel (aus einem
+  # urspruenglichen NA) - das liess classif.ranger mit einem kryptischen
+  # "Indizierung ausserhalb der Grenzen" abstuerzen. Bestaetigte Root
+  # Cause (siehe TARGETS.md, Eintrag "Ranger-Absturz bei leerer
+  # Zielklasse"): R's Matrix-Indizierung nach Spaltenname behandelt ""
+  # nie als echten Treffer, selbst wenn diese Spalte existiert -
+  # ranger::ranger()s eigene Nachbearbeitung "result$predictions[,
+  # levels(droplevels(y)), drop = FALSE]" (R/ranger.R) schlaegt daher
+  # IMMER fehl, sobald ein Zielwert exakt "" ist - unabhaengig von
+  # Seltenheit. Betrifft nicht nur synthetische Fixtures: echte
+  # Kaggle-CSVs koennen vereinzelte NA/leere Werte im Ziel haben, die ein
+  # naiver as.factor()-Cast genau in diese Falle laufen liesse.
+  check_target_column <- function(target_values, min_count_per_class = 2) {
+    if (anyNA(target_values)) {
+      stop(
+        "Zielspalte enthaelt ", sum(is.na(target_values)), " NA-Wert(e). ",
+        "Ein naiver as.factor()-Cast wuerde NA in eine eigene Faktorstufe ",
+        "verwandeln, die spaeter classif.ranger mit einem kryptischen ",
+        "Ranger-internen Fehler abstuerzen laesst (siehe TARGETS.md, ",
+        "\"Ranger-Absturz bei leerer Zielklasse\"). Bitte vor dem Task-Bau ",
+        "entscheiden: Zeilen entfernen oder NA bewusst als eigene Klasse ",
+        "kodieren (z.B. \"unknown\").",
+        call. = FALSE
+      )
+    }
+
+    target_chr <- as.character(target_values)
+    n_empty <- sum(!is.na(target_chr) & target_chr == "")
+    if (n_empty > 0) {
+      stop(
+        "Zielspalte enthaelt ", n_empty, " leere(n) String-Wert(e) (''). ",
+        "as.factor('') erzeugt eine Faktorstufe mit dem Namen '', die ",
+        "classif.ranger IMMER zum Absturz bringt (bestaetigte Root Cause: ",
+        "R's Matrix-Indizierung nach Spaltenname behandelt '' nie als ",
+        "Treffer, selbst wenn diese Spalte existiert - ranger::ranger()s ",
+        "eigene Nachbearbeitung 'result$predictions[, levels(droplevels(y)), ",
+        "drop = FALSE]' schlaegt daher fehl, siehe TARGETS.md, \"Ranger-",
+        "Absturz bei leerer Zielklasse\"). Typische Ursache: ein verstecktes ",
+        "NA, das bei einem CSV-Rundweg (fwrite/fread) zu '' wurde. Bitte vor ",
+        "dem Task-Bau bereinigen (leere Strings zu NA machen und behandeln, ",
+        "oder Zeilen entfernen).",
+        call. = FALSE
+      )
+    }
+
+    tab <- table(target_values)
+    rare <- tab[tab < min_count_per_class]
+    if (length(rare) > 0) {
+      warning(
+        "Zielklasse(n) mit weniger als ", min_count_per_class, " ",
+        "Beobachtung(en) gefunden: ",
+        paste(names(rare), "=", rare, collapse = ", "), " - stratifizierte ",
+        "CV/Holdout-Splits, Klassifikationsmasse (BAcc/MCC) und manche ",
+        "Learner koennen bei derart duenn besetzten Klassen instabil werden. ",
+        "Erwaegen: Zeilen entfernen oder Klasse mit einer anderen ",
+        "zusammenfassen.",
+        call. = FALSE
+      )
+    }
+
+    invisible(NULL)
+  }
+  ```
+
+  Aufrufstelle in `020_task.R` (vor `train_small <- train %>% ...`):
+  ```r
+  train <- fread(train_path)
+  check_target_column(train[[target_col]])
+  ```
+
+  **Warum zwei harte `stop()` statt nur Warnungen (anders als
+  `warn_rare_factor_levels()`)**: NA/`""` im Ziel sind strukturell IMMER
+  fatal (spaetestens bei `classif.ranger`, s.o.) oder zumindest inhaltlich
+  bedeutungslos als Klasse - anders als bei seltenen, aber validen
+  Feature-Leveln (wo `collapsefactors` oder Ausschluss echte Alternativen
+  sind) gibt es hier keine sinnvolle Fortsetzung ohne Nutzerentscheidung.
+  Ein fruehes, sprechendes `stop()` in `020_task.R` ist strikt besser als
+  ein Absturz zehn Skripte spaeter mit einem fuer Ranger-Interna
+  spezifischen Fehler, der weder den Grund noch die betroffene Spalte
+  nennt. Die dritte Pruefung (seltene, aber gueltige Klassen) bleibt
+  bewusst eine Warnung, da sie kein Ranger-spezifischer Bug ist, sondern ein
+  allgemeines Stratifizierungs-/Stabilitaetsrisiko (analog
+  `warn_rare_factor_levels()`s Warn-statt-Stop-Politik).
+
+  **Noch offen vor Umsetzung**: `min_count_per_class = 2` ist eine
+  Faustregel (kleinstmoegliche Zahl, unter der ein stratifizierter Split
+  eine Klasse strukturell nicht auf beide Seiten verteilen kann), kein
+  statistisch hergeleiteter Wert - passend zur Warn-Schwelle waere ein
+  2-Projekt-Kriterium (analog `warn_rare_factor_levels()`s eigener
+  Historie) sinnvoll, bevor der Wert als endgueltig gilt. Ausserdem: die
+  ci_smoke_test-Kopie von `020_task.R` muesste denselben Aufruf erhalten
+  (aktuell strukturell identisch zum Root-Skript, siehe generate_fixture.R
+  fuer den bereits behobenen Fixture-Bug).

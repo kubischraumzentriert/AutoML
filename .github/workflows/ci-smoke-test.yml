@@ -28,6 +28,11 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 1
+          # mlr3extralearners liegt nicht auf CRAN, nur im mlr-org
+          # R-Universe (siehe R/Windows-env-Notizen) - ohne dieses Extra-
+          # Repository schlaegt die pak-Aufloesung fehl ("Can't find
+          # package called mlr3extralearners").
+          extra-repositories: 'https://mlr-org.r-universe.dev'
 
       - name: Kernskripte in die Fixture kopieren
         run: |
