@@ -41,6 +41,9 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `010_eda.R` | Datenueberblick auf 10%-Subset mit `skimr` |
 | `015_target_leak_audit.R` | Prueft eine zu gute Baseline auf Target-Leakage: Feature-Importance-Konzentration, Determinismus-Check (`P(Ziel\|Feature=Wert)`), optionale Within-Stratum-Zieltrennung, Ehrlich-vs-aufgeblasen-Zerlegung (mit/ohne Verdaechtige) - bewusst auf vollen Daten, kein Subset |
 | `020_task.R` | Erzeugt den Rohfeature-`TaskClassif` |
+| `021_multilabel_workflow.R` | Opt-in fuer Multi-Label-Aufgaben (`label_cols` statt `target_col` in `000_config.R`): Binary Relevance + Accuracy-Threshold-Tuning (`multilabel.R`), rueckwirkungsfrei bei leerem `label_cols` |
+| `022_split_size_sensitivity.R` | Prueft, ob `validation_ratio` selbst stabil ist (`split_size_sensitivity.R`, `classif.rpart`, `rsmp("subsampling")`) - uebersprungen bei Datensaetzen ueber `split_sensitivity_max_n` |
+| `023_learning_curve.R` | Prueft, ob `subset_fraction` gut kalibriert ist (`learning_curve.R`, Ranger, Score vs. Trainingsgroesse) - laedt bewusst den vollen Datensatz, nicht das Subset |
 | `025_feature_engineering.R` | Erzeugt je Feature-Familie (`features/*.R`) einen eigenen Task, den kombinierten Feature-Task (alle Familien) und den ausgewaehlten Feature-Task (Aktivitaet+Cardio+Schlaf) |
 | `030_baseline.R` | Autarke Baseline mit LDA, Multinom und Ranger |
 | `035_feature_baseline.R` | Dieselben Baseline-Modelle auf engineered Features |
@@ -54,6 +57,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `080_boosting_benchmark.R` | Vergleicht LightGBM gegen die Ranger-Referenz (Rohfeatures, native Faktoren, kein One-Hot, CV) |
 | `081_xgboost_benchmark.R` | XGBoost separat (braucht One-Hot aus `040`), Vergleich gegen die `080`-Referenz |
 | `090_ranger_tuning.R` | Random-Search-Tuning fuer Ranger (mtry.ratio, min.node.size, sample.fraction), Finalvergleich per CV |
+| `092_seed_stability.R` | Streuung durch das MODELL selbst bei fixen Daten (`seed_stability.R`: Seed-Varianz + Hyperparameter-Jitter um die `090`-Konfiguration), gegen die normale CV-Fold-Streuung als Referenz eingeordnet |
 | `095_tabpfn_benchmark.R` | Explorativer TabPFN-Vergleich auf einem CPU-vertraeglichen Mini-Subset (eigenes `tabpfn_subset_size`) |
 | `100_lightgbm_tuning.R` | Bayesian-Optimization-Tuning fuer LightGBM (`mlr3mbo`), Finalvergleich per CV |
 | `105_lightgbm_class_weights.R` | Vergleicht balancierte Klassengewichte (`power`-Stufen 0 bis 1) fuer LightGBM per CV, inkl. Konfusionsmatrizen |
@@ -63,6 +67,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `125_catboost_benchmark.R` | Vergleicht CatBoost gegen LightGBM (beide mit aktueller `class_weight_power`-Gewichtung, Rohfeatures, CV) |
 | `130_threshold_tuning.R` | Sucht post-hoc Klassengewichte auf den Wahrscheinlichkeiten (`argmax(prob * weight)`, `class_multiplier_tuning.R`: Grid-Startpunkt + geschlossene `1/prior`-Korrektur + kontinuierliche Nelder-Mead-Verfeinerung) auf einem Tune-Split, vergleicht mit `class_weight_power` |
 | `135_lightgbm_class_weight_power_extended.R` | Setzt die `power`-Kurve aus `105` ueber 1 hinaus fort, findet das innere BAcc-Maximum |
+| `136_generalization_gap.R` | Formale Generalisierungsluecke (`generalization_gap.R`): CV- vs. Bootstrap-Test-Score-Verteilung, Referenzbereich aus `base_learner_constructors`, Kandidaten aus den `090`/`100`-Tuning-Instanzen - laeuft nach `090`/`100` |
 | `140_ensemble_candidates_weighted.R` | Vergleicht LightGBM, Ranger und XGBoost mit derselben `power=1.5`-Gewichtung (CV) |
 | `142_ranger_tuning_weighted.R` | Wiederholt `090` auf dem `power=1.5`-gewichteten Task (Random Search), Finalvergleich per CV |
 | `145_ensemble_ranger_lightgbm.R` | Gleichgewichtetes Wahrscheinlichkeits-Ensemble (`gunion()` + `po("classifavg")`) aus Ranger und LightGBM |
@@ -194,7 +199,11 @@ SELECT * FROM v_best_per_algorithm ORDER BY bacc DESC;
 
 Die Datenbank ist rein additiv und projektunabhaengig aufgebaut (kein Bezug zu `health_condition` oder den drei Klassen im Schema) - fuer einen neuen Kaggle-Wettbewerb reicht ein neuer `project_name` in `000_config.R`, Schema und `db_logging.R` bleiben unveraendert. `_targets.R` schreibt aktuell **nicht** in die Datenbank (Details siehe `EXPERIMENTS_DB.md`, Abschnitt "Bekannte Einschraenkung").
 
-In der Praxis bekommt jedes uebertragene Projekt zunaechst seine eigene lokale `experiments.db`. Nach Projektabschluss konsolidiert `merge_project_experiments.R` die aggregierten Tabellen (nicht die Zeilenebene, siehe `EXPERIMENTS_DB.md`) in diese zentrale Template-DB - Stand jetzt enthaelt sie `health_condition`, `s6e5` (Pit-Stop), `s6e6` (Stellar Class) und `s5e12` (Diabetes), abfragbar ueber `proj_name`.
+In der Praxis bekommt jedes uebertragene Projekt zunaechst seine eigene lokale `experiments.db`. `merge_project_experiments.R` konsolidiert die aggregierten Tabellen (nicht die Zeilenebene, siehe `EXPERIMENTS_DB.md`) automatisch (auto-discovery unter `R_Workspace`/`ML_Learning`) in diese zentrale Template-DB, INKREMENTELL (neue lokale Runs werden bei jedem Aufruf nachgezogen, nicht nur beim ersten Merge eines Projekts - siehe TARGETS.md, "Merge-Skript-Bug", 2026-08-14). Welche Projekte aktuell enthalten sind, per SQL statt einer hier zwangslaeufig veraltenden Aufzaehlung pruefen:
+
+```sql
+SELECT DISTINCT proj_name FROM project ORDER BY proj_name;
+```
 
 ## Bewertungsmetriken
 
