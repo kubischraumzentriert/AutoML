@@ -9,9 +9,9 @@ name: CI Smoke Test
 on:
   push:
     branches: [main]
-    paths: ["**.R", "DESCRIPTION", ".github/workflows/ci-smoke-test.yml"]
+    paths: ["**.R", "DESCRIPTION", ".Rprofile", ".github/workflows/ci-smoke-test.yml"]
   pull_request:
-    paths: ["**.R", "DESCRIPTION", ".github/workflows/ci-smoke-test.yml"]
+    paths: ["**.R", "DESCRIPTION", ".Rprofile", ".github/workflows/ci-smoke-test.yml"]
 
 jobs:
   smoke-test:
