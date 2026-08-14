@@ -1,0 +1,87 @@
+name: CI Smoke Test
+
+# Laeuft die Kernskripte (015-136) end-to-end auf einer kleinen,
+# synthetischen Fixture durch - siehe TARGETS.md fuer Herkunft/Design.
+# Kein Korrektheitstest (keine Score-Schwellenwerte), nur "laeuft es noch
+# fehlerfrei durch" - genau das, was diese Session mehrfach manuell an
+# steel-plates-fault/satimage gemacht hat.
+
+on:
+  push:
+    branches: [main]
+    paths: ["**.R", "DESCRIPTION", ".github/workflows/ci-smoke-test.yml"]
+  pull_request:
+    paths: ["**.R", "DESCRIPTION", ".github/workflows/ci-smoke-test.yml"]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: 1
+
+      - name: Kernskripte in die Fixture kopieren
+        run: |
+          cd ci_smoke_test
+          for f in db_logging.R db_schema.sql 005_benchmark_runtime.R 006_tuning_diagnostics.R \
+                   class_multiplier_tuning.R split_size_sensitivity.R learning_curve.R \
+                   seed_stability.R generalization_gap.R \
+                   015_target_leak_audit.R 020_task.R 022_split_size_sensitivity.R \
+                   023_learning_curve.R 030_baseline.R 080_boosting_benchmark.R \
+                   090_ranger_tuning.R 100_lightgbm_tuning.R 092_seed_stability.R \
+                   136_generalization_gap.R; do
+            cp "../$f" "./$f"
+          done
+
+      - name: Fixture erzeugen
+        working-directory: ci_smoke_test
+        run: Rscript generate_fixture.R
+
+      - name: 015 Target-Leak-Audit
+        working-directory: ci_smoke_test
+        run: Rscript 015_target_leak_audit.R
+
+      - name: 020 Task
+        working-directory: ci_smoke_test
+        run: Rscript 020_task.R
+
+      - name: 022 Split-Size-Sensitivity
+        working-directory: ci_smoke_test
+        run: Rscript 022_split_size_sensitivity.R
+
+      - name: 023 Lernkurve
+        working-directory: ci_smoke_test
+        run: Rscript 023_learning_curve.R
+
+      - name: 030 Baseline
+        working-directory: ci_smoke_test
+        run: Rscript 030_baseline.R
+
+      - name: 080 Boosting-Benchmark
+        working-directory: ci_smoke_test
+        run: Rscript 080_boosting_benchmark.R
+
+      - name: 090 Ranger-Tuning
+        working-directory: ci_smoke_test
+        run: Rscript 090_ranger_tuning.R
+
+      - name: 100 LightGBM-Tuning
+        working-directory: ci_smoke_test
+        run: Rscript 100_lightgbm_tuning.R
+
+      - name: 092 Seed-Stabilitaet
+        working-directory: ci_smoke_test
+        run: Rscript 092_seed_stability.R
+
+      - name: 136 Generalisierungsluecke
+        working-directory: ci_smoke_test
+        run: Rscript 136_generalization_gap.R

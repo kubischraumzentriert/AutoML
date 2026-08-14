@@ -1041,3 +1041,42 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Modellvergleiche; die Formel ist hier konservativer als die urspruengliche
   Wahl, nicht falsch). In Phase 1 der Kochbuch-Prosa (`WorkflowDescription.md`)
   als dritte, leicht uebersehbare `000_config.R`-Entscheidung ergaenzt.
+
+- **CI-Smoke-Test (2026-08-14) - ERLEDIGT.** Systematisiert, was diese
+  Session mehrfach manuell an `steel-plates-fault`/`satimage` gemacht hat:
+  `.github/workflows/ci-smoke-test.yml` laesst bei jedem Push/PR (Pfad-
+  Filter auf `**.R`/`DESCRIPTION`/den Workflow selbst) `015`-`136` gegen
+  eine kleine, SYNTHETISCHE Fixture durchlaufen (`ci_smoke_test/
+  generate_fixture.R`, deterministischer Seed, 800 Zeilen, 3 Klassen -
+  bewusst kein Live-OpenML-Download, kein Netzwerk-/Flakiness-Risiko in
+  CI). `DESCRIPTION` (kein echtes R-Paket, nur Dependency-Manifest fuer
+  `r-lib/actions/setup-r-dependencies` + Cache). Kein Korrektheitstest
+  (keine Score-Schwellenwerte) - reiner Smoke-Test: Exitcode 0 oder Fehler.
+  Tuning-/Wiederholungs-Budgets in `ci_smoke_test/000_config.R` auf
+  Minimalwerte gesetzt (z.B. `ranger_tuning_evals=4` statt 20) - nur der
+  Code-Pfad zaehlt, nicht gute Hyperparameter.
+
+  **Der erste lokale Trockenlauf fand sofort einen echten Bug**: `030_
+  baseline.R` stuerzte bei `classif.ranger` mit "Indizierung ausserhalb der
+  Grenzen" ab. Root Cause: ein Bug im eigenen Fixture-Generator (`cut()`-
+  Grenzen aus einem rauschfreien Vektor berechnet, aber auf einen
+  verrauschten Vektor angewendet - ein Wert fiel ausserhalb der Grenzen,
+  wurde zu NA, rundete sich beim CSV-Rundweg (fwrite/fread) zu einer
+  leeren Faktorstufe mit n=1 in der ZIELSPALTE), nicht ein Bug im Template
+  selbst. Behoben (`cut()` jetzt auf demselben verrauschten Vektor, aus dem
+  auch die Grenzen berechnet werden) + zwei Sicherheitschecks in
+  `generate_fixture.R` ergaenzt (`stopifnot(!anyNA(target))`, Mindest-
+  Zellenbesetzung je (Zielklasse, Faktorstufe)). Trotzdem ein echter,
+  bisher undokumentierter Befund: `classif.ranger` crasht (anders als
+  LDA/Multinom, die durchliefen) auf eine derart korrupte Zielspalte mit
+  einer kryptischen Fehlermeldung statt einer klaren Diagnose - als
+  eigenstaendige Untersuchung ausgelagert (Spawn-Task, nicht Teil dieses
+  CI-Commits), da `020_task.R`/`005_benchmark_runtime.R` bisher nur
+  FEATURE-Spalten auf seltene Level prueft (`warn_rare_factor_levels()`),
+  nicht die Zielspalte selbst - potenziell relevant auch fuer echte
+  Kaggle-CSVs mit vereinzelten NA/leeren Werten im Ziel.
+
+  Nach dem Fix liefen alle 10 Skripte (`015`/`020`/`022`/`023`/`030`/`080`/
+  `090`/`100`/`092`/`136`) lokal fehlerfrei durch. Der eigentliche
+  GitHub-Actions-Runner (Paket-Cache, Laufzeit dort) ist von hier aus nicht
+  testbar - erste echte Bestaetigung erst nach dem naechsten Push.

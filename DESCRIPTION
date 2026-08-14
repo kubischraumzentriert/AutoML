@@ -1,0 +1,27 @@
+Package: MLR3Classifikation
+Title: mlr3 Classification AutoML Template (CI Dependency Manifest)
+Version: 0.0.0.9000
+Description: Kein echtes R-Paket - diese Datei existiert ausschliesslich,
+    damit r-lib/actions/setup-r-dependencies (siehe .github/workflows/
+    ci-smoke-test.yml) die benoetigten Pakete installieren und cachen kann.
+    Siehe TARGETS.md fuer den Hintergrund (CI-Smoke-Test-Vorhaben).
+License: MIT
+Imports:
+    data.table,
+    tidyverse,
+    mlr3,
+    mlr3learners,
+    mlr3extralearners,
+    mlr3pipelines,
+    mlr3tuning,
+    mlr3mbo,
+    mlr3measures,
+    paradox,
+    ranger,
+    lightgbm,
+    rpart,
+    DBI,
+    RSQLite,
+    uuid
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)

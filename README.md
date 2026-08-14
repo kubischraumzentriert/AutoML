@@ -2,6 +2,12 @@
 
 Dieses Unterprojekt entwickelt eine wiederverwendbare AutoML-Struktur fuer Kaggle-Klassifikationsaufgaben mit `mlr3`.
 
+> **CI-Smoke-Test**: `.github/workflows/ci-smoke-test.yml` laesst bei jedem
+> Push/PR die Kernskripte (`015`-`136`) gegen eine kleine synthetische
+> Fixture (`ci_smoke_test/`) durchlaufen - kein Korrektheitstest, nur "laeuft
+> es noch fehlerfrei durch". Siehe TARGETS.md fuer Design/Herkunft, inkl.
+> eines echten Bugs, den der erste Trockenlauf sofort gefunden hat.
+
 Der aktuelle Datensatz stammt aus `playground-series-s6e7` und beschreibt Gesundheits- und Lifestyle-Merkmale. Zielvariable ist `health_condition` mit drei Klassen: `at-risk`, `unhealthy`, `fit`.
 
 > **Einstieg / Kontext erfassen**: vor dem Deep-Dive in einzelne Skripte oder
