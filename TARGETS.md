@@ -902,10 +902,38 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
 - **Drei weitere Luecken aus dem Brownlee-Checklisten-Abgleich (2026-08-13,
   siehe `REFERENZ_GENERALIZATION_GAP.md` Abschnitt 1 fuer die vollstaendige
   Tabelle) - noch NICHT begonnen:**
-  - **§3 Split-Size-Sensitivity-Analysis**: kein Modul prueft, ob der
-    gewaehlte Train/Test-Split selbst repraesentativ ist (Verteilungs-/
-    Performance-Vergleich ueber mehrere zufaellige Split-Wiederholungen,
-    VOR dem eigentlichen Modellieren).
+  - ~~**§3 Split-Size-Sensitivity-Analysis**~~ **ERLEDIGT (2026-08-13)**:
+    neues Modul `split_size_sensitivity.R` (`split_ratio_sensitivity()` via
+    `rsmp("subsampling", repeats, ratio)` + `report_split_ratio_sensitivity()`)
+    + `022_split_size_sensitivity.R`. Synthetisch verifiziert (rpart, n=100/
+    400, ratios 0.5-0.95): CV der Performance-Scores steigt mit sinkender
+    Testset-Groesse wie erwartet (Faktor bis 3.56x ggue. dem besten ratio).
+    Ein erster Entwurf koppelte das Flagging zusaetzlich an einen absoluten
+    CV-Schwellenwert (0.03) - das flaggte faelschlich sogar das BESTE
+    getestete ratio, weil die "normale" CV-Groessenordnung stark von
+    Metrik/Task abhaengt. Korrigiert: nur der RELATIVE Faktor ggue. dem
+    Minimum ist das Gate (dieselbe Selbst-Kalibrierungs-Lehre wie beim
+    z-Score in `generalization_gap.R`, jetzt 2. Bestaetigung). Real an 2
+    Projekten verifiziert (`health_condition`, `openml-satimage-multiclass`):
+    beide Male der aktuelle Default `validation_ratio=0.80` unauffaellig
+    (Faktor 1.47x/1.71x, mit Ranger) - bei den deutlich kleineren
+    synthetischen Datensaetzen war derselbe Anteil naeher an der
+    Flagging-Schwelle bzw. darueber. Ins Template zurueckgefuehrt.
+  - **Update (2026-08-13), Kosten-Nutzen-Korrektur**: Nutzer wies zurecht
+    darauf hin, dass der Check bei grossen Datensaetzen teuer UND am
+    wenigsten informativ ist (beide realen Bestaetigungen unauffaellig),
+    waehrend er bei kleinen Datensaetzen billig UND am nuetzlichsten waere -
+    Kosten und Nutzen laufen gegenlaeufig zur Datensatzgroesse. Zwei
+    Aenderungen: (1) `classif.rpart` statt Ranger als Default-Lerner (der
+    Mechanismus - Streuung durch Testset-Groesse - ist weitgehend
+    lernverfahren-unabhaengig, macht `base_learner_constructors` zudem
+    unnoetig); (2) `split_sensitivity_max_n=5000` - Check wird bei groesseren
+    Datensaetzen komplett uebersprungen (klare Meldung statt stillschweigend).
+    Spot-Check mit dem neuen rpart-Default gegen `openml-satimage-multiclass`
+    (3215 Zeilen, unter der Schwelle): gleiches qualitatives Muster
+    (monotoner CV-Anstieg mit steigendem ratio), Faktor 1.26x bei
+    ratio=0.80 (mit Ranger zuvor: 1.71x) - unauffaellig in beiden Faellen,
+    bestaetigt die Lernverfahren-Unabhaengigkeit der Diagnose.
   - **§11 Lern-/Validierungs-/Loss-Kurven**: klassische Overfitting-
     Diagnose durch Variation von Trainingsgroesse bzw. Modellkapazitaet.
     `008_curve_diagnostics.R` ist trotz aehnlichem Namen KEIN Kandidat

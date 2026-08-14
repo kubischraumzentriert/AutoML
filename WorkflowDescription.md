@@ -37,7 +37,15 @@ flowchart TD
     DPanel -- "nein" --> Task["Phase 3: 020_task.R<br/>stratifizierter Task, subset_fraction"]
     GroupCV --> Task
 
-    Task --> Baseline["Phase 4: 030_baseline.R<br/>LDA / Multinom / Ranger per Holdout"]
+    Task --> SplitSens["Phase 3b: 022_split_size_sensitivity.R<br/>rpart, rsmp(subsampling, repeats=20)"]
+    SplitSens --> DSplitSkip{"Zeilenzahl &gt;<br/>split_sensitivity_max_n (5000)?"}
+    DSplitSkip -- "ja, uebersprungen" --> Baseline
+    DSplitSkip -- "nein" --> DSplitFlag{"CV bei validation_ratio<br/>&gt; 2x Minimum ueber alle ratios?"}
+    DSplitFlag -- "nein" --> Baseline
+    DSplitFlag -- "ja" --> SplitFix["Anderen ratio waehlen<br/>und/oder CV statt Holdout"]
+    SplitFix --> Baseline
+
+    Baseline["Phase 4: 030_baseline.R<br/>LDA / Multinom / Ranger per Holdout"]
     Baseline --> DCard{"Faktor-Spalte<br/>&gt;50 Auspraegungen?"}
     DCard -- "ja" --> CardFix["Fuer LDA/Multinom ausschliessen<br/>oder kodieren (sonst Absturz)"]
     DCard -- "nein" --> AdvVal
@@ -218,6 +226,28 @@ Der Task markiert die Zielspalte zudem als `stratum`. Damit erhalten alle
 klassifikationsbasierten Holdout- und CV-Resamplings im Workflow die
 Klassenanteile. Fuer Zeitreihen oder gruppierte Daten muss dieser Standard vor
 der Ausfuehrung durch ein passendes Zeit- bzw. Group-Resampling ersetzt werden.
+
+## Phase 3b: Split-Size-Sensitivity-Analyse (`022_split_size_sensitivity.R`)
+
+```r
+source("022_split_size_sensitivity.R")
+```
+
+Prueft, ob der gewaehlte `validation_ratio` selbst stabil ist - BEVOR man
+einer einzelnen Holdout-Bewertung in den folgenden Phasen vertraut.
+Wiederholt den Split 20-mal je getestetem Anteil (`rsmp("subsampling")`,
+`classif.rpart` als guenstiger Test-Lerner) und vergleicht die Streuung
+(Variationskoeffizient) beim gewaehlten Anteil gegen das Minimum ueber alle
+getesteten Anteile. Wird bei Datensaetzen ueber `split_sensitivity_max_n`
+(Default 5000 Zeilen) automatisch uebersprungen - der Aufwand lohnt sich
+nur bei kleineren Datensaetzen, siehe TARGETS.md fuer die Herleitung.
+
+Meldet das Skript "AUFFAELLIG" (Streuung beim gewaehlten Anteil > 2x das
+Minimum): entweder den in der Ausgabe genannten stabileren Anteil
+uebernehmen, oder generell auf CV-/Repeated-CV-basierte statt einzelner
+Holdout-Bewertung umstellen fuer die restlichen Phasen dieses Projekts
+(siehe Kopfkommentar in `split_size_sensitivity.R` fuer die volle
+Reaktions-Anleitung).
 
 ## Phase 4: Baselines (`030_baseline.R`)
 

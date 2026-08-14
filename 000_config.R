@@ -529,6 +529,32 @@ generalization_gap_test_ratio <- 0.2
 generalization_gap_n_boot <- 200
 generalization_gap_results_path <- file.path(artifact_dir, "generalization_gap_results.csv")
 
+# Split-Size-Sensitivity-Analyse (022_split_size_sensitivity.R, siehe
+# split_size_sensitivity.R und TARGETS.md fuer Herkunft): prueft, ob der
+# gewaehlte Split-Anteil (validation_ratio) selbst stabil ist - BEVOR man
+# einer einzelnen Holdout-Bewertung vertraut. An 2 unabhaengigen Projekten
+# verifiziert (health_condition, openml-satimage-multiclass) - beide Male
+# unauffaellig (Faktor 1.47x/1.71x ggue. dem Minimum ueber alle getesteten
+# ratios); synthetisch an kleinen Datensaetzen (n~100-400) klarer geflaggt
+# (Faktor bis 3.56x) - der Effekt skaliert mit der Datensatzgroesse.
+#
+# Kosten-Nutzen laeuft GEGENLAEUFIG zur Datensatzgroesse: bei einem grossen
+# Datensatz ist der Check teuer (viele Zeilen pro Fit) UND am wenigsten
+# noetig (beide reale Bestaetigungen unauffaellig); bei einem kleinen
+# Datensatz ist er am nuetzlichsten UND am billigsten. Deshalb zwei
+# Kostensenkungen: `classif.rpart` statt Ranger (der Mechanismus - Streuung
+# durch Testset-Groesse - ist weitgehend lernverfahren-unabhaengig, macht
+# das Projekt-eigene base_learner_constructors zudem unnoetig, ein
+# Kopplungspunkt weniger) und ein Zeilenzahl-Schwellenwert, der den Check
+# bei grossen Datensaetzen komplett ueberspringt (5000 - unsere beiden
+# realen Bestaetigungen bei 6430/69008 Zeilen waren beide unauffaellig,
+# der synthetische Beleg fuer einen echten Effekt lag bei 100-400 Zeilen).
+split_sensitivity_max_n <- 5000L
+split_sensitivity_ratios <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.95)
+split_sensitivity_repeats <- 20L
+split_sensitivity_cv_warn_relative <- 2
+split_sensitivity_results_path <- file.path(artifact_dir, "split_sensitivity_results.csv")
+
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "<task_id_prefix>_sleep_weighted_p1.5")
 # ein feature_set-Label fuer model_config ab. Referenziert task_id_prefix

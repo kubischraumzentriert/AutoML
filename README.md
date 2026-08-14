@@ -118,6 +118,15 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > Tuning-Instanzen). An 2 unabhaengigen OpenML-Projekten verifiziert
 > (steel-plates-fault/satimage-multiclass), beide Male unauffaellig - kein
 > Beleg fuer Test-Harness-Optimismus durch die bestehende Tuning-Suche.
+> Fuer die Split-Size-Sensitivity-Analyse (prueft, ob `validation_ratio`
+> selbst stabil ist, BEVOR man einer einzelnen Holdout-Bewertung vertraut)
+> siehe `split_size_sensitivity.R` + `022_split_size_sensitivity.R` (laeuft
+> frueh, direkt nach `020_task.R`). Kosten/Nutzen laufen gegenlaeufig zur
+> Datensatzgroesse (siehe TARGETS.md) - deshalb `classif.rpart` als
+> guenstiger Default-Lerner und `split_sensitivity_max_n=5000`: bei
+> groesseren Datensaetzen wird der Check komplett uebersprungen (beide
+> realen Bestaetigungen dort waren unauffaellig). Bei einem kleineren neuen
+> Projekt laeuft er automatisch und guenstig mit.
 
 Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
 
