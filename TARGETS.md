@@ -988,7 +988,30 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     kuenftig fuer mehrere Lerner gleichzeitig aufrufen (Ranger UND rpart/
     lda) und beide in `experiments.db` loggen - noch keine einzige
     Vergleichsmessung vorhanden, reine Idee bis dahin.
-  - **§14 Seed-Varianz & Hyperparameter-Rausch-Stabilitaet**: teilweise
-    abgedeckt durch `sanity_checks.R` (Feature-Rausch-Perturbation,
-    Feature-Invarianz) - fehlt: Stabilitaet gegenueber Seed-Wechsel selbst
-    und gegenueber Hyperparameter-Jitter.
+  - ~~**§14 Seed-Varianz & Hyperparameter-Rausch-Stabilitaet**~~ **ERLEDIGT
+    (2026-08-13)**: `sanity_checks.R` deckte bereits Feature-Rausch-
+    Perturbation und Feature-Invarianz ab - neu: `seed_stability.R`
+    (`seed_stability()` + `hyperparam_jitter_stability()` +
+    `report_stability()`) + `092_seed_stability.R`, fuer Streuung durch
+    das MODELL selbst bei FIXEN Daten (anderer Rauschkanal als Daten-
+    Sampling in `split_size_sensitivity.R` oder Feature-Rauschen in
+    `sanity_checks.R`).
+
+    Referenzpunkt: die normale CV-Fold-Streuung (mischt Daten- UND
+    Modellrauschen) - 5. Bestaetigung derselben Selbst-Kalibrierungs-Lehre.
+    Synthetisch verifiziert (Ranger, n=4000): ein Modell mit 300 Baeumen
+    zeigt kleine Seed-Streuung (0.14x der CV-Referenz), ein Einzelbaum
+    (1 Baum, maximal instabil) deutlich mehr (0.61x) - Richtung korrekt,
+    aber ein erster Schwellenwert-Entwurf (Paritaet, 1.0x) haette selbst
+    den Extremfall nicht geflaggt, weil CV-Fold-Streuung strukturell
+    IMMER Daten- und Modellrauschen zusammen misst und damit meist groesser
+    bleibt als reines Modellrauschen allein. Korrigiert auf 0.5x (zwischen
+    den beiden synthetischen Messpunkten).
+
+    Real an 2 Projekten verifiziert (`health_condition`, `openml-satimage-
+    multiclass`): beide Male BEIDE Checks unauffaellig (Seed-Varianz 0.24x/
+    0.23x, Hyperparameter-Jitter um die getunte `090`-Konfiguration 0.09x-
+    0.21x) - die eingesetzten 200-Baum-Ranger-Konfigurationen sind
+    robust gegen Seed-/Hyperparameter-Rauschen bei beiden Datensatzgroessen.
+    DB-Logging ergaenzt (`092`). Jitter-Test laeuft nur, wenn `090` bereits
+    ausgefuehrt wurde (sonst uebersprungen, kein Fehler).

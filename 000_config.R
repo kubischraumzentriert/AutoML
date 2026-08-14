@@ -583,6 +583,24 @@ learning_curve_cv_folds <- 3L
 learning_curve_plateau_relative <- 0.10
 learning_curve_results_path <- file.path(artifact_dir, "learning_curve_results.csv")
 
+# Seed-/Hyperparameter-Rausch-Stabilitaet (092_seed_stability.R, siehe
+# seed_stability.R und TARGETS.md): prueft, wie sehr der Score bei FIXEN
+# Daten allein durch den Lerner-Seed bzw. leichtes Jitter auf den getunten
+# Hyperparametern schwankt - ein anderer Rauschkanal als split_size_
+# sensitivity.R (Daten-Sampling) oder sanity_checks.R (Feature-Rauschen).
+# Referenzpunkt: die normale CV-Fold-Streuung (mischt Daten- UND Modell-
+# rauschen). An 2 Projekten verifiziert (health_condition, openml-satimage-
+# multiclass) - beide Male beide Checks unauffaellig (0.17x-0.24x). Der
+# Schwellenwert 0.5 (statt Paritaet 1.0) ist synthetisch kalibriert: selbst
+# ein extrem instabiles Modell (1 Baum) blieb bei 0.61x, Paritaet haette
+# das nie geflaggt (siehe TARGETS.md fuer die Herleitung).
+seed_stability_n_seeds <- 10L
+seed_stability_n_jitter <- 10L
+seed_stability_cv_folds <- 5L
+seed_stability_cv_warn_relative <- 0.5
+seed_stability_jitter_relative <- 0.1  # +/-10% Jitter auf mtry.ratio/sample.fraction, +/-20% auf min.node.size
+seed_stability_results_path <- file.path(artifact_dir, "seed_stability_results.csv")
+
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "<task_id_prefix>_sleep_weighted_p1.5")
 # ein feature_set-Label fuer model_config ab. Referenziert task_id_prefix

@@ -136,6 +136,12 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > multiclass`) - beide Male "NOCH STEIGEND" beim jeweiligen
 > `subset_fraction`-Punkt, bei `health_condition` aber nur ein kleiner
 > absoluter Effekt. Loggt je fraction in `experiments.db`.
+> Fuer die Seed-/Hyperparameter-Rausch-Stabilitaet (Streuung durch das
+> MODELL selbst bei fixen Daten, gegen die normale CV-Fold-Streuung als
+> Referenz eingeordnet) siehe `seed_stability.R` + `092_seed_stability.R`
+> (laeuft nach `090`). An 2 Projekten verifiziert - beide Male unauffaellig,
+> die eingesetzten Ranger-Konfigurationen sind robust gegen Seed-/
+> Hyperparameter-Rauschen.
 
 Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
 

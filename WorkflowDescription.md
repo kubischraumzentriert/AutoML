@@ -81,9 +81,16 @@ flowchart TD
     DMbo -- "nein" --> KeepDefault["Tuning verwerfen,<br/>Default-Hyperparameter behalten"]
     DMbo -- "ja" --> AdoptTuning["Getunte Hyperparameter uebernehmen"]
 
-    KeepDefault --> ClassWeight
-    AdoptTuning --> ClassWeight["Phase 9: 105 / 135<br/>class_weight_power-Gitter"]
+    KeepDefault --> SeedStab
+    AdoptTuning --> SeedStab
 
+    SeedStab["Phase 8b: 092_seed_stability.R<br/>Seed-Varianz + Hyperparameter-Jitter"]
+    SeedStab --> DSeedStab{"Streuung &gt; 0.5x der<br/>normalen CV-Fold-Streuung?"}
+    DSeedStab -- "nein" --> ClassWeight
+    DSeedStab -- "ja" --> SeedStabFix["Mehr Baeume/Iterationen<br/>und/oder ueber Seeds mitteln<br/>(Ensemble Selection)"]
+    SeedStabFix --> ClassWeight
+
+    ClassWeight["Phase 9: 105 / 135<br/>class_weight_power-Gitter"]
     ClassWeight --> DMetric{"is_threshold_independent_metric()?"}
     DMetric -- "unabhaengig, AUC/LogLoss" --> SkipThresh["Klassengewichtung: niedrige Prioritaet.<br/>Phase 10 UEBERSPRINGEN"]
     DMetric -- "abhaengig, BAcc/MCC/Acc/F1" --> ThreshTune["Phase 10: 130 / 146<br/>Schwellenwert-Tuning, hohe Prioritaet"]
@@ -478,6 +485,27 @@ nur der Tuning-Holdout-Split selbst) die Verbesserung bestaetigt. Ein
 Tuning-Ergebnis, das nur auf dem Such-Holdout besser ist, aber in der
 CV-Gegenprobe schlechter als der Default abschneidet, wurde ueberangepasst -
 verwerfen, nicht uebernehmen.
+
+## Phase 8b: Seed-/Hyperparameter-Rausch-Stabilitaet (`092_seed_stability.R`)
+
+```r
+source("092_seed_stability.R")
+```
+
+Prueft, wie sehr der Score bei FIXEN Daten (fester Train/Test-Split) allein
+durch den Lerner-Seed bzw. leichtes Jitter auf den in Phase 8 gefundenen
+Hyperparametern schwankt - ein anderer Rauschkanal als Phase 3b (Daten-
+Sampling) oder die Feature-Rausch-Perturbation in `sanity_checks.R`.
+Referenzpunkt: die normale CV-Fold-Streuung (mischt Daten- UND
+Modellrauschen, deshalb strukturell fast immer groesser als reines
+Modellrauschen allein - Parität als Schwelle waere zu streng, siehe
+`seed_stability.R`-Kopfkommentar).
+
+Braucht `ranger_tuning_instance_path` aus Phase 8 fuer den Jitter-Test (der
+Seed-Test allein laeuft auch ohne Phase 8). Meldet das Skript "AUFFAELLIG"
+(Streuung > 0.5x der CV-Referenz): mehr Baeume/Iterationen (Modell-Varianz
+senken) und/oder ueber mehrere Seeds mitteln erwaegen - Letzteres nutzt die
+Ensemble Selection (Phase 11b) bereits.
 
 ## Phase 9: Klassengewichtung pruefen (`105`/`135`)
 
