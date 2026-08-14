@@ -1077,9 +1077,35 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Kaggle-CSVs mit vereinzelten NA/leeren Werten im Ziel.
 
   Nach dem Fix liefen alle 10 Skripte (`015`/`020`/`022`/`023`/`030`/`080`/
-  `090`/`100`/`092`/`136`) lokal fehlerfrei durch. Der eigentliche
-  GitHub-Actions-Runner (Paket-Cache, Laufzeit dort) ist von hier aus nicht
-  testbar - erste echte Bestaetigung erst nach dem naechsten Push.
+  `090`/`100`/`092`/`136`) lokal fehlerfrei durch.
+
+  **Der GitHub-Actions-Runner selbst brauchte danach noch 4 weitere
+  Iterationen** (von hier aus nicht lokal testbar, jede Runde ~1-20 Min):
+  1. `mlr3extralearners` liegt nicht auf CRAN, nur im mlr-org R-Universe -
+     `setup-r-dependencies@v2` kennt aber KEIN `extra-repositories`-Input
+     (trotz Erwartung, siehe Aktions-Fehlermeldung "Unexpected input(s)").
+  2. DESCRIPTIONs `Additional_repositories`-Feld (die naheliegende
+     Alternative) wird von `pak` NICHT automatisch gelesen - identischer
+     Fehler trotz gesetztem Feld. **Tatsaechlich wirksam**: ein `.Rprofile`
+     im Repo-Root, das `options(repos = c(mlrorg = ..., CRAN = ...))`
+     setzt - `pak` liest `getOption("repos")` direkt, sowohl lokal als auch
+     in der von `setup-r-dependencies@v2` gestarteten R-Session.
+  3. Der Push mit nur `.Rprofile`-Aenderung loeste den Workflow gar nicht
+     aus - der Pfad-Filter deckte `.Rprofile` nicht ab (kein `**.R`-Match).
+     Filter ergaenzt.
+  4. Pipeline lief bis `100_lightgbm_tuning.R`, dann "packages could not be
+     loaded: DiceKriging" - eine SUGGESTS-Abhaengigkeit von `mlr3mbo`, die
+     `pak` nicht transitiv installiert, wenn `mlr3mbo` selbst nur ein
+     Imports-Eintrag in der eigenen `DESCRIPTION` ist. `DiceKriging` +
+     vorsorglich weitere ueblicherweise benoetigte `mlr3mbo`-Suggests
+     (`rgenoud`/`nloptr`/`lhs`/`emoa`/`fastGHQuad`) ergaenzt, um nicht noch
+     eine 18-Minuten-Iteration zu riskieren.
+
+  **Ergebnis: gruener Lauf, alle 12 Schritte, 20:47 Min beim ersten Mal
+  (kein Cache-Treffer)** - siehe https://github.com/kubischraumzentriert/
+  AutoML/actions/runs/31792180343. Kuenftige Laeufe sollten dank
+  `cache-version: 1` im Paket-Schritt deutlich schneller sein (erster Lauf
+  baut den Cache erst auf).
 
 - **Ranger-Absturz bei leerer Zielklasse - Root Cause bestaetigt (2026-08-14),
   Absicherung als konkreter Vorschlag vorgelegt, NOCH NICHT umgesetzt.**
