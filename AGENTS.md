@@ -54,7 +54,7 @@ das ADR in BEIDEN Repos pruefen/aktualisieren, siehe `adr/README.md`.
   Eintrag), nicht routinemaessig das ganze Repo laden.
 - `git status`, `git diff --stat` und gefilterte Ausgaben bevorzugen statt
   vollstaendiger Logs/Diffs.
-- Grosse Dateien (`README.md`, `TARGETS.md`, `EXPERIMENTS_DB.md`) gezielt
+- Grosse Dateien (`README_DETAILS.md`, `TARGETS.md`, `EXPERIMENTS_DB.md`) gezielt
   ueber Ueberschriften/Suche lesen, nicht routinemaessig vollstaendig.
 - Vor mehrminuetigen R-Laeufen (CV-Vergleiche, `tnr("mbo")`-Tuning,
   KernelSHAP, TabPFN) die Laufzeit grob abschaetzen (`estimate_cv_runtime()`
@@ -188,6 +188,7 @@ eine neue Agentensession korrekt und ressourcenschonend einsteigen kann?
 ## Siehe auch
 
 - `WorkflowDescription.md` - der Workflow selbst, inkl. Diagramm.
-- `README.md` - Skriptuebersicht und inhaltliche Ergebnisse.
+- `README.md` - kurzer Ueberblick (Zielgruppe: extern/erster Eindruck).
+- `README_DETAILS.md` - vollstaendige Skriptuebersicht und inhaltliche Ergebnisse.
 - `TARGETS.md` - `targets`-Pipeline und Uebertragungs-Checkliste.
 - `adr/` - Architekturentscheidungen (siehe oben).

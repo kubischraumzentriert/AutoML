@@ -5,8 +5,8 @@ jeden Schritt der Modellauswahl (`010`-`155`) manuell in der R-Konsole
 nachvollziehen - Befehl eingeben, Ausgabe lesen, Entscheidung treffen, naechster
 Befehl - ohne dass eine KI die Ergebnisse interpretiert. `TARGETS.md`
 dokumentiert das *Werkzeug* `targets` (wie der Cache/Abhaengigkeitsgraph
-funktioniert); `README.md` dokumentiert die *inhaltlichen Ergebnisse* dieses
-konkreten Projekts. Diese Datei dokumentiert den *Ablauf*: was in welcher
+funktioniert); `README_DETAILS.md` dokumentiert die *inhaltlichen Ergebnisse*
+dieses konkreten Projekts. Diese Datei dokumentiert den *Ablauf*: was in welcher
 Reihenfolge zu tun ist, welche Ausgabe was bedeutet, und an welchen Stellen ein
 Mensch eine echte Entscheidung treffen muss (die kein Skript automatisch trifft).
 
@@ -769,6 +769,6 @@ keine Schreibkonkurrenz waehrend aktiver Arbeit an mehreren Projekten).
 
 - `TARGETS.md` - das `targets`-Werkzeug selbst (Caching, Abhaengigkeitsgraph,
   Uebertragungs-Checkliste in Kurzform).
-- `README.md` - inhaltliche Ergebnisse und Begruendungen dieses konkreten
-  Projekts (`health_condition`).
+- `README_DETAILS.md` - inhaltliche Ergebnisse und Begruendungen dieses
+  konkreten Projekts (`health_condition`).
 - `EXPERIMENTS_DB.md` - Schema und Query-Sammlung fuer `experiments.db`.

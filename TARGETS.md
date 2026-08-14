@@ -4,7 +4,7 @@ Diese Datei erklärt, wie unsere `targets`-Pipeline (`_targets.R`) funktioniert,
 welche Befehle man im Alltag braucht, und was zu tun ist, wenn dieser Workflow
 auf einen neuen Klassifikationsaufgaben-Wettbewerb übertragen werden soll.
 Für die inhaltlichen Ergebnisse (welches Modell, welche Klassengewichtung,
-welche Features) siehe `README.md` - hier geht es nur um das *Werkzeug*.
+welche Features) siehe `README_DETAILS.md` - hier geht es nur um das *Werkzeug*.
 
 ## Das Wichtigste zuerst: Was `targets` NICHT macht
 
@@ -151,7 +151,7 @@ Angenommen, du willst `class_weight_power` von 1.5 auf 1.75 testen:
    Familien testen, Modelle vergleichen, Klassengewichtung pruefen,
    Adversarial Validation - und die Ergebnisse in Schritt 2/4 einfliessen
    lassen. Alle diese Skripte loggen automatisch in `_artifacts/experiments.db`
-   (siehe README.md, Abschnitt "Experiment-Tracking (SQLite)") - fuer einen
+   (siehe README_DETAILS.md, Abschnitt "Experiment-Tracking (SQLite)") - fuer einen
    neuen Wettbewerb reicht ein neuer `project_name` in `000_config.R`, Schema
    und Logging-Code bleiben unveraendert. `030_baseline.R` warnt automatisch
    vor hochkardinalen Faktor-Spalten (`warn_high_cardinality_factors()` in
@@ -429,7 +429,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
 - **Zwei implizite Architekturentscheidungen als ADR-Kandidaten vorgemerkt
   (2026-08-08, noch nicht umgesetzt)**: (a) `targets`-Pipeline deckt bewusst
   nur den finalen Produktionspfad ab, die explorativen Skripte (`030`-`147`)
-  bleiben ausserhalb des Graphen - bisher nur in `README.md`-Prosa begruendet;
+  bleiben ausserhalb des Graphen - bisher nur in `README_DETAILS.md`-Prosa begruendet;
   (b) beide Templates (Klassifikation/Regression) halten ihr `experiments.db`-
   Schema bewusst identisch, um kuenftige Cross-Template-Analysen/-Merges zu
   ermoeglichen - ebenfalls nur Prosa. Beide erfuellen das Befoerderungs-
@@ -823,7 +823,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     NA/Sentinel-Zeilen beim Directional-Test sauberer heraus als der erste
     Standalone-Prototyp), danach wieder auf leere Defaults zurueckgesetzt
     (Template bleibt default-inert, wie bei `segment_metric_cols`).
-    `WorkflowDescription.md`/`README.md` aktualisiert. Neues
+    `WorkflowDescription.md`/`README_DETAILS.md` aktualisiert. Neues
     `REFERENZ_MODEL_SANITY_CHECKS.md` (theoretischer Hintergrund, analog zu
     `REFERENZ_PROBABILITY_CALIBRATION.md`). **Committet und gepusht**
     (`87c4751`).

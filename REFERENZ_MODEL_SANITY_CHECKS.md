@@ -3,7 +3,7 @@
 Theoretischer Hintergrund zu den drei Behavioral-Testing-Checks aus Huyen
 (2022) "Designing Machine Learning Systems", Kap. 6 "Model Evaluation
 Methods". Implementiert in `sanity_checks.R` +
-`147_error_analysis_ranger_sanity_checks.R` (siehe README.md,
+`147_error_analysis_ranger_sanity_checks.R` (siehe README_DETAILS.md,
 WorkflowDescription.md Phase 11). Diese Referenz erklaert das WARUM; der
 Code dokumentiert nur das WAS. Entstanden aus der Buch-Review-Session
 2026-08-10 (siehe TARGETS.md fuer die vollstaendige Herleitung inkl.

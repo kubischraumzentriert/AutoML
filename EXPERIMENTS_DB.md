@@ -3,7 +3,7 @@
 Diese Datei erklärt Aufbau und Konzept der SQLite-Datenbank, in die alle
 explorativen Skripte (`030`-`147`) ihre Ergebnisse schreiben. Für die
 inhaltlichen Ergebnisse (welches Modell, welche Klassengewichtung) siehe
-`README.md` - hier geht es nur um das *Werkzeug*: Schema, Konventionen,
+`README_DETAILS.md` - hier geht es nur um das *Werkzeug*: Schema, Konventionen,
 Logging-Code und wie man die Datenbank abfragt.
 
 ## Warum ueberhaupt eine Datenbank
