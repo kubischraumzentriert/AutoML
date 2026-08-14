@@ -142,6 +142,12 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > (laeuft nach `090`). An 2 Projekten verifiziert - beide Male unauffaellig,
 > die eingesetzten Ranger-Konfigurationen sind robust gegen Seed-/
 > Hyperparameter-Rauschen.
+> Fuer einen datengetriebenen Vorschlag zu `subset_fraction` (statt blind
+> beim Template-Default `0.10` zu bleiben - bei kleinen Datensaetzen ergibt
+> das zu wenige absolute Zeilen) siehe `suggest_subset_fraction.R`, direkt
+> per `Rscript suggest_subset_fraction.R` im Projektordner ausfuehrbar.
+> Faustregel (`min_rows=20000`), kein statistisch verifizierter Wert wie
+> bei den vier Diagnose-Modulen.
 
 Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
 

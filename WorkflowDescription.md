@@ -194,6 +194,14 @@ projektspezifischen Werte.
 - **`class_weight_power`**: als Startwert `0` (ungewichtet) setzen, nicht
   raten. Der tatsaechlich sinnvolle Wert ist ein **Ergebnis** von Phase 9
   (Klassengewichtung pruefen), keine Config-Eingabe im Voraus.
+- **`subset_fraction`**: NICHT blind beim Template-Default `0.10` belassen -
+  bei kleinen Datensaetzen ergibt ein fester Prozentsatz zu wenige absolute
+  Zeilen (steel-plates-fault: 1941*0.10 = 194 Zeilen, musste auf `1.0`
+  korrigiert werden). Vorschlag per `Rscript suggest_subset_fraction.R` im
+  Projektordner (liest `train.csv`, schlaegt einen Anteil vor, der eine
+  Mindestzeilenzahl sicherstellt) - Faustregel, kein statistisch
+  verifizierter Wert wie bei den Diagnose-Modulen, siehe dessen
+  Kopfkommentar.
 
 `feature_families`/`selected_families` zunaechst `character(0)` lassen, falls
 noch kein Feature Engineering feststeht (siehe Phase 6).

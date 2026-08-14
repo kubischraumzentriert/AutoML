@@ -1015,3 +1015,29 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     robust gegen Seed-/Hyperparameter-Rauschen bei beiden Datensatzgroessen.
     DB-Logging ergaenzt (`092`). Jitter-Test laeuft nur, wenn `090` bereits
     ausgefuehrt wurde (sonst uebersprungen, kein Fehler).
+
+- **`subset_fraction`-Zeilenschwelle (2026-08-13) - ERLEDIGT.** Nutzer-Idee
+  im Anschluss an die Lernkurve: ein fester Prozentsatz (Template-Default
+  `0.10`) kann bei kleinen Datensaetzen zu wenige absolute Zeilen ergeben
+  (steel-plates-fault: 1941*0.10 = 194 Zeilen, musste diese Session manuell
+  auf `1.0` korrigiert werden). Neues Hilfsskript
+  `suggest_subset_fraction.R` (`suggest_subset_fraction(n_full,
+  default_fraction=0.10, min_rows=20000)`, `min(1, max(default_fraction,
+  min_rows/n_full))`) - direkt per `Rscript suggest_subset_fraction.R` im
+  Projektordner ausfuehrbar (liest `train.csv`) oder als Funktion
+  importierbar. `min_rows=20000` ist eine FAUSTREGEL (an der unteren Grenze
+  dessen, was diese Session als "unauffaellig" in den anderen vier
+  Diagnose-Modulen beobachtet hat), KEIN separat statistisch verifizierter
+  Wert - dafuer braucht es weitere Projekt-Erfahrung, anders als bei den
+  vier Checklisten-Modulen also keine ADR-003-Bestaetigung noetig/sinnvoll
+  (deterministische Formel, kein statistischer Test).
+
+  Reproduziert rueckwirkend zwei der drei bereits manuell getroffenen
+  Entscheidungen exakt: steel-plates-fault (1941 Zeilen) -> 1.0 (manuell:
+  1.0, exakt), health_condition (690088 Zeilen) -> 0.10 (unveraendert,
+  Floor bereits erreicht, exakt). `openml-satimage-multiclass` (6430
+  Zeilen) -> 1.0 (manuell gewaehlt war 0.50, aus einem anderen Grund - dort
+  ging es um stabile OvR-Kurven, nicht um eine Zeilen-Mindestzahl fuer
+  Modellvergleiche; die Formel ist hier konservativer als die urspruengliche
+  Wahl, nicht falsch). In Phase 1 der Kochbuch-Prosa (`WorkflowDescription.md`)
+  als dritte, leicht uebersehbare `000_config.R`-Entscheidung ergaenzt.
