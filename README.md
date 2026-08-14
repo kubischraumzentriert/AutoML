@@ -127,6 +127,15 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > groesseren Datensaetzen wird der Check komplett uebersprungen (beide
 > realen Bestaetigungen dort waren unauffaellig). Bei einem kleineren neuen
 > Projekt laeuft er automatisch und guenstig mit.
+> Fuer die Lernkurve (prueft, ob `subset_fraction` selbst gut kalibriert
+> ist - steigt der Score bei mehr Trainingsdaten noch spuerbar?) siehe
+> `learning_curve.R` + `023_learning_curve.R`. ANDERS als bei der
+> Split-Size-Sensitivity ist der Mechanismus hier lernverfahren-ABHAENGIG
+> (Ranger statt eines billigen Stellvertreters, siehe Modul-Kopfkommentar).
+> An 2 Projekten verifiziert (`health_condition`/`openml-satimage-
+> multiclass`) - beide Male "NOCH STEIGEND" beim jeweiligen
+> `subset_fraction`-Punkt, bei `health_condition` aber nur ein kleiner
+> absoluter Effekt. Loggt je fraction in `experiments.db`.
 
 Die nummerierten Skripte `020`/`025`/`070`/`150`/`155` bilden zusammen den *finalen* Workflow: Rohtask erzeugen, Feature-Familien bauen, Modelle auf dem 10%-Subset trainieren, das finale Modell auf dem vollen Datensatz trainieren, Submission schreiben. Bisher musste man dafuer die richtige Reihenfolge kennen und jedes Skript manuell erneut anstossen, wenn sich z.B. `class_weight_power` in `000_config.R` aenderte (jedes Skript prueft nur "existiert die Datei schon", nicht "ist sie noch aktuell").
 

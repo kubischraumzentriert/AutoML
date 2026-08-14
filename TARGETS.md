@@ -934,10 +934,60 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     (monotoner CV-Anstieg mit steigendem ratio), Faktor 1.26x bei
     ratio=0.80 (mit Ranger zuvor: 1.71x) - unauffaellig in beiden Faellen,
     bestaetigt die Lernverfahren-Unabhaengigkeit der Diagnose.
-  - **§11 Lern-/Validierungs-/Loss-Kurven**: klassische Overfitting-
-    Diagnose durch Variation von Trainingsgroesse bzw. Modellkapazitaet.
+  - ~~**§11 Lern-/Validierungs-/Loss-Kurven**~~ **TEILWEISE ERLEDIGT
+    (2026-08-13)**: nur die LERNKURVEN-Haelfte gebaut (Score vs. Trainings-
+    groesse) - die Validierungskurven-Haelfte (Score vs. Modellkapazitaet)
+    bewusst weggelassen, da weitgehend redundant mit dem, was `090`/`100`
+    (Hyperparameter-Suche + Default-vs-getunt-Vergleich) schon liefern.
     `008_curve_diagnostics.R` ist trotz aehnlichem Namen KEIN Kandidat
-    dafuer - das sind ROC-/PR-Schwellenwert-Kurven, ein anderes Konzept.
+    fuer beides - das sind ROC-/PR-Schwellenwert-Kurven, ein anderes Konzept.
+
+    Neues Modul `learning_curve.R` (`learning_curve()` + `report_learning_
+    curve()`) + `023_learning_curve.R`. ANDERS als `split_size_sensitivity.R`
+    ist der Mechanismus hier NICHT lernverfahren-unabhaengig (Kapazitaet des
+    Algorithmus bestimmt die Kurvenform) - ein rpart-Stellvertreter waere
+    eine falsche Sicherheit, das Modul laeuft mit dem tatsaechlich
+    eingesetzten Ranger.
+
+    Synthetisch verifiziert (2 Szenarien, Ranger): ein erster Entwurf mit
+    "letzter vs. erster Zuwachs" (2 Randpunkte) war zu instabil - bei einer
+    bereits fast durchgehend flachen Kurve teilt man dann Rauschen durch
+    Rauschen. Korrigiert auf eine Regression ueber ALLE Punkte
+    (lm(val_score ~ log(n)), Steigung -> erwarteter Zuwachs bei Verdopplung
+    von n, relativ zur beobachteten Score-Spannweite bewertet - 4.
+    Bestaetigung derselben Selbst-Kalibrierungs-Lehre wie in
+    split_size_sensitivity.R/generalization_gap.R). Danach: Szenario
+    "datenhungrig" (n=350, 1 Interaktion + Rauschen) korrekt "NOCH
+    STEIGEND", Szenario "saettigend" (n=2000, 1 dominantes Feature) korrekt
+    "PLATEAU".
+
+    Real an 2 Projekten verifiziert:
+    - `health_condition` (Volldatensatz 690088 Zeilen, subset_fraction=0.10):
+      BAcc 0.8304(1%)->0.8423(2%)->0.8499(5%)->**0.8586(10%)**->0.8618(20%),
+      monoton steigend, bei 10% "NOCH STEIGEND" (23% der Spannweite pro
+      Verdopplung). Absolut betrachtet kleiner Effekt (+0.32 BAcc-Punkte
+      10%->20%) - Modellauswahl auf dem Subset ist leicht konservativ, aber
+      kein Alarmsignal (das finale Modell trainiert ohnehin auf 100%,
+      `150_train_full_model.R`).
+    - `openml-satimage-multiclass` (Volldatensatz 6430 Zeilen,
+      subset_fraction=0.50): BAcc 0.848(10%)->0.864(25%)->0.873(50%)->
+      0.886(75%)->0.892(100%), auch bei 100% noch "NOCH STEIGEND" (30% der
+      Spannweite) - bei diesem kleinen Datensatz waere selbst der volle
+      Datensatz noch nicht am Plateau.
+
+    DB-Logging ergaenzt (`023`): je fraction ein `model_config` (Hyperparams
+    `train_fraction`/`n_train`) + 2 `metric_result`-Zeilen (Validierung +
+    Training per Suffix `_train`) - keine Schema-Erweiterung noetig,
+    verifiziert per direkter DB-Abfrage.
+
+    **Offene Idee (Nutzer, 2026-08-13), NICHT umgesetzt**: "Wetterballon" -
+    empirisch pruefen (nicht annehmen), ob eine BILLIGE Lernkurve (rpart/
+    lda) mit dem teuren Ranger/LightGBM-Pendant ueber mehrere Projekte
+    hinweg korreliert (z.B. Plateau-Punkt), um kuenftig die teure Kurve
+    per kalibrierter Regel abzukuerzen. Braucht als Voraussetzung: `023`
+    kuenftig fuer mehrere Lerner gleichzeitig aufrufen (Ranger UND rpart/
+    lda) und beide in `experiments.db` loggen - noch keine einzige
+    Vergleichsmessung vorhanden, reine Idee bis dahin.
   - **§14 Seed-Varianz & Hyperparameter-Rausch-Stabilitaet**: teilweise
     abgedeckt durch `sanity_checks.R` (Feature-Rausch-Perturbation,
     Feature-Invarianz) - fehlt: Stabilitaet gegenueber Seed-Wechsel selbst

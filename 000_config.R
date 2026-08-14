@@ -555,6 +555,34 @@ split_sensitivity_repeats <- 20L
 split_sensitivity_cv_warn_relative <- 2
 split_sensitivity_results_path <- file.path(artifact_dir, "split_sensitivity_results.csv")
 
+# Lernkurve (023_learning_curve.R, siehe learning_curve.R und TARGETS.md):
+# prueft, ob subset_fraction selbst gut kalibriert ist - ANDERS als bei
+# split_size_sensitivity.R haengt das Ergebnis direkt von der Kapazitaet
+# des Algorithmus ab (ein rpart-Stellvertreter waere hier eine FALSCHE
+# Sicherheit, siehe Kopfkommentar learning_curve.R) - deshalb Ranger, der
+# tatsaechlich eingesetzte Algorithmus. An 2 unabhaengigen Projekten
+# verifiziert (health_condition, openml-satimage-multiclass) - beide Male
+# "NOCH STEIGEND" beim jeweiligen subset_fraction-Punkt (absolut betrachtet
+# aber ein kleiner Effekt bei health_condition, +0.32 BAcc-Punkte fuer eine
+# Verdopplung auf 20%). Konsequenz: Modellauswahl-Entscheidungen auf dem
+# Subset sind leicht konservativ, aber das finale Modell trainiert ohnehin
+# schon auf 100% (150_train_full_model.R) - kein Alarmsignal, aber ein
+# Hinweis, dass ein knapperer Modellvergleich auf dem Subset (z.B. Ranger
+# vs. LightGBM sehr nah beieinander) mit Vorsicht zu interpretieren ist.
+#
+# learning_curve_max_rows begrenzt die teuerste getestete Groesse (der
+# Aufwand liegt hier - anders als bei split_size_sensitivity.R - GENAU dort,
+# wo die Information am interessantesten ist, kann also nicht einfach bei
+# grossen Datensaetzen uebersprungen werden). fractions werden automatisch
+# auf max_rows gekappt UND um subset_fraction selbst ergaenzt, damit der
+# tatsaechlich verwendete Punkt immer mitgetestet wird.
+learning_curve_fractions <- c(0.01, 0.02, 0.05, 0.10, 0.20, 0.35, 0.50, 0.75, 1.0)
+learning_curve_max_rows <- 150000L
+learning_curve_repeats <- 3L
+learning_curve_cv_folds <- 3L
+learning_curve_plateau_relative <- 0.10
+learning_curve_results_path <- file.path(artifact_dir, "learning_curve_results.csv")
+
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "<task_id_prefix>_sleep_weighted_p1.5")
 # ein feature_set-Label fuer model_config ab. Referenziert task_id_prefix

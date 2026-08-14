@@ -39,11 +39,17 @@ flowchart TD
 
     Task --> SplitSens["Phase 3b: 022_split_size_sensitivity.R<br/>rpart, rsmp(subsampling, repeats=20)"]
     SplitSens --> DSplitSkip{"Zeilenzahl &gt;<br/>split_sensitivity_max_n (5000)?"}
-    DSplitSkip -- "ja, uebersprungen" --> Baseline
+    DSplitSkip -- "ja, uebersprungen" --> LearnCurve
     DSplitSkip -- "nein" --> DSplitFlag{"CV bei validation_ratio<br/>&gt; 2x Minimum ueber alle ratios?"}
-    DSplitFlag -- "nein" --> Baseline
+    DSplitFlag -- "nein" --> LearnCurve
     DSplitFlag -- "ja" --> SplitFix["Anderen ratio waehlen<br/>und/oder CV statt Holdout"]
-    SplitFix --> Baseline
+    SplitFix --> LearnCurve
+
+    LearnCurve["Phase 3c: 023_learning_curve.R<br/>Ranger, Score vs. Trainingsgroesse"]
+    LearnCurve --> DLearnCurve{"Regressions-Steigung bei<br/>subset_fraction noch relevant<br/>(&gt;10% der Score-Spannweite)?"}
+    DLearnCurve -- "nein, Plateau" --> Baseline
+    DLearnCurve -- "ja, noch steigend" --> LearnCurveNote["Subset-basierte Modellvergleiche<br/>mit Vorsicht interpretieren<br/>(Ranking koennte bei mehr Daten kippen)"]
+    LearnCurveNote --> Baseline
 
     Baseline["Phase 4: 030_baseline.R<br/>LDA / Multinom / Ranger per Holdout"]
     Baseline --> DCard{"Faktor-Spalte<br/>&gt;50 Auspraegungen?"}
@@ -248,6 +254,34 @@ uebernehmen, oder generell auf CV-/Repeated-CV-basierte statt einzelner
 Holdout-Bewertung umstellen fuer die restlichen Phasen dieses Projekts
 (siehe Kopfkommentar in `split_size_sensitivity.R` fuer die volle
 Reaktions-Anleitung).
+
+## Phase 3c: Lernkurve (`023_learning_curve.R`)
+
+```r
+source("023_learning_curve.R")
+```
+
+Prueft, ob `subset_fraction` selbst gut kalibriert ist - steigt der Score
+bei mehr Trainingsdaten noch spuerbar? ANDERS als Phase 3b (dort war der
+Mechanismus weitgehend lernverfahren-unabhaengig, `rpart` als billiger
+Stellvertreter genuegte) haengt das Ergebnis hier direkt von der Kapazitaet
+des Algorithmus ab - das Skript laeuft deshalb mit Ranger, dem tatsaechlich
+eingesetzten Algorithmus, nicht mit einem billigen Ersatz.
+
+Laedt bewusst den VOLLEN Datensatz (nicht `task_train_small`), um auch
+ueber den bisherigen `subset_fraction`-Punkt hinaus testen zu koennen -
+gekappt bei `learning_curve_max_rows` (Default 150000 Zeilen), da der
+Aufwand hier - anders als bei Phase 3b - genau dort liegt, wo die
+Information am interessantesten ist (nahe der vollen Datenmenge), und sich
+deshalb nicht einfach bei grossen Datensaetzen umgehen laesst.
+
+Meldet das Skript "NOCH STEIGEND" (Regressions-Steigung bei `subset_fraction`
+noch relevant): kein Grund zum Abbruch, aber Modellvergleiche/Hyperparameter-
+Entscheidungen aus den folgenden Phasen sollten mit dem Vorbehalt gelesen
+werden, dass sich die Rangfolge zwischen Algorithmen bei mehr Trainingsdaten
+theoretisch noch verschieben koennte (das finale Modell trainiert ohnehin
+auf 100%, Phase 12b - die Warnung betrifft nur die AUSWAHL-Entscheidungen
+davor).
 
 ## Phase 4: Baselines (`030_baseline.R`)
 
