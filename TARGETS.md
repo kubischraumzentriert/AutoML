@@ -1345,3 +1345,51 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   automatisch idempotent UND inkrementell zugleich. Verifiziert: 3x
   hintereinander ausgefuehrt, ab dem 2. Lauf ueberall `+0 Zeilen` fuer
   alle Projekte/Tabellen.
+
+- **Workflow-Smoke-Test an neuem OpenML-Projekt (2026-08-14,
+  `openml-credit-g`) - ERLEDIGT, 2 echte Funde behoben.** Auf Nutzerwunsch
+  bewusst OHNE Rueckfragen durchgefuehrt, nur nach der in `WorkflowDescription.md`
+  dokumentierten Entscheidungslogik - Test, ob ein Mensch ohne KI-Agent
+  ebenso durchkommen wuerde. German Credit Data (OpenML 31, 1000 Zeilen,
+  binaer gut/schlecht 700/300) - neu fuer diese Session, erstes BINAERE
+  Projekt seit den Backports von `022`/`023`/`092`/`130`+`class_multiplier_
+  tuning.R`/`136`. Alle 10 Kernskripte liefen fehlerfrei durch
+  (`015`/`020`/`022`/`023`/`030`/`080`/`090`/`100`/`092`/`130`/`136`).
+
+  **OpenML-Projekte haben keinen externen Testsatz** (anders als die
+  Kaggle-Projekte dieser Session `health_condition`/`s6e6`/`s6e8`) - alle
+  Zahlen sind interne CV-/Holdout-Schaetzungen auf demselben Datensatz,
+  keine externe Leaderboard-Bestaetigung moeglich. `136_generalization_
+  gap.R` liefert dafuer den naechstbesten internen Check (eigener 80/20-
+  Split, Bootstrap-Test-Verteilung gegen die CV-Verteilung) - beide
+  getunten Modelle unauffaellig.
+
+  **Fund 1 - Dokumentationsluecke in `WorkflowDescription.md` Phase 0**:
+  war ausschliesslich auf Kaggle-Wettbewerbe zugeschnitten (`train.csv`/
+  `test.csv`/`sample_submission.csv`, "Kaggle-Wettbewerbsseite lesen") -
+  fuer ein OpenML-Standalone-Projekt (kein externer Testsatz, keine
+  Bewertungsmetrik-Vorgabe) gab es keine dokumentierte Anleitung, obwohl
+  diese Session laengst eine etablierte (aber nirgends niedergeschriebene)
+  Konvention dafuer hatte. **Behoben**: Phase 0 um einen Abschnitt "Zwei
+  Projektarten" ergaenzt (OpenML-Abweichungen von den Kaggle-Schritten:
+  `mlr3oml::odt(<exakte-ID>)` statt Kaggle-Download, `baseline_measure_ids`
+  auf Template-Konvention statt Wettbewerbsseite, `suggest_subset_
+  fraction.R` vor `000_config.R`).
+
+  **Fund 2 - `class_multiplier_tuning.R`: Nelder-Mead auf 1 Freiheitsgrad.**
+  Bei binaeren Aufgaben (2 Klassen) hat die kontinuierliche Multiplikator-
+  Verfeinerung nur 1 freien Parameter (die Referenzklasse bleibt bei 1.0
+  fixiert) - `optim(method="Nelder-Mead")` warnte 4x "eindimensionale
+  Optimierung mit Nelder-Mead ist unzuverlaessig: nutze direkt Brent oder
+  optimize()" (R selbst empfiehlt die Alternative in der Warnung). Kein
+  Absturz, plausible Ergebnisse, aber ein echter, bisher unbeobachteter
+  Fall (alle bisherigen Threshold-Tuning-Bestaetigungen dieser Session
+  waren >=3-Klassen). **Behoben**: Fallunterscheidung ergaenzt -
+  `length(others) == 1` (binaer) -> `optimize()` (Brent) auf einem festen
+  weiten Log-Intervall, kein Start-Loop noetig; `length(others) >= 2`
+  (>=3 Klassen) -> weiterhin Nelder-Mead mit mehreren Startpunkten wie
+  bisher. Regressionsgetestet gegen `openml-credit-g`: keine Warnung mehr,
+  UND ein besseres Optimum gefunden (LightGBM ungewichtet: BAcc 0.730 statt
+  vorher 0.713 mit Nelder-Mead) - `optimize()` ist fuer den 1D-Fall nicht
+  nur sauberer, sondern findet hier auch das tatsaechliche Optimum
+  zuverlaessiger.

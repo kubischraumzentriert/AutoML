@@ -97,20 +97,40 @@ tune_class_multipliers <- function(probs, truth, classes = colnames(probs),
   m_prior <- prior_correction_multipliers(truth, classes)
   prior_bacc <- score(m_prior)
 
-  # 2) Kontinuierliche Verfeinerung (Nelder-Mead), mult = exp(theta) > 0 -
-  # geseedet von Grid-Optimum UND Prior-Korrektur (+ optionalen extra_starts).
+  # 2) Kontinuierliche Verfeinerung, mult = exp(theta) > 0 - geseedet von
+  # Grid-Optimum UND Prior-Korrektur (+ optionalen extra_starts).
   obj <- function(theta) { m <- base1; m[others] <- exp(theta); -score(m) }
   to_theta <- function(m) log(pmax(m[others], 1e-4))
   starts <- c(list(grid_best, m_prior), extra_starts)
   if (prior_bacc > grid_bacc) { best <- m_prior; best_bacc <- prior_bacc }
   else { best <- grid_best; best_bacc <- grid_bacc }
-  for (st in starts) {
-    o <- tryCatch(optim(to_theta(st), obj, method = "Nelder-Mead",
-                        control = list(maxit = 1000, reltol = 1e-11)),
+
+  if (length(others) == 1) {
+    # Binaere Aufgabe (2 Klassen): genau 1 freier Multiplikator. Nelder-Mead
+    # ist fuer mehrdimensionale Probleme gebaut und warnt bei 1D explizit auf
+    # eine zuverlaessigere Alternative (siehe optim()-Dokumentation) -
+    # optimize() (Brent) statt Nelder-Mead. Kein Start-Loop noetig:
+    # optimize() durchsucht das gesamte Intervall direkt, unabhaengig vom
+    # Startwert - reine Erste-Anwendung-Reibung (2026-08-14, openml-credit-g,
+    # erstes binaere Projekt nach dem Threshold-Tuning-Backport), siehe
+    # TARGETS.md.
+    o <- tryCatch(optimize(obj, interval = c(log(1e-4), log(1e4)), tol = 1e-8),
                   error = function(e) NULL)
-    if (is.null(o)) next
-    b <- -o$value
-    if (b > best_bacc) { best_bacc <- b; m <- base1; m[others] <- exp(o$par); best <- m }
+    if (!is.null(o)) {
+      b <- -o$objective
+      if (b > best_bacc) { best_bacc <- b; m <- base1; m[others] <- exp(o$minimum); best <- m }
+    }
+  } else {
+    # >=3 Klassen: >=2 freie Multiplikatoren, Nelder-Mead mit mehreren
+    # Startpunkten (Grid-Optimum, Prior-Korrektur, optionale extra_starts).
+    for (st in starts) {
+      o <- tryCatch(optim(to_theta(st), obj, method = "Nelder-Mead",
+                          control = list(maxit = 1000, reltol = 1e-11)),
+                    error = function(e) NULL)
+      if (is.null(o)) next
+      b <- -o$value
+      if (b > best_bacc) { best_bacc <- b; m <- base1; m[others] <- exp(o$par); best <- m }
+    }
   }
 
   list(multipliers = best, bacc = best_bacc,

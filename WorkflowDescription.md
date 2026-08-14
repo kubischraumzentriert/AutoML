@@ -139,11 +139,31 @@ flowchart TD
 
 ## Phase 0: Vorbereitung
 
+**Zwei Projektarten** - die Schritte unten sind fuer einen Kaggle-Wettbewerb
+geschrieben (echtes `test.csv` + Leaderboard-Bewertung). Fuer ein OpenML-
+Standalone-Projekt (kein externer Testsatz, keine Leaderboard-Bestaetigung
+moeglich - siehe TARGETS.md, "OpenML-Projekte haben keinen externen
+Testsatz") gilt derselbe Ablauf mit drei Anpassungen: (a) Schritt 1 entfaellt
+(kein `test.csv`/`sample_submission.csv` - ein eigenes `005_download_
+openml.R` per `mlr3oml::odt(<exakte-ID>)` laedt `train.csv`, siehe
+`ML_Learning/openml-credit-g/005_download_openml.R` als Vorlage; **exakte
+ID/Name verwenden, `list_oml_data()`s Freitextsuche und die openml.org-
+Weboberflaeche waren in dieser Session wiederholt unzuverlaessig**), (b)
+Schritt 3 entfaellt (keine Wettbewerbsseite - `baseline_measure_ids`
+bewusst auf die Template-Konvention `c("classif.bacc", "classif.mcc")`
+setzen, da keine externe Metrik-Vorgabe existiert), (c) vor Schritt 4
+`Rscript suggest_subset_fraction.R` ausfuehren (kleine OpenML-Datensaetze
+brauchen oft `subset_fraction=1.0`, siehe TARGETS.md).
+
 1. Projektordner mit `train.csv`, `test.csv`, `sample_submission.csv` von
    Kaggle anlegen (z.B. `C:/Users/HP/OneDrive/Dokumente/R_Workspace/<projekt>/`).
 2. Alle nummerierten Skripte, `000_config.R`, `005_benchmark_runtime.R`,
-   `006_tuning_diagnostics.R`, `db_logging.R`, `db_schema.sql` aus diesem
-   Template-Repo in den neuen Ordner kopieren. `features/utils.R`
+   `006_tuning_diagnostics.R`, `class_multiplier_tuning.R`, `db_logging.R`,
+   `db_schema.sql` aus diesem Template-Repo in den neuen Ordner kopieren
+   (`006`/`class_multiplier_tuning.R` werden leicht uebersehen, da sie nur
+   von `100`/`130` per `source()` nachgeladen werden, nicht offensichtlich
+   als eigene Abhaengigkeit - Reibungspunkt, der dieser Session mehrfach
+   auffiel, siehe TARGETS.md). `features/utils.R`
    (nur `safe_divide()`) ebenfalls kopieren, `features/*.R` sonst leer lassen.
 3. **Kaggle-Wettbewerbsseite lesen** (Overview + Data), BEVOR `000_config.R`
    ausgefuellt wird: Zielspalte, Bewertungsmetrik (steht im Abschnitt
