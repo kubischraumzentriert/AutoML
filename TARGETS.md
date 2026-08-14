@@ -1393,3 +1393,63 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   vorher 0.713 mit Nelder-Mead) - `optimize()` ist fuer den 1D-Fall nicht
   nur sauberer, sondern findet hier auch das tatsaechliche Optimum
   zuverlaessiger.
+
+- **Externe Quelle geprueft (2026-08-14): "Introduction to Deep Learning
+  Using R" (Taweh Beysolow II, Apress 2017) - KEINE Anwendung, dokumentiert
+  statt verworfen.** Buchdatei: `\\endressserver\homes\MeineOrdner\
+  MeineDokumente\50_ebook\010_DataScience\Introduction-to-Deep-Learning-
+  Using-R.pdf`. Textextraktion via `pdftotext -layout` (kein `pdftoppm`
+  auf diesem Rechner installiert, daher kein Seiten-Rendering moeglich -
+  fuer reinen Text ausreichend). Kapitel 1-7 (SLP/MLP/CNN/RNN/Autoencoder/
+  RBM/DBN) sind generische 2017er Deep-Learning-Theorie mit Bild-/
+  Sequenzdaten-Fokus; Kapitel 8 (Experimental Design/Heuristics: ANOVA,
+  Plackett-Burman/Full-Factorial/Space-Filling-DOE, A/B-Testing, Feature-
+  Selection via AIC/BIC/PCA/Factor-Analysis/CCA, Encoding-Fallstricke).
+
+  **RBM (Restricted Boltzmann Machine)**: zweischichtiges, ungerichtetes
+  Energiemodell (sichtbare + versteckte Schicht, keine Verbindungen
+  INNERHALB einer Schicht -> faktorisierbare bedingte Verteilungen),
+  Training via Contrastive Divergence (Gibbs-Sampling-Approximation des
+  Log-Likelihood-Gradienten, kein Backprop). **DBN (Deep Belief Network)**:
+  Stapel von RBMs, schichtweise gierig vortrainiert, optional mit Backprop
+  feinjustiert (Hinton & Osindero 2006) - geloest wurde damit primaer das
+  Problem verschwindender Gradienten bei zufaelliger Gewichtsinitialisierung
+  in tiefen Netzen.
+
+  **Warum kein Thema mehr**: seit ~2010 loesen bessere Init-Schemata
+  (Xavier/Glorot, He), ReLU statt Sigmoid, Batch-Normalization und Residual-
+  Connections dasselbe Trainierbarkeits-Problem direkt per End-to-End-
+  Backprop - generative RBM/DBN-Vortrainierung ist seither aus der Praxis
+  verschwunden.
+
+  **Wo die Pipeline ueberlegen ist (mit Referenz zum Buch)**:
+  - RBM/DBN/CNN/RNN (Kap. 1-7) sind fuer Bild-/Sequenzdaten konzipiert,
+    nicht fuer strukturierte/tabellarische Daten wie unsere Kaggle-/OpenML-
+    Projekte. Fuer Tabellendaten dominieren gut getunte GBMs (LightGBM/
+    XGBoost/CatBoost, unsere `090`/`100`-Bausteine) neuronale Architekturen
+    empirisch durchgehend - RBM/DBN eingeschlossen (vgl. `mlr3torch`-
+    Recherche in [[project_literatur_review_produktion_ki]]: falls ueberhaupt
+    neuronal, dann modernere tabellar-spezifische Architekturen wie FT-
+    Transformer via `mlr3torch`, nicht RBM/DBN).
+  - Kap. 8s DOE-Methoden (Plackett-Burman, Full-Factorial, Space-Filling)
+    fuer Hyperparameter-Suche sind strikt schwaecher als das bereits
+    genutzte `mlr3mbo` (Bayesian Optimization/MBO) - starre faktorielle
+    Designs vs. sequenzielle, modellbasierte Verfeinerung mit weniger
+    Evaluationen.
+  - Kap. 8s Bootstrap-Signifikanztest-Empfehlung ("Fishers Prinzipien",
+    Test of Significance) ist konzeptionell bereits durch
+    `136_generalization_gap.R` abgedeckt (Bootstrap-Test-Verteilung gegen
+    CV-Verteilung, siehe `REFERENZ_GENERALIZATION_GAP.md`).
+  - Kap. 8s PCA/Factor-Analysis/CCA zur Dimensionsreduktion adressieren
+    kein Problem, das unsere GBM-lastige Pipeline hat (Baumverfahren sind
+    robust gegen hochdimensionale/korrelierte Features; PCA wuerde hier
+    eher Information kosten als helfen).
+  - Kap. 8s Kategorial-Encoding-Diskussion (Label-Encoding-Fallstricke,
+    High-Cardinality-Streets-Beispiel -> Cluster-Nummer als Ersatz) ist
+    durch unser bestehendes Target-Encoding bereits geloest.
+
+  **Entscheidung**: keine Code-Aenderung, keine ADR-003-Pipeline gestartet
+  - Buch ist ein generisches 2017er Lehrbuch ohne Technik, die etwas
+  schlaegt, das die Pipeline (mlr3mbo/GBM/Ensemble-Selection/Target-
+  Encoding) bereits besser loest. Dient hier als dokumentierter Negativ-
+  Befund, falls die Frage spaeter erneut aufkommt.
