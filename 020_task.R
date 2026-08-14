@@ -7,11 +7,17 @@ suppressPackageStartupMessages({
 })
 
 source("000_config.R")
+source(file.path(project_dir, "005_benchmark_runtime.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
 
 train <- fread(train_path)
+# Auf der vollen Rohspalte, VOR slice_sample()/as.factor() - faengt auch
+# Faelle ab, in denen eine kaputte Zeile durch Zufall aus dem
+# subset_fraction-Subset herausfaellt (siehe TARGETS.md, "Ranger-Absturz
+# bei leerer Zielklasse").
+check_target_column(train[[target_col]])
 
 train_small <- train %>%
   as_tibble() %>%

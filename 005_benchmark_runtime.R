@@ -90,6 +90,73 @@ warn_rare_factor_levels <- function(task, min_count_per_class = 1) {
   invisible(problems)
 }
 
+# Prueft die ZIELSPALTE selbst (Ergaenzung zu warn_rare_factor_levels(),
+# die nur FEATURE-Spalten prueft) auf NA, leere Faktorstufen ("") und
+# extrem seltene Klassen, BEVOR ein mlr3-Task gebaut wird. Anlass: ein
+# Fixture-Bug im CI-Smoke-Test erzeugte durch einen fwrite/fread-Rundweg
+# eine einzelne Zeile mit leerem String "" im Ziel (aus einem
+# urspruenglichen NA) - das liess classif.ranger mit einem kryptischen
+# "Indizierung ausserhalb der Grenzen" abstuerzen. Bestaetigte Root
+# Cause (siehe TARGETS.md, Eintrag "Ranger-Absturz bei leerer
+# Zielklasse"): R's Matrix-Indizierung nach Spaltenname behandelt ""
+# nie als echten Treffer, selbst wenn diese Spalte existiert -
+# ranger::ranger()s eigene Nachbearbeitung "result$predictions[,
+# levels(droplevels(y)), drop = FALSE]" (R/ranger.R) schlaegt daher
+# IMMER fehl, sobald ein Zielwert exakt "" ist - unabhaengig von
+# Seltenheit. Betrifft nicht nur synthetische Fixtures: echte
+# Kaggle-CSVs koennen vereinzelte NA/leere Werte im Ziel haben, die ein
+# naiver as.factor()-Cast genau in diese Falle laufen liesse.
+check_target_column <- function(target_values, min_count_per_class = 2) {
+  if (anyNA(target_values)) {
+    stop(
+      "Zielspalte enthaelt ", sum(is.na(target_values)), " NA-Wert(e). ",
+      "Ein naiver as.factor()-Cast wuerde NA in eine eigene Faktorstufe ",
+      "verwandeln, die spaeter classif.ranger mit einem kryptischen ",
+      "Ranger-internen Fehler abstuerzen laesst (siehe TARGETS.md, ",
+      "\"Ranger-Absturz bei leerer Zielklasse\"). Bitte vor dem Task-Bau ",
+      "entscheiden: Zeilen entfernen oder NA bewusst als eigene Klasse ",
+      "kodieren (z.B. \"unknown\").",
+      call. = FALSE
+    )
+  }
+
+  target_chr <- as.character(target_values)
+  n_empty <- sum(!is.na(target_chr) & target_chr == "")
+  if (n_empty > 0) {
+    stop(
+      "Zielspalte enthaelt ", n_empty, " leere(n) String-Wert(e) (''). ",
+      "as.factor('') erzeugt eine Faktorstufe mit dem Namen '', die ",
+      "classif.ranger IMMER zum Absturz bringt (bestaetigte Root Cause: ",
+      "R's Matrix-Indizierung nach Spaltenname behandelt '' nie als ",
+      "Treffer, selbst wenn diese Spalte existiert - ranger::ranger()s ",
+      "eigene Nachbearbeitung 'result$predictions[, levels(droplevels(y)), ",
+      "drop = FALSE]' schlaegt daher fehl, siehe TARGETS.md, \"Ranger-",
+      "Absturz bei leerer Zielklasse\"). Typische Ursache: ein verstecktes ",
+      "NA, das bei einem CSV-Rundweg (fwrite/fread) zu '' wurde. Bitte vor ",
+      "dem Task-Bau bereinigen (leere Strings zu NA machen und behandeln, ",
+      "oder Zeilen entfernen).",
+      call. = FALSE
+    )
+  }
+
+  tab <- table(target_values)
+  rare <- tab[tab < min_count_per_class]
+  if (length(rare) > 0) {
+    warning(
+      "Zielklasse(n) mit weniger als ", min_count_per_class, " ",
+      "Beobachtung(en) gefunden: ",
+      paste(names(rare), "=", rare, collapse = ", "), " - stratifizierte ",
+      "CV/Holdout-Splits, Klassifikationsmasse (BAcc/MCC) und manche ",
+      "Learner koennen bei derart duenn besetzten Klassen instabil werden. ",
+      "Erwaegen: Zeilen entfernen oder Klasse mit einer anderen ",
+      "zusammenfassen.",
+      call. = FALSE
+    )
+  }
+
+  invisible(NULL)
+}
+
 # Prueft, ob eine Korrekturregel "bei Uneinigkeit auf Modell B umschalten"
 # (z.B. ein staerkeres Modell A durch ein schwaecheres, aber manchmal
 # treffenderes Modell B ergaenzen) tatsaechlich sinnvoll waere. Die in der

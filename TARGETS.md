@@ -1107,8 +1107,8 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   `cache-version: 1` im Paket-Schritt deutlich schneller sein (erster Lauf
   baut den Cache erst auf).
 
-- **Ranger-Absturz bei leerer Zielklasse - Root Cause bestaetigt (2026-08-14),
-  Absicherung als konkreter Vorschlag vorgelegt, NOCH NICHT umgesetzt.**
+- **Ranger-Absturz bei leerer Zielklasse - Root Cause bestaetigt UND
+  Absicherung umgesetzt (2026-08-14).**
   Nachtrag zum obigen Spawn-Task (`classif.ranger` stuerzt auf eine
   Zielspalte mit einer leeren Faktorstufe `""` ab, LDA/Multinom nicht).
 
@@ -1156,8 +1156,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   imputemode`-Pipeline, stratifizierter `rsmp("holdout")`, Zielspalte mit
   genau 1 Zeile Klasse `""`.
 
-  **Frage 2 - Verteidigungsvorschlag (Code + Fehlermeldungstext, NOCH NICHT
-  eingebaut):** neue Funktion `check_target_column()`, analog zu
+  **Frage 2 - Verteidigung (umgesetzt):** neue Funktion `check_target_column()`, analog zu
   `warn_rare_factor_levels()` in `005_benchmark_runtime.R`, aber fuer die
   ZIELSPALTE statt Feature-Spalten, aufgerufen in `020_task.R` direkt nach
   `train <- fread(train_path)` (also auf der vollen Rohspalte, bevor
@@ -1258,12 +1257,22 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   allgemeines Stratifizierungs-/Stabilitaetsrisiko (analog
   `warn_rare_factor_levels()`s Warn-statt-Stop-Politik).
 
-  **Noch offen vor Umsetzung**: `min_count_per_class = 2` ist eine
+  **Umsetzung (2026-08-14)**: `check_target_column()` in
+  `005_benchmark_runtime.R` ergaenzt, Aufruf in `020_task.R` direkt nach
+  `train <- fread(train_path)` (volle Rohspalte, vor `slice_sample()`/
+  `as.factor()`). Beide `ci_smoke_test/`-Kopien synchron mitgezogen
+  (byte-identisch zum Root-Skript, wie zuvor). Getestet: (1) Root-Fixture
+  (`ci_smoke_test/020_task.R` gegen die bereits fehlerfreie 800-Zeilen-
+  Fixture) laeuft unveraendert durch, keine Regression; (2) vier
+  isolierte `check_target_column()`-Aufrufe direkt verifiziert - NA stoppt
+  mit der geplanten Meldung, leerer String stoppt mit der geplanten
+  Meldung, eine seltene-aber-gueltige Klasse (n=1, Name `"rare"`) wirft nur
+  die Warnung und laeuft weiter, eine unauffaellige Zielspalte erzeugt
+  keine Meldung.
+
+  **Bewusst offen gelassen**: `min_count_per_class = 2` bleibt eine
   Faustregel (kleinstmoegliche Zahl, unter der ein stratifizierter Split
   eine Klasse strukturell nicht auf beide Seiten verteilen kann), kein
-  statistisch hergeleiteter Wert - passend zur Warn-Schwelle waere ein
-  2-Projekt-Kriterium (analog `warn_rare_factor_levels()`s eigener
-  Historie) sinnvoll, bevor der Wert als endgueltig gilt. Ausserdem: die
-  ci_smoke_test-Kopie von `020_task.R` muesste denselben Aufruf erhalten
-  (aktuell strukturell identisch zum Root-Skript, siehe generate_fixture.R
-  fuer den bereits behobenen Fixture-Bug).
+  statistisch hergeleiteter Wert - ein 2-Projekt-Kriterium (analog
+  `warn_rare_factor_levels()`s eigener Historie) waere sinnvoll, bevor der
+  Wert als endgueltig gilt.
