@@ -1276,3 +1276,72 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   statistisch hergeleiteter Wert - ein 2-Projekt-Kriterium (analog
   `warn_rare_factor_levels()`s eigener Historie) waere sinnvoll, bevor der
   Wert als endgueltig gilt.
+
+- **"Wetterballon"-Idee getestet (2026-08-14) - NEGATIVES/GEMISCHTES
+  ERGEBNIS, nicht umgesetzt.** Frage: korreliert eine BILLIGE Lernkurve
+  (`classif.rpart`) mit der TEUREN (`classif.ranger`) genug, um sie
+  kuenftig als guenstigen Stellvertreter zu nutzen? An 6 kleinen Projekten
+  getestet (relative Steigung = Regressions-Slope*log(2) / Score-
+  Spannweite, dieselbe Metrik wie in `report_learning_curve()`, fractions
+  0.2/0.4/0.6/0.8/1.0, 3-fache CV, 3 Wiederholungen):
+
+  | Projekt | Zeilen | rpart (billig) | Ranger (teuer) | Uebereinstimmung |
+  |---|---|---|---|---|
+  | steel-plates-fault | 1941 | +0.389 | +0.444 | ja |
+  | satimage | 6430 | **-0.259** | **+0.435** | **NEIN - Vorzeichen entgegengesetzt** |
+  | wine (WineQualityDataset) | 2056 | -0.106 | -0.392 | Richtung gleich, Groessenordnung sehr unterschiedlich |
+  | yeast (Label Class1) | 2417 | +0.403 | +0.430 | ja |
+  | scene (Label Beach) | 2407 | +0.478 | +0.476 | ja, fast identisch |
+  | birds (Label Swainson.s.Thrush) | 645 | +0.446 | +0.449 | ja, fast identisch |
+
+  Spearman-Korrelation ueber alle 6: **0.71** - bei n=6 statistisch nicht
+  signifikant (kritischer Wert fuer p<0.05 waere ~0.81). Wichtiger als die
+  Korrelationszahl: `satimage` zeigt ein ENTGEGENGESETZTES Vorzeichen -
+  die billige Kurve haette "eher abflachend" signalisiert, waehrend Ranger
+  tatsaechlich klar noch steigt. Ein einzelner klarer Gegenbeweis reicht,
+  um der Idee nicht zu vertrauen, selbst bei einer moderaten
+  Gesamtkorrelation. **Entscheidung: nicht umgesetzt, Idee bleibt
+  verworfen** (nicht nur "vertagt") - waere jederzeit mit demselben Skript
+  an weiteren Projekten neu pruefbar, falls neue Evidenz dazukommt.
+
+  Nebenbefund beim Aufbau: `classif.rpart` stuerzte bei einer sehr
+  seltenen Zielklasse (14/645, `Brown.Creeper` im `birds`-Datensatz) bei
+  kleinen Lernkurven-Anteilen ab (zu wenige Positive je CV-Fold) - mit dem
+  haeufigsten Label (`Swainson.s.Thrush`, 103/645) behoben. Kein
+  Template-Bug, aber ein praktischer Hinweis fuer kuenftige Lernkurven-
+  Anwendungen auf stark unbalancierten Zielspalten.
+
+  Alle 6 Ergebnisse in die jeweiligen Projekt-`experiments.db` geloggt
+  (measure_name `weather_balloon_relative_slope`) und per
+  `merge_project_experiments.R` in die zentrale DB gemergt - siehe
+  naechster Punkt fuer einen dabei gefundenen echten Bug im Merge-Skript.
+
+- **Merge-Skript-Bug gefunden + behoben (2026-08-14): `merge_project_
+  experiments.R` mergte Projekte nur EINMAL, nicht inkrementell.**
+  Beim Versuch, die Wetterballon-Ergebnisse zu migrieren, fiel auf, dass
+  `openml-satimage-multiclass` in der zentralen DB nur 6 `model_config`-
+  Zeilen aus 3 Runs hatte, waehrend die PROJEKTEIGENE `experiments.db`
+  bereits 57 Zeilen aus 6 Runs enthielt. Root Cause: das alte Skript prueft
+  nur "existiert `proj_name` schon in der Ziel-DB?" - wenn ja, wird die
+  GESAMTE Quelle uebersprungen, auch wenn seither neue Runs lokal
+  dazukamen. `satimage` wurde im Juli (fuers urspruengliche OvR-Kurven-
+  Projekt) einmal gemergt; alle 3 Runs aus DIESER Session (Split-Size-
+  Sensitivity/Lernkurve/Seed-Stabilitaet/Generalisierungsluecke - alle
+  vier ADR-003-Bestaetigungen fuer `satimage` in diesem Backlog!) blieben
+  lokal haengen, obwohl das Skript brav "Bereits vollstaendig gemergt"
+  meldete.
+
+  **Betraf nicht nur `satimage`**: beim Beheben zeigte sich, dass auch
+  `playground-series-s5e12`/`s6e5`/`s6e8`/`tweet` denselben Rueckstand
+  hatten (neue lokale Runs seit ihrem jeweiligen Erst-Merge nie zentral
+  gelandet).
+
+  **Fix**: von "einmal pro Projekt" auf "pro Zeile, gefiltert nach UUID-
+  Schluessel" umgestellt - `INSERT ... WHERE <id_col> NOT IN (SELECT
+  <id_col> FROM <tabelle>)` fuer jede der 8 Tabellen, statt einer
+  proj_name-basierten Vorab-Pruefung. Dadurch entfaellt die alte
+  Unterscheidung "noch nicht gemergt / bereits gemergt" komplett - jede
+  Quelle wird immer verarbeitet, die Filterung macht wiederholte Laeufe
+  automatisch idempotent UND inkrementell zugleich. Verifiziert: 3x
+  hintereinander ausgefuehrt, ab dem 2. Lauf ueberall `+0 Zeilen` fuer
+  alle Projekte/Tabellen.

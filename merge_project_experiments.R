@@ -68,10 +68,14 @@ cat("Gefundene Quell-DBs (", length(source_db_paths), "):\n", sep = "")
 for (nm in names(source_db_paths)) cat("  -", nm, "->", source_db_paths[[nm]], "\n")
 cat("\n")
 
-# Tabellen in Fremdschluessel-Abhaengigkeitsreihenfolge (Eltern vor Kindern).
+# Tabellen in Fremdschluessel-Abhaengigkeitsreihenfolge (Eltern vor Kindern),
+# mit ihrer jeweiligen UUID-Text-Schluesselspalte (NICHT die lokale
+# INTEGER-<praefix>_seq-Spalte - diese ist SQLite-rowid-Alias und darf nicht
+# mitkopiert werden, siehe Kommentar unten).
 merge_tables <- c(
-  "project", "workflow", "run", "run_config",
-  "model_config", "resampling", "hyperparam", "metric_result"
+  project = "proj_id", workflow = "wf_id", run = "run_id", run_config = "rconf_id",
+  model_config = "mconf_id", resampling = "rsmp_id", hyperparam = "hparam_id",
+  metric_result = "mres_id"
 )
 
 if (!file.exists(target_db_path)) {
@@ -90,8 +94,17 @@ cat("Backup der Ziel-DB angelegt:", backup_path, "\n\n")
 con <- dbConnect(RSQLite::SQLite(), target_db_path)
 dbExecute(con, "PRAGMA foreign_keys = ON;")
 
-existing_projects <- dbGetQuery(con, "SELECT proj_name FROM project")$proj_name
-
+# INKREMENTELL statt "einmal pro Projekt": frueher wurde eine Quelle komplett
+# uebersprungen, sobald ihr proj_name schon IRGENDWANN gemergt worden war -
+# das verbarg neue Runs, die LOKAL nach diesem ersten Merge dazukamen (Fund
+# 2026-08-14: `openml-satimage-multiclass` hatte lokal 6 Runs, zentral nur
+# die ersten 3 vom Erst-Merge im Juli - 3 neuere Runs aus dieser Session
+# blieben unsichtbar, "Bereits vollstaendig gemergt" war fuer den PROJEKT-
+# NAMEN korrekt, aber irrefuehrend fuer den tatsaechlichen Dateninhalt).
+# Jetzt: JEDE Quelle wird immer verarbeitet, aber pro Tabelle nur Zeilen
+# eingefuegt, deren UUID-Schluessel im Ziel noch NICHT existiert (siehe
+# merge_tables oben) - idempotent UND inkrementell in einem, ohne
+# proj_name-basierte Vorab-Pruefung.
 for (project_label in names(source_db_paths)) {
   source_path <- source_db_paths[[project_label]]
 
@@ -102,59 +115,35 @@ for (project_label in names(source_db_paths)) {
     next
   }
 
-  source_proj_name <- {
-    src_con <- dbConnect(RSQLite::SQLite(), source_path)
-    proj_name <- dbGetQuery(src_con, "SELECT proj_name FROM project")$proj_name
-    dbDisconnect(src_con)
-    proj_name
-  }
-
-  if (length(source_proj_name) == 0) {
-    cat("  Keine project-Zeile in der Quelle gefunden, uebersprungen.\n\n")
-    next
-  }
-
-  # Eine Quell-DB kann mehrere proj_name-Zeilen enthalten (z.B. `tweet` mit
-  # separaten Poisson-/Tweedie-Projekten in derselben Datei) - deshalb ueber
-  # ALLE Namen pruefen, nicht nur den ersten.
-  already_merged <- source_proj_name %in% existing_projects
-  if (all(already_merged)) {
-    cat("  Bereits vollstaendig gemergt (", paste(source_proj_name, collapse = ", "), "), uebersprungen.\n\n", sep = "")
-    next
-  }
-  if (any(already_merged) && !all(already_merged)) {
-    cat("  TEILWEISE bereits gemergt (", paste(source_proj_name[already_merged], collapse = ", "),
-        ") - restliche Projekte (", paste(source_proj_name[!already_merged], collapse = ", "),
-        ") NICHT automatisch gemergt, manuell pruefen.\n\n", sep = "")
-    next
-  }
-
   dbExecute(con, sprintf("ATTACH DATABASE '%s' AS src", source_path))
 
   dbBegin(con)
   tryCatch({
-    for (tbl in merge_tables) {
-      # Jede Tabelle hat eine lokale INTEGER-PRIMARY-KEY-Spalte (<praefix>_seq,
-      # SQLite-rowid-Alias) - die NICHT mitkopiert werden darf (kollidiert
-      # sonst mit bereits vorhandenen Zeilen in der Ziel-Tabelle). Alle
-      # anderen Spalten haengen an UUID-Text-Schluesseln, die kollisionsfrei
-      # sind. Spaltenliste dynamisch aus PRAGMA table_info ermitteln (pk=1
-      # markiert die auszuschliessende Spalte) statt hart zu codieren.
+    any_new <- FALSE
+    for (tbl in names(merge_tables)) {
+      id_col <- merge_tables[[tbl]]
+      # Spaltenliste dynamisch aus PRAGMA table_info ermitteln (pk=1
+      # markiert die auszuschliessende lokale INTEGER-<praefix>_seq-Spalte,
+      # SQLite-rowid-Alias, NICHT mitkopieren - kollidiert sonst mit
+      # bereits vorhandenen Zeilen).
       col_info <- dbGetQuery(con, sprintf("PRAGMA table_info(%s)", tbl))
       cols <- col_info$name[col_info$pk == 0]
       col_list <- paste(cols, collapse = ", ")
 
       n_before <- dbGetQuery(con, paste0("SELECT COUNT(*) AS n FROM ", tbl))$n
-      dbExecute(con, sprintf("INSERT INTO %s (%s) SELECT %s FROM src.%s", tbl, col_list, col_list, tbl))
+      dbExecute(con, sprintf(
+        "INSERT INTO %s (%s) SELECT %s FROM src.%s WHERE %s NOT IN (SELECT %s FROM %s)",
+        tbl, col_list, col_list, tbl, id_col, id_col, tbl
+      ))
       n_after <- dbGetQuery(con, paste0("SELECT COUNT(*) AS n FROM ", tbl))$n
+      if (n_after > n_before) any_new <- TRUE
       cat(sprintf("  %-14s +%d Zeilen (%d -> %d)\n", tbl, n_after - n_before, n_before, n_after))
     }
     dbCommit(con)
-    existing_projects <- c(existing_projects, source_proj_name)
-    cat("  Gemergt: '", paste(source_proj_name, collapse = "', '"), "'\n\n", sep = "")
+    if (any_new) cat("  Gemergt (inkl. neuer Zeilen).\n\n") else cat("  Keine neuen Zeilen (bereits aktuell).\n\n")
   }, error = function(e) {
     dbRollback(con)
-    cat("  FEHLER, Merge fuer dieses Projekt zurueckgerollt:", conditionMessage(e), "\n\n")
+    cat("  FEHLER, Merge fuer diese Quelle zurueckgerollt:", conditionMessage(e), "\n\n")
   })
 
   dbExecute(con, "DETACH DATABASE src")
