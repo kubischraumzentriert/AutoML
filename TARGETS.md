@@ -211,6 +211,24 @@ Abschnitt "Erweiterung: gilt auch fuer didaktische Dokumentation" - dieser
 Verweis hier nur, damit die Konvention auch beim Lesen von `TARGETS.md`
 allein auffindbar bleibt.
 
+- **Nelder-Mead in `class_multiplier_tuning.R` noch nicht didaktisch
+  aufgearbeitet (2026-08-15).** Der kontinuierliche Multiplikator-Optimizer
+  fuer >=3-Klassen-Faelle nutzt Nelder-Mead (ableitungsfreier Simplex-
+  Optimierer: haelt n+1 Testpunkte, ersetzt iterativ den schlechtesten durch
+  Spiegelung/Streckung/Stauchung Richtung der besseren - kein Gradient
+  noetig, funktioniert daher auch fuer eine nicht-differenzierbare
+  Zielfunktion wie BAcc). Bisher nur als Bugfix-Notiz dokumentiert (siehe
+  oben, `openml-credit-g`-Eintrag: Nelder-Mead auf 1 Freiheitsgrad bei
+  binaeren Aufgaben unzuverlaessig, gefixt durch `optimize()`/Brent fuer den
+  1D-Fall), keine eigene theoretische Aufarbeitung. **Anders als die
+  DIDAKTIK-Kandidaten oben**: Nelder-Mead ist bereits FESTER Bestandteil des
+  Templates (`class_multiplier_tuning.R`), kein Backport-Kandidat aus einem
+  Projekt - der passende Rahmen ist daher direkt ein `REFERENZ_*.md` hier im
+  Template (analog `REFERENZ_GENERALIZATION_GAP.md`/
+  `REFERENZ_PROBABILITY_CALIBRATION.md`), keine projektgebundene
+  `DIDAKTIK_*.md` mit 2-Projekt-Regel. Niedrige Prioritaet, reine
+  Dokumentationsluecke, keine funktionale Aenderung noetig.
+
 Bei der Uebertragung dieses Templates auf `playground-series-s6e5`
 (F1-Boxenstopp-Vorhersage, binaer, AUC-bewertet) sind weitere
 Reibungspunkte aufgefallen, die sich noch nicht sicher genug generalisieren
