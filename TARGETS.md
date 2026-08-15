@@ -211,6 +211,18 @@ Abschnitt "Erweiterung: gilt auch fuer didaktische Dokumentation" - dieser
 Verweis hier nur, damit die Konvention auch beim Lesen von `TARGETS.md`
 allein auffindbar bleibt.
 
+- ~~**`id_col` als Vektor bricht `015`/`023`**~~ **ERLEDIGT (2026-08-15).**
+  Anlass: `openml-eeg-eye-state-timeseries` (ML_Learning) setzt
+  `id_col <- c("id", "time_block")`, um neben der reinen ID auch eine
+  Zeit-Block-Hilfsspalte aus dem Standard-Feature-Set auszuschliessen -
+  `020_task.R`s `select(-all_of(id_col))` unterstuetzte das bereits, aber
+  `015_target_leak_audit.R`/`023_learning_curve.R` nutzten
+  `if (id_col %in% names(...))`, das bei einem Vektor > Laenge 1 mit
+  "condition has length > 1" abbricht. Behoben mit `any(id_col %in%
+  names(...))` in beiden Dateien (rueckwirkungsfrei fuer skalares
+  `id_col` - `any()` auf einem Ein-Element-Vektor ist identisch zum
+  Vektor selbst), regressionsgetestet gegen `ci_smoke_test`.
+
 - **Nelder-Mead in `class_multiplier_tuning.R` noch nicht didaktisch
   aufgearbeitet (2026-08-15).** Der kontinuierliche Multiplikator-Optimizer
   fuer >=3-Klassen-Faelle nutzt Nelder-Mead (ableitungsfreier Simplex-

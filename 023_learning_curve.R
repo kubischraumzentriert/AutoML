@@ -24,7 +24,10 @@ if (exists("task_full_path") && file.exists(task_full_path)) {
   task_full <- readRDS(task_full_path)
 } else {
   full_dt <- fread(train_path)
-  if (exists("id_col") && !is.null(id_col) && id_col %in% names(full_dt)) {
+  # any(): id_col kann ein Vektor sein (siehe 015_target_leak_audit.R fuer
+  # die identische Begruendung) - ein einzelnes %in% ergaebe sonst einen
+  # Vektor, den if() bei Laenge > 1 ablehnt.
+  if (exists("id_col") && !is.null(id_col) && any(id_col %in% names(full_dt))) {
     full_dt[, (id_col) := NULL]
   }
   full_dt[, (target_col) := as.factor(get(target_col))]

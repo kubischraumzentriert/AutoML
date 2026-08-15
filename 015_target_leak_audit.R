@@ -37,7 +37,12 @@ cat("Warnsignal, kein Erfolg. CV<->Leaderboard-Uebereinstimmung faengt einen\n")
 cat("Leak NICHT (das Artefakt steckt meist auch in den Testdaten).\n\n")
 
 train <- fread(train_path)
-if (id_col %in% names(train)) train[, (id_col) := NULL]
+# any(): id_col kann ein Vektor sein (020_task.R unterstuetzt das bereits
+# ueber select(-all_of(id_col)), z.B. um neben der reinen ID auch eine
+# Hilfsspalte wie einen Zeit-Block-Index auszuschliessen, siehe
+# openml-eeg-eye-state-timeseries in ML_Learning) - ein einzelnes %in%
+# ergaebe sonst einen Vektor, den if() bei Laenge > 1 ablehnt.
+if (any(id_col %in% names(train))) train[, (id_col) := NULL]
 
 char_cols <- names(train)[vapply(train, is.character, logical(1))]
 train[, (char_cols) := lapply(.SD, as.factor), .SDcols = char_cols]
