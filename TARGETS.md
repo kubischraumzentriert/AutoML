@@ -353,6 +353,27 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   `140_weighted_blend.R`, Softmax-Gewichte je Klasse, LogLoss-optimiert)
   gegen das beste Einzelmodell messen. Erst bei klarem Gewinn ODER 2-Projekt-
   Bestaetigung zurueckfuehren.
+
+  **Erster Versuch am vorgeschlagenen Weg (2026-08-15,
+  `openml-synthetic-control-timeseries`) - CPU-Machbarkeit bestaetigt,
+  Kandidat selbst aber ungeeignet.** `mlr3torch::lrn("classif.ft_transformer")`
+  lief auf CPU reibungslos (600 Zeilen: 15 Epochen in 163s, 60
+  Produktions-Epochen hochgerechnet ~11 Min. - klar unter der
+  30-Minuten-Schwelle aus `adr/002`, siehe dortiger neuer Datenpunkt). 5-fach
+  CV gegen Ranger auf denselben Folds: FT-Transformer BAcc 0.9833 (Ranger
+  0.9900) UND Cohen's Kappa 0.976 (98% Uebereinstimmung der Vorhersagen) -
+  sowohl schwaecher als AUCH kaum dekorreliert. Kein Ensemble-Gewinn zu
+  erwarten (dieselbe "schwaches+korreliertes-Mitglied"-Lehre wie beim
+  urspruenglichen health_condition-Befund oben), daher NICHT bis zum
+  fertigen Blend-Wert weitergerechnet. Grund vermutlich: `synthetic_control`
+  ist zu sauber/einfach trennbar (i.i.d. Zeitreihen-Klassifikation, 6 exakt
+  balancierte Klassen) - fuer echte Dekorrelation braucht es ein Projekt mit
+  mehr Rauschen/komplexeren Interaktionen, wo Baummodelle und
+  Aufmerksamkeitsmechanismen strukturell unterschiedliche Fehler machen.
+  Voller Befund inkl. Skripte (`095_ft_transformer_timing.R`/
+  `096_ft_transformer_cv_ensemble.R`) in `openml-synthetic-control-
+  timeseries/README.md`. Naechster Versuch: ein Projekt mit mehr Zeilen/
+  Rauschen als Kandidat waehlen, nicht denselben einfachen Fall wiederholen.
 - ~~**Exact-value Target-Encoding auch auf NUMERISCHE Spalten**~~ **ERLEDIGT /
   UEBERNOMMEN (2. Bestaetigung)**: Anlass 4th-Place-Writeup zu `s6e7` (XGBoost OOF
   0.9489 -> 0.9496), zweite unabhaengige Bestaetigung auf `s6e8` (Smartphone
