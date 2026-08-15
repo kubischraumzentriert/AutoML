@@ -97,14 +97,25 @@ Naechste Schritte, die bei neuen Arbeiten mitgedacht werden sollen:
 
 1. Systematische Evaluation vorbereiten: 8-15 diverse OpenML/Kaggle/
    DrivenData-Datensaetze mit demselben Workflow durchlaufen lassen.
+   **Aktiver Fokus (Stand 2026-08-15)**: der Durchlauf selbst ist ueber
+   die Session-Historie hinweg faktisch schon an ~20 Projekten passiert
+   (siehe `ML_Learning/README.md` fuer die vollstaendige Liste) - der
+   fehlende Teil ist Schritt 3, die konsolidierte Ergebnistabelle.
 2. Fuer jeden Datensatz dieselben Artefakte sammeln: Baseline, Tuning,
    ggf. Ensemble, Laufzeit, manuelle Eingriffe, Drift-/Leak-/Segment-/
    Sanity-Befunde.
 3. Eine Ergebnistabelle pflegen: Welche Workflow-Komponente wurde auf
-   welchem Projekt bestaetigt, war neutral, oder wurde verworfen?
-4. Greedy Ensemble Selection als groessten offenen Backport-Kandidaten
-   priorisieren, weil sie bereits an zwei OpenML-Datensaetzen positiv
-   verifiziert ist, aber noch nicht in den Template-Workflow integriert wurde.
+   welchem Projekt bestaetigt, war neutral, oder wurde verworfen? **Noch
+   nicht begonnen, aktueller Arbeitsschwerpunkt.**
+4. ~~Greedy Ensemble Selection als groessten offenen Backport-Kandidaten
+   priorisieren~~ **ERLEDIGT**: `148_ensemble_candidate_pool.R`/
+   `149_ensemble_selection.R` (+ `156`/`157` fuer den Full-Train-Export)
+   sind seit dem Backport Teil des nummerierten Workflows, verifiziert
+   gegen `health_condition` und live an `s6e6`/`s6e8` bestaetigt
+   (`s6e8`: als echte Kaggle-Submission deployed). Naechster offener
+   Backport-Kandidat: aktuell keiner in TARGETS.md dokumentiert - wird
+   die systematische Evaluation (Punkt 1-3) einen neuen Kandidaten
+   finden, hier eintragen statt eines veralteten Punktes.
 5. Negative Ergebnisse explizit behalten, insbesondere den Meta-Learning-
    Warmstart-Befund: kleine Referenzpools bringen hier bisher praktisch
    keinen messbaren Vorteil.
