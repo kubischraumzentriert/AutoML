@@ -66,6 +66,7 @@ einer aufwendigen Blackbox.
 
 ## Mehr Tiefe
 
+- [`REFERENZ_DUCKDB_EXPERIMENT_MART.md`](REFERENZ_DUCKDB_EXPERIMENT_MART.md) — DuckDB als optionaler lokaler Analyse-Mart fuer CSV-/Parquet-Artefakte und Experimentauswertungen.
 - [`README_DETAILS.md`](README_DETAILS.md) — vollständige Skriptübersicht (85+ Skripte), alle Baseline-/Tuning-/Ensemble-Ergebnisse im Detail.
 - [`WorkflowDescription.md`](WorkflowDescription.md) — der komplette Ablauf als Mermaid-Diagramm inkl. aller Entscheidungspunkte; auch ohne KI-Unterstützung nachvollziehbar.
 - [`TARGETS.md`](TARGETS.md) — die `targets`-Pipeline (Caching/Reproduzierbarkeit) und die vollständige Entscheidungshistorie.
