@@ -48,9 +48,15 @@ neuronalen Netzen zusaetzlich ein fixer Overhead pro Epoche, der nicht mit
 der Zeilenzahl schrumpft).
 
 Fuer Projekte mit ausreichend wenigen Zeilen kann CPU-Training dagegen
-direkt tragfaehig sein - dann entfaellt der Python-Export komplett
-(niedrigere Zeilenschwelle bisher nicht formal definiert, siehe
-`TARGETS.md`/`BACKLOG.md`-Kandidat).
+direkt tragfaehig sein - dann entfaellt der Python-Export komplett. **Erster
+Datenpunkt (2026-08-15, `openml-synthetic-control-timeseries`, 600 Zeilen,
+`mlr3torch::lrn("classif.ft_transformer")`, d_token=64/n_blocks=3)**: 15
+Epochen brauchten 163s CPU-Zeit, hochgerechnet auf 60 Produktions-Epochen
+~11 Minuten - klar unter der 30-Minuten-Schwelle, CPU-Training direkt
+tragfaehig. Noch kein zweiter Datenpunkt, die genaue Zeilenschwelle (ab wann
+CPU nicht mehr tragfaehig ist) bleibt daher weiterhin nicht formal definiert
+- siehe `TARGETS.md`-Backlog "Per-Klassen-gewichteter Ensemble-Blend" fuer
+den Folgeschritt (echte CV-Bewertung + Dekorrelations-Check vs. GBMs).
 
 ## Alternativen erwogen
 
