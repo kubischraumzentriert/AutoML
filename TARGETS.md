@@ -198,6 +198,19 @@ Produktion sauber zu trennen.
 
 ## Backlog (bei einer Uebertragung gefunden, noch nicht umgesetzt)
 
+**Hinweis zur didaktischen Dokumentation (DIDAKTIK_*.md)**: dieselbe
+≥2-Projekt-Bestaetigungsregel wie fuer Code-Backports (siehe unten) gilt
+seit 2026-08-14 auch fuer Theorie-/Didaktik-Dokumente in `ML_Learning`-
+Projekten (Konvention etabliert an `ML_Learning\SubjektDatensatz\
+DIDAKTIK_GROUP_CV.md`) - pro neuer Technik entsteht dort eine eigene
+`DIDAKTIK_<THEMA>.md` mit Status-Vermerk, erst bei einer zweiten
+unabhaengigen Bestaetigung wird die Schnittmenge als `REFERENZ_*.md` hierher
+zurueckgefuehrt. Vollstaendig festgehalten in
+[`adr/003-backport-after-confirmation.md`](adr/003-backport-after-confirmation.md),
+Abschnitt "Erweiterung: gilt auch fuer didaktische Dokumentation" - dieser
+Verweis hier nur, damit die Konvention auch beim Lesen von `TARGETS.md`
+allein auffindbar bleibt.
+
 Bei der Uebertragung dieses Templates auf `playground-series-s6e5`
 (F1-Boxenstopp-Vorhersage, binaer, AUC-bewertet) sind weitere
 Reibungspunkte aufgefallen, die sich noch nicht sicher genug generalisieren
@@ -366,17 +379,49 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   neuen Projekt werden genau die vorhandenen Dateien geladen, kein "file not
   found" mehr. Rueckwirkungsfrei getestet (alle bisherigen `add_*_features`-/
   `build_*_po`-Funktionen bleiben nach dem Glob-Sourcing verfuegbar).
-- **Fehlwert-Sentinels (numerisch, z.B. `-9999`) werden vom Template nicht
-  erkannt** - Anlass: `geoai-aquaculture-pond-identification-challenge`
-  (Sentinel-codierte fehlende Monate in Fernerkundungsdaten). Die
-  Imputationspipelines (`imputemedian`/`imputemode`) fangen nur echtes `NA` ab,
-  nicht numerische Sentinel-Werte - die wirken sonst wie extreme, aber gueltige
-  Messwerte. Projekt-lokal in `000_config.R` geloest (Sentinel-Liste ->
-  `sentinel_to_na()`-Transformation vor der Pipeline), noch nicht generalisiert.
-  1-Projekt-Kandidat; ins Template uebernehmen (z.B. als
-  `sentinel_to_na(dt, sentinel_values)`-Helfer analog zu
-  `empty_factor_to_na()`), sobald ein 2. Projekt mit numerischen Sentinels
-  auftritt.
+- ~~**Fehlwert-Sentinels (numerisch, z.B. `-9999`) werden vom Template nicht
+  erkannt**~~ **ERLEDIGT (2026-08-15), ueber den No-op-Pfad aus ADR-003
+  backported (noch 1-Projekt-Beleg fuer den NUTZEN, aber strukturell inert
+  und regressionsgetestet).** Anlass: `geoai-aquaculture-pond-
+  identification-challenge` (Sentinel-codierte fehlende Monate in
+  Fernerkundungsdaten). Die Imputationspipelines (`imputemedian`/
+  `imputemode`) fangen nur echtes `NA` ab, nicht numerische Sentinel-Werte -
+  die wirken sonst wie extreme, aber gueltige Messwerte. Projekt-lokal war
+  das bisher inline in `prepare_aquaculture_data()` geloest (fester
+  `sentinel_value <- -9999`, kein wiederverwendbarer Helfer).
+
+  **Umsetzung**: neue Funktion `sentinel_to_na(x, sentinel_values)` in
+  `040_preprocessing.R`, analog zu `empty_factor_to_na()` aber fuer
+  numerische Spalten und mit konfigurierbarer Sentinel-Liste statt eines
+  festen Werts. Neue Config-Variable `sentinel_values <- numeric(0)` in
+  `000_config.R` (Default leer). `build_preprocessing_graph()` liest
+  `sentinel_values` per `get0("sentinel_values", envir = globalenv(),
+  ifnotfound = numeric(0))` als Default-Argument - dadurch muessen die 10
+  bestehenden Aufrufstellen (`030`/`080`/`081`/`095`/`140`/`147`/`features/
+  target_encoding.R`/etc.) NICHT angefasst werden, ein Projekt aktiviert den
+  Schritt allein durch Setzen von `sentinel_values` in seiner `000_config.R`.
+  Bei leerer Liste (Default) wird kein zusaetzlicher `po("colapply")`-Schritt
+  in den Graphen eingefuegt - strukturell identisch zum Verhalten vor dieser
+  Aenderung.
+
+  **Begruendung fuer den Backport trotz nur 1-Projekt-Bestaetigung**: ADR-003
+  erlaubt Backporten auch ohne zweites Projekt, wenn die Aenderung
+  "nachweislich ein No-op" ist (Guard/Feature, das bei sauberen Daten korrekt
+  still bleibt) - hier per Konstruktion erfuellt (Default leer -> kein
+  Eingriff in den Graphen) UND per Test verifiziert: `ci_smoke_test/
+  030_baseline.R` (kein `sentinel_values` gesetzt) laeuft byteidentisch zum
+  Vorher-Zustand durch (gleiche Learner-IDs
+  `imputemedian.imputemode.classif.*`, kein `sentinel_to_na`-Schritt im
+  Graphen). Zusaetzlich isoliert getestet: `sentinel_to_na()` trennt Sentinel
+  und echtes `NA` korrekt (`c(1, 2, -9999, 4, -9999, NA, 6)` ->
+  `c(FALSE,FALSE,TRUE,FALSE,TRUE,TRUE,FALSE)` als `is.na()`-Maske); ein
+  synthetischer Task mit `sentinel_values <- c(-9999)` zeigt nach
+  `build_preprocessing_graph()$predict()`, dass der Sentinel-Wert verschwindet
+  (median-imputiert) statt als Extremwert ins Feature einzufliessen. Der
+  **NUTZEN** (verbessert das tatsaechlich einen Score?) bleibt trotzdem ein
+  1-Projekt-Befund, bis ein zweites Projekt mit numerischen Sentinels
+  auftritt - nur die STRUKTURELLE Integration ins Template gilt als
+  abgeschlossen.
 - ~~**Target-Leakage-Audit als Workflow-Guard fehlt**~~ **ERLEDIGT**: Anlass
   `CreditScoringChallenge` (African Credit Scoring, stark unbalanciert, ~1.8%
   positive Klasse). Die naive Baseline erreichte F1 0.88 - getrieben durch einen

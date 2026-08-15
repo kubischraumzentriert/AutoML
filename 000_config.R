@@ -17,6 +17,17 @@ target_col <- "health_condition"
 # (dieses Projekt: health_condition, 3-Klassen/BAcc -> NULL, rueckwirkungsfrei).
 positive_class <- NULL
 
+# Numerische Fehlwert-Sentinels (z.B. -9999 fuer "kein Messwert"): werden von
+# imputemedian/imputemode NICHT erkannt, da sie wie extreme, aber gueltige
+# Werte aussehen - erst 040_preprocessing.R's sentinel_to_na()-Schritt
+# wandelt sie vor der eigentlichen Imputation in echtes NA um. Anlass:
+# geoai-aquaculture-pond-identification-challenge (Sentinel-codierte
+# fehlende Monate in Fernerkundungsdaten), siehe TARGETS.md. Default leer
+# -> Schritt wird uebersprungen (projektspezifisches Wissen noetig, welcher
+# Zahlenwert als Sentinel gilt), rueckwirkungsfrei fuer Projekte ohne
+# Sentinels.
+sentinel_values <- numeric(0)
+
 # Experiment-Tracking (SQLite, siehe db_schema.sql/db_logging.R)
 project_name <- "playground-series-s6e7-health-condition"
 
