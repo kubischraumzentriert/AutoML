@@ -223,23 +223,14 @@ allein auffindbar bleibt.
   `id_col` - `any()` auf einem Ein-Element-Vektor ist identisch zum
   Vektor selbst), regressionsgetestet gegen `ci_smoke_test`.
 
-- **Nelder-Mead in `class_multiplier_tuning.R` noch nicht didaktisch
-  aufgearbeitet (2026-08-15).** Der kontinuierliche Multiplikator-Optimizer
-  fuer >=3-Klassen-Faelle nutzt Nelder-Mead (ableitungsfreier Simplex-
-  Optimierer: haelt n+1 Testpunkte, ersetzt iterativ den schlechtesten durch
-  Spiegelung/Streckung/Stauchung Richtung der besseren - kein Gradient
-  noetig, funktioniert daher auch fuer eine nicht-differenzierbare
-  Zielfunktion wie BAcc). Bisher nur als Bugfix-Notiz dokumentiert (siehe
-  oben, `openml-credit-g`-Eintrag: Nelder-Mead auf 1 Freiheitsgrad bei
-  binaeren Aufgaben unzuverlaessig, gefixt durch `optimize()`/Brent fuer den
-  1D-Fall), keine eigene theoretische Aufarbeitung. **Anders als die
-  DIDAKTIK-Kandidaten oben**: Nelder-Mead ist bereits FESTER Bestandteil des
-  Templates (`class_multiplier_tuning.R`), kein Backport-Kandidat aus einem
-  Projekt - der passende Rahmen ist daher direkt ein `REFERENZ_*.md` hier im
-  Template (analog `REFERENZ_GENERALIZATION_GAP.md`/
-  `REFERENZ_PROBABILITY_CALIBRATION.md`), keine projektgebundene
-  `DIDAKTIK_*.md` mit 2-Projekt-Regel. Niedrige Prioritaet, reine
-  Dokumentationsluecke, keine funktionale Aenderung noetig.
+- ~~**Nelder-Mead in `class_multiplier_tuning.R` noch nicht didaktisch
+  aufgearbeitet**~~ **ERLEDIGT (2026-08-15).** Als
+  [`REFERENZ_NELDER_MEAD.md`](REFERENZ_NELDER_MEAD.md) geschrieben (analog
+  `REFERENZ_GENERALIZATION_GAP.md`) - Mechanismus (ableitungsfreier
+  Simplex-Optimierer), warum keine Gradientenmethode (BAcc ist stueckweise
+  konstant, nicht differenzierbar), die `log`-Reparametrisierung fuer
+  `mult > 0`, und der dokumentierte 1D-Grenzfall (binaere Aufgaben, gefixt
+  durch `optimize()`/Brent) im Detail.
 
 Bei der Uebertragung dieses Templates auf `playground-series-s6e5`
 (F1-Boxenstopp-Vorhersage, binaer, AUC-bewertet) sind weitere
@@ -263,16 +254,17 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   greifen geaenderte Definitionen in bestehenden DBs nicht). Gegen echte
   AUC/LogLoss-Daten (openml-adult-income) UND die BAcc/MCC-Template-DB
   getestet. Siehe `EXPERIMENTS_DB.md`, Abschnitt "Views".
-- **`tnr("mbo")`s Initialdesign kann das Eval-Budget stillschweigend
-  aufbrauchen**: Das Initialdesign skaliert mit ~4x Anzahl Suchraum-
-  Parameter - wird der Suchraum erweitert, ohne das Budget (`*_tuning_evals`)
-  entsprechend zu erhoehen, findet ggf. gar keine echte sequenzielle
-  Optimierung mehr statt (pruefbar ueber `unique(instance$archive$data$batch_nr)`
-  - genau 1 eindeutiger Wert heisst: nur Initialdesign, keine Verfeinerung).
-  Vorschlag: vor jedem Tuning-Lauf mit erweitertem Suchraum Budget >= 4x
-  Dimensionen + 10-20 sicherstellen, danach `batch_nr` sowie Spannweite/R²
-  der Zielmetrik ueber die Archiv-Punkte pruefen (Plateau-Indikator), um
-  eine Empfehlung "Budget erhoehen" vs. "vermutlich Plateau" abzuleiten.
+- ~~**`tnr("mbo")`s Initialdesign kann das Eval-Budget stillschweigend
+  aufbrauchen**~~ **ERLEDIGT - Karteileiche korrigiert (2026-08-15).** Der
+  hier vorgeschlagene Check ist laengst umgesetzt: `diagnose_mbo_search()`
+  in `006_tuning_diagnostics.R` (prueft genau `batch_nr`-Eindeutigkeit +
+  Spannweite/R² der Zielmetrik als Plateau-Indikator, exakt wie unten
+  beschrieben) und in `100_lightgbm_tuning.R` fest verdrahtet
+  (`diagnose_mbo_search(instance, tuning_measure_id)`, Zeile 79). Diese
+  Backlog-Zeile war schlicht nicht aktualisiert worden - dritter
+  Karteileichen-Fund dieser Session (nach `DIDAKTIK_GROUP_CV.md` und den
+  beiden ADR-Kandidaten oben) - Muster: ein Feature wird umgesetzt, aber
+  die urspruengliche Vorschlags-Zeile im Backlog nie als erledigt markiert.
 - **Logits-Stacking über bereits benchmarkte Modelle fehlt**: Das Template
   waehlt bisher nur das beste EINZELNE Modell fuer die Submission
   (`148_select_submission_model.R`), kombiniert die bereits vorhandenen
@@ -501,16 +493,19 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   funktioniert), aber ein dokumentierter, funktionierender
   Verfeinerungsvorschlag fuer `class_multiplier_tuning.R`/`130`. 1-Projekt-
   Kandidat, niedrigere Prioritaet.
-- **Zwei implizite Architekturentscheidungen als ADR-Kandidaten vorgemerkt
-  (2026-08-08, noch nicht umgesetzt)**: (a) `targets`-Pipeline deckt bewusst
-  nur den finalen Produktionspfad ab, die explorativen Skripte (`030`-`147`)
-  bleiben ausserhalb des Graphen - bisher nur in `README_DETAILS.md`-Prosa begruendet;
-  (b) beide Templates (Klassifikation/Regression) halten ihr `experiments.db`-
-  Schema bewusst identisch, um kuenftige Cross-Template-Analysen/-Merges zu
-  ermoeglichen - ebenfalls nur Prosa. Beide erfuellen das Befoerderungs-
-  Kriterium aus `adr/README.md` (echte Alternative + versehentlich umkehrbar),
-  aber noch nicht zu eigenen ADR-Dateien ausgebaut - niedrige Prioritaet,
-  keine akute Verwechslungsgefahr beobachtet.
+- ~~**Zwei implizite Architekturentscheidungen als ADR-Kandidaten
+  vorgemerkt (2026-08-08)**~~ **ERLEDIGT - Karteileiche korrigiert
+  (2026-08-15).** Diese Notiz war laengst veraltet: beide Entscheidungen
+  wurden bereits am 2026-08-12 zu eigenen ADR-Dateien ausgebaut -
+  [`adr/005-targets-covers-production-path-only.md`](adr/005-targets-covers-production-path-only.md)
+  ((a) `targets`-Pipeline deckt bewusst nur den finalen Produktionspfad ab)
+  und
+  [`adr/006-identical-db-schema-across-templates.md`](adr/006-identical-db-schema-across-templates.md)
+  ((b) identisches `experiments.db`-Schema). Diese TARGETS.md-Zeile wurde
+  seither einfach nicht mehr aktualisiert - derselbe Karteileichen-Fehler
+  wie bei `DIDAKTIK_GROUP_CV.md` (siehe dortiger Eintrag oben): ein
+  Status-Update an einer Stelle (hier: neue ADR-Datei) zieht nicht
+  automatisch die Querverweise an anderer Stelle nach.
 - **Drei Ideen aus "Automated Machine Learning" (Hutter/Kotthoff/Vanschoren
   2019, offenes Springer-Buch) geprueft (2026-08-08)** - Kap. 1
   (Hyperparameter Optimization), Kap. 2 (Meta-Learning), Kap. 6
