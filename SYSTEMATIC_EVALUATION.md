@@ -35,8 +35,8 @@ Tabelle als publikationsreif gilt.
 | `openml-steel-plates-fault` | ✓ (1 Determinismus-Fund dokumentiert, nicht als Leak entfernt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ✓ (1. Bestätigung, z=-1.63/z=-0.39, Hintergrund-Lücke -0.039 BAcc, beide Kandidaten innerhalb des Referenzbereichs) | — (kein `148`/`149` im Projekt) | ✓ (1/prior schlägt Grid: 0.840 vs. 0.832) | — |
 | `openml-credit-g` | ✓ (unauffällig, Top-Feature `credit_amount` 26.9%, 0/68 Determinismus) | — (kein `115` im Projekt) | ✓ (Faktor 1.53x bei ratio=0.80, unauffällig) | ✓ (PLATEAU, 6.5% der Score-Spannweite/Verdopplung - unter 10%-Schwelle, ERSTES Plateau-Ergebnis ggü. `health_condition`/`satimage`, die beide "noch steigend" waren) | ✓ (2 Checks, 17.3%/16.6% relativ, beide unauffällig) | ✓ (unauffällig, eigener 80/20-Split) | — (kein `148`/`149` im Projekt) | ✓ (binärer Nelder-Mead-Fix gefunden+behoben) | — |
 | `openml-adult-income` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
-| `playground-series-s6e5` | — (kein `015` im Projekt) | ✓ (AUC 0.4996, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (5. Bestätigung, Methodik-Test) | — (kein `130` im Projekt) | — |
-| `playground-series-s6e6` | — (kein `015` im Projekt) | ✓ (AUC ≈0.4996, kein Shift, widerlegt Kardinalitäts-Artefakt-Verdacht aus s6e5) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (5. Bestätigung, Methodik-Test) | — (kein `130` im Projekt) | — |
+| `playground-series-s6e5` | — (kein `015` im Projekt) | ✓ (AUC 0.4996, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✗ (KEIN `148`/`149` im Projekt - stattdessen `140_stack_ensemble.R`, ein ANDERES Verfahren: Logits-Stacking-Meta-Learner, negativ getestet: +0.00016 AUC ggü. bestem Einzelmodell, unter dem Rausch-Band, bei ~19x Rechenaufwand - nicht übernommen) | — (kein `130` im Projekt) | — |
+| `playground-series-s6e6` | — (kein `015` im Projekt) | ✓ (AUC ≈0.4996, kein Shift, widerlegt Kardinalitäts-Artefakt-Verdacht aus s6e5) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (5. Bestätigung, Methodik-Test - lokal als `146_ensemble_selection.R` benannt, nicht `148`/`149`, aber dieselbe Greedy-Ensemble-Selection-Methodik) | — (kein `130` im Projekt) | — |
 | `predictingsmartphoneAddiction_s6e8` | — (kein `015` im Projekt) | ✓ (AUC 0.565, moderat; ESS-Ratio 0.94, unschädlich) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓✓ (6. Bestätigung, live Kaggle-Submission) | — (`130`/`146` im Ordner, aber strukturell übersprungen - AUC/LogLoss/PRAUC sind schwellenwertunabhängig, keine Artefakte vorhanden) | — |
 | `drivendata_richter` | — (kein `015` im Projekt) | ✓ (AUC 0.5002, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `openml-yeast-multilabel` | — (kein `015` im Projekt) | — | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | ✓ (Binary Relevance, 1. Bestätigung) | ✓ (1. Bestätigung) |
@@ -167,13 +167,19 @@ Tabelle als publikationsreif gilt.
    → Threshold-Tuning → Ensemble Selection), 0 `?`-Zellen verbleibend.
 2. Fehlende Projekte ergänzen, falls `ML_Learning/README.md` weitere
    relevante Kandidaten zeigt, die hier noch nicht aufgenommen sind.
-3. Stichproben-Gegenprobe: einzelne bereits gefüllte Zellen (insbesondere
-   aus der allerersten Entwurfsfassung, vor dem 2026-08-15-Durchgang)
-   nochmal gegen die Quelle verifizieren, bevor die Tabelle als
-   publikationsreif gilt - z.B. die auffällige Dopplung von "5. Bestätigung,
-   Methodik-Test" bei sowohl `s6e5` als auch `s6e6` in der Ensemble-
-   Selection-Spalte (TARGETS.md ordnet diesen Wortlaut nur `s6e6` zu, nicht
-   `s6e5`) noch klären.
+3. ~~Stichproben-Gegenprobe: die s6e5/s6e6-Dopplung klären~~ **ERLEDIGT
+   (2026-08-15)**: echter Fehler bestätigt - `s6e5` hat gar kein `148`/
+   `149` im Ordner, nur `140_stack_ensemble.R` (ein ANDERES Verfahren,
+   Logits-Stacking-Meta-Learner, laut TARGETS.md negativ getestet).
+   `s6e5`s Zelle von faelschlich `✓ (5. Bestätigung...)` auf `✗` (verworfen,
+   falsches Verfahren) korrigiert. `s6e6`s `✓` bleibt korrekt, aber mit
+   Klarstellung ergänzt: dort heisst das Skript lokal
+   `146_ensemble_selection.R`, nicht `148`/`149` wie im aktuellen Template -
+   **Lehre für weitere Stichproben**: `?`/`—`-Zellen wurden strikt per
+   Dateiname geprüft (robust), bereits VORHANDENE `✓`-Zellen aus der
+   allerersten Entwurfsfassung dagegen nicht - genau dort sass dieser
+   Fehler. Weitere Stichproben unter bereits gefüllten Alt-Zellen bleiben
+   sinnvoll, sind aber kein Blocker mehr für die Grundstruktur.
 4. Sobald belastbar: Zusammenfassung/Diskussion für die Publikationsnotiz
    ableiten (welche Komponenten sind projekttyp-unabhängig robust,
    welche projektspezifisch).
