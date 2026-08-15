@@ -296,8 +296,25 @@ echten, bisher unbemerkten Befund**: ein Ranger-Lauf
 (`selected_cv_results`) brauchte 7706 Sekunden (~128 Minuten), landete
 aber nur auf **Rang 59 von 60+** nach BAcc (0.857) - ein teurer, aber
 wirkungsloser Lauf, genau die Art Erkenntnis, fuer die dieses Werkzeug
-gedacht ist. (Noch nicht weiter untersucht, warum dieser spezielle Lauf so
-lange brauchte - eigener Punkt, falls relevant.)
+gedacht ist.
+
+**Nachtrag (2026-08-15), Ursache gezielt gegengeprueft und WIDERLEGT**:
+naheliegende Hypothese war, dass die 11 zusaetzlichen `safe_divide()`-
+Ratio-Features des "selected"-Sets (24 statt 13 Rohfeatures) die Anzahl
+eindeutiger Werte pro Spalte explodieren lassen (Rohfeatures: 371-10.066
+eindeutige Werte; Ratio-Features: 48.637-63.519 - bei 69.008 Zeilen quasi
+kontinuierlich) und dadurch Rangers Split-Suche unverhaeltnismaessig
+verteuern. **Gezielter Kontrolltest widerlegt das klar**: weder eine
+einzelne hochkardinale Ratio-Spalte allein (0.9x ggue. Baseline) noch alle
+11 zusammen (1.5x, einzelnes `train()` auf allen 69.008 Zeilen statt nur
+einem CV-Fold) reproduzieren auch nur annaehernd den urspruenglichen
+54x-Faktor. **Wahrscheinlichste Erklaerung**: der 7706s-Wert war eine
+einmalige Umgebungs-Anomalie beim urspruenglichen Lauf (konkurrierender
+Prozess, Throttling o.ae.), kein reproduzierbares Daten-/Feature-Problem.
+Trotzdem wertvoll: bestaetigt, dass der DuckDB-Report zuverlaessig echte
+Anomalien aufdeckt, die eine gezielte Nachpruefung wert sind - auch wenn
+sich diese eine als Messartefakt statt als echtes Struktur-Problem
+herausstellte.
 
 ## 13. Quellen und Einordnung
 
