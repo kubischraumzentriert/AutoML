@@ -5,11 +5,20 @@ Konsolidierte Ergebnistabelle für das mittelfristige Publikationsziel
 Workflow-Komponente wurde auf welchem Projekt bestätigt, war neutral/
 No-op, oder wurde verworfen?
 
-**Status: erster Entwurf (2026-08-15).** Methodik: jede Zelle stützt sich
-auf einen konkreten Textbeleg in `TARGETS.md`/`README_DETAILS.md` - keine
-Zelle wurde aus Erinnerung geraten. `?` heißt "noch nicht verifiziert/
-nicht in den gelesenen Abschnitten belegt", nicht "negativ". Diese Tabelle
-braucht vermutlich mehrere Korrekturdurchgänge, bevor sie belastbar ist.
+**Status: alle Zellen aufgelöst (2026-08-15), keine `?` mehr offen.**
+Methodik: jede Zelle stützt sich auf einen konkreten Textbeleg in
+`TARGETS.md`/`README_DETAILS.md`, oder - wo Prosa fehlte - direkt auf
+nachgerechnete Werte aus dem jeweiligen `_artifacts`-CSV im Projektordner
+(z.B. Adversarial-Validation-AUC, Split-Size-/Learning-Curve-/Seed-
+Stabilitäts-Kennzahlen); keine Zelle wurde aus Erinnerung geraten. Ein
+Grossteil der `—`-Zellen ist eine echte MARKER-LÜCKE (das jeweilige
+nummerierte Skript existiert schlicht nicht im Projektordner, meist weil
+das Modul erst nach der Projekt-Erstellung ins Template gebackportet
+wurde) statt eines negativen Befunds - siehe die Abschnittshinweise unten
+für die Einordnung je Spalte. Das ist eine erste vollständige Fassung,
+keine finale Qualitätssicherung - ein zweiter Korrekturdurchgang (z.B.
+Stichproben-Gegenprobe einzelner Zellen) bleibt sinnvoll, bevor die
+Tabelle als publikationsreif gilt.
 
 **Legende**: ✓ bestätigt (Modul lief, Befund unauffällig/wie erwartet) ·
 ✓✓ bestätigt UND Kernbefund (Leak/Bug real gefunden) · ~ neutral/No-op
@@ -152,12 +161,19 @@ braucht vermutlich mehrere Korrekturdurchgänge, bevor sie belastbar ist.
 
 ## Nächste Schritte für diese Tabelle
 
-1. `?`-Zellen gezielt durch Lesen der jeweiligen Projekt-READMEs/
-   `TEMPLATE_FRICTION.md`-Dateien auflösen (nicht alle auf einmal - nach
-   Priorität, z.B. zuerst Leak-Audit und Adversarial Validation, weil
-   das der "Trust-Layer"-Kern der Publikationshypothese ist).
+1. ~~`?`-Zellen gezielt auflösen~~ **ERLEDIGT (2026-08-15)**: alle 9 Spalten
+   durchgearbeitet (Reihenfolge: Leak-Audit → Adversarial Validation →
+   Split-Size-Sens./Learning-Curve/Seed-Stabilität → Generalisierungslücke
+   → Threshold-Tuning → Ensemble Selection), 0 `?`-Zellen verbleibend.
 2. Fehlende Projekte ergänzen, falls `ML_Learning/README.md` weitere
    relevante Kandidaten zeigt, die hier noch nicht aufgenommen sind.
-3. Sobald belastbar: Zusammenfassung/Diskussion für die Publikationsnotiz
+3. Stichproben-Gegenprobe: einzelne bereits gefüllte Zellen (insbesondere
+   aus der allerersten Entwurfsfassung, vor dem 2026-08-15-Durchgang)
+   nochmal gegen die Quelle verifizieren, bevor die Tabelle als
+   publikationsreif gilt - z.B. die auffällige Dopplung von "5. Bestätigung,
+   Methodik-Test" bei sowohl `s6e5` als auch `s6e6` in der Ensemble-
+   Selection-Spalte (TARGETS.md ordnet diesen Wortlaut nur `s6e6` zu, nicht
+   `s6e5`) noch klären.
+4. Sobald belastbar: Zusammenfassung/Diskussion für die Publikationsnotiz
    ableiten (welche Komponenten sind projekttyp-unabhängig robust,
    welche projektspezifisch).
