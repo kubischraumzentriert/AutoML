@@ -18,25 +18,25 @@ braucht vermutlich mehrere Korrekturdurchgänge, bevor sie belastbar ist.
 
 | Projekt | Leak-Audit (015) | Adversarial Val. (115) | Split-Size-Sens. (022) | Learning-Curve (023) | Seed-Stabilität (092) | Generalisierungslücke (136) | Ensemble Selection (148/149) | Threshold-Tuning (130) | Multi-Label (021) |
 |---|---|---|---|---|---|---|---|---|---|
-| `health_condition` (Template-eigen) | ✓ (stress_level 42.9%, kein Determinismus) | ✓ (AUC 0.654, moderat, unschädlich) | ✓ | ✓ (noch steigend, klein) | ✓ | ✓ | ✓✓ (3./6. Bestätigung, live s6e8 deployed) | ? | — |
-| `CreditScoringChallenge` (Zindi) | ✓✓ (F1 0.88→0.41, echter Ex-post-Leak) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ? | ? | — |
-| `PumpItUp` (DrivenData) | ✓ (2. Bestätigung, `ward` 28.5%, kein Leak) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ? | ? | — |
-| `geoai-aquaculture...` (Zindi) | ✓ (3. Bestätigung, `re3_08` 27.5%, kein Leak) | ✓✓ (AUC 0.99998 roh / 0.978 Band-Mittel - echter, extremer Train/Test-Shift; ESS 2.6% -> Reweighting verworfen, Invarianz-Ansatz stattdessen) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ? | ? | — |
-| `openml-satimage-multiclass` | — (kein `015` im Projekt) | ? | ✓ (Faktor 1.26x, unauffällig) | ✓ (noch steigend bei 100%) | ✓ | ✓ (2. Bestätigung, unauffällig) | ? | ? | — |
-| `openml-steel-plates-fault` | ✓ (1 Determinismus-Fund dokumentiert, nicht als Leak entfernt) | ? | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ✓ (1. Bestätigung, unauffällig) | ? | ✓ (1/prior schlägt Grid: 0.840 vs. 0.832) | — |
+| `health_condition` (Template-eigen) | ✓ (stress_level 42.9%, kein Determinismus) | ✓ (AUC 0.654, moderat, unschädlich) | ✓ | ✓ (noch steigend, klein) | ✓ | ✓ (engste bisher gemessene Lücke, +0.0025, SD 0.0032, unauffällig) | ✓✓ (3./6. Bestätigung, live s6e8 deployed) | ? | — |
+| `CreditScoringChallenge` (Zindi) | ✓✓ (F1 0.88→0.41, echter Ex-post-Leak) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ? | ? | — |
+| `PumpItUp` (DrivenData) | ✓ (2. Bestätigung, `ward` 28.5%, kein Leak) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ? | ? | — |
+| `geoai-aquaculture...` (Zindi) | ✓ (3. Bestätigung, `re3_08` 27.5%, kein Leak) | ✓✓ (AUC 0.99998 roh / 0.978 Band-Mittel - echter, extremer Train/Test-Shift; ESS 2.6% -> Reweighting verworfen, Invarianz-Ansatz stattdessen) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ? | ? | — |
+| `openml-satimage-multiclass` | — (kein `015` im Projekt) | ? | ✓ (Faktor 1.26x, unauffällig) | ✓ (noch steigend bei 100%) | ✓ | ✓ (2. Bestätigung, z=1.03/z=0.50, kleinere/engere Hintergrund-Lücke als steel-plates-fault, unauffällig) | ? | ? | — |
+| `openml-steel-plates-fault` | ✓ (1 Determinismus-Fund dokumentiert, nicht als Leak entfernt) | ? | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ✓ (1. Bestätigung, z=-1.63/z=-0.39, Hintergrund-Lücke -0.039 BAcc, beide Kandidaten innerhalb des Referenzbereichs) | ? | ✓ (1/prior schlägt Grid: 0.840 vs. 0.832) | — |
 | `openml-credit-g` | ✓ (unauffällig, Top-Feature `credit_amount` 26.9%, 0/68 Determinismus) | ? | ✓ (Faktor 1.53x bei ratio=0.80, unauffällig) | ✓ (PLATEAU, 6.5% der Score-Spannweite/Verdopplung - unter 10%-Schwelle, ERSTES Plateau-Ergebnis ggü. `health_condition`/`satimage`, die beide "noch steigend" waren) | ✓ (2 Checks, 17.3%/16.6% relativ, beide unauffällig) | ✓ (unauffällig, eigener 80/20-Split) | ? | ✓ (binärer Nelder-Mead-Fix gefunden+behoben) | — |
-| `openml-adult-income` | — (kein `015` im Projekt) | ? | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ? | ? | — |
-| `playground-series-s6e5` | — (kein `015` im Projekt) | ✓ (AUC 0.4996, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ✓ (5. Bestätigung, Methodik-Test) | ? | — |
-| `playground-series-s6e6` | — (kein `015` im Projekt) | ✓ (AUC ≈0.4996, kein Shift, widerlegt Kardinalitäts-Artefakt-Verdacht aus s6e5) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ✓ (5. Bestätigung, Methodik-Test) | ? | — |
-| `predictingsmartphoneAddiction_s6e8` | — (kein `015` im Projekt) | ✓ (AUC 0.565, moderat; ESS-Ratio 0.94, unschädlich) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ✓✓ (6. Bestätigung, live Kaggle-Submission) | ? | — |
-| `drivendata_richter` | — (kein `015` im Projekt) | ✓ (AUC 0.5002, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ? | ? | — |
-| `openml-yeast-multilabel` | — (kein `015` im Projekt) | — | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ? | ✓ (Binary Relevance, 1. Bestätigung) | ✓ (1. Bestätigung) |
-| `openml-scene-multilabel` | — (kein `015` im Projekt) | — | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ? | ✓ (2. Bestätigung) | ✓ (2. Bestätigung) |
-| `openml-birds-multilabel` | — (kein `015` im Projekt) | — | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ? | ✓ (3. Bestätigung) | ✓ (3. Bestätigung) |
+| `openml-adult-income` | — (kein `015` im Projekt) | ? | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ? | ? | — |
+| `playground-series-s6e5` | — (kein `015` im Projekt) | ✓ (AUC 0.4996, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (5. Bestätigung, Methodik-Test) | ? | — |
+| `playground-series-s6e6` | — (kein `015` im Projekt) | ✓ (AUC ≈0.4996, kein Shift, widerlegt Kardinalitäts-Artefakt-Verdacht aus s6e5) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (5. Bestätigung, Methodik-Test) | ? | — |
+| `predictingsmartphoneAddiction_s6e8` | — (kein `015` im Projekt) | ✓ (AUC 0.565, moderat; ESS-Ratio 0.94, unschädlich) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓✓ (6. Bestätigung, live Kaggle-Submission) | ? | — |
+| `drivendata_richter` | — (kein `015` im Projekt) | ✓ (AUC 0.5002, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ? | ? | — |
+| `openml-yeast-multilabel` | — (kein `015` im Projekt) | — | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ? | ✓ (Binary Relevance, 1. Bestätigung) | ✓ (1. Bestätigung) |
+| `openml-scene-multilabel` | — (kein `015` im Projekt) | — | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ? | ✓ (2. Bestätigung) | ✓ (2. Bestätigung) |
+| `openml-birds-multilabel` | — (kein `015` im Projekt) | — | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ? | ✓ (3. Bestätigung) | ✓ (3. Bestätigung) |
 | `health-condition-huyen-sanity-tests` | — | — | — | — | — | — | — | — | — |
-| `FinancialStressPredictionChallenge` | — (kein `015` im Projekt) | ✓ (AUC 0.4971, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ? | ? | — |
-| `openml-amazon-access` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ? | ? | — |
-| `openml-bank-marketing-ensemble-test` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ? | ✓ (frühe Ensemble-Selection-Bestätigung, vor `health_condition`) | ? | — |
+| `FinancialStressPredictionChallenge` | — (kein `015` im Projekt) | ✓ (AUC 0.4971, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ? | ? | — |
+| `openml-amazon-access` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ? | ? | — |
+| `openml-bank-marketing-ensemble-test` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (frühe Ensemble-Selection-Bestätigung, vor `health_condition`) | ? | — |
 
 ## Was diese erste Fassung zeigt
 
@@ -101,6 +101,20 @@ braucht vermutlich mehrere Korrekturdurchgänge, bevor sie belastbar ist.
   kleinen, einfachen Datensaetzen", ist aber bisher nur 1 Projekt-Beleg.
   Die restlichen 14 Projekte haben keines der drei Module im
   Projektordner - Marker-Luecke, keine Nullbefunde.
+- **Generalisierungslücke (136) aufgelöst (2026-08-15)**: von 15 offenen
+  Projekten hat KEINES `136_generalization_gap.R` im Ordner - nur die
+  bereits gefuellten vier (`health_condition`, `satimage`,
+  `steel-plates-fault`, `credit-g`) haben es. Bestehende `✓`-Zellen um die
+  konkreten z-Werte aus TARGETS.md ergaenzt statt als reines `✓` stehen zu
+  lassen: `health_condition` z.B. mit der bisher ENGSTEN gemessenen
+  Hintergrund-Luecke (+0.0025, SD 0.0032), `satimage`/`steel-plates-fault`
+  mit z=1.03/0.50 bzw. z=-1.63/-0.39 - konsistent mit der erwarteten
+  "Luecke schrumpft mit Datensatzgroesse"-Reihenfolge
+  (steel-plates-fault 1941 Zeilen > satimage 6430 > health_condition
+  690088). Alle vier bislang gemessenen Faelle unauffaellig - bisher KEIN
+  einziger realer Beleg fuer Test-Harness-Optimismus durch die Suche
+  gefunden (nur synthetisch nachgewiesen, siehe
+  `REFERENZ_GENERALIZATION_GAP.md`).
 
 ## Nächste Schritte für diese Tabelle
 
