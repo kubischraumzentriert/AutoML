@@ -316,7 +316,36 @@ Anomalien aufdeckt, die eine gezielte Nachpruefung wert sind - auch wenn
 sich diese eine als Messartefakt statt als echtes Struktur-Problem
 herausstellte.
 
-## 13. Quellen und Einordnung
+## 13. Projektuebergreifender Mart (2026-08-15) - ERLEDIGT
+
+Die in Abschnitt 4 vorgesehene Variante `template_experiment_mart.duckdb`
+ist umgesetzt: [`merge_duckdb_experiment_marts.R`](merge_duckdb_experiment_marts.R)
+(Template-Root, analog `merge_project_experiments.R`) sammelt
+`_artifacts/*_results.csv` ueber ALLE Projekte (`R_Workspace`/
+`ML_Learning`-Wurzeln, Projekt = Ordner mit `000_config.R` - dieselbe
+Auto-Discovery wie `check_project_script_coverage.R`).
+
+**Schema-Drift-Loesung**: DuckDBs `read_csv_auto(files, union_by_name =
+TRUE, filename = TRUE)` gleicht Spalten NACH NAME ab (nicht Position) und
+fuellt fehlende Spalten mit NULL statt eines Fehlers - loest das Problem,
+dass z.B. `class_weight_results.csv` je nach Projekt eine zusaetzliche
+`weight_power`-Spalte haben kann, ohne manuelle Schema-Angleichung.
+`filename = TRUE` liefert den Quellpfad, aus dem `project` per
+`regexp_extract()` abgeleitet wird (erfuellt die project_name-Pflicht aus
+Abschnitt 11).
+
+**Regressionsgetestet gegen den vollen realen Bestand** (2026-08-15): 31
+Projekte gefunden, 84 verschiedene Tabellennamen, 34 davon mit dem
+gemeinsamen Benchmark-Schema in `experiment_metrics` vereint. **Erster
+echter Cross-Projekt-Befund**: LightGBM (getunt) gewinnt am haeufigsten
+(beste `classif.bacc` in 7 von ~20 Projekten mit dieser Metrik) - genau
+die Art Frage ("welche Modellfamilie gewinnt ueber mehrere Projekte
+hinweg?"), die in Abschnitt 2 als Motivation genannt wurde und mit reinen
+CSVs nicht ohne Weiteres zu beantworten war. Regressions-Projekte
+(`regr.*`-Metriken statt `classif.*`) tauchen korrekt mit `NA` in der
+`classif.bacc`-Auswertung auf, statt einen Fehler zu werfen.
+
+## 14. Quellen und Einordnung
 
 - *DuckDB in Action* beschreibt DuckDB als embedded analytische Datenbank fuer
   lokale SQL-Analysen, CSV/JSON/Parquet, Python-Integration, Datenpipelines und
