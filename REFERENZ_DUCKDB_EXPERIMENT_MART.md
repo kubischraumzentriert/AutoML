@@ -268,26 +268,36 @@ oder ein anderes transaktionales System.
 - Bei projektuebergreifenden Marts immer `project_name`, `source_file`,
   `source_script` und `created_at` mitschreiben.
 
-## 12. Backlog-Idee
+## 12. Umsetzung (2026-08-15) - ERLEDIGT
 
-Ein optionales Skript koennte spaeter ergaenzt werden:
+[`170_build_duckdb_experiment_mart.R`](170_build_duckdb_experiment_mart.R)
+setzt alle 5 Schritte um, bricht fruehzeitig mit einer klaren Meldung ab,
+falls `duckdb` nicht installiert ist (kein Eingriff in die uebrige
+Pipeline, kein `DESCRIPTION`-Eintrag noetig - Paket wird nur bei
+tatsaechlicher Nutzung gebraucht).
 
-```text
-170_build_duckdb_experiment_mart.R
-```
+**Schema-Erkennung statt Dateiname-Liste**: Schritt 3 (normalisierte View)
+erkennt die Benchmark-Familie ueber das SPALTENMUSTER (`task_id`/
+`learner_id`/`resampling_id` + mindestens eine `classif.*`-Spalte), nicht
+ueber eine hartcodierte Dateiliste - neue Benchmark-Skripte mit demselben
+Schema landen automatisch in `experiment_metrics`, ohne dieses Skript
+anzufassen. Tabellen mit abweichendem Schema (Diagnose-Module wie
+`generalization_gap_results`/`seed_stability_results`/...) bleiben als
+eigene Rohtabellen bestehen, fliessen aber bewusst NICHT in die
+Langformat-View ein (strukturell zu unterschiedlich ohne Informations-
+verlust in ein gemeinsames `metric`/`value`-Format zu pressen).
 
-Aufgaben:
-
-1. Alle bekannten `_artifacts/*_results.csv` erkennen.
-2. Jede CSV als eigene DuckDB-Tabelle registrieren.
-3. Aus bekannten Spaltenmustern eine normalisierte View `experiment_metrics`
-   erzeugen.
-4. Optional CSVs nach `_artifacts/parquet/` spiegeln.
-5. Einen kurzen Report mit Top-Modellen, teuren Laeufen und instabilen
-   Featuregruppen schreiben.
-
-Dieses Skript sollte optional bleiben und keine bestehende Pipeline brechen,
-wenn das R-Paket `duckdb` nicht installiert ist.
+**Regressionsgetestet gegen das Template-eigene Projekt**
+(`health_condition`, 36 real vorhandene `_results.csv`-Dateien - der
+groesste real verfuegbare Bestand): 22 Tabellen ins gemeinsame
+Benchmark-Schema erkannt, 14 korrekt als eigenstaendige Rohtabellen
+belassen, 36 Parquet-Dateien gespiegelt. **Der Report fand sofort einen
+echten, bisher unbemerkten Befund**: ein Ranger-Lauf
+(`selected_cv_results`) brauchte 7706 Sekunden (~128 Minuten), landete
+aber nur auf **Rang 59 von 60+** nach BAcc (0.857) - ein teurer, aber
+wirkungsloser Lauf, genau die Art Erkenntnis, fuer die dieses Werkzeug
+gedacht ist. (Noch nicht weiter untersucht, warum dieser spezielle Lauf so
+lange brauchte - eigener Punkt, falls relevant.)
 
 ## 13. Quellen und Einordnung
 
