@@ -184,6 +184,20 @@ Tabelle als publikationsreif gilt.
     Ensemble-Zwecke - Kappa 0.976 (stark korreliert mit Ranger) UND
     schwaecher (0.983 vs. 0.990 BAcc). Kein Bestandteil der Ensemble-
     Selection-Spalte (148/149), da ein anderes Verfahren/Backlog-Ziel.
+- **Stichproben-Gegenprobe an Alt-Zellen (2026-08-15), kein neuer Fehler
+  gefunden**: 7 Zellen aus der allerersten Entwurfsfassung (vor dem
+  2026-08-15-Durchgang, quer ueber 6 Projekte/6 Spalten) direkt gegen
+  Quelle nachgeprueft statt nur gegen TARGETS.md-Prosa - `health_condition`/
+  `steel-plates-fault`-Leak-Audit, `credit-g`-Leak-Audit (`credit_amount`
+  26.9% direkt aus `leak_audit_importance.csv` nachgerechnet: 0.2688,
+  Determinismus 0/68 aus 68 Zeilen in `leak_audit_determinism.csv`
+  bestaetigt - `credit-g` hat kein README, die Zahl stand bisher nirgends
+  als Text, nur im Artefakt selbst), Multilabel-Trios
+  Threshold-Tuning-Nummerierung (1./2./3., konsistent in allen drei
+  READMEs), `bank-marketing-ensemble-test`s "fruehe Bestaetigung" und
+  `satimage`s Split-Size-Faktor 1.26x. Alle sieben bestaetigt - nur die
+  bereits behobene `s6e5`-Dopplung war fehlerhaft, keine weiteren Funde in
+  dieser Stichprobe.
 
 ## Nächste Schritte für diese Tabelle
 
@@ -204,8 +218,14 @@ Tabelle als publikationsreif gilt.
    **Lehre für weitere Stichproben**: `?`/`—`-Zellen wurden strikt per
    Dateiname geprüft (robust), bereits VORHANDENE `✓`-Zellen aus der
    allerersten Entwurfsfassung dagegen nicht - genau dort sass dieser
-   Fehler. Weitere Stichproben unter bereits gefüllten Alt-Zellen bleiben
-   sinnvoll, sind aber kein Blocker mehr für die Grundstruktur.
-4. Sobald belastbar: Zusammenfassung/Diskussion für die Publikationsnotiz
+   Fehler.
+4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **ERSTE
+   RUNDE ERLEDIGT (2026-08-15)**: 7 zusätzliche Alt-Zellen aus 6
+   Projekten/Spalten direkt gegen Quelle (Artefakt-CSV oder README, nicht
+   nur TARGETS.md-Prosa) nachgeprüft - alle bestätigt, kein neuer Fehler.
+   Nicht erschöpfend (die Tabelle hat >150 Zellen, nur ein kleiner Teil
+   wurde bisher stichprobenartig geprüft) - eine zweite Runde an anderen
+   Zellen bleibt sinnvoll, ist aber kein akuter Blocker mehr.
+5. Sobald belastbar: Zusammenfassung/Diskussion für die Publikationsnotiz
    ableiten (welche Komponenten sind projekttyp-unabhängig robust,
    welche projektspezifisch).
