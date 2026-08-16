@@ -95,6 +95,36 @@ results <- rbindlist(list(
 
 fwrite(results, threshold_tuning_results_path)
 
+# --- Optional: nested/gepooltes per-Fold-Tuning (siehe TARGETS.md) ---------
+# Default AUS (threshold_tuning_nested in 000_config.R) - laeuft nur, wenn
+# ein Projekt es explizit aktiviert, kein Eingriff in die obigen Ergebnisse.
+if (isTRUE(threshold_tuning_nested)) {
+  cat("\n=== Nested/gepooltes per-Fold-Multiplikator-Tuning (", threshold_tuning_nested_folds, "-fach CV) ===\n", sep = "")
+  learner_nested <- lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations)
+  learner_nested$predict_type <- "prob"
+
+  nested_res <- nested_cv_class_multiplier_tuning(
+    task_train_small, learner_nested,
+    folds = threshold_tuning_nested_folds, classes = classes,
+    grid = threshold_tuning_weight_grid, seed = seed
+  )
+
+  print(nested_res$fold_info)
+  cat(sprintf(
+    "\nEhrliche gepoolte BAcc-Schaetzung (nested, kein Datenleck zwischen Suche/Bewertung): %.4f\n",
+    nested_res$nested_metric
+  ))
+  cat(sprintf(
+    "Zum Vergleich, 3-Wege-Split oben (LightGBM ungewichtet, kontinuierlich getuned): %.4f\n",
+    results$bacc_tuned[1]
+  ))
+  cat("Finale Deployment-Multiplikatoren (auf allen OOF gesucht):\n")
+  cat(paste(sprintf("%s=%.2f", names(nested_res$final_multipliers), nested_res$final_multipliers), collapse = ", "), "\n")
+
+  fwrite(nested_res$fold_info, threshold_tuning_nested_results_path)
+  cat("Gespeichert:", threshold_tuning_nested_results_path, "\n")
+}
+
 cat("=== Multiklassen-Schwellenwert-Tuning: plain vs. 1/prior vs. Grid vs. kontinuierlich ===\n")
 print(results)
 cat(sprintf("\n1/prior vs. Grid (BAcc): %+.4f / %+.4f  |  kontinuierlich vs. 1/prior: %+.4f / %+.4f\n",

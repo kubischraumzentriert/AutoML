@@ -232,6 +232,19 @@ threshold_tuning_weight_grid <- seq(0.5, 6, by = 0.5)
 threshold_tuning_results_path <- file.path(artifact_dir, "threshold_tuning_results.csv")
 threshold_tuning_ranger_results_path <- file.path(artifact_dir, "threshold_tuning_ranger_results.csv")
 
+# Nested/gepooltes per-Fold-Multiplikator-Tuning (nested_cv_class_multiplier_
+# tuning() in class_multiplier_tuning.R, siehe TARGETS.md): Verfeinerung
+# zum obigen 3-Wege-Split - nutzt CV-OOF-Vorhersagen statt eines einzelnen
+# Tune-/Eval-Splits (mehr Daten fuer sowohl Multiplikator-Suche als auch
+# Bewertung, an CreditScoringChallenge Grundlage einer fast perfekten
+# CV-LB-Kalibrierung). Default AUS -> 130_threshold_tuning.R laeuft
+# unveraendert wie bisher (No-op), auf TRUE setzen um zusaetzlich
+# threshold_tuning_nested_results.csv zu erzeugen. 1-Projekt-Kandidat,
+# noch keine zweite Bestaetigung.
+threshold_tuning_nested <- FALSE
+threshold_tuning_nested_folds <- 5L
+threshold_tuning_nested_results_path <- file.path(artifact_dir, "threshold_tuning_nested_results.csv")
+
 # TabPFN hat eine begrenzte Kontextlaenge (Vortrainings-Limits fuer Zeilen-
 # /Feature-Anzahl) und erlaubt auf CPU standardmaessig nur bis zu 1000
 # Trainingszeilen. Bei validation_ratio = 0.80 muss die Subset-Groesse daher

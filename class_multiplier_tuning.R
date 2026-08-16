@@ -138,3 +138,88 @@ tune_class_multipliers <- function(probs, truth, classes = colnames(probs),
        prior_multipliers = m_prior, prior_bacc = prior_bacc,
        reference_class = ref)
 }
+
+# --- Nested/gepooltes per-Fold-Multiplikator-Tuning -------------------
+# Verallgemeinert die in CreditScoringChallenge/040_threshold_tuning.R
+# projekt-lokal gebaute binaere F1-Nested-CV (siehe TARGETS.md) auf
+# beliebige Klassenzahl/Metrik, indem sie das bereits vorhandene
+# tune_class_multipliers() wiederverwendet statt Suchlogik zu duplizieren.
+#
+# Problem beim bestehenden 3-Wege-Split (130_threshold_tuning.R): EIN
+# stratifizierter Tune-/Eval-Split - die Multiplikatoren werden nur auf
+# einem Bruchteil der Daten gesucht, die Eval-Zahl ist eine einzelne,
+# potenziell verrauschte Stichprobe. Nested-CV nutzt STATTDESSEN alle
+# Zeilen fuer beides: fuer jeden Fold k werden die Multiplikatoren NUR auf
+# den OOF-Vorhersagen der UEBRIGEN Folds gesucht und auf Fold k angewendet
+# (Fold k war an der Suche unbeteiligt - kein Leck). Gepoolt ueber alle
+# Folds ergibt das eine ehrlichere, datensparsamere Schaetzung als der
+# einzelne Eval-Split. Die finale Deployment-Multiplikatoren werden
+# separat auf ALLEN OOF-Vorhersagen gesucht (bester Punkt fuer die echte
+# Submission, nicht Teil der ehrlichen Schaetzung).
+#
+# @param task mlr3-TaskClassif (bereits vorbereitet, z.B. gewichtet via
+#   add_balanced_class_weights() falls gewuenscht).
+# @param learner mlr3-Learner mit predict_type = "prob".
+# @param folds Anzahl CV-Folds fuer die OOF-Vorhersagen.
+# @param metric_fn Metrik(truth, response) fuer die Fold-/Nested-Berichte
+#   (Multiplikator-SUCHE selbst optimiert weiterhin die Metrik aus
+#   tune_class_multipliers()s eigenem metric_fn-Argument, Default BAcc).
+# @return list(fold_info [data.table je Fold: threshold_metric_source,
+#   metric_on_fold], nested_metric [gepoolte ehrliche Schaetzung],
+#   final_multipliers, final_metric [auf allen OOF, Deployment-Punkt]).
+nested_cv_class_multiplier_tuning <- function(task, learner, folds = 5,
+                                              classes = task$class_names,
+                                              grid = seq(0.5, 6, by = 0.5),
+                                              metric_fn = mlr3measures::bacc,
+                                              seed = 42) {
+  set.seed(seed)
+  rr <- mlr3::resample(task, learner, mlr3::rsmp("cv", folds = folds))
+  preds <- rr$predictions()
+
+  extract <- function(p) list(
+    prob = p$prob[, classes, drop = FALSE],
+    truth = factor(as.character(p$truth), levels = classes)
+  )
+  per_fold <- lapply(preds, extract)
+
+  pooled_response <- vector("list", length(per_fold))
+  pooled_truth <- vector("list", length(per_fold))
+  fold_info <- vector("list", length(per_fold))
+
+  for (k in seq_along(per_fold)) {
+    others <- per_fold[-k]
+    others_prob <- do.call(rbind, lapply(others, `[[`, "prob"))
+    others_truth <- factor(unlist(lapply(others, function(o) as.character(o$truth))), levels = classes)
+
+    tuned_on_others <- tune_class_multipliers(others_prob, others_truth, classes, grid = grid, metric_fn = metric_fn)
+    response_k <- apply_class_multipliers(per_fold[[k]]$prob, tuned_on_others$multipliers, classes)
+
+    pooled_response[[k]] <- response_k
+    pooled_truth[[k]] <- per_fold[[k]]$truth
+    fold_info[[k]] <- data.table::data.table(
+      fold = k,
+      metric_on_fold = metric_fn(per_fold[[k]]$truth, response_k),
+      multipliers = paste(sprintf("%s=%.2f", names(tuned_on_others$multipliers), tuned_on_others$multipliers), collapse = ", ")
+    )
+  }
+
+  nested_metric <- metric_fn(
+    factor(unlist(lapply(pooled_truth, as.character)), levels = classes),
+    factor(unlist(lapply(pooled_response, as.character)), levels = classes)
+  )
+
+  # Finale Deployment-Multiplikatoren: auf ALLEN OOF-Vorhersagen gesucht -
+  # kein Bestandteil der ehrlichen nested_metric-Schaetzung oben (die darf
+  # keine Zeile verwenden, auf der auch die fuer sie geltenden Multiplikatoren
+  # gesucht wurden), aber der richtige Punkt fuer die tatsaechliche Submission.
+  all_prob <- do.call(rbind, lapply(per_fold, `[[`, "prob"))
+  all_truth <- factor(unlist(lapply(per_fold, function(p) as.character(p$truth))), levels = classes)
+  final <- tune_class_multipliers(all_prob, all_truth, classes, grid = grid, metric_fn = metric_fn)
+
+  list(
+    fold_info = data.table::rbindlist(fold_info),
+    nested_metric = nested_metric,
+    final_multipliers = final$multipliers,
+    final_metric = final$bacc
+  )
+}

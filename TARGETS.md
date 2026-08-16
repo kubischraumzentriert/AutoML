@@ -505,15 +505,39 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Regressions-Template - noch nicht unabhaengig an einem Klassifikations-
   projekt bestaetigt, dieselbe Code-Logik (`share > threshold`) gilt aber
   identisch hier.
-- **Nested/gepooltes per-Fold-Threshold-Tuning fehlt** - Anlass:
-  `CreditScoringChallenge`, Verfeinerung zu `130_threshold_tuning.R`. Aktuell nur
-  ein einzelner stratifizierter 3-Wege-Split (Train/Tune/Eval) - keine
-  per-Fold-Schwellenwahl mit gepoolter Auswertung auf den ausgelassenen Folds.
-  Die im Projekt umgesetzte "Nested"-Variante war dort die Grundlage einer fast
-  perfekten CV-LB-Kalibrierung. Kein Muss (der bestehende 3-Wege-Split
-  funktioniert), aber ein dokumentierter, funktionierender
-  Verfeinerungsvorschlag fuer `class_multiplier_tuning.R`/`130`. 1-Projekt-
-  Kandidat, niedrigere Prioritaet.
+- ~~**Nested/gepooltes per-Fold-Threshold-Tuning fehlt**~~ **ERLEDIGT
+  (2026-08-15), ueber den No-op-Pfad aus ADR-003 backported.** Anlass:
+  `CreditScoringChallenge`, Verfeinerung zu `130_threshold_tuning.R`. Der
+  bestehende einzelne stratifizierte 3-Wege-Split (Train/Tune/Eval) nutzt
+  nur einen Bruchteil der Daten fuer Multiplikator-Suche UND Bewertung - die
+  in `CreditScoringChallenge/040_threshold_tuning.R` projekt-lokal gebaute
+  "Nested"-Variante (binaer, F1-spezifisch, eigene Suchlogik) war dort
+  Grundlage einer fast perfekten CV-LB-Kalibrierung.
+
+  **Umsetzung**: statt die binaere F1-Suchlogik zu kopieren,
+  `nested_cv_class_multiplier_tuning()` neu in `class_multiplier_tuning.R`
+  - verallgemeinert das Prinzip (K-fach-CV-OOF-Vorhersagen, Multiplikatoren
+  je Fold NUR auf den UEBRIGEN Folds suchen, gepoolt anwenden -> ehrliche
+  Schaetzung ohne Datenleck zwischen Suche und Bewertung; finale
+  Deployment-Multiplikatoren separat auf ALLEN OOF gesucht) generisch fuer
+  beliebige Klassenzahl/Metrik, indem sie das bereits vorhandene
+  `tune_class_multipliers()` wiederverwendet (das den binaeren 1D-Fall via
+  `optimize()`/Brent und den Multiklassen-Fall via Nelder-Mead schon
+  automatisch unterscheidet, siehe `REFERENZ_NELDER_MEAD.md`) - keine
+  Logik-Duplikation. Opt-in in `130_threshold_tuning.R` ueber
+  `threshold_tuning_nested` (Default `FALSE`, `000_config.R`) - laeuft nur,
+  wenn ein Projekt es explizit aktiviert, erzeugt dann zusaetzlich
+  `threshold_tuning_nested_results.csv` neben den bestehenden Ergebnissen,
+  ohne diese zu veraendern.
+
+  **Regressionsgetestet gegen `ci_smoke_test`**: Default (`FALSE`) liefert
+  byteidentische Ergebnisse zum Vorher-Zustand. Mit `TRUE` aktiviert: nested
+  BAcc 0.6160 vs. 0.5617 beim bestehenden 3-Wege-Split (mehr Daten fuer
+  Suche UND Bewertung, weniger Rauschen - erwartungsgemaess). `130` laeuft
+  im CI-Smoke-Test nicht mit (nicht in dessen Kopierliste), daher keine
+  CI-Aenderung noetig; die neue Funktion wird von keinem der CI-Kernskripte
+  geladen. Noch 1-Projekt-Kandidat fuer den NUTZEN (CreditScoringChallenge)
+  - die STRUKTURELLE Integration ins Template gilt als abgeschlossen.
 - ~~**Zwei implizite Architekturentscheidungen als ADR-Kandidaten
   vorgemerkt (2026-08-08)**~~ **ERLEDIGT - Karteileiche korrigiert
   (2026-08-15).** Diese Notiz war laengst veraltet: beide Entscheidungen
