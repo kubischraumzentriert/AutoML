@@ -47,7 +47,8 @@ Tabelle als publikationsreif gilt.
 | `openml-amazon-access` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `openml-bank-marketing-ensemble-test` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (frühe Ensemble-Selection-Bestätigung, vor `health_condition`) | — (kein `130` im Projekt) | — |
 | `openml-synthetic-control-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | ✓ (Faktor 1.25x, unauffällig) | ✓ (noch steigend, 17.5%) | ✓ (SD=0.000, vollständig deterministisch) | ✓ (beide unauffällig, z=0.05/-0.63) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096` für Hebel-1-Kandidat, negativ: Kappa 0.976, kein Diversitätsgewinn) | ✓ (keine Verbesserung, exakt balancierte Klassen) | — |
-| `openml-eeg-eye-state-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | — (strukturell übersprungen, >5000 Zeilen) | ✓ (noch steigend, 14.7%) | ✓ (unauffällig, 0.23x/0.21x) | ✓ (beide unauffällig, aber bisher höchste z-Werte: z=1.67/1.27) | — (kein `148`/`149` im Projekt) | ✓ (binärer `optimize()`/Brent-Pfad, modester Gewinn) | — |
+| `playground-series-s5e12` (Kaggle) | — (kein `015` im Projekt) | ✓ (AUC 0.627, moderater aber echter Shift, Treiber `physical_activity_minutes_per_week`/`triglycerides`) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✗ (KEIN `148`/`149` im heutigen Sinn - lokal `148_select_submission_model.R`/`149_disagreement_check.R`, ZWEI ANDERE Verfahren: datengetriebene Modellwahl aus `experiments.db` bzw. Uneinigkeits-Vertrauenscheck, keine Greedy-Ensemble-Selection; drittes Projekt nach `s6e5`/`s6e6` mit diesem Namenskollisions-Muster) | ~ (`130_threshold_tuning.R` im Ordner, aber keine Artefakte - Zielmetrik AUC ist schwellenwertunabhaengig, `warn_if_threshold_step_low_value()` greift; dasselbe Muster wie `predictingsmartphoneAddiction_s6e8`) | — |
+| `openml-eeg-eye-state-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | — (strukturell übersprungen, >5000 Zeilen) | ✓ (noch steigend, 14.7%) | ✓ (unauffällig, 0.23x/0.21x) | ✓ (beide unauffällig, aber bisher höchste z-Werte: z=1.67/1.27) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096`, 2. Versuch nach `synthetic_control`: Kappa 0.581, DEKORRELIERT (anders als dort), aber FT-Transformer schwächer (BAcc 0.764 vs. Ranger 0.869 bei nur 15 Epochen/n=4500) - Blend-BAcc wegen NaN-Bug offen geblieben, nicht nachgerechnet) | ✓ (binärer `optimize()`/Brent-Pfad, modester Gewinn) | — |
 
 ## Was diese erste Fassung zeigt
 
@@ -323,10 +324,24 @@ Dateneigenschaften, nicht nur "funktioniert der Mechanismus")
   `synthetic_control` (i.i.d. Zeilen). Kein Mechanismus-Versagen, sondern
   strukturell nur dort ein Thema, wo die Datenstruktur es hergibt.
 - **FT-Transformer-Ensemble-Diversitaet**: CPU-Machbarkeit war projekt-
-  unabhaengig (adr/002-Schwelle klar eingehalten), der Ensemble-NUTZEN aber
-  negativ auf einem besonders sauberen, kleinen Datensatz (Kappa 0.976) -
-  offene Frage, ob ein groesserer/rauschigerer Datensatz ein anderes Bild
-  zeigt.
+  unabhaengig **innerhalb** der getesteten Groessenspanne, aber selbst NICHT
+  projekttyp-unabhaengig - der zweite Datenpunkt (`eeg-eye-state`, 14980
+  Zeilen) ist bereits CPU-untragfaehig bei Produktionseinstellungen
+  (adr/002-Zeilenschwelle liegt irgendwo zwischen 600 und 14980). Der
+  Dekorrelations-BEFUND selbst dreht sich mit dem zweiten Datenpunkt: auf
+  dem sauberen, kleinen `synthetic_control` (600 Zeilen, exakt trennbar)
+  praktisch KEINE Dekorrelation (Kappa 0.976), auf dem rauschigeren,
+  groesseren (aber subgesampelten) `eeg-eye-state` (n=4500) dagegen
+  DEKORRELIERT (Kappa 0.581) - erste Evidenz, dass Datensatz-"Sauberkeit"
+  (nicht nur Groesse) der eigentliche Treiber sein koennte, ob ein FT-
+  Transformer andere Fehler macht als ein Baumensemble. Der tatsaechliche
+  Blend-NUTZEN bleibt aber bei beiden offen bzw. unguenstig: bei
+  `synthetic_control` mangels Dekorrelation, bei `eeg-eye-state` weil der
+  (kostenbedingt nur 15 Epochen trainierte) FT-Transformer klar schwaecher
+  als Ranger blieb (BAcc 0.764 vs. 0.869) und die konkrete Blend-Zahl wegen
+  eines Bugs nicht nachgerechnet wurde. Insgesamt weiterhin ein dünner,
+  2-Projekt-Befund mit gemischtem statt eindeutigem Bild - kein robuster
+  Publikationsbefund, sondern ein offener Faden.
 
 ### Methodischer Hinweis fuer die Publikationsnotiz selbst
 
@@ -346,8 +361,25 @@ Abdeckungsquote zu praesentieren.
    durchgearbeitet (Reihenfolge: Leak-Audit → Adversarial Validation →
    Split-Size-Sens./Learning-Curve/Seed-Stabilität → Generalisierungslücke
    → Threshold-Tuning → Ensemble Selection), 0 `?`-Zellen verbleibend.
-2. Fehlende Projekte ergänzen, falls `ML_Learning/README.md` weitere
-   relevante Kandidaten zeigt, die hier noch nicht aufgenommen sind.
+2. ~~Fehlende Projekte ergänzen~~ **ERLEDIGT (2026-08-15)**: alle
+   `ML_Learning`-Ordner gegen die Tabelle abgeglichen. Die meisten Luecken
+   waren Regressionsprojekte (out of scope fuer dieses Klassifikations-
+   Template: `AStepAheadOfdrought`, `SubjektDatensatz`, `WineQualityDataset`,
+   `dataCar-exposure-offset-test`, `openml-diamonds-regression`,
+   `openml-house-prices-regression`, `openml-bike-sharing-leak-test`,
+   `playground-series-s5e9`, `tweet`) oder keine echten Workflow-Projekte
+   (`niftis` = nur Rohdaten, `openml-drift-detection-test` = Ad-hoc-
+   Feature-Testskripte ohne Kernworkflow). Ein echter Fund: `DAT_Parkinsons`
+   (Klassifikation, `classif.*`-Metriken) hat bisher NUR `000_config.R`/
+   `db_logging.R` - kein einziges Kernskript gelaufen, daher (noch) keine
+   Tabellenzeile wert. `playground-series-s5e12` (Kaggle Diabetes,
+   binaer/AUC) war der einzige echte fehlende Kandidat - ergaenzt, inkl.
+   eines weiteren `148`/`149`-Namenskollisionsfalls (drittes Projekt nach
+   `s6e5`/`s6e6` mit diesem Muster) und einer Korrektur unterwegs: die
+   Threshold-Tuning-Zelle war zunaechst faelschlich als `✓` markiert, weil
+   das Skript existiert - fehlende Artefakte + `warn_if_threshold_step_low_
+   value()` zeigten aber, dass es strukturell uebersprungen wird (AUC ist
+   schwellenwertunabhaengig, identisch zu `s6e8`s Muster), auf `~` korrigiert.
 3. ~~Stichproben-Gegenprobe: die s6e5/s6e6-Dopplung klären~~ **ERLEDIGT
    (2026-08-15)**: echter Fehler bestätigt - `s6e5` hat gar kein `148`/
    `149` im Ordner, nur `140_stack_ensemble.R` (ein ANDERES Verfahren,
@@ -376,6 +408,12 @@ Abdeckungsquote zu praesentieren.
    Diversität) identifiziert, plus ein methodischer Hinweis zur
    Marker-Lücken-Interpretation für die Notiz selbst.
 6. Perspektivisch: zweiter Beleg für die noch duennen 1-Projekt-Befunde
-   (Learning-Curve-Plateau, Group-aware-CV-Klassifikationsseite,
-   FT-Transformer-Diversitaet), bevor die Diskussion oben als belastbar
-   gilt statt als erste Beobachtung.
+   (Learning-Curve-Plateau, Group-aware-CV-Klassifikationsseite), bevor die
+   Diskussion oben als belastbar gilt statt als erste Beobachtung.
+   ~~FT-Transformer-Diversitaet~~ **zweiter Datenpunkt ERLEDIGT
+   (2026-08-15, `eeg-eye-state`)**: Ergebnis aber uneindeutig statt
+   bestaetigend - Dekorrelations-Befund dreht sich zwischen den beiden
+   Projekten (0.976 vs. 0.581), CPU-Machbarkeitsschwelle liegt bereits
+   INNERHALB der beiden Datenpunkte, Blend-Nutzen bei keinem der beiden
+   klar positiv belegt. Bleibt ein offener Faden statt eines robusten
+   Befunds, siehe Diskussion oben.
