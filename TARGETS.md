@@ -374,6 +374,34 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   `096_ft_transformer_cv_ensemble.R`) in `openml-synthetic-control-
   timeseries/README.md`. Naechster Versuch: ein Projekt mit mehr Zeilen/
   Rauschen als Kandidat waehlen, nicht denselben einfachen Fall wiederholen.
+
+  **Zweiter Versuch (2026-08-15, `openml-eeg-eye-state-timeseries`) -
+  Dekorrelation erstmals bestaetigt, aber neue offene Frage.** Bei VOLLER
+  Zeilenzahl (14980) war CPU-Training NICHT tragfaehig (111 Min. bei 60
+  Produktions-Epochen, weit ueber der `adr/002`-Schwelle - neuer
+  Datenpunkt: die Zeilenschwelle liegt irgendwo zwischen 600 und 14980).
+  Daher auf 4500 Zeilen stratifiziert subgesamplet, 15 Epochen, 5-fach CV
+  (33.3 Min.): FT-Transformer BAcc 0.764/MCC 0.532 vs. Ranger BAcc
+  0.869/MCC 0.744 - UND Cohen's Kappa **0.581** (79.5% Uebereinstimmung),
+  **erstmals tatsaechlich dekorreliert** (< 0.7-Schwelle), klarer
+  Gegensatz zu `synthetic_control`s Kappa 0.976. Bestaetigt: auf einem
+  rauschigeren Datensatz existiert das gesuchte Diversitaets-Potenzial
+  grundsaetzlich.
+
+  **Blend-Wert offen geblieben**: ein Bug (vereinzelte NaN-Wahrschein-
+  lichkeiten des unternetrainierten FT-Transformers bei nur 15 Epochen)
+  liess die Blend-Auswertung abstuerzen - bewusst NICHT erneut 33 Minuten
+  gezahlt, um nur diese eine Zahl nachzutragen (Dekorrelation war die
+  eigentliche Frage dieses Tests), Bug im Skript aber gefixt (betroffene
+  Zeilen werden jetzt ausgeschlossen statt den Lauf abzubrechen) fuer eine
+  kuenftige Wiederholung. **Offene Frage fuer den naechsten Versuch**: ob
+  ein per-Klassen-GEWICHTETER Blend (statt gleichgewichtet) das schwache-
+  aber-dekorrelierte FT-Transformer-Mitglied trotzdem gewinnbringend
+  einbindet - das ist genau der Mechanismus, den Hebel 1 urspruenglich
+  adressieren sollte, und jetzt erstmals ein Kandidat, an dem es sich
+  lohnen koennte, ihn tatsaechlich zu bauen (bisher gab es dafuer noch
+  keinen dekorrelierten Kandidaten). Voller Befund in
+  `openml-eeg-eye-state-timeseries/README.md`.
 - ~~**Exact-value Target-Encoding auch auf NUMERISCHE Spalten**~~ **ERLEDIGT /
   UEBERNOMMEN (2. Bestaetigung)**: Anlass 4th-Place-Writeup zu `s6e7` (XGBoost OOF
   0.9489 -> 0.9496), zweite unabhaengige Bestaetigung auf `s6e8` (Smartphone

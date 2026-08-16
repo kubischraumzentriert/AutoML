@@ -53,10 +53,15 @@ Datenpunkt (2026-08-15, `openml-synthetic-control-timeseries`, 600 Zeilen,
 `mlr3torch::lrn("classif.ft_transformer")`, d_token=64/n_blocks=3)**: 15
 Epochen brauchten 163s CPU-Zeit, hochgerechnet auf 60 Produktions-Epochen
 ~11 Minuten - klar unter der 30-Minuten-Schwelle, CPU-Training direkt
-tragfaehig. Noch kein zweiter Datenpunkt, die genaue Zeilenschwelle (ab wann
-CPU nicht mehr tragfaehig ist) bleibt daher weiterhin nicht formal definiert
-- siehe `TARGETS.md`-Backlog "Per-Klassen-gewichteter Ensemble-Blend" fuer
-den Folgeschritt (echte CV-Bewertung + Dekorrelations-Check vs. GBMs).
+tragfaehig. **Zweiter Datenpunkt (2026-08-15, `openml-eeg-eye-state-
+timeseries`, 14980 Zeilen, gleiche Architektur)**: NICHT mehr tragfaehig -
+15 Prototyp-Epochen hochgerechnet auf 60 Produktions-Epochen ergeben ~111
+Minuten, weit ueber der Schwelle. Die Zeilenschwelle liegt damit
+irgendwo zwischen 600 (tragfaehig) und 14980 (nicht tragfaehig) - immer
+noch keine feine Eingrenzung, aber die erste bestaetigte OBERE Grenze.
+Siehe `TARGETS.md`-Backlog "Per-Klassen-gewichteter Ensemble-Blend" fuer
+den Folgeschritt (echte CV-Bewertung + Dekorrelations-Check vs. GBMs,
+dort mit 4500 subgesampelten Zeilen als Kompromiss durchgefuehrt).
 
 ## Alternativen erwogen
 
