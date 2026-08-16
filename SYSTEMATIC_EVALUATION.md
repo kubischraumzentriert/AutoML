@@ -261,6 +261,28 @@ Tabelle als publikationsreif gilt.
   Learning-Curve-Spalte durch den Bugfix oben) - weiterhin nicht
   erschoepfend, aber ein wachsender, durchgehend fehlerfreier Ausschnitt
   ausserhalb der bereits bekannten `s6e5`-Korrektur.
+- **Dritte Stichproben-Runde an Alt-Zellen (2026-08-16), wieder kein neuer
+  Fehler gefunden**: 8 weitere Zellen aus 6 Projekten/2 Spalten (Leak-Audit,
+  Generalisierungslücke, Split-Size-Sensitivity, Seed-Stabilität,
+  Adversarial Validation) direkt gegen die rohen `_artifacts`-CSVs
+  nachgerechnet - `openml-steel-plates-fault`s Determinismus-Fund (`V14`
+  bei Wert 300, `n_group=43`, `purity=1`, `flagged=TRUE` - exakt der eine
+  dokumentierte Fund) und Generalisierungslücke (z=-1.6337/-0.3902 ≈
+  -1.63/-0.39 exakt), `openml-satimage`s Generalisierungslücke
+  (z=1.0292/0.4967 ≈ 1.03/0.50 exakt) und Split-Size-Sensitivity (Faktor
+  0.0333/0.0264 = 1.259 ≈ 1.26x exakt, `chosen_ratio=0.8` gegen
+  `min(cv)` bei `ratio=0.6`), `openml-credit-g`s Leak-Audit
+  (`credit_amount`-Share 0.2688 ≈ 26.9% exakt, 0/68 Determinismus-Zeilen
+  bestaetigt `flagged=TRUE`), Split-Size-Sensitivity (Faktor 0.0640/0.0419
+  = 1.527 ≈ 1.53x exakt) und Seed-Stabilitaet (0.1734/0.1657 ≈
+  17.3%/16.6% exakt), `playground-series-s6e5`s Adversarial-Validation-AUC
+  (0.499637 ≈ 0.4996 exakt) sowie `predictingsmartphoneAddiction_s6e8`s
+  Adversarial-Validation-AUC/ESS-Ratio (0.564925/0.940007 ≈ 0.565/0.94
+  exakt aus `adversarial_staged_results.csv`). Alle acht bestaetigt. Damit
+  sind jetzt 21 von >150 Zellen stichprobenartig direkt gegen Quelle
+  verifiziert - weiterhin nicht erschoepfend, aber ein durchgehend
+  fehlerfreier Ausschnitt ueber inzwischen 3 Runden, ausserhalb der
+  bereits bekannten `s6e5`-`148`/`149`-Korrektur.
 
 ## Diskussion für die Publikationsnotiz (2026-08-15)
 
@@ -392,13 +414,17 @@ Abdeckungsquote zu praesentieren.
    Dateiname geprüft (robust), bereits VORHANDENE `✓`-Zellen aus der
    allerersten Entwurfsfassung dagegen nicht - genau dort sass dieser
    Fehler.
-4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **ERSTE
-   RUNDE ERLEDIGT (2026-08-15)**: 7 zusätzliche Alt-Zellen aus 6
-   Projekten/Spalten direkt gegen Quelle (Artefakt-CSV oder README, nicht
-   nur TARGETS.md-Prosa) nachgeprüft - alle bestätigt, kein neuer Fehler.
-   Nicht erschöpfend (die Tabelle hat >150 Zellen, nur ein kleiner Teil
-   wurde bisher stichprobenartig geprüft) - eine zweite Runde an anderen
-   Zellen bleibt sinnvoll, ist aber kein akuter Blocker mehr.
+4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **DREI RUNDEN
+   ERLEDIGT (2026-08-15/2026-08-16)**: 7 (1. Runde) + 6 (2. Runde) + 8
+   (3. Runde) = 21 Alt-Zellen aus insgesamt 9 Projekten/5 Spalten direkt
+   gegen Quelle (Artefakt-CSV, nicht nur TARGETS.md-Prosa) nachgeprüft -
+   alle 21 bestätigt, kein neuer Fehler seit der `s6e5`-Korrektur (siehe
+   Detailauflistungen der 2. und 3. Runde im Abschnitt "Was diese erste
+   Fassung zeigt" oben). Nicht erschöpfend (die Tabelle hat >150 Zellen,
+   ~14% bisher stichprobenartig geprüft) - eine vierte Runde bleibt
+   sinnvoll, ist aber kein akuter Blocker mehr; das durchgehend
+   fehlerfreie Muster ueber 3 Runden spricht fuer die grundsaetzliche
+   Verlaesslichkeit der Tabelle.
 5. ~~Zusammenfassung/Diskussion für die Publikationsnotiz ableiten~~
    **ERLEDIGT (2026-08-15)**: siehe Abschnitt "Diskussion für die
    Publikationsnotiz" oben - vier robuste, projekttyp-unabhängige
