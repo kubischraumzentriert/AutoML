@@ -199,6 +199,81 @@ Tabelle als publikationsreif gilt.
   bereits behobene `s6e5`-Dopplung war fehlerhaft, keine weiteren Funde in
   dieser Stichprobe.
 
+## Diskussion für die Publikationsnotiz (2026-08-15)
+
+Beantwortet Schritt 5 unten: welche Komponenten sind projekttyp-unabhängig
+robust (der Mechanismus funktioniert zuverlässig, unabhängig von der
+Domäne), welche sind projektspezifisch (die Ergebnisgröße/Relevanz hängt
+an konkreten Dateneigenschaften)? Diese Unterscheidung ist fuer die
+Publikationshypothese aus `AGENTS.md` ("Trust-/Diagnose-Schicht als
+staerkster Kern") wichtiger als reine Trefferquoten.
+
+### Projekttyp-unabhängig robust (Mechanismus haelt ueber sehr
+unterschiedliche Domaenen/Aufgabentypen)
+
+- **Leak-Audit (015)**: 8 Bestätigungen über Kaggle/Zindi/DrivenData/OpenML,
+  binär/multiclass, Domänen von Gesundheit bis Kredit bis Infrastruktur bis
+  Zeitreihen-Klassifikation. Genau **1 echter Fund** (`CreditScoringChallenge`,
+  F1 0.88→0.41) bei **0 Fehlalarmen** über die restlichen 7 Projekte - exakt
+  das erwartete Muster fuer einen funktionierenden Guard (selten ausloesen,
+  aber wenn, dann berechtigt).
+- **Generalisierungslücke (136)**: über alle 6 real getesteten Projekte
+  unauffaellig, trotz enormer Groessenspanne (1941 bis 690.088 Zeilen).
+  Bisher **kein einziger realer Beleg fuer Test-Harness-Optimismus** - ein
+  konsistentes Negativergebnis, das indirekt bestaetigt, dass das
+  `AutoTuner`-Design (verschachteltes Resampling) haelt, was es verspricht,
+  unabhaengig vom Projekttyp.
+- **Adversarial Validation (115)**: trennt zuverlaessig echten, extremen
+  Shift (`geoai-aquaculture`, AUC 0.99998) von 5 strukturell sehr
+  unterschiedlichen unauffaelligen Faellen (Zindi/Kaggle/OpenML, AUC
+  0.4971-0.654) - funktioniert als Diskriminator unabhaengig von Domaene
+  oder Datensatzgroesse.
+- **Seed-/Hyperparameter-Stabilitaet (092)**: durchgehend niedrige relative
+  Streuung (0.17x-0.24x der CV-Referenz) ueber 5 Projekte. Ausreisser:
+  `synthetic_control` mit SD=0.000 (vollstaendig deterministisch) - eher ein
+  Artefakt eines besonders sauber trennbaren synthetischen Datensatzes als
+  ein generalisierbarer Befund, sollte in einer Publikationsnotiz nicht als
+  typischer Wert zitiert werden.
+
+### Projektspezifisch (Effektgroesse/Relevanz haengt an konkreten
+Dateneigenschaften, nicht nur "funktioniert der Mechanismus")
+
+- **Learning-Curve (023)**: PLATEAU vs. NOCH STEIGEND korreliert direkt mit
+  Datensatzgroesse - `credit-g` (1000 Zeilen, kleinster getesteter Fall) ist
+  bisher der EINZIGE Plateau-Fall, `health_condition` (690k) und `satimage`
+  (6430) bleiben trotz sehr unterschiedlicher Groesse beide "noch steigend".
+  Nur 1 Plateau-Beleg bisher - fuer eine Publikationsnotiz waere ein
+  zweiter kleiner Datensatz wertvoll, um das Muster zu haerten.
+- **Threshold-Tuning (130), Effektgroesse**: reicht von einem GROESSTEN
+  Einzelhebel des gesamten Templates (`health_condition`, +0.074 BAcc,
+  unbalancierte 3 Klassen) bis zu GENAU NULL Wirkung
+  (`synthetic_control`, exakt balancierte 6 Klassen - keine
+  Multiplikator-Korrektur noetig). Der Mechanismus selbst bricht nie, aber
+  sein NUTZEN haengt sichtbar an Klassenungleichgewicht - eine Aufgabe ohne
+  Ungleichgewicht hat strukturell nichts zu gewinnen.
+- **Group-aware CV** (noch keine eigene Spalte, siehe Abschnitt oben): nur
+  relevant, wo echte Entitaets-/Zeitstruktur existiert - dramatisch bei
+  `eeg-eye-state-timeseries` (-21 BAcc-Punkte), komplett irrelevant bei
+  `synthetic_control` (i.i.d. Zeilen). Kein Mechanismus-Versagen, sondern
+  strukturell nur dort ein Thema, wo die Datenstruktur es hergibt.
+- **FT-Transformer-Ensemble-Diversitaet**: CPU-Machbarkeit war projekt-
+  unabhaengig (adr/002-Schwelle klar eingehalten), der Ensemble-NUTZEN aber
+  negativ auf einem besonders sauberen, kleinen Datensatz (Kappa 0.976) -
+  offene Frage, ob ein groesserer/rauschigerer Datensatz ein anderes Bild
+  zeigt.
+
+### Methodischer Hinweis fuer die Publikationsnotiz selbst
+
+Die vielen `—`-Zellen (Marker-Luecken) duerfen NICHT als Abdeckungs-Fehler
+in einer Publikation dargestellt werden - die meisten Module wurden erst
+zu einem bestimmten Zeitpunkt der Projekt-Historie eingefuehrt
+(`022`/`023`/`092` z.B. erst 2026-08-13, `148`/`149` erst 2026-08-11), die
+betroffenen Projekte sind aelter. Eine ehrliche Publikationsnotiz sollte
+das explizit als Limitation nennen (retrospektive Tabelle über eine
+organisch gewachsene Projekt-Historie, keine von Anfang an einheitlich
+instrumentierte Studie) statt Bestaetigungszahlen unkommentiert als
+Abdeckungsquote zu praesentieren.
+
 ## Nächste Schritte für diese Tabelle
 
 1. ~~`?`-Zellen gezielt auflösen~~ **ERLEDIGT (2026-08-15)**: alle 9 Spalten
@@ -226,6 +301,15 @@ Tabelle als publikationsreif gilt.
    Nicht erschöpfend (die Tabelle hat >150 Zellen, nur ein kleiner Teil
    wurde bisher stichprobenartig geprüft) - eine zweite Runde an anderen
    Zellen bleibt sinnvoll, ist aber kein akuter Blocker mehr.
-5. Sobald belastbar: Zusammenfassung/Diskussion für die Publikationsnotiz
-   ableiten (welche Komponenten sind projekttyp-unabhängig robust,
-   welche projektspezifisch).
+5. ~~Zusammenfassung/Diskussion für die Publikationsnotiz ableiten~~
+   **ERLEDIGT (2026-08-15)**: siehe Abschnitt "Diskussion für die
+   Publikationsnotiz" oben - vier robuste, projekttyp-unabhängige
+   Komponenten (Leak-Audit, Generalisierungslücke, Adversarial Validation,
+   Seed-Stabilität) und vier projektspezifische Befunde (Learning-Curve-
+   Plateau, Threshold-Tuning-Effektgröße, Group-aware CV, FT-Transformer-
+   Diversität) identifiziert, plus ein methodischer Hinweis zur
+   Marker-Lücken-Interpretation für die Notiz selbst.
+6. Perspektivisch: zweiter Beleg für die noch duennen 1-Projekt-Befunde
+   (Learning-Curve-Plateau, Group-aware-CV-Klassifikationsseite,
+   FT-Transformer-Diversitaet), bevor die Diskussion oben als belastbar
+   gilt statt als erste Beobachtung.
