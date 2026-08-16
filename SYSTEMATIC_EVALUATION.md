@@ -243,6 +243,23 @@ Tabelle als publikationsreif gilt.
   SD statt Spannweite) - gezielt nachgeprueft, KEINE identische
   Schwachstelle gefunden. Nur `learning_curve.R`s spezifische
   max-min-Implementierung war betroffen.
+- **Zweite Stichproben-Runde an Alt-Zellen (2026-08-15), wieder kein neuer
+  Fehler gefunden**: 6 weitere Zellen direkt gegen die rohen
+  `_artifacts`-CSVs nachgerechnet statt gegen Prosa geglaubt -
+  `CreditScoringChallenge`-Leak-Audit (F1 0.88→"Nested F1 ≈ 0.413" im
+  README bestaetigt), `PumpItUp`-Leak-Audit (`ward`-Share 0.2849 ≈ 28.5%
+  exakt aus `leak_audit_importance.csv`), `geoai-aquaculture`-Leak-Audit
+  (`re3_08`-Share 0.2748 ≈ 27.5% exakt), `health_condition`s Adversarial-
+  Validation-AUC (0.6535 ≈ 0.654 exakt aus
+  `adversarial_validation_results.csv`) sowie die beiden bisher nur mit
+  blossem `✓` (ohne Zahl) markierten Zellen `health_condition`s
+  Split-Size-Sensitivity (Faktor ≈1.47x bei `ratio=0.80`, min. CV bei
+  `ratio=0.6`) und Seed-Stabilitaet (0.24x/0.09x, beide `flagged=FALSE`).
+  Alle sechs bestaetigt. Damit sind jetzt 13 von >150 Zellen stichproben-
+  artig direkt gegen Quelle verifiziert (plus die vollstaendige
+  Learning-Curve-Spalte durch den Bugfix oben) - weiterhin nicht
+  erschoepfend, aber ein wachsender, durchgehend fehlerfreier Ausschnitt
+  ausserhalb der bereits bekannten `s6e5`-Korrektur.
 
 ## Diskussion für die Publikationsnotiz (2026-08-15)
 
