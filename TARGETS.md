@@ -1103,6 +1103,41 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     kuenftig fuer mehrere Lerner gleichzeitig aufrufen (Ranger UND rpart/
     lda) und beide in `experiments.db` loggen - noch keine einzige
     Vergleichsmessung vorhanden, reine Idee bis dahin.
+
+    **Bugfix (2026-08-15): "PLATEAU"-Klassifikation war anfaellig gegen
+    Einzelpunkt-Ausreisser bei kleinen Stichproben.** Anlass: bei der
+    Suche nach einem zweiten Beleg fuer `openml-credit-g`s vermeintlichen
+    ersten Plateau-Fall (siehe SYSTEMATIC_EVALUATION.md) zeigte
+    `openml-synthetic-control-timeseries` (600 Zeilen, KLEINER als
+    `credit-g`) "noch steigend" - direkter Widerspruch zur "kleine
+    Datensaetze plateauen"-Hypothese. Ursache: `report_learning_curve()`
+    bewertete den Regressions-Zuwachs relativ zur VOLLEN Score-Spannweite
+    (max-min ueber alle Fraktionen) - bei `credit-g` dominierte ein
+    einzelner Ausreisser bei winzigem n=20 (BAcc-Einbruch auf 0.475,
+    trotz `repeats=5`-Mittelung: bei n=20/5-fach-CV bleiben nur ~4 Zeilen
+    je Fold) die Spannweite und liess den tatsaechlich noch klar
+    steigenden Trend (0.598 bei n=100 -> 0.653 bei n=1000) faelschlich
+    unter der 10%-Schwelle erscheinen (6.5% statt der tatsaechlichen
+    23.1%). **Fix**: Nenner auf IQR (Q3-Q1) statt volle Spannweite
+    umgestellt - robust gegen genau diesen Fall, ohne neuen
+    Schwellenwert. `credit-g` kippt damit von PLATEAU zu NOCH STEIGEND.
+    Regressionsgetestet gegen `ci_smoke_test` (keine Aenderung) und alle
+    vier weiteren real getesteten Projekte (`health_condition`/`satimage`/
+    `synthetic_control`/`credit-g` selbst - alle bleiben bzw. werden "noch
+    steigend", keine unbeabsichtigte Kippung). Explizit NICHT auf
+    `split_size_sensitivity.R`/`generalization_gap.R` uebertragen - beide
+    nutzen zwar dieselbe "selbstkalibrierend relativ zu einer Referenz"-
+    Philosophie, aber technisch robustere Mechanismen (Minimum-Referenz
+    bzw. echter SD-basierter z-Score), gezielt gegengeprueft, keine
+    identische Schwachstelle gefunden.
+
+    **Nebenbefund**: `openml-satimage-multiclass` hat gar kein
+    `023_learning_curve.R` im Projektordner (nur das Modul
+    `learning_curve.R` ohne aufrufendes Skript/Artefakt) - die oben
+    zitierten Zahlen (0.848→0.892) stammen aus einer nicht mehr
+    reproduzierbaren Ad-hoc-Analyse. Echte Reproduzierbarkeits-Luecke,
+    niedrige Prioritaet (Klassifikation aendert sich unter beiden Nennern
+    nicht - 29.7%/59.3%, beide klar "noch steigend").
   - ~~**§14 Seed-Varianz & Hyperparameter-Rausch-Stabilitaet**~~ **ERLEDIGT
     (2026-08-13)**: `sanity_checks.R` deckte bereits Feature-Rausch-
     Perturbation und Feature-Invarianz ab - neu: `seed_stability.R`

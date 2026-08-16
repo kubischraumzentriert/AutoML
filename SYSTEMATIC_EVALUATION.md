@@ -33,7 +33,7 @@ Tabelle als publikationsreif gilt.
 | `geoai-aquaculture...` (Zindi) | ✓ (3. Bestätigung, `re3_08` 27.5%, kein Leak) | ✓✓ (AUC 0.99998 roh / 0.978 Band-Mittel - echter, extremer Train/Test-Shift; ESS 2.6% -> Reweighting verworfen, Invarianz-Ansatz stattdessen) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `openml-satimage-multiclass` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | ✓ (Faktor 1.26x, unauffällig) | ✓ (noch steigend bei 100%) | ✓ | ✓ (2. Bestätigung, z=1.03/z=0.50, kleinere/engere Hintergrund-Lücke als steel-plates-fault, unauffällig) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `openml-steel-plates-fault` | ✓ (1 Determinismus-Fund dokumentiert, nicht als Leak entfernt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ✓ (1. Bestätigung, z=-1.63/z=-0.39, Hintergrund-Lücke -0.039 BAcc, beide Kandidaten innerhalb des Referenzbereichs) | — (kein `148`/`149` im Projekt) | ✓ (1/prior schlägt Grid: 0.840 vs. 0.832) | — |
-| `openml-credit-g` | ✓ (unauffällig, Top-Feature `credit_amount` 26.9%, 0/68 Determinismus) | — (kein `115` im Projekt) | ✓ (Faktor 1.53x bei ratio=0.80, unauffällig) | ✓ (PLATEAU, 6.5% der Score-Spannweite/Verdopplung - unter 10%-Schwelle, ERSTES Plateau-Ergebnis ggü. `health_condition`/`satimage`, die beide "noch steigend" waren) | ✓ (2 Checks, 17.3%/16.6% relativ, beide unauffällig) | ✓ (unauffällig, eigener 80/20-Split) | — (kein `148`/`149` im Projekt) | ✓ (binärer Nelder-Mead-Fix gefunden+behoben) | — |
+| `openml-credit-g` | ✓ (unauffällig, Top-Feature `credit_amount` 26.9%, 0/68 Determinismus) | — (kein `115` im Projekt) | ✓ (Faktor 1.53x bei ratio=0.80, unauffällig) | ✓ (NOCH STEIGEND, 23.1% des IQR - **korrigiert 2026-08-15**: urspr. als "PLATEAU, 6.5% der vollen Spannweite" gemessen, aber ein Ausreisser bei n=20 hatte die Spannweite kuenstlich aufgeblaeht und den Trend verschleiert; robusterer IQR-Nenner zeigt denselben "noch steigend"-Trend wie `health_condition`/`satimage`/die Zeitreihen-Projekte) | ✓ (2 Checks, 17.3%/16.6% relativ, beide unauffällig) | ✓ (unauffällig, eigener 80/20-Split) | — (kein `148`/`149` im Projekt) | ✓ (binärer Nelder-Mead-Fix gefunden+behoben) | — |
 | `openml-adult-income` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `playground-series-s6e5` | — (kein `015` im Projekt) | ✓ (AUC 0.4996, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✗ (KEIN `148`/`149` im Projekt - stattdessen `140_stack_ensemble.R`, ein ANDERES Verfahren: Logits-Stacking-Meta-Learner, negativ getestet: +0.00016 AUC ggü. bestem Einzelmodell, unter dem Rausch-Band, bei ~19x Rechenaufwand - nicht übernommen) | — (kein `130` im Projekt) | — |
 | `playground-series-s6e6` | — (kein `015` im Projekt) | ✓ (AUC ≈0.4996, kein Shift, widerlegt Kardinalitäts-Artefakt-Verdacht aus s6e5) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (5. Bestätigung, Methodik-Test - lokal als `146_ensemble_selection.R` benannt, nicht `148`/`149`, aber dieselbe Greedy-Ensemble-Selection-Methodik) | — (kein `130` im Projekt) | — |
@@ -103,15 +103,17 @@ Tabelle als publikationsreif gilt.
   bisher nur "lief fehlerfrei durch", keine Zahlen): Split-Size-Sens.
   Faktor 1.53x bei `ratio=0.80` (Schwelle 2x, unauffaellig). Seed-
   Stabilitaet 17.3%/16.6% relativ (Schwelle 50%, beide unauffaellig).
-  **Echter differenzierender Befund bei Learning-Curve**: `credit-g`
-  (1000 Zeilen) zeigt als ERSTES Projekt ueberhaupt ein PLATEAU (6.5% der
-  Score-Spannweite pro Verdopplung, unter der 10%-Schwelle) - im
-  Gegensatz zu `health_condition` (690k Zeilen) und `satimage` (6430
-  Zeilen), die beide trotz sehr unterschiedlicher Groesse "noch
-  steigend" waren. Passt qualitativ zur Erwartung "Plateau eher bei
-  kleinen, einfachen Datensaetzen", ist aber bisher nur 1 Projekt-Beleg.
-  Die restlichen 14 Projekte haben keines der drei Module im
-  Projektordner - Marker-Luecke, keine Nullbefunde.
+  **Urspruenglich vermuteter differenzierender Befund bei Learning-Curve,
+  NACHTRAEGLICH WIDERLEGT (2026-08-15, siehe eigener Abschnitt weiter
+  unten)**: `credit-g` (1000 Zeilen) schien zunaechst als erstes Projekt
+  ein PLATEAU zu zeigen (6.5% der vollen Score-Spannweite, unter der
+  10%-Schwelle) - stellte sich bei der Suche nach einem zweiten Beleg als
+  Methodik-Artefakt heraus (ein Ausreisser bei winzigem n blaehte die
+  Spannweite auf). Mit einem robusteren IQR-Nenner zeigt `credit-g`
+  denselben "noch steigend"-Trend (23.1%) wie alle anderen bisher
+  getesteten Projekte, unabhaengig von der Groesse. Die restlichen 14
+  Projekte haben keines der drei Module im Projektordner - Marker-Luecke,
+  keine Nullbefunde.
 - **Generalisierungslücke (136) aufgelöst (2026-08-15)**: von 15 offenen
   Projekten hat KEINES `136_generalization_gap.R` im Ordner - nur die
   bereits gefuellten vier (`health_condition`, `satimage`,
@@ -198,6 +200,49 @@ Tabelle als publikationsreif gilt.
   `satimage`s Split-Size-Faktor 1.26x. Alle sieben bestaetigt - nur die
   bereits behobene `s6e5`-Dopplung war fehlerhaft, keine weiteren Funde in
   dieser Stichprobe.
+- **Zweiter Beleg fuer das Learning-Curve-Plateau gesucht (2026-08-15) -
+  Methodik-Fehler gefunden statt Bestaetigung.** `openml-synthetic-
+  control-timeseries` (600 Zeilen, KLEINER als `credit-g`s 1000) zeigte
+  "noch steigend" statt Plateau - direkter Widerspruch zur "kleine
+  Datensaetze plateauen"-Hypothese. Ursache gezielt untersucht: `learning_
+  curve.R`s Klassifikation bewertet den Regressions-Zuwachs relativ zur
+  VOLLEN Score-Spannweite (max-min ueber alle getesteten Fraktionen).
+  Bei `credit-g` dominierte ein einzelner Ausreisser bei winzigem n=20
+  (BAcc-Einbruch auf 0.475, trotz `repeats=5`-Mittelung - bei n=20/5-fach-
+  CV bleiben nur ~4 Zeilen je Fold) die Spannweite (0.178) und liess den
+  tatsaechlich noch klar steigenden Trend (0.598 bei n=100 -> 0.653 bei
+  n=1000) faelschlich unter der 10%-Plateau-Schwelle erscheinen (6.5%).
+
+  **Fix**: `learning_curve.R` auf IQR (Q3-Q1) statt volle Spannweite als
+  Nenner umgestellt - robust gegen genau diesen Einzelausreisser-Fall,
+  ohne einen neuen Schwellenwert einzufuehren. **Ergebnis**: `credit-g`
+  kippt von PLATEAU (6.5%) zu NOCH STEIGEND (23.1%) - der "erste
+  Plateau-Fall" war ein Artefakt, keine echte Sättigung.
+  Regressionsgetestet gegen `ci_smoke_test` (keine Klassifikationsaenderung)
+  und alle vier weiteren real getesteten Projekte
+  (`health_condition` 44.3%, `satimage` 29.7-59.3% je nach Nenner,
+  `synthetic_control` 45.4%, alle weiterhin "noch steigend", keine
+  ungewollte Kippung). **Nebenbefund**: `satimage` hat gar kein
+  `023_learning_curve.R` im Projektordner (nur das Modul `learning_curve.R`
+  ohne aufrufendes Skript/Artefakt) - die in TARGETS.md zitierten Zahlen
+  stammen aus einer nicht mehr reproduzierbaren Ad-hoc-Analyse, hier nur
+  handgerechnet aus den 5 dokumentierten Punkten nachvollzogen (echte
+  Reproduzierbarkeits-Luecke, siehe TARGETS.md-Backlog-Notiz).
+
+  **Fuer die Publikationsnotiz**: die "Learning-Curve ist projektspezifisch"
+  -These aus dem vorherigen Diskussions-Entwurf ist damit HINFAELLIG - siehe
+  korrigierter Diskussions-Abschnitt oben. Stattdessen ein methodischer
+  Lehrsatz, aber PRAEZISE eingegrenzt statt pauschalisiert: die konkrete
+  Implementierung "relativ zur VOLLEN Spannweite (max-min)" war
+  anfaellig gegen einen Einzelpunkt-Ausreisser. `split_size_sensitivity.R`
+  (Faktor relativ zum MINIMUM ueber alle ratios, je Ratio ueber
+  `repeats=20` gemittelt) und `generalization_gap.R` (echter z-Score,
+  SD-basiert ueber mehrere Referenz-Algorithmen) nutzen zwar dieselbe
+  "selbstkalibrierend relativ zu einer Referenz"-PHILOSOPHIE, aber
+  technisch ANDERE, bereits robustere Mechanismen (Minimum-Referenz bzw.
+  SD statt Spannweite) - gezielt nachgeprueft, KEINE identische
+  Schwachstelle gefunden. Nur `learning_curve.R`s spezifische
+  max-min-Implementierung war betroffen.
 
 ## Diskussion für die Publikationsnotiz (2026-08-15)
 
@@ -234,16 +279,20 @@ unterschiedliche Domaenen/Aufgabentypen)
   Artefakt eines besonders sauber trennbaren synthetischen Datensatzes als
   ein generalisierbarer Befund, sollte in einer Publikationsnotiz nicht als
   typischer Wert zitiert werden.
+- **Learning-Curve (023) - NOCH STEIGEND ueber alle 5 getesteten Projekte,
+  unabhaengig von der Groesse (korrigiert 2026-08-15)**: `health_condition`
+  (690k Zeilen), `satimage` (6430), `credit-g` (1000), `synthetic_control`
+  (600) und `eeg-eye-state` (14980) zeigen alle "noch steigend" - die
+  urspruenglich vermutete Groessen-Korrelation ("kleine Datensaetze
+  plateauen") war ein Methodik-Artefakt (siehe Abschnitt unten), kein
+  echter Befund. Bisher in DIESEM Oekosystem also eher ein robuster
+  Nullbefund ("Ranger/LightGBM plateauen im getesteten Fraktionsbereich
+  praktisch nie") als ein differenzierender - noch kein einziger echter
+  Plateau-Fall beobachtet.
 
 ### Projektspezifisch (Effektgroesse/Relevanz haengt an konkreten
 Dateneigenschaften, nicht nur "funktioniert der Mechanismus")
 
-- **Learning-Curve (023)**: PLATEAU vs. NOCH STEIGEND korreliert direkt mit
-  Datensatzgroesse - `credit-g` (1000 Zeilen, kleinster getesteter Fall) ist
-  bisher der EINZIGE Plateau-Fall, `health_condition` (690k) und `satimage`
-  (6430) bleiben trotz sehr unterschiedlicher Groesse beide "noch steigend".
-  Nur 1 Plateau-Beleg bisher - fuer eine Publikationsnotiz waere ein
-  zweiter kleiner Datensatz wertvoll, um das Muster zu haerten.
 - **Threshold-Tuning (130), Effektgroesse**: reicht von einem GROESSTEN
   Einzelhebel des gesamten Templates (`health_condition`, +0.074 BAcc,
   unbalancierte 3 Klassen) bis zu GENAU NULL Wirkung

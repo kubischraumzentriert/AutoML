@@ -71,10 +71,19 @@ learning_curve <- function(task, learner, measure, fractions, cv_folds = 5, repe
 #'
 #' SELBST-KALIBRIEREND (4. Bestaetigung derselben Lehre wie in
 #' split_size_sensitivity.R/generalization_gap.R): die vorhergesagte
-#' Verbesserung durch eine Verdopplung von n wird relativ zur GESAMTEN
-#' beobachteten Score-Spannweite (max-min ueber alle fractions) bewertet,
-#' nicht gegen einen absoluten Score-Schwellenwert - die "normale"
-#' Score-Skala haengt stark von Metrik/Task ab.
+#' Verbesserung durch eine Verdopplung von n wird relativ zur beobachteten
+#' Score-STREUUNG bewertet, nicht gegen einen absoluten Score-Schwellenwert
+#' - die "normale" Score-Skala haengt stark von Metrik/Task ab.
+#'
+#' IQR statt max-min als Nenner (2026-08-15, Korrektur nach einem echten
+#' Fund): die urspruengliche volle Spannweite (max-min ueber ALLE fractions)
+#' ist anfaellig fuer einen einzelnen verrauschten Ausreisser bei winzigen
+#' Fraktionen (z.B. openml-credit-g: ein Einbruch bei n=20 dominierte die
+#' Spannweite und liess einen tatsaechlich noch klar steigenden Trend
+#' faelschlich als "PLATEAU" erscheinen - mit repeats=5 gemittelt, aber bei
+#' n=20/5-fach-CV bleiben nur ~4 Zeilen je Fold, selbst gemittelt instabil).
+#' IQR (Q3-Q1) ignoriert die extremsten 25% auf jeder Seite und ist damit
+#' robust gegen genau diesen Fall, siehe TARGETS.md fuer die Herleitung.
 #' @param out_path optional CSV-Speicherpfad
 #' @param plateau_relative Anteil der Gesamtspannweite, den eine Verdopplung
 #'   von n mindestens noch bringen muesste, um als "noch steigend" zu gelten
@@ -94,15 +103,16 @@ report_learning_curve <- function(lc, out_path = NULL, plateau_relative = 0.10) 
     slope <- unname(coef(fit)["log(n)"])
     gain_per_doubling <- slope * log(2)
     total_range <- max(lc$val_score) - min(lc$val_score)
-    relative <- if (total_range == 0) NA_real_ else gain_per_doubling / total_range
+    iqr_range <- stats::IQR(lc$val_score)
+    relative <- if (iqr_range == 0) NA_real_ else gain_per_doubling / iqr_range
 
     cat(sprintf(
       "Regressions-Steigung (val_score ~ log(n)): %.5f  Erwarteter Zuwachs bei\n",
       slope
     ))
     cat(sprintf(
-      "Verdopplung von n: %.4f (%s der beobachteten Score-Spannweite %.4f)\n",
-      gain_per_doubling, if (is.na(relative)) "n/a" else sprintf("%.1f%%", relative * 100), total_range
+      "Verdopplung von n: %.4f (%s des IQR %.4f; volle Spannweite zum Vergleich: %.4f)\n",
+      gain_per_doubling, if (is.na(relative)) "n/a" else sprintf("%.1f%%", relative * 100), iqr_range, total_range
     ))
     still_climbing <- is.na(relative) || relative > plateau_relative
     if (still_climbing) {
