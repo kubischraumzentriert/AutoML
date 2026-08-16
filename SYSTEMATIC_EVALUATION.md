@@ -46,6 +46,8 @@ Tabelle als publikationsreif gilt.
 | `FinancialStressPredictionChallenge` | — (kein `015` im Projekt) | ✓ (AUC 0.4971, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `openml-amazon-access` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `openml-bank-marketing-ensemble-test` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (frühe Ensemble-Selection-Bestätigung, vor `health_condition`) | — (kein `130` im Projekt) | — |
+| `openml-synthetic-control-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | ✓ (Faktor 1.25x, unauffällig) | ✓ (noch steigend, 17.5%) | ✓ (SD=0.000, vollständig deterministisch) | ✓ (beide unauffällig, z=0.05/-0.63) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096` für Hebel-1-Kandidat, negativ: Kappa 0.976, kein Diversitätsgewinn) | ✓ (keine Verbesserung, exakt balancierte Klassen) | — |
+| `openml-eeg-eye-state-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | — (strukturell übersprungen, >5000 Zeilen) | ✓ (noch steigend, 14.7%) | ✓ (unauffällig, 0.23x/0.21x) | ✓ (beide unauffällig, aber bisher höchste z-Werte: z=1.67/1.27) | — (kein `148`/`149` im Projekt) | ✓ (binärer `optimize()`/Brent-Pfad, modester Gewinn) | — |
 
 ## Was diese erste Fassung zeigt
 
@@ -158,6 +160,30 @@ Tabelle als publikationsreif gilt.
   keines der vier `115_adversarial_validation.R` im Ordner hat. Alle
   `?`-Zellen der Tabelle sind damit jetzt vollstaendig aufgeloest (0
   verbleibend, per `grep`).
+- **Zwei neue Zeitreihen-Projekte ergaenzt (2026-08-15)**:
+  `openml-synthetic-control-timeseries` und `openml-eeg-eye-state-
+  timeseries` - erste Zeitreihen-Charakteristik im Oekosystem, bewusst als
+  Kontrastpaar gewaehlt (unabhaengige Serien vs. durchgehende Aufzeichnung
+  mit Zeit-Autokorrelation). Zwei echte Befunde, die KEINE der neun
+  bestehenden Spalten abbildet, deshalb hier als Text vermerkt statt einer
+  neuen Spalte (zu geringe Fallzahl fuer eine eigene Spalte, siehe Punkt 2
+  unten):
+  - **`group_resampling.R` (portiert aus `MLR3_Regression`) erste
+    eigenstaendige Bestaetigung auf der Klassifikationsseite** bei
+    `openml-eeg-eye-state-timeseries`: Random-CV BAcc 0.930 vs. Block-CV
+    BAcc 0.717 (-21 Punkte) - der bisher dramatischste Group-aware-CV-Befund
+    im gesamten Oekosystem (staerker als die beiden Regressions-
+    Bestaetigungen `SubjektDatensatz`/`AStepAheadOfdrought`). Noch kein
+    kanonisches Skript/keine Spaltennummer im Klassifikations-Template
+    (`group_resampling.R` liegt bisher nur projekt-lokal kopiert), daher
+    keine eigene Tabellenspalte.
+  - **FT-Transformer (`mlr3torch`) als Ensemble-Diversitaets-Kandidat**
+    (`per-Klassen-gewichteter Ensemble-Blend`-Backlog, Hebel 1) bei
+    `openml-synthetic-control-timeseries` getestet: CPU-Machbarkeit
+    bestaetigt (~11 Min. Produktions-Hochrechnung), aber negativ fuer
+    Ensemble-Zwecke - Kappa 0.976 (stark korreliert mit Ranger) UND
+    schwaecher (0.983 vs. 0.990 BAcc). Kein Bestandteil der Ensemble-
+    Selection-Spalte (148/149), da ein anderes Verfahren/Backlog-Ziel.
 
 ## Nächste Schritte für diese Tabelle
 
