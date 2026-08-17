@@ -429,13 +429,32 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   gezahlt, um nur diese eine Zahl nachzutragen (Dekorrelation war die
   eigentliche Frage dieses Tests), Bug im Skript aber gefixt (betroffene
   Zeilen werden jetzt ausgeschlossen statt den Lauf abzubrechen) fuer eine
-  kuenftige Wiederholung. **Offene Frage fuer den naechsten Versuch**: ob
-  ein per-Klassen-GEWICHTETER Blend (statt gleichgewichtet) das schwache-
-  aber-dekorrelierte FT-Transformer-Mitglied trotzdem gewinnbringend
-  einbindet - das ist genau der Mechanismus, den Hebel 1 urspruenglich
-  adressieren sollte, und jetzt erstmals ein Kandidat, an dem es sich
-  lohnen koennte, ihn tatsaechlich zu bauen (bisher gab es dafuer noch
-  keinen dekorrelierten Kandidaten). Voller Befund in
+  kuenftige Wiederholung.
+
+  **Per-Klassen-gewichteter Blend gebaut und getestet (2026-08-17,
+  `097_weighted_blend.R`) - Hebel 1 NICHT bestaetigt.** Statt der teuren
+  5-fach-CV (33 Min.) ein einzelner stratifizierter Train/Tune/Eval-
+  3-Wege-Split (wie `130_threshold_tuning.R`) - FT-Transformer nur EINMAL
+  trainiert (4.1 Min.), Blend-Gewicht(e) auf Tune gesucht (skalar via
+  `optimize()`, per-Klasse via Nelder-Mead ueber logit-reparametrisierte
+  Gewichte), ehrlich auf Eval bewertet: FT-Transformer 0.6862, Ranger
+  **0.8439**, Blend gleichgewichtet 0.7617, Blend skalar getunt
+  (`w_ft`=0.067) 0.8403, Blend per-Klasse getunt 0.8378 - **kein Blend
+  schlaegt das beste Einzelmodell** (bester Blend -0.0036 unter Ranger).
+  Die Gewicht-Suche schaltete FT-Transformer fast komplett ab (~0.07-0.10
+  statt 0.5), weil er auf diesem Split noch schwaecher war als im
+  `096`-CV-Mittel (0.686 vs. 0.764) - plausibel durch weniger
+  Trainingsdaten (2700 statt ~3600 Zeilen) UND keine Fold-Mittelung in
+  der guenstigeren 1-Split-Variante, also eine methodische Einschraenkung
+  dieses konkreten Tests, kein endgueltiger Beweis gegen einen staerker
+  trainierten FT-Transformer. **Fazit fuer Hebel 1 ueber beide bisher
+  getesteten Projekte**: in keinem Fall hat ein gewichteter Blend
+  gewonnen - bei `synthetic_control` mangels Dekorrelation, bei
+  `eeg-eye-state` trotz echter Dekorrelation wegen zu grossem
+  Qualitaetsabstand. Ein dritter Testfall mit staerker trainiertem
+  neuronalem Kandidaten waere der naechste Schritt, falls Hebel 1
+  weiterverfolgt werden soll - aktuell KEIN Backport-Kandidat (0/2
+  Projekte positiv). Voller Befund in
   `openml-eeg-eye-state-timeseries/README.md`.
 - ~~**Exact-value Target-Encoding auch auf NUMERISCHE Spalten**~~ **ERLEDIGT /
   UEBERNOMMEN (2. Bestaetigung)**: Anlass 4th-Place-Writeup zu `s6e7` (XGBoost OOF

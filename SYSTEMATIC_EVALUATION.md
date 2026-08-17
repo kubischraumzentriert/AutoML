@@ -48,7 +48,7 @@ Tabelle als publikationsreif gilt.
 | `openml-bank-marketing-ensemble-test` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (frühe Ensemble-Selection-Bestätigung, vor `health_condition`) | — (kein `130` im Projekt) | — |
 | `openml-synthetic-control-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | ✓ (Faktor 1.25x, unauffällig) | ✓ (noch steigend, 45.4% des IQR - Zelle am 2026-08-17 korrigiert, stand veraltet als "17.5%" seit vor dem IQR-Fix) | ✓ (SD=0.000, vollständig deterministisch) | ✓ (beide unauffällig, z=0.05/-0.63) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096` für Hebel-1-Kandidat, negativ: Kappa 0.976, kein Diversitätsgewinn) | ✓ (keine Verbesserung, exakt balancierte Klassen) | — |
 | `playground-series-s5e12` (Kaggle) | — (kein `015` im Projekt) | ✓ (AUC 0.627, moderater aber echter Shift, Treiber `physical_activity_minutes_per_week`/`triglycerides`) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✗ (KEIN `148`/`149` im heutigen Sinn - lokal `148_select_submission_model.R`/`149_disagreement_check.R`, ZWEI ANDERE Verfahren: datengetriebene Modellwahl aus `experiments.db` bzw. Uneinigkeits-Vertrauenscheck, keine Greedy-Ensemble-Selection; drittes Projekt nach `s6e5`/`s6e6` mit diesem Namenskollisions-Muster) | ~ (`130_threshold_tuning.R` im Ordner, aber keine Artefakte - Zielmetrik AUC ist schwellenwertunabhaengig, `warn_if_threshold_step_low_value()` greift; dasselbe Muster wie `predictingsmartphoneAddiction_s6e8`) | — |
-| `openml-eeg-eye-state-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | — (strukturell übersprungen, >5000 Zeilen) | ✓ (noch steigend, 31.0% des IQR - Zelle am 2026-08-17 korrigiert, stand veraltet als "14.7%" seit vor dem IQR-Fix) | ✓ (unauffällig, 0.23x/0.21x) | ✓ (beide unauffällig, aber bisher höchste z-Werte: z=1.67/1.27) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096`, 2. Versuch nach `synthetic_control`: Kappa 0.581, DEKORRELIERT (anders als dort), aber FT-Transformer schwächer (BAcc 0.764 vs. Ranger 0.869 bei nur 15 Epochen/n=4500) - Blend-BAcc wegen NaN-Bug offen geblieben, nicht nachgerechnet) | ✓ (binärer `optimize()`/Brent-Pfad, modester Gewinn) | — |
+| `openml-eeg-eye-state-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | — (strukturell übersprungen, >5000 Zeilen) | ✓ (noch steigend, 31.0% des IQR - Zelle am 2026-08-17 korrigiert, stand veraltet als "14.7%" seit vor dem IQR-Fix) | ✓ (unauffällig, 0.23x/0.21x) | ✓ (beide unauffällig, aber bisher höchste z-Werte: z=1.67/1.27) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096`, 2. Versuch nach `synthetic_control`: Kappa 0.581, DEKORRELIERT (anders als dort), aber FT-Transformer schwächer (BAcc 0.764 vs. Ranger 0.869 bei nur 15 Epochen/n=4500); `097_weighted_blend.R` (2026-08-17) hat den gewichteten Blend gebaut/getestet - Hebel 1 NICHT bestätigt, kein Blend (skalar 0.8403/per-Klasse 0.8378) schlägt Ranger allein (0.8439), Gewicht-Suche schaltete FT-Transformer fast ab) | ✓ (binärer `optimize()`/Brent-Pfad, modester Gewinn) | — |
 | `wdbc-plateau-test`¹ | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | ✓✓ (gezielt gebauter PLATEAU-Fall, 7.5% des IQR nach Mindest-n-Fix - erster echter Plateau-Fund, siehe Fussnote) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `uci-parkinsons-voice-groupcv`² | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 
@@ -627,13 +627,19 @@ Dateneigenschaften, nicht nur "funktioniert der Mechanismus")
   DEKORRELIERT (Kappa 0.581) - erste Evidenz, dass Datensatz-"Sauberkeit"
   (nicht nur Groesse) der eigentliche Treiber sein koennte, ob ein FT-
   Transformer andere Fehler macht als ein Baumensemble. Der tatsaechliche
-  Blend-NUTZEN bleibt aber bei beiden offen bzw. unguenstig: bei
-  `synthetic_control` mangels Dekorrelation, bei `eeg-eye-state` weil der
-  (kostenbedingt nur 15 Epochen trainierte) FT-Transformer klar schwaecher
-  als Ranger blieb (BAcc 0.764 vs. 0.869) und die konkrete Blend-Zahl wegen
-  eines Bugs nicht nachgerechnet wurde. Insgesamt weiterhin ein dünner,
-  2-Projekt-Befund mit gemischtem statt eindeutigem Bild - kein robuster
-  Publikationsbefund, sondern ein offener Faden.
+  Blend-NUTZEN ist bei BEIDEN Projekten inzwischen negativ bestaetigt (nicht
+  mehr offen): bei `synthetic_control` mangels Dekorrelation, bei
+  `eeg-eye-state` (`097_weighted_blend.R`, 2026-08-17, einzelner Train/
+  Tune/Eval-Split statt teurer CV) trotz ECHTER Dekorrelation - weder der
+  skalare (0.8403) noch der per-Klassen-getunte Blend (0.8378) schlagen
+  Ranger allein (0.8439), die Gewicht-Optimierung schaltete FT-Transformer
+  fast komplett ab (~0.07-0.10 statt 0.5). **Hebel 1 ist damit 0/2 -
+  aktuell KEIN Backport-Kandidat.** Mit einer methodischen Einschraenkung:
+  der guenstige 1-Split-Test gab FT-Transformer weniger Trainingsdaten
+  (2700 statt ~3600 Zeilen) und keine Fold-Mittelung als der urspruengliche
+  `096`-CV-Test, ein staerker trainierter Kandidat koennte das Bild noch
+  aendern - aber auf Basis der bisherigen 2 Projekte ist der Befund ein
+  klares, wenn auch vorlaeufiges Negativergebnis, kein offener Faden mehr.
 
 ### Methodischer Hinweis fuer die Publikationsnotiz selbst
 
