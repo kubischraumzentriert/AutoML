@@ -36,7 +36,7 @@ Tabelle als publikationsreif gilt.
 | `openml-credit-g` | ✓ (unauffällig, Top-Feature `credit_amount` 26.9%, 0/68 Determinismus) | — (kein `115` im Projekt) | ✓ (Faktor 1.53x bei ratio=0.80, unauffällig) | ✓ (NOCH STEIGEND, 23.1% des IQR - **korrigiert 2026-08-15**: urspr. als "PLATEAU, 6.5% der vollen Spannweite" gemessen, aber ein Ausreisser bei n=20 hatte die Spannweite kuenstlich aufgeblaeht und den Trend verschleiert; robusterer IQR-Nenner zeigt denselben "noch steigend"-Trend wie `health_condition`/`satimage`/die Zeitreihen-Projekte) | ✓ (2 Checks, 17.3%/16.6% relativ, beide unauffällig) | ✓ (unauffällig, eigener 80/20-Split) | — (kein `148`/`149` im Projekt) | ✓ (binärer Nelder-Mead-Fix gefunden+behoben) | — |
 | `openml-adult-income` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `playground-series-s6e5` | — (kein `015` im Projekt) | ✓ (AUC 0.4996, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✗ (KEIN `148`/`149` im Projekt - stattdessen `140_stack_ensemble.R`, ein ANDERES Verfahren: Logits-Stacking-Meta-Learner, negativ getestet: +0.00016 AUC ggü. bestem Einzelmodell, unter dem Rausch-Band, bei ~19x Rechenaufwand - nicht übernommen) | — (kein `130` im Projekt) | — |
-| `playground-series-s6e6` | — (kein `015` im Projekt) | ✓ (AUC ≈0.4996, kein Shift, widerlegt Kardinalitäts-Artefakt-Verdacht aus s6e5) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (5. Bestätigung, Methodik-Test - lokal als `146_ensemble_selection.R` benannt, nicht `148`/`149`, aber dieselbe Greedy-Ensemble-Selection-Methodik) | — (kein `130` im Projekt) | — |
+| `playground-series-s6e6` | — (kein `015` im Projekt) | ✓ (AUC ≈0.4996, kein Shift, widerlegt Kardinalitäts-Artefakt-Verdacht aus s6e5) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (5. Bestätigung, Methodik-Test - lokal als `146_ensemble_selection.R` benannt, nicht `148`/`149`, aber dieselbe Greedy-Ensemble-Selection-Methodik; laut Roh-CSV gewinnt der Greedy-Ensemble hier NICHT gegen das beste Einzelmodell, BAcc 0.9633 vs. 0.9638 - Mechanismus lief korrekt, aber ohne Performance-Gewinn bei diesem Lauf) | — (kein `130` im Projekt) | — |
 | `predictingsmartphoneAddiction_s6e8` | — (kein `015` im Projekt) | ✓ (AUC 0.565, moderat; ESS-Ratio 0.94, unschädlich) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓✓ (6. Bestätigung, live Kaggle-Submission) | — (`130`/`146` im Ordner, aber strukturell übersprungen - AUC/LogLoss/PRAUC sind schwellenwertunabhängig, keine Artefakte vorhanden) | — |
 | `drivendata_richter` | — (kein `015` im Projekt) | ✓ (AUC 0.5002, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `openml-yeast-multilabel` | — (kein `015` im Projekt) | — | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | ✓ (Binary Relevance, 1. Bestätigung) | ✓ (1. Bestätigung) |
@@ -325,6 +325,37 @@ Ergebnis (Group-aware CV hat noch keine eigene Spalte): Random-CV BAcc
   erschoepfend, aber ein durchgehend fehlerfreier Ausschnitt ueber
   inzwischen 4 Runden, ausserhalb der bereits bekannten
   `s6e5`-`148`/`149`-Korrektur.
+- **Fünfte Stichproben-Runde an Alt-Zellen (2026-08-17), kein Tabellenfehler,
+  aber eine dokumentierenswerte Nuance gefunden**: 9 weitere Zellen aus 6
+  Projekten/5 Spalten (Seed-Stabilität, Generalisierungslücke, Ensemble
+  Selection, Split-Size-Sensitivity, Multi-Label) direkt gegen die rohen
+  `_artifacts`-CSVs nachgerechnet - `eeg-eye-state`s Seed-Stabilität
+  (0.2328/0.2140 ≈ 0.23x/0.21x exakt) und Generalisierungslücke
+  (z=1.6676/1.2718 ≈ 1.67/1.27 exakt), `synthetic_control`s Split-Size-
+  Sensitivity (Faktor 0.0319/0.0254 = 1.255 ≈ 1.25x exakt, `min(cv)` bei
+  `ratio=0.6`), Generalisierungslücke (z=0.0454/-0.6345 ≈ 0.05/-0.63
+  exakt) und Seed-Stabilität (SD=0 exakt, beide Checks) sowie
+  `openml-scene-multilabel`/`openml-birds-multilabel`s Binary-Relevance-
+  Artefakte (reale, plausible Metriken - `scene` macro_f1 0.703 vs.
+  `birds` macro_f1 0.188, letzteres plausibel schwaecher bei einer
+  bioakustischen Aufgabe mit staerkerem Klassenungleichgewicht).
+  `predictingsmartphoneAddiction_s6e8`s Ensemble-Selection bestaetigt
+  (greedy_ensemble AUC 0.9560 > best_single 0.9556, passend zur `✓✓`-
+  Zelle). **Nuance bei `playground-series-s6e6`s Ensemble-Selection**: die
+  Roh-CSV (`ensemble_selection_results.csv`) zeigt best_single BAcc
+  0.9638 > greedy_ensemble 0.9633 > equal_blend 0.9580 - der Greedy-
+  Ensemble GEWINNT bei diesem konkreten Lauf NICHT gegen das beste
+  Einzelmodell. Kein Tabellenfehler (die Zelle behauptet nur "Methodik-
+  Test"/Mechanismus-Bestätigung, keinen Performance-Gewinn), aber ein
+  Beleg dafuer, dass Ensemble Selection nicht immer gewinnt - konsistent
+  mit der allgemeinen "schwache/korrelierte Mitglieder verwaessern das
+  Ensemble"-Lehre aus dem FT-Transformer-Abschnitt, hier bisher nirgends
+  explizit vermerkt. Alle neun Zellen inhaltlich bestaetigt (keine falsche
+  Tabellenzahl gefunden). Damit sind jetzt 38 von >150 Zellen
+  stichprobenartig direkt gegen Quelle verifiziert - weiterhin nicht
+  erschoepfend, aber ein durchgehend fehlerfreier Ausschnitt ueber
+  inzwischen 5 Runden, ausserhalb der bereits bekannten
+  `s6e5`-`148`/`149`-Korrektur.
 
 ## Diskussion für die Publikationsnotiz (2026-08-15)
 
@@ -480,16 +511,21 @@ Abdeckungsquote zu praesentieren.
    Dateiname geprüft (robust), bereits VORHANDENE `✓`-Zellen aus der
    allerersten Entwurfsfassung dagegen nicht - genau dort sass dieser
    Fehler.
-4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **VIER RUNDEN
+4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **FÜNF RUNDEN
    ERLEDIGT (2026-08-15/2026-08-17)**: 7 (1. Runde) + 6 (2. Runde) + 8
-   (3. Runde) + 8 (4. Runde) = 29 Alt-Zellen aus insgesamt 13 Projekten/
-   8 Spalten direkt gegen Quelle (Artefakt-CSV, nicht nur TARGETS.md-Prosa)
-   nachgeprüft - alle 29 bestätigt, kein neuer Fehler seit der
-   `s6e5`-Korrektur (siehe Detailauflistungen der 2.-4. Runde im Abschnitt
-   "Was diese erste Fassung zeigt" oben). Nicht erschöpfend (die Tabelle
-   hat >150 Zellen, ~19% bisher stichprobenartig geprüft) - eine fünfte
-   Runde bleibt sinnvoll, ist aber kein akuter Blocker mehr; das
-   durchgehend fehlerfreie Muster ueber 4 Runden spricht fuer die
+   (3. Runde) + 8 (4. Runde) + 9 (5. Runde) = 38 Alt-Zellen aus insgesamt
+   15 Projekten/9 Spalten direkt gegen Quelle (Artefakt-CSV, nicht nur
+   TARGETS.md-Prosa) nachgeprüft - alle 38 inhaltlich bestätigt, kein
+   neuer TABELLENFEHLER seit der `s6e5`-Korrektur, aber eine echte Nuance
+   in der 5. Runde gefunden und in die `s6e6`-Zelle nachgetragen (Greedy-
+   Ensemble gewinnt dort laut Roh-CSV NICHT gegen das beste Einzelmodell -
+   Mechanismus lief korrekt, kein Performance-Gewinn bei diesem Lauf,
+   siehe Detailauflistungen der 2.-5. Runde im Abschnitt "Was diese erste
+   Fassung zeigt" oben). Nicht erschöpfend (die Tabelle hat >150 Zellen,
+   ~25% bisher stichprobenartig geprüft) - eine sechste Runde bleibt
+   sinnvoll, ist aber kein akuter Blocker mehr; das durchgehend
+   fehlerfreie (bzw. bei Funden sofort nachgetragene) Muster ueber 5
+   Runden spricht fuer die
    grundsaetzliche Verlaesslichkeit der Tabelle.
 5. ~~Zusammenfassung/Diskussion für die Publikationsnotiz ableiten~~
    **ERLEDIGT (2026-08-15)**: siehe Abschnitt "Diskussion für die
