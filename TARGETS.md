@@ -223,9 +223,9 @@ allein auffindbar bleibt.
   `id_col` - `any()` auf einem Ein-Element-Vektor ist identisch zum
   Vektor selbst), regressionsgetestet gegen `ci_smoke_test`.
 
-- **Group-aware CV (`group_resampling.R`) auf der Klassifikationsseite -
-  ZWEITE unabhaengige Bestaetigung (2026-08-17), ADR-003-Backport-
-  Kriterium erfuellt.** `group_resampling.R` (Regressionsseite bereits
+- ~~**Group-aware CV (`group_resampling.R`) auf der Klassifikationsseite**~~
+  **ERLEDIGT (2026-08-17): ZWEITE unabhaengige Bestaetigung UND Backport
+  ins Template.** `group_resampling.R` (Regressionsseite bereits
   bestaetigt an `SubjektDatensatz`/`AStepAheadOfdrought`, siehe
   `REFERENZ_GROUP_AWARE_CV.md` im Regressions-Template) wurde am
   2026-08-15 nach `openml-eeg-eye-state-timeseries` portiert (1. Beleg
@@ -243,10 +243,17 @@ allein auffindbar bleibt.
   featureless` liegt bei Group-CV bei 0.469 (Zufallsniveau) - Rangers
   0.568 ist also echtes, wenn auch schwaches Signal, kein reines
   Rauschen-Artefakt der wenigen Gruppen (nur 8 gesunde Probanden).
-  **Naechster Schritt**: `group_resampling.R`/`set_group_role()`/
-  `diagnose_group_cv()` als eigenstaendiges Klassifikations-Modul ins
-  Template backporten (Regressions-Modul existiert bereits parallel) -
-  noch NICHT umgesetzt, nur die Bestaetigung selbst ist jetzt vollstaendig.
+  **Backport (2026-08-17)**: `group_resampling.R` (byte-identischer Code
+  zur Regressionsseite) liegt jetzt im Template-Root, Theorie/Zahlen in
+  [`REFERENZ_GROUP_AWARE_CV.md`](REFERENZ_GROUP_AWARE_CV.md) (verweist auf
+  das Regressions-Pendant fuer die volle Herleitung, dokumentiert hier nur
+  die Classif-spezifische Bestaetigungsgeschichte). Kein numeriertes
+  Treiber-Skript/keine `000_config.R`-Aenderung noetig (wie auf der
+  Regressionsseite - die Gruppenspalte ist immer projektspezifisch, opt-in
+  wie `scan_group_candidates()`). `test_group_significance()`/
+  `scan_group_candidates()` (eta^2-Permutationstest) bleiben ein NICHT
+  eigenstaendig fuer Classif bestaetigter Teil (setzen numerischen
+  Zielwert voraus, siehe Kopfkommentar im Modul + REFERENZ-Abschnitt 4).
   Details in `openml-eeg-eye-state-timeseries/README.md` bzw.
   `uci-parkinsons-voice-groupcv/README.md`, konsolidiert in
   `SYSTEMATIC_EVALUATION.md`.

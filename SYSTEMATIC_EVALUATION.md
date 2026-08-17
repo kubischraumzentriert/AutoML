@@ -383,9 +383,9 @@ Dateneigenschaften, nicht nur "funktioniert der Mechanismus")
   strukturell PROJEKTSPEZIFISCH relevant (nur wo echte Entitaets-/
   Zeitstruktur existiert - komplett irrelevant bei `synthetic_control`,
   i.i.d. Zeilen) - kein Mechanismus-Versagen dort, sondern schlicht nicht
-  anwendbar. Naechster Schritt: Backport von `group_resampling.R` als
-  eigenstaendiges Klassifikations-Modul ins Template (siehe TARGETS.md),
-  noch nicht umgesetzt.
+  anwendbar. **Backport (2026-08-17) abgeschlossen**: `group_resampling.R`
+  liegt jetzt im Template-Root, siehe
+  [`REFERENZ_GROUP_AWARE_CV.md`](REFERENZ_GROUP_AWARE_CV.md).
 - **FT-Transformer-Ensemble-Diversitaet**: CPU-Machbarkeit war projekt-
   unabhaengig **innerhalb** der getesteten Groessenspanne, aber selbst NICHT
   projekttyp-unabhaengig - der zweite Datenpunkt (`eeg-eye-state`, 14980
@@ -479,8 +479,9 @@ Abdeckungsquote zu praesentieren.
    Entitaets-Wiederholung, -23.6 BAcc-Punkte) bestaetigt `eeg-eye-state`
    (Zeit-Block-Nachbarschaft, -21.3 Punkte) mit einem strukturell anderen
    Leck-Mechanismus - ADR-003-Backport-Kriterium erfuellt, siehe Diskussion
-   oben/TARGETS.md. Backport von `group_resampling.R` als Klassifikations-
-   Modul ins Template selbst steht noch aus (naechster konkreter Schritt).
+   oben/TARGETS.md. Backport von `group_resampling.R` als eigenstaendiges
+   Klassifikations-Modul ins Template ebenfalls erledigt (2026-08-17),
+   siehe `REFERENZ_GROUP_AWARE_CV.md`.
    ~~Learning-Curve-Plateau~~ **umformuliert statt bestaetigt
    (2026-08-17)**: der urspruengliche Punkt war durch den `credit-g`-
    IQR-Fix bereits obsolet (kein Plateau-Fund mehr, den man haette
