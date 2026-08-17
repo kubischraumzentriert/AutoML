@@ -1264,6 +1264,17 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     DB-Logging ergaenzt (`092`). Jitter-Test laeuft nur, wenn `090` bereits
     ausgefuehrt wurde (sonst uebersprungen, kein Fehler).
 
+    **Nebenbefund (2026-08-17, 6. Stichproben-Runde SYSTEMATIC_EVALUATION.md)**:
+    `openml-satimage-multiclass` hat KEIN `092_seed_stability.R` im
+    Projektordner (nur das Modul `seed_stability.R` ohne aufrufendes
+    Skript/Artefakt) - dieselbe Reproduzierbarkeits-Luecken-Klasse wie das
+    bereits dokumentierte `023_learning_curve.R`-Fehlen weiter oben. Anders
+    als dort aber KEIN Vertrauensproblem: die oben zitierten Zahlen
+    (0.23x/0.21x) sind im Projekt-README (Abschnitt "Seed-/Hyperparameter-
+    Rausch-Stabilitaet") mit konkreten SD-Werten belegt (SD=0.0025/0.23x,
+    SD=0.0023/0.21x, Referenz-SD=0.0108) - eine echte, spezifische
+    Textquelle, nur das ausfuehrbare Artefakt fehlt.
+
 - **`subset_fraction`-Zeilenschwelle (2026-08-13) - ERLEDIGT.** Nutzer-Idee
   im Anschluss an die Lernkurve: ein fester Prozentsatz (Template-Default
   `0.10`) kann bei kleinen Datensaetzen zu wenige absolute Zeilen ergeben

@@ -31,7 +31,7 @@ Tabelle als publikationsreif gilt.
 | `CreditScoringChallenge` (Zindi) | ✓✓ (F1 0.88→0.41, echter Ex-post-Leak) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `PumpItUp` (DrivenData) | ✓ (2. Bestätigung, `ward` 28.5%, kein Leak) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `geoai-aquaculture...` (Zindi) | ✓ (3. Bestätigung, `re3_08` 27.5%, kein Leak) | ✓✓ (AUC 0.99998 roh / 0.978 Band-Mittel - echter, extremer Train/Test-Shift; ESS 2.6% -> Reweighting verworfen, Invarianz-Ansatz stattdessen) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
-| `openml-satimage-multiclass` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | ✓ (Faktor 1.26x, unauffällig) | ✓ (noch steigend bei 100%) | ✓ | ✓ (2. Bestätigung, z=1.03/z=0.50, kleinere/engere Hintergrund-Lücke als steel-plates-fault, unauffällig) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
+| `openml-satimage-multiclass` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | ✓ (Faktor 1.26x, unauffällig) | ✓ (noch steigend bei 100%) | ✓ (Seed-Varianz 0.23x/Jitter 0.21x, unauffällig - aus README nachgetragen, KEINE Reproduzierbarkeits-Lücke wie bei Learning-Curve: `092_seed_stability.R` fehlt zwar im Ordner wie das `023`-Pendant, aber die Zahlen stehen mit SD-Werten im README dokumentiert, nicht nur als Prosa-Behauptung) | ✓ (2. Bestätigung, z=1.03/z=0.50, kleinere/engere Hintergrund-Lücke als steel-plates-fault, unauffällig) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `openml-steel-plates-fault` | ✓ (1 Determinismus-Fund dokumentiert, nicht als Leak entfernt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | ✓ (1. Bestätigung, z=-1.63/z=-0.39, Hintergrund-Lücke -0.039 BAcc, beide Kandidaten innerhalb des Referenzbereichs) | — (kein `148`/`149` im Projekt) | ✓ (1/prior schlägt Grid: 0.840 vs. 0.832) | — |
 | `openml-credit-g` | ✓ (unauffällig, Top-Feature `credit_amount` 26.9%, 0/68 Determinismus) | — (kein `115` im Projekt) | ✓ (Faktor 1.53x bei ratio=0.80, unauffällig) | ✓ (NOCH STEIGEND, 23.1% des IQR - **korrigiert 2026-08-15**: urspr. als "PLATEAU, 6.5% der vollen Spannweite" gemessen, aber ein Ausreisser bei n=20 hatte die Spannweite kuenstlich aufgeblaeht und den Trend verschleiert; robusterer IQR-Nenner zeigt denselben "noch steigend"-Trend wie `health_condition`/`satimage`/die Zeitreihen-Projekte) | ✓ (2 Checks, 17.3%/16.6% relativ, beide unauffällig) | ✓ (unauffällig, eigener 80/20-Split) | — (kein `148`/`149` im Projekt) | ✓ (binärer Nelder-Mead-Fix gefunden+behoben) | — |
 | `openml-adult-income` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
@@ -356,6 +356,42 @@ Ergebnis (Group-aware CV hat noch keine eigene Spalte): Random-CV BAcc
   erschoepfend, aber ein durchgehend fehlerfreier Ausschnitt ueber
   inzwischen 5 Runden, ausserhalb der bereits bekannten
   `s6e5`-`148`/`149`-Korrektur.
+- **Sechste Stichproben-Runde an Alt-Zellen (2026-08-17), kein Tabellenfehler,
+  aber eine echte, bisher unbekannte Reproduzierbarkeits-Luecke gefunden**:
+  6 weitere Zellen aus 5 Projekten/4 Spalten (Threshold-Tuning, Leak-Audit,
+  Seed-Stabilitaet, Ensemble Selection) direkt gegen Quelle nachgeprueft -
+  `openml-steel-plates-fault`s Threshold-Tuning (`bacc_prior`=0.8402 vs.
+  `bacc_grid`=0.8320 ≈ 0.840 vs. 0.832 exakt, "1/prior schlaegt Grid"
+  woertlich bestaetigt), `openml-credit-g`s Threshold-Tuning (Existenz +
+  plausible Verbesserung bacc_plain 0.6845 -> bacc_tuned 0.6964
+  bestaetigt), `eeg-eye-state`s Leak-Audit (Top-Feature `V6` 14.0% Share,
+  weit unter der 50%-Schwelle - "unauffaellig" bestaetigt),
+  `synthetic_control`s Leak-Audit (Top-Feature `col_4` 14.2% Share,
+  ebenfalls unauffaellig) sowie `openml-bank-marketing-ensemble-test`s
+  Ensemble-Selection (Log-Datei statt CSV, da aelteres Projekt ohne
+  `_artifacts`-Konvention: Greedy-Ensemble TEST-AUC 0.9348 > bestes
+  Einzelmodell 0.9326 > Blend 0.9307 - echter Ensemble-Gewinn bestaetigt).
+
+  **Fund**: `openml-satimage-multiclass`s Seed-Stabilitaets-Zelle stand
+  bisher als bloßes `✓` ohne Zahl/Quelle in der Tabelle, ihre Zahlen
+  (0.23x/0.21x) stammten nur aus einem TEMPLATE-Config-Kommentar
+  (`000_config.R`, Zeile ~617). Der Projektordner hat KEIN
+  `092_seed_stability.R` (nur das Modul `seed_stability.R`, wie beim
+  bereits bekannten `023_learning_curve.R`-Nebenbefund) UND keine
+  `seed_stability_results.csv` - dieselbe Reproduzierbarkeits-Luecken-
+  Klasse wie bei der Lernkurve, bisher aber nirgends dokumentiert.
+  Anders als befuerchtet KEIN Vertrauensproblem: `README.md` (Abschnitt
+  "Seed-/Hyperparameter-Rausch-Stabilitaet", Zeile ~112-121) dokumentiert
+  die Zahlen mit konkreten SD-Werten (SD=0.0025/0.23x, SD=0.0023/0.21x,
+  Referenz-SD=0.0108) - die Behauptung ist also durch eine echte,
+  spezifische Textquelle gedeckt, nur das ausfuehrbare Artefakt fehlt.
+  Tabellenzelle entsprechend nachgetragen (Zahlen + Praezisierung, dass
+  dies keine neue, ungeklaerte Luecke ist, sondern dieselbe bereits fuer
+  Learning-Curve bekannte Kategorie). Damit sind jetzt 44 von >150 Zellen
+  stichprobenartig direkt gegen Quelle verifiziert - weiterhin nicht
+  erschoepfend, aber ein durchgehend inhaltlich fehlerfreier Ausschnitt
+  ueber inzwischen 6 Runden, ausserhalb der bereits bekannten
+  `s6e5`-`148`/`149`-Korrektur.
 
 ## Diskussion für die Publikationsnotiz (2026-08-15)
 
@@ -511,22 +547,26 @@ Abdeckungsquote zu praesentieren.
    Dateiname geprüft (robust), bereits VORHANDENE `✓`-Zellen aus der
    allerersten Entwurfsfassung dagegen nicht - genau dort sass dieser
    Fehler.
-4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **FÜNF RUNDEN
-   ERLEDIGT (2026-08-15/2026-08-17)**: 7 (1. Runde) + 6 (2. Runde) + 8
-   (3. Runde) + 8 (4. Runde) + 9 (5. Runde) = 38 Alt-Zellen aus insgesamt
-   15 Projekten/9 Spalten direkt gegen Quelle (Artefakt-CSV, nicht nur
-   TARGETS.md-Prosa) nachgeprüft - alle 38 inhaltlich bestätigt, kein
-   neuer TABELLENFEHLER seit der `s6e5`-Korrektur, aber eine echte Nuance
-   in der 5. Runde gefunden und in die `s6e6`-Zelle nachgetragen (Greedy-
-   Ensemble gewinnt dort laut Roh-CSV NICHT gegen das beste Einzelmodell -
-   Mechanismus lief korrekt, kein Performance-Gewinn bei diesem Lauf,
-   siehe Detailauflistungen der 2.-5. Runde im Abschnitt "Was diese erste
-   Fassung zeigt" oben). Nicht erschöpfend (die Tabelle hat >150 Zellen,
-   ~25% bisher stichprobenartig geprüft) - eine sechste Runde bleibt
-   sinnvoll, ist aber kein akuter Blocker mehr; das durchgehend
-   fehlerfreie (bzw. bei Funden sofort nachgetragene) Muster ueber 5
-   Runden spricht fuer die
-   grundsaetzliche Verlaesslichkeit der Tabelle.
+4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **SECHS
+   RUNDEN ERLEDIGT (2026-08-15/2026-08-17)**: 7 (1. Runde) + 6 (2. Runde)
+   + 8 (3. Runde) + 8 (4. Runde) + 9 (5. Runde) + 6 (6. Runde) = 44
+   Alt-Zellen aus insgesamt 17 Projekten/10 Spalten direkt gegen Quelle
+   (Artefakt-CSV/README, nicht nur TARGETS.md-Prosa) nachgeprüft - alle 44
+   inhaltlich bestätigt, kein neuer TABELLENFEHLER seit der `s6e5`-
+   Korrektur. Zwei echte Nuancen/Lücken gefunden und nachgetragen statt
+   als Fehler behandelt: die `s6e6`-Ensemble-Selection-Zelle (5. Runde,
+   Greedy-Ensemble gewinnt dort laut Roh-CSV NICHT gegen das beste
+   Einzelmodell) und `satimage`s Seed-Stabilität (6. Runde, kein
+   `092_seed_stability.R`/keine Ergebnis-CSV im Projektordner - dieselbe
+   Reproduzierbarkeits-Lücken-Klasse wie bei der Lernkurve, aber die
+   Zahlen sind im README mit echten SD-Werten belegt, kein reines
+   Vertrauensproblem). Siehe Detailauflistungen der 2.-6. Runde im
+   Abschnitt "Was diese erste Fassung zeigt" oben. Nicht erschöpfend (die
+   Tabelle hat >150 Zellen, ~29% bisher stichprobenartig geprüft) - eine
+   siebte Runde bleibt sinnvoll, ist aber kein akuter Blocker mehr; das
+   durchgehend fehlerfreie (bzw. bei Funden sofort nachgetragene) Muster
+   über 6 Runden spricht für die grundsätzliche Verlässlichkeit der
+   Tabelle.
 5. ~~Zusammenfassung/Diskussion für die Publikationsnotiz ableiten~~
    **ERLEDIGT (2026-08-15)**: siehe Abschnitt "Diskussion für die
    Publikationsnotiz" oben - vier robuste, projekttyp-unabhängige
