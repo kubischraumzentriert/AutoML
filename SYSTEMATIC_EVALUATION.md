@@ -469,6 +469,39 @@ Ergebnis (Group-aware CV hat noch keine eigene Spalte): Random-CV BAcc
   eigenes Projekt, hat noch kein eigenes README wie die `ML_Learning`-
   Projekte). Damit sind jetzt 52 von >150 Zellen stichprobenartig direkt
   gegen Quelle verifiziert.
+- **Neunte Stichproben-Runde an Alt-Zellen (2026-08-17), kein neuer Fehler
+  gefunden - diesmal Schwerpunkt auf bisher ungeprueften Zahlen UND auf
+  der Legitimitaet der `—`-Zellen selbst.** 7 Zellen aus 6 Projekten/4
+  Spalten (Adversarial Validation/ESS, Threshold-Tuning, Multi-Label) plus
+  3 komplette `—`-Zeilen direkt gegen Quelle geprueft -
+  `geoai-aquaculture`s ESS-Zahl (`importance_weight_ess.csv`,
+  `index_means`-Repraesentation: `ESS_frac`=0.0259 ≈ 2.6% exakt, damit
+  auch die letzte noch offene Zahl dieser wichtigsten Tabellenzeile
+  bestaetigt), `predictingsmartphoneAddiction_s6e8`s Threshold-Tuning-
+  "keine Artefakte vorhanden"-Behauptung (gezielte Suche nach
+  `*threshold*`-Dateien im Projektordner: tatsaechlich leer, Abwesenheits-
+  Behauptung bestaetigt statt nur angenommen) sowie `openml-scene-
+  multilabel`s/`openml-birds-multilabel`s Threshold-Tuning-Artefakte
+  (`threshold_tuning_multilabel_summary.csv`: reale, plausible Metriken -
+  Accuracy-getunte Schwelle schlaegt Default bei beiden auf den meisten
+  Metriken, wie schon bei `yeast` in Runde 4).
+
+  **Legitimitaets-Check der `—`-Zeilen** (bisher nie systematisch
+  gemacht - die Methodik-Notiz oben warnt zwar vor Fehlinterpretation der
+  `—`-Zellen, aber niemand hatte bisher stichprobenartig verifiziert, dass
+  die Zeilen tatsaechlich KEINE der 9 Spalten abdecken): `health-
+  condition-huyen-sanity-tests` (komplett `—`) hat reale Skripte
+  (Perturbation-/Invarianz-/Directional-Tests nach Huyen 2022) - deckt
+  aber keine der 9 Tabellenspalten ab, sondern eine ganz andere
+  diagnostische Dimension (Modell-Sanity-Checks), die noch keine eigene
+  Spalte hat. `openml-adult-income` (Baseline/Tuning/Fehleranalyse-
+  Skripte 020-147) und `openml-amazon-access` (nur 020/036/037) ebenfalls
+  geprueft - beide haben echte Skripte, aber keins davon deckt eine der 9
+  Spalten ab. Alle drei `—`-Zeilen also legitim, keine versehentlich
+  unbearbeiteten Projekte. Damit sind jetzt 59 von >150 Zellen
+  stichprobenartig direkt gegen Quelle verifiziert (plus 3 zusaetzlich
+  auf Zeilen-Legitimitaet gepruefte `—`-Projekte), durchgehend
+  fehlerfrei ueber die 9. Runde.
 
 ## Diskussion für die Publikationsnotiz (2026-08-15)
 
@@ -624,38 +657,39 @@ Abdeckungsquote zu praesentieren.
    Dateiname geprüft (robust), bereits VORHANDENE `✓`-Zellen aus der
    allerersten Entwurfsfassung dagegen nicht - genau dort sass dieser
    Fehler.
-4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **ACHT
-   RUNDEN ERLEDIGT (2026-08-15/2026-08-17)**: 7+6+8+8+9+6+4+4 = 52
-   Alt-Zellen aus insgesamt 19 Projekten/12 Spalten direkt gegen Quelle
+4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **NEUN
+   RUNDEN ERLEDIGT (2026-08-15/2026-08-17)**: 7+6+8+8+9+6+4+4+7 = 59
+   Alt-Zellen aus insgesamt 22 Projekten/12 Spalten direkt gegen Quelle
    (Artefakt-CSV/README/Commit-Historie, nicht nur TARGETS.md-Prosa)
-   nachgeprüft. **Ein echter, korrigierter Tabellenfehler** (7. Runde):
-   `synthetic_control`s/`eeg-eye-state`s Learning-Curve-Zellen zeigten
-   veraltete Max-Min-Prozentzahlen von vor dem IQR-Fix (17.5%/14.7% statt
-   korrekt 45.4%/31.0%) - der IQR-Fix wurde regressionsgetestet, aber
-   nicht rückwirkend in bereits befüllte Tabellenzellen nachgezogen. Drei
-   weitere echte Nuancen/Lücken gefunden und nachgetragen statt als Fehler
-   behandelt: `s6e6`s Ensemble-Selection (5. Runde, Greedy-Ensemble
-   gewinnt dort laut Roh-CSV NICHT gegen das beste Einzelmodell),
-   `satimage`s Seed-Stabilität (6. Runde, Reproduzierbarkeits-Lücke wie
-   bei der Lernkurve, aber im README belegt) und `health_condition`s
-   Threshold-Tuning-/Generalisierungslücken-Zahlen (8. Runde, plausibel
-   und intern konsistent, aber ohne auffindbares Artefakt/README-Beleg -
-   reine TARGETS.md-Prosa). In der 7./8. Runde ausserdem: `geoai-
-   aquaculture`s Adversarial-Validation-AUC (die wichtigste Einzelzelle
-   der Tabelle, exakt bestätigt) und ein ausgeräumter Verdacht (`credit-g`s
-   Learning-Curve-Zelle sah nach demselben Staleness-Muster wie Runde 7
-   aus, war aber tatsächlich korrekt - das Projekt-eigene Skript reicht
-   `cv_folds` nicht durch, daher bleibt "23.1%" die richtige Zahl fürs
-   heutige Skriptverhalten). Siehe Detailauflistungen der 2.-8. Runde im
-   Abschnitt "Was diese erste Fassung zeigt" oben. Nicht erschöpfend (die
-   Tabelle hat >150 Zellen, ~35% bisher stichprobenartig geprüft) - eine
-   neunte Runde bleibt sinnvoll, ist aber kein akuter Blocker mehr. **Neue
-   Lehre für künftige Modul-Bugfixes**: ein Fix an einem gemeinsam
-   genutzten Modul reicht nicht mit reinem Regressionstest der Skripte -
-   auch bereits befüllte Tabellenzellen, die auf dem alten Verhalten
-   beruhen, müssen aktiv nachgezogen werden (aber NICHT blind - erst
-   prüfen, ob das jeweilige Projekt-Skript den Fix ueberhaupt schon nutzt,
-   siehe der ausgeräumte `credit-g`-Verdacht).
+   nachgeprüft, plus 3 komplette `—`-Zeilen auf Legitimität geprüft (9.
+   Runde - alle drei bestätigt echte, aber spaltenfremde Projekte, keine
+   versehentlich unbearbeiteten). **Ein echter, korrigierter
+   Tabellenfehler** (7. Runde): `synthetic_control`s/`eeg-eye-state`s
+   Learning-Curve-Zellen zeigten veraltete Max-Min-Prozentzahlen von vor
+   dem IQR-Fix (17.5%/14.7% statt korrekt 45.4%/31.0%) - der IQR-Fix
+   wurde regressionsgetestet, aber nicht rückwirkend in bereits befüllte
+   Tabellenzellen nachgezogen. Drei weitere echte Nuancen/Lücken gefunden
+   und nachgetragen statt als Fehler behandelt: `s6e6`s Ensemble-Selection
+   (5. Runde), `satimage`s Seed-Stabilität (6. Runde) und
+   `health_condition`s Threshold-Tuning-/Generalisierungslücken-Zahlen
+   (8. Runde, plausibel aber ohne auffindbares Artefakt/README-Beleg).
+   `geoai-aquaculture`s komplette Adversarial-Validation-Zeile ist jetzt
+   vollständig bestätigt (AUC 0.99998/0.978 in Runde 7, ESS 2.6% in Runde
+   9 - die wichtigste Zeile der Tabelle). Ein ausgeräumter Verdacht
+   (8. Runde, `credit-g`s Learning-Curve-Zelle sah nach demselben
+   Staleness-Muster aus, war aber tatsächlich korrekt). Siehe
+   Detailauflistungen der 2.-9. Runde im Abschnitt "Was diese erste
+   Fassung zeigt" oben. Nicht erschöpfend (die Tabelle hat >150 Zellen,
+   ~39% bisher stichprobenartig geprüft) - eine zehnte Runde bleibt
+   möglich, ist aber kein akuter Blocker mehr; die Abdeckung ist jetzt
+   breit genug (fast jedes Projekt mindestens einmal, jede Spalte
+   mehrfach), dass weitere Runden abnehmenden Grenznutzen haben. **Neue
+   Lehre für künftige Modul-Bugfixes** (aus Runde 7/8): ein Fix an einem
+   gemeinsam genutzten Modul reicht nicht mit reinem Regressionstest der
+   Skripte - auch bereits befüllte Tabellenzellen, die auf dem alten
+   Verhalten beruhen, müssen aktiv nachgezogen werden (aber NICHT blind -
+   erst prüfen, ob das jeweilige Projekt-Skript den Fix überhaupt schon
+   nutzt).
 5. ~~Zusammenfassung/Diskussion für die Publikationsnotiz ableiten~~
    **ERLEDIGT (2026-08-15)**: siehe Abschnitt "Diskussion für die
    Publikationsnotiz" oben - vier robuste, projekttyp-unabhängige
