@@ -502,6 +502,33 @@ Ergebnis (Group-aware CV hat noch keine eigene Spalte): Random-CV BAcc
   stichprobenartig direkt gegen Quelle verifiziert (plus 3 zusaetzlich
   auf Zeilen-Legitimitaet gepruefte `—`-Projekte), durchgehend
   fehlerfrei ueber die 9. Runde.
+- **Zehnte Stichproben-Runde an Alt-Zellen (2026-08-17), kein neuer Fehler
+  gefunden - Schwerpunkt auf bisher nur locker (README-Prosa statt
+  Roh-Artefakt) bestaetigten Zellen.** 5 Zellen aus 4 Projekten/3 Spalten
+  (Generalisierungslücke, Leak-Audit, Ensemble/Stacking) direkt gegen
+  Roh-Artefakte nachgerechnet - `credit-g`s Generalisierungslücke
+  (`generalization_gap_results.csv`: z=-0.0177/-0.4593, beide
+  `flagged=FALSE` - "unauffällig" bestätigt, bisher nur als blosses `✓`
+  ohne Zahl in der Tabelle), `health_condition`s Leak-Audit-Exaktwert
+  (`stress_level`-Share 0.429144 ≈ 42.9% exakt) sowie `playground-series-
+  s6e5`s Logits-Stacking-Negativbefund (`stacking_results.csv`: AUC-Delta
+  0.941286-0.941121=0.000165 ≈ +0.00016 exakt, Rechenaufwand-Verhältnis
+  1441.75s/74.79s=19.28x ≈ "~19x" exakt - beide Zahlen der urspruenglichen
+  `s6e5`-Korrektur jetzt erstmals bis auf die Roh-CSV zurueckverfolgt).
+
+  **Tiefste Nachpruefung bisher**: `CreditScoringChallenge`s Kernbefund
+  (F1 0.88->0.41, der GROESSTE reale Leak-Fund des gesamten Oekosystems)
+  war in Runde 2 nur gegen README-Prosa geprueft worden - jetzt bis auf
+  die zugrundeliegenden Roh-CSVs verfolgt: `clean_baseline_results.csv`
+  zeigt `full`-Feature-Set F1=0.8757 (≈0.88) vs. `minus_repay_and_funding`
+  (das "ehrliche" Feature-Set) F1=0.418 (≈0.42), `threshold_tuning_
+  summary.csv` zeigt `nested_f1_ehrlich`=0.4129 (≈0.413, die im README
+  zitierte Zahl) - UND das README dokumentiert eine externe Bestätigung
+  (Leaderboard-Score 0.4191, traf die nested-CV-Schätzung fast exakt). Der
+  wichtigste Einzelfund der gesamten Tabelle ist damit jetzt vollständig,
+  bis auf die Rohdaten UND eine externe Quelle zurückverfolgt bestätigt.
+  Damit sind jetzt 64 von >150 Zellen stichprobenartig direkt gegen Quelle
+  verifiziert, durchgehend fehlerfrei über zehn Runden.
 
 ## Diskussion für die Publikationsnotiz (2026-08-15)
 
@@ -657,34 +684,34 @@ Abdeckungsquote zu praesentieren.
    Dateiname geprüft (robust), bereits VORHANDENE `✓`-Zellen aus der
    allerersten Entwurfsfassung dagegen nicht - genau dort sass dieser
    Fehler.
-4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **NEUN
-   RUNDEN ERLEDIGT (2026-08-15/2026-08-17)**: 7+6+8+8+9+6+4+4+7 = 59
+4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **ZEHN
+   RUNDEN ERLEDIGT (2026-08-15/2026-08-17)**: 7+6+8+8+9+6+4+4+7+5 = 64
    Alt-Zellen aus insgesamt 22 Projekten/12 Spalten direkt gegen Quelle
    (Artefakt-CSV/README/Commit-Historie, nicht nur TARGETS.md-Prosa)
    nachgeprüft, plus 3 komplette `—`-Zeilen auf Legitimität geprüft (9.
-   Runde - alle drei bestätigt echte, aber spaltenfremde Projekte, keine
-   versehentlich unbearbeiteten). **Ein echter, korrigierter
-   Tabellenfehler** (7. Runde): `synthetic_control`s/`eeg-eye-state`s
-   Learning-Curve-Zellen zeigten veraltete Max-Min-Prozentzahlen von vor
-   dem IQR-Fix (17.5%/14.7% statt korrekt 45.4%/31.0%) - der IQR-Fix
-   wurde regressionsgetestet, aber nicht rückwirkend in bereits befüllte
-   Tabellenzellen nachgezogen. Drei weitere echte Nuancen/Lücken gefunden
-   und nachgetragen statt als Fehler behandelt: `s6e6`s Ensemble-Selection
+   Runde). **Ein echter, korrigierter Tabellenfehler** (7. Runde):
+   `synthetic_control`s/`eeg-eye-state`s Learning-Curve-Zellen zeigten
+   veraltete Max-Min-Prozentzahlen von vor dem IQR-Fix (17.5%/14.7% statt
+   korrekt 45.4%/31.0%). Drei weitere echte Nuancen/Lücken gefunden und
+   nachgetragen statt als Fehler behandelt: `s6e6`s Ensemble-Selection
    (5. Runde), `satimage`s Seed-Stabilität (6. Runde) und
    `health_condition`s Threshold-Tuning-/Generalisierungslücken-Zahlen
-   (8. Runde, plausibel aber ohne auffindbares Artefakt/README-Beleg).
-   `geoai-aquaculture`s komplette Adversarial-Validation-Zeile ist jetzt
-   vollständig bestätigt (AUC 0.99998/0.978 in Runde 7, ESS 2.6% in Runde
-   9 - die wichtigste Zeile der Tabelle). Ein ausgeräumter Verdacht
-   (8. Runde, `credit-g`s Learning-Curve-Zelle sah nach demselben
-   Staleness-Muster aus, war aber tatsächlich korrekt). Siehe
-   Detailauflistungen der 2.-9. Runde im Abschnitt "Was diese erste
-   Fassung zeigt" oben. Nicht erschöpfend (die Tabelle hat >150 Zellen,
-   ~39% bisher stichprobenartig geprüft) - eine zehnte Runde bleibt
-   möglich, ist aber kein akuter Blocker mehr; die Abdeckung ist jetzt
-   breit genug (fast jedes Projekt mindestens einmal, jede Spalte
-   mehrfach), dass weitere Runden abnehmenden Grenznutzen haben. **Neue
-   Lehre für künftige Modul-Bugfixes** (aus Runde 7/8): ein Fix an einem
+   (8. Runde). `geoai-aquaculture`s komplette Adversarial-Validation-Zeile
+   ist vollständig bestätigt (Runde 7/9). Ein ausgeräumter Verdacht bei
+   `credit-g`s Learning-Curve (8. Runde). **Tiefste Nachprüfung** (10.
+   Runde): `CreditScoringChallenge`s Kernbefund (F1 0.88->0.41, groesster
+   realer Leak-Fund des Oekosystems) bis auf die Roh-CSVs UND eine
+   externe Quelle (Leaderboard-Score 0.4191, bestätigt die nested-CV-
+   Schätzung 0.4129) zurückverfolgt - vorher nur gegen README-Prosa
+   geprüft. Siehe Detailauflistungen der 2.-10. Runde im Abschnitt "Was
+   diese erste Fassung zeigt" oben. Nicht erschöpfend (die Tabelle hat
+   >150 Zellen, ~43% bisher stichprobenartig geprüft), aber die Abdeckung
+   ist jetzt breit und tief genug (fast jedes Projekt mindestens einmal,
+   die wichtigsten Befunde bis auf Rohdaten/externe Quellen
+   zurückverfolgt) - **weitere Runden werden hier eingestellt**, der
+   Grenznutzen ist erschöpft, ohne einen dedizierten neuen Anlass (z.B.
+   einen weiteren Modul-Bugfix, der rückwirkend geprüft werden müsste).
+   **Lehre für künftige Modul-Bugfixes** (aus Runde 7/8): ein Fix an einem
    gemeinsam genutzten Modul reicht nicht mit reinem Regressionstest der
    Skripte - auch bereits befüllte Tabellenzellen, die auf dem alten
    Verhalten beruhen, müssen aktiv nachgezogen werden (aber NICHT blind -
