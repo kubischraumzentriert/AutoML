@@ -223,6 +223,34 @@ allein auffindbar bleibt.
   `id_col` - `any()` auf einem Ein-Element-Vektor ist identisch zum
   Vektor selbst), regressionsgetestet gegen `ci_smoke_test`.
 
+- **Group-aware CV (`group_resampling.R`) auf der Klassifikationsseite -
+  ZWEITE unabhaengige Bestaetigung (2026-08-17), ADR-003-Backport-
+  Kriterium erfuellt.** `group_resampling.R` (Regressionsseite bereits
+  bestaetigt an `SubjektDatensatz`/`AStepAheadOfdrought`, siehe
+  `REFERENZ_GROUP_AWARE_CV.md` im Regressions-Template) wurde am
+  2026-08-15 nach `openml-eeg-eye-state-timeseries` portiert (1. Beleg
+  Klassifikation: Random-CV BAcc 0.930 vs. Block-CV 0.717, -21.3 Punkte,
+  Zeit-Block-Nachbarschaft als Leck-Mechanismus). **2. Beleg
+  (`ML_Learning/uci-parkinsons-voice-groupcv`)**: UCI Parkinsons-Sprache
+  (Little et al. 2007, direkt von UCI geladen - OpenML.org antwortete an
+  diesem Tag durchgehend mit 504 Gateway Timeout, siehe auch
+  `wdbc-plateau-test`), 195 Aufnahmen von 32 Probanden (~6-7 je Proband),
+  binaeres Ziel (Parkinson/gesund). Random-CV BAcc 0.804 vs. Group-CV BAcc
+  0.568 (-23.6 Punkte) - AEHNLICHE Groessenordnung wie `eeg-eye-state`,
+  aber ein STRUKTURELL ANDERER Leck-Mechanismus (echte Entitaets-
+  Wiederholung statt zeitliche Naehe), was den Befund staerker macht als
+  eine blosse Wiederholung. No-Signal-Check bestanden: `classif.
+  featureless` liegt bei Group-CV bei 0.469 (Zufallsniveau) - Rangers
+  0.568 ist also echtes, wenn auch schwaches Signal, kein reines
+  Rauschen-Artefakt der wenigen Gruppen (nur 8 gesunde Probanden).
+  **Naechster Schritt**: `group_resampling.R`/`set_group_role()`/
+  `diagnose_group_cv()` als eigenstaendiges Klassifikations-Modul ins
+  Template backporten (Regressions-Modul existiert bereits parallel) -
+  noch NICHT umgesetzt, nur die Bestaetigung selbst ist jetzt vollstaendig.
+  Details in `openml-eeg-eye-state-timeseries/README.md` bzw.
+  `uci-parkinsons-voice-groupcv/README.md`, konsolidiert in
+  `SYSTEMATIC_EVALUATION.md`.
+
 - ~~**Nelder-Mead in `class_multiplier_tuning.R` noch nicht didaktisch
   aufgearbeitet**~~ **ERLEDIGT (2026-08-15).** Als
   [`REFERENZ_NELDER_MEAD.md`](REFERENZ_NELDER_MEAD.md) geschrieben (analog

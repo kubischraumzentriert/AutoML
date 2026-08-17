@@ -50,6 +50,7 @@ Tabelle als publikationsreif gilt.
 | `playground-series-s5e12` (Kaggle) | — (kein `015` im Projekt) | ✓ (AUC 0.627, moderater aber echter Shift, Treiber `physical_activity_minutes_per_week`/`triglycerides`) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✗ (KEIN `148`/`149` im heutigen Sinn - lokal `148_select_submission_model.R`/`149_disagreement_check.R`, ZWEI ANDERE Verfahren: datengetriebene Modellwahl aus `experiments.db` bzw. Uneinigkeits-Vertrauenscheck, keine Greedy-Ensemble-Selection; drittes Projekt nach `s6e5`/`s6e6` mit diesem Namenskollisions-Muster) | ~ (`130_threshold_tuning.R` im Ordner, aber keine Artefakte - Zielmetrik AUC ist schwellenwertunabhaengig, `warn_if_threshold_step_low_value()` greift; dasselbe Muster wie `predictingsmartphoneAddiction_s6e8`) | — |
 | `openml-eeg-eye-state-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | — (strukturell übersprungen, >5000 Zeilen) | ✓ (noch steigend, 14.7%) | ✓ (unauffällig, 0.23x/0.21x) | ✓ (beide unauffällig, aber bisher höchste z-Werte: z=1.67/1.27) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096`, 2. Versuch nach `synthetic_control`: Kappa 0.581, DEKORRELIERT (anders als dort), aber FT-Transformer schwächer (BAcc 0.764 vs. Ranger 0.869 bei nur 15 Epochen/n=4500) - Blend-BAcc wegen NaN-Bug offen geblieben, nicht nachgerechnet) | ✓ (binärer `optimize()`/Brent-Pfad, modester Gewinn) | — |
 | `wdbc-plateau-test`¹ | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | ✓✓ (gezielt gebauter PLATEAU-Fall, 7.5% des IQR nach Mindest-n-Fix - erster echter Plateau-Fund, siehe Fussnote) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
+| `uci-parkinsons-voice-groupcv`² | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 
 ¹ `wdbc-plateau-test` ist KEIN regulaeres Kaggle/OpenML-Workflow-Projekt,
 sondern ein gezielt gebauter Diagnose-Testfall (Wisconsin Breast Cancer via
@@ -58,6 +59,13 @@ sondern ein gezielt gebauter Diagnose-Testfall (Wisconsin Breast Cancer via
 Learning-Curve-PLATEAU-Klassifikation ueberhaupt je korrekt anschlaegt,
 nachdem der einzige bisherige Plateau-Fund (`credit-g`) sich als
 Methodik-Artefakt herausstellte (siehe TARGETS.md/Abschnitt unten).
+
+² `uci-parkinsons-voice-groupcv` ist ebenfalls kein regulaeres Workflow-
+Projekt, sondern der gezielt gebaute ZWEITE Klassifikations-Beleg fuer
+Group-aware CV (nach `eeg-eye-state-timeseries`) - nur `020`/`021`
+gelaufen (kein `022`-`149`, da nicht der Zweck), deshalb durchgehend `—`.
+Ergebnis (Group-aware CV hat noch keine eigene Spalte): Random-CV BAcc
+0.804 vs. Group-CV BAcc 0.568 (-23.6 Punkte), siehe Diskussion unten.
 
 ## Was diese erste Fassung zeigt
 
@@ -361,11 +369,23 @@ Dateneigenschaften, nicht nur "funktioniert der Mechanismus")
   Multiplikator-Korrektur noetig). Der Mechanismus selbst bricht nie, aber
   sein NUTZEN haengt sichtbar an Klassenungleichgewicht - eine Aufgabe ohne
   Ungleichgewicht hat strukturell nichts zu gewinnen.
-- **Group-aware CV** (noch keine eigene Spalte, siehe Abschnitt oben): nur
-  relevant, wo echte Entitaets-/Zeitstruktur existiert - dramatisch bei
-  `eeg-eye-state-timeseries` (-21 BAcc-Punkte), komplett irrelevant bei
-  `synthetic_control` (i.i.d. Zeilen). Kein Mechanismus-Versagen, sondern
-  strukturell nur dort ein Thema, wo die Datenstruktur es hergibt.
+- **Group-aware CV** (noch keine eigene Spalte, siehe Abschnitt oben) -
+  **ZWEITE unabhaengige Klassifikations-Bestaetigung (2026-08-17,
+  ADR-003-Backport-Kriterium erfuellt)**: `eeg-eye-state-timeseries`
+  (Zeit-Block-Nachbarschaft, -21.3 BAcc-Punkte) und
+  `uci-parkinsons-voice-groupcv` (echte Entitaets-Wiederholung/wiederholte
+  Aufnahmen desselben Probanden, -23.6 BAcc-Punkte) zeigen AEHNLICH grosse
+  Luecken trotz STRUKTURELL VERSCHIEDENER Leck-Mechanismen - staerkere
+  Evidenz als eine blosse Wiederholung desselben Mechanismus waere. Bei
+  `uci-parkinsons-voice-groupcv` zusaetzlich ein No-Signal-Check bestanden
+  (Featureless-Baseline bei Group-CV nahe Zufallsniveau, 0.469 - Rangers
+  0.568 ist also echtes, wenn auch schwaches Signal). Bleibt trotzdem
+  strukturell PROJEKTSPEZIFISCH relevant (nur wo echte Entitaets-/
+  Zeitstruktur existiert - komplett irrelevant bei `synthetic_control`,
+  i.i.d. Zeilen) - kein Mechanismus-Versagen dort, sondern schlicht nicht
+  anwendbar. Naechster Schritt: Backport von `group_resampling.R` als
+  eigenstaendiges Klassifikations-Modul ins Template (siehe TARGETS.md),
+  noch nicht umgesetzt.
 - **FT-Transformer-Ensemble-Diversitaet**: CPU-Machbarkeit war projekt-
   unabhaengig **innerhalb** der getesteten Groessenspanne, aber selbst NICHT
   projekttyp-unabhaengig - der zweite Datenpunkt (`eeg-eye-state`, 14980
@@ -454,9 +474,13 @@ Abdeckungsquote zu praesentieren.
    Plateau, Threshold-Tuning-Effektgröße, Group-aware CV, FT-Transformer-
    Diversität) identifiziert, plus ein methodischer Hinweis zur
    Marker-Lücken-Interpretation für die Notiz selbst.
-6. Perspektivisch: zweiter Beleg für die noch duennen 1-Projekt-Befunde
-   (Group-aware-CV-Klassifikationsseite), bevor die Diskussion oben als
-   belastbar gilt statt als erste Beobachtung.
+6. ~~Perspektivisch: zweiter Beleg für Group-aware-CV-Klassifikationsseite~~
+   **ERLEDIGT (2026-08-17)**: `uci-parkinsons-voice-groupcv` (echte
+   Entitaets-Wiederholung, -23.6 BAcc-Punkte) bestaetigt `eeg-eye-state`
+   (Zeit-Block-Nachbarschaft, -21.3 Punkte) mit einem strukturell anderen
+   Leck-Mechanismus - ADR-003-Backport-Kriterium erfuellt, siehe Diskussion
+   oben/TARGETS.md. Backport von `group_resampling.R` als Klassifikations-
+   Modul ins Template selbst steht noch aus (naechster konkreter Schritt).
    ~~Learning-Curve-Plateau~~ **umformuliert statt bestaetigt
    (2026-08-17)**: der urspruengliche Punkt war durch den `credit-g`-
    IQR-Fix bereits obsolet (kein Plateau-Fund mehr, den man haette
