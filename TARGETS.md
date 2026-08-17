@@ -198,6 +198,39 @@ Produktion sauber zu trennen.
 
 ## Backlog (bei einer Uebertragung gefunden, noch nicht umgesetzt)
 
+- **`renv.lock` eingefuehrt (2026-08-17) - Dokumentations-Snapshot, KEINE
+  renv-Aktivierung.** Anlass: externe Projekt-Beurteilung
+  (`Beurteilung_AutoML_Projekt.md`, Nutzer-Downloads) empfahl `renv` fuer
+  Reproduzierbarkeit. Bewusst NUR `renv::snapshot(lockfile = "renv.lock")`
+  aus der bestehenden, funktionierenden globalen Bibliothek geschrieben -
+  KEIN `renv::init()` (haette eine isolierte Projekt-Bibliothek + Auto-
+  Aktivierung per `.Rprofile` fuer jede kuenftige R-Sitzung hier bedeutet,
+  mit echtem Zeit-/Bruchrisiko bei den schweren ML-Paketen: `torch`/
+  `mlr3torch`, `catboost`, `xgboost` - siehe die dokumentierten
+  Windows-Sackgassen in `adr/002`/`NEURAL_DEPLOY.md`). Kein `.Rprofile`,
+  kein `renv/`-Ordner entstanden - bestehende Skript-Ausfuehrung
+  vollstaendig unveraendert, `renv.lock` ist reine Versions-Dokumentation.
+
+  Zwei echte Luecken beim automatischen Scan gefunden und behoben: (1) der
+  implizite Abhaengigkeits-Scan (`type="implicit"`, parst `library()`/
+  `pkg::fun()`-Aufrufe) uebersah `torch`/`mlr3torch`/`catboost`/`xgboost`,
+  weil diese nur indirekt ueber `lrn("classif.xgboost")` etc. geladen
+  werden - per `renv::record()` gezielt nachgetragen (`catboost` mit
+  explizitem GitHub-Remote-Spec, da nicht auf CRAN). (2) `DESCRIPTION`
+  listet `emoa`/`fastGHQuad`/`lhs` (mlr3mbo-Bausteine fuer Bayesian
+  Optimization) als Imports, die lokal aber gar nicht installiert waren -
+  nachinstalliert und ergaenzt. `tabpfn` bewusst NICHT aufgenommen (kein
+  installiertes R-Paket in diesem Repo, nur in einzelnen `ML_Learning`-
+  Projekten relevant). 200 Pakete final im Lockfile.
+
+  **Perspektivisch offen**: eine echte `renv::init()`-Aktivierung (isolierte
+  Projekt-Bibliothek) waere der naechste Reifegrad, aber bewusst NICHT
+  jetzt umgesetzt - das Zeit-/Bruchrisiko bei den schweren ML-Paketen
+  steht in keinem Verhaeltnis zum Nutzen fuer ein Projekt, das primaer als
+  persoenliches Labor genutzt wird (nicht als extern verteiltes Framework,
+  siehe Einordnung in der externen Beurteilung: 9/10 als persoenliches
+  Labor vs. 6/10 als oeffentliches Framework).
+
 **Hinweis zur didaktischen Dokumentation (DIDAKTIK_*.md)**: dieselbe
 ≥2-Projekt-Bestaetigungsregel wie fuer Code-Backports (siehe unten) gilt
 seit 2026-08-14 auch fuer Theorie-/Didaktik-Dokumente in `ML_Learning`-
