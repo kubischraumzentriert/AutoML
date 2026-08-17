@@ -199,3 +199,49 @@ Wenn ein lokal validierter Kandidat auf dem Leaderboard bestaetigt wurde, ist
 ein expliziter Stopp fairer als eine Serie sehr aehnlicher Nachtests. Weitere
 Submissions brauchen eine neue methodische Idee, nicht nur einen Nachbarwert
 eines bereits bestaetigten Reglers.
+
+## 8. LogLoss-Clipping (`eps`): wann greift es ueberhaupt?
+
+Anlass: Nutzerfrage, ob `mlr3measures::logloss()`s Default-Clipping
+(`eps=1e-15`, Wahrscheinlichkeiten werden auf `[eps, 1-eps]` geklemmt) zu
+"gnadenlos" ist - ein einzelner selbstsicher-falscher Fall mit `p` nahe 0
+fuer die wahre Klasse kann rechnerisch bis zu `-log(1e-15)≈34.5` zum
+Mittelwert beitragen.
+
+**Perzentilbasiertes Clipping (1%/99% der eigenen Modellvorhersagen)
+wurde verworfen**: die Klemme wuerde dann vom Modell selbst abhaengen -
+ein unsichereres Modell haette ein enger liegendes Perzentil und wuerde
+effektiv grosszuegiger bestraft. Kein fester Massstab mehr, nicht
+vergleichbar zwischen Modellen/Runs, potenzieller Gaming-Vektor (ein
+Modell koennte seinen LogLoss verbessern, indem es einfach insgesamt
+weniger selbstsicher wird). `eps=1e-15` ist zudem der historische
+sklearn-/Kaggle-Standard - viele echte Wettbewerbe definieren LogLoss in
+ihren offiziellen Regeln exakt mit dieser Klemme; bei extern vorgegebener
+Metrik muss sie exakt gematcht werden (sonst CV<->LB-Kalibrierungsproblem).
+
+**Empirisch getestet (2026-08-17, `openml-eeg-eye-state-timeseries/
+098_logloss_eps_sensitivity.R`)**, ob die Klemme bei realistischen
+Baumensembles ueberhaupt je greift: Ranger/LightGBM (200 Baeume, 5-fach
+CV, n=14980) - **kein einziger** der 14.980 OOF-Wahrscheinlichkeitswerte
+lag unter `p=1e-2` fuer die wahre Klasse, geschweige denn unter `1e-15`.
+Maximaler Einzelzeilen-Strafwert nur 2.53 (Ranger) bzw. 4.03 (LightGBM) -
+weit unter dem theoretischen `34.5`-Maximum. Der LogLoss-Wert und das
+Ranger-vs-LightGBM-Ranking aendern sich ueber `eps in {1e-15, 1e-6, 1e-4,
+1e-2}` praktisch nicht (4. Nachkommastelle).
+
+**Aber ein verwandtes Phaenomen ist trotzdem real**: die schlechtesten 1%
+der Zeilen (150 von 14980) tragen 5.3% (Ranger) bzw. 11.8% (LightGBM) der
+GESAMTEN LogLoss - deutlich mehr als "faire" 1%. Das liegt aber NICHT am
+eps-Clipping (das nie greift), sondern an der Log-Form selbst: schon
+MODERAT falsch-selbstsichere Vorhersagen (z.B. `p=0.08` statt nahe 0)
+schlagen ueberproportional zu Buche.
+
+**Einordnung**: bei einem gut ausgebauten Baumensemble (viele Baeume/
+Boosting-Runden) ist die konkrete `eps`-Wahl praktisch irrelevant, weil
+solche Modelle selten exakte 0/1-Wahrscheinlichkeiten produzieren. Die
+Klemme wuerde erst relevant bei einem Modell, das tatsaechlich extreme
+Wahrscheinlichkeiten ausgibt (ein einzelner Baum, sehr wenige Boosting-
+Runden, oder starkes Overfitting). Die "wenige Zeilen dominieren den
+Score"-Beobachtung bleibt aber ein echtes, allgemeines LogLoss-Merkmal -
+dafuer ist Kalibrierung (Abschnitte 1-7 oben) oder gezielte Fehleranalyse
+der richtige Hebel, nicht eine Anpassung der eps-Klemme.
