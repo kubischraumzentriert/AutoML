@@ -46,9 +46,9 @@ Tabelle als publikationsreif gilt.
 | `FinancialStressPredictionChallenge` | — (kein `015` im Projekt) | ✓ (AUC 0.4971, kein Shift) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `openml-amazon-access` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `openml-bank-marketing-ensemble-test` | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✓ (frühe Ensemble-Selection-Bestätigung, vor `health_condition`) | — (kein `130` im Projekt) | — |
-| `openml-synthetic-control-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | ✓ (Faktor 1.25x, unauffällig) | ✓ (noch steigend, 17.5%) | ✓ (SD=0.000, vollständig deterministisch) | ✓ (beide unauffällig, z=0.05/-0.63) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096` für Hebel-1-Kandidat, negativ: Kappa 0.976, kein Diversitätsgewinn) | ✓ (keine Verbesserung, exakt balancierte Klassen) | — |
+| `openml-synthetic-control-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | ✓ (Faktor 1.25x, unauffällig) | ✓ (noch steigend, 45.4% des IQR - Zelle am 2026-08-17 korrigiert, stand veraltet als "17.5%" seit vor dem IQR-Fix) | ✓ (SD=0.000, vollständig deterministisch) | ✓ (beide unauffällig, z=0.05/-0.63) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096` für Hebel-1-Kandidat, negativ: Kappa 0.976, kein Diversitätsgewinn) | ✓ (keine Verbesserung, exakt balancierte Klassen) | — |
 | `playground-series-s5e12` (Kaggle) | — (kein `015` im Projekt) | ✓ (AUC 0.627, moderater aber echter Shift, Treiber `physical_activity_minutes_per_week`/`triglycerides`) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✗ (KEIN `148`/`149` im heutigen Sinn - lokal `148_select_submission_model.R`/`149_disagreement_check.R`, ZWEI ANDERE Verfahren: datengetriebene Modellwahl aus `experiments.db` bzw. Uneinigkeits-Vertrauenscheck, keine Greedy-Ensemble-Selection; drittes Projekt nach `s6e5`/`s6e6` mit diesem Namenskollisions-Muster) | ~ (`130_threshold_tuning.R` im Ordner, aber keine Artefakte - Zielmetrik AUC ist schwellenwertunabhaengig, `warn_if_threshold_step_low_value()` greift; dasselbe Muster wie `predictingsmartphoneAddiction_s6e8`) | — |
-| `openml-eeg-eye-state-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | — (strukturell übersprungen, >5000 Zeilen) | ✓ (noch steigend, 14.7%) | ✓ (unauffällig, 0.23x/0.21x) | ✓ (beide unauffällig, aber bisher höchste z-Werte: z=1.67/1.27) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096`, 2. Versuch nach `synthetic_control`: Kappa 0.581, DEKORRELIERT (anders als dort), aber FT-Transformer schwächer (BAcc 0.764 vs. Ranger 0.869 bei nur 15 Epochen/n=4500) - Blend-BAcc wegen NaN-Bug offen geblieben, nicht nachgerechnet) | ✓ (binärer `optimize()`/Brent-Pfad, modester Gewinn) | — |
+| `openml-eeg-eye-state-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | — (strukturell übersprungen, >5000 Zeilen) | ✓ (noch steigend, 31.0% des IQR - Zelle am 2026-08-17 korrigiert, stand veraltet als "14.7%" seit vor dem IQR-Fix) | ✓ (unauffällig, 0.23x/0.21x) | ✓ (beide unauffällig, aber bisher höchste z-Werte: z=1.67/1.27) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096`, 2. Versuch nach `synthetic_control`: Kappa 0.581, DEKORRELIERT (anders als dort), aber FT-Transformer schwächer (BAcc 0.764 vs. Ranger 0.869 bei nur 15 Epochen/n=4500) - Blend-BAcc wegen NaN-Bug offen geblieben, nicht nachgerechnet) | ✓ (binärer `optimize()`/Brent-Pfad, modester Gewinn) | — |
 | `wdbc-plateau-test`¹ | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | ✓✓ (gezielt gebauter PLATEAU-Fall, 7.5% des IQR nach Mindest-n-Fix - erster echter Plateau-Fund, siehe Fussnote) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 | `uci-parkinsons-voice-groupcv`² | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
 
@@ -392,6 +392,37 @@ Ergebnis (Group-aware CV hat noch keine eigene Spalte): Random-CV BAcc
   erschoepfend, aber ein durchgehend inhaltlich fehlerfreier Ausschnitt
   ueber inzwischen 6 Runden, ausserhalb der bereits bekannten
   `s6e5`-`148`/`149`-Korrektur.
+- **Siebte Stichproben-Runde an Alt-Zellen (2026-08-17) - ECHTER
+  Tabellenfehler gefunden und korrigiert (zwei veraltete Learning-Curve-
+  Zellen).** 4 Zellen aus 3 Projekten/2 Spalten (Adversarial Validation,
+  Learning-Curve) direkt gegen Quelle nachgerechnet -
+  `geoai-aquaculture-pond-identification-challenge`s beide Adversarial-
+  Validation-Kennzahlen bestaetigt (roh 0.999981 ≈ 0.99998 exakt,
+  Band-Mittel 0.977847 ≈ 0.978 exakt aus
+  `adversarial_validation_aggregates_results.csv` - die wichtigste
+  Einzelzelle der ganzen Tabelle, bisher noch nie direkt nachgerechnet,
+  jetzt bestaetigt).
+
+  **Fund**: `synthetic_control`s und `eeg-eye-state`s Learning-Curve-Zellen
+  zeigten "17.5%" bzw. "14.7%" - beides die ALTE Max-Min-Spannweiten-
+  Prozentzahl von VOR dem IQR-Fix (2026-08-15), nie aktualisiert, obwohl
+  der Diskussions-Abschnitt oben (Zeile ~242) fuer `synthetic_control`
+  bereits korrekt "45.4%" zitierte - ein interner Widerspruch zwischen
+  Tabelle und Diskussion, der bisher unbemerkt blieb. Nachgerechnet mit
+  der aktuellen IQR-Formel: `synthetic_control` 45.4% (statt 17.5%),
+  `eeg-eye-state` 31.0% (statt 14.7%) - beide Klassifikationen bleiben
+  "NOCH STEIGEND" (keine Kippung, nur die Prozentzahl war stale), auch mit
+  dem `min_rows_per_fold`-Filter unveraendert (bei `eeg-eye-state` ohnehin
+  kein Punkt unter der Schwelle, bei `synthetic_control` sogar noch
+  klareres Signal: 78.0% gefiltert vs. 45.4% ungefiltert). Beide
+  Tabellenzellen direkt korrigiert. **Lehre**: ein Bugfix an einem
+  gemeinsam genutzten Modul (`learning_curve.R`) muss auch rueckwirkend
+  in ALLEN bereits befuellten Tabellenzellen nachgezogen werden, nicht nur
+  in neu hinzukommenden - dieser Fehler waere durch reines "neue Zeilen
+  pruefen" nie gefunden worden. Damit sind jetzt 48 von >150 Zellen
+  stichprobenartig direkt gegen Quelle verifiziert, davon 1 echter,
+  korrigierter Tabellenfehler (2 betroffene Zellen) - der erste seit der
+  `s6e5`-`148`/`149`-Korrektur.
 
 ## Diskussion für die Publikationsnotiz (2026-08-15)
 
@@ -547,26 +578,30 @@ Abdeckungsquote zu praesentieren.
    Dateiname geprüft (robust), bereits VORHANDENE `✓`-Zellen aus der
    allerersten Entwurfsfassung dagegen nicht - genau dort sass dieser
    Fehler.
-4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **SECHS
-   RUNDEN ERLEDIGT (2026-08-15/2026-08-17)**: 7 (1. Runde) + 6 (2. Runde)
-   + 8 (3. Runde) + 8 (4. Runde) + 9 (5. Runde) + 6 (6. Runde) = 44
-   Alt-Zellen aus insgesamt 17 Projekten/10 Spalten direkt gegen Quelle
-   (Artefakt-CSV/README, nicht nur TARGETS.md-Prosa) nachgeprüft - alle 44
-   inhaltlich bestätigt, kein neuer TABELLENFEHLER seit der `s6e5`-
-   Korrektur. Zwei echte Nuancen/Lücken gefunden und nachgetragen statt
-   als Fehler behandelt: die `s6e6`-Ensemble-Selection-Zelle (5. Runde,
-   Greedy-Ensemble gewinnt dort laut Roh-CSV NICHT gegen das beste
-   Einzelmodell) und `satimage`s Seed-Stabilität (6. Runde, kein
-   `092_seed_stability.R`/keine Ergebnis-CSV im Projektordner - dieselbe
-   Reproduzierbarkeits-Lücken-Klasse wie bei der Lernkurve, aber die
-   Zahlen sind im README mit echten SD-Werten belegt, kein reines
-   Vertrauensproblem). Siehe Detailauflistungen der 2.-6. Runde im
-   Abschnitt "Was diese erste Fassung zeigt" oben. Nicht erschöpfend (die
-   Tabelle hat >150 Zellen, ~29% bisher stichprobenartig geprüft) - eine
-   siebte Runde bleibt sinnvoll, ist aber kein akuter Blocker mehr; das
-   durchgehend fehlerfreie (bzw. bei Funden sofort nachgetragene) Muster
-   über 6 Runden spricht für die grundsätzliche Verlässlichkeit der
-   Tabelle.
+4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **SIEBEN
+   RUNDEN ERLEDIGT (2026-08-15/2026-08-17)**: 7+6+8+8+9+6+4 = 48 Alt-Zellen
+   aus insgesamt 18 Projekten/11 Spalten direkt gegen Quelle (Artefakt-CSV/
+   README, nicht nur TARGETS.md-Prosa) nachgeprüft. **Ein echter, jetzt
+   korrigierter Tabellenfehler** (7. Runde): `synthetic_control`s/
+   `eeg-eye-state`s Learning-Curve-Zellen zeigten veraltete Max-Min-
+   Prozentzahlen von vor dem IQR-Fix (17.5%/14.7% statt korrekt 45.4%/
+   31.0%) - der IQR-Fix wurde regressionsgetestet, aber nicht rückwirkend
+   in bereits befüllte Tabellenzellen nachgezogen. Zwei weitere echte
+   Nuancen/Lücken gefunden und nachgetragen statt als Fehler behandelt:
+   die `s6e6`-Ensemble-Selection-Zelle (5. Runde, Greedy-Ensemble gewinnt
+   dort laut Roh-CSV NICHT gegen das beste Einzelmodell) und `satimage`s
+   Seed-Stabilität (6. Runde, Reproduzierbarkeits-Lücke wie bei der
+   Lernkurve, aber im README belegt). Ausserdem in der 7. Runde erstmals
+   die wichtigste Einzelzelle der Tabelle direkt nachgerechnet:
+   `geoai-aquaculture`s Adversarial-Validation-AUC (0.99998 roh/0.978
+   Band-Mittel, beide exakt bestätigt). Siehe Detailauflistungen der
+   2.-7. Runde im Abschnitt "Was diese erste Fassung zeigt" oben. Nicht
+   erschöpfend (die Tabelle hat >150 Zellen, ~32% bisher stichprobenartig
+   geprüft) - eine achte Runde bleibt sinnvoll, ist aber kein akuter
+   Blocker mehr. **Neue Lehre für künftige Modul-Bugfixes**: ein Fix an
+   einem gemeinsam genutzten Modul reicht nicht mit reinem Regressionstest
+   der Skripte - auch bereits befüllte Tabellenzellen, die auf dem alten
+   Verhalten beruhen, müssen aktiv nachgezogen werden.
 5. ~~Zusammenfassung/Diskussion für die Publikationsnotiz ableiten~~
    **ERLEDIGT (2026-08-15)**: siehe Abschnitt "Diskussion für die
    Publikationsnotiz" oben - vier robuste, projekttyp-unabhängige
