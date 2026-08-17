@@ -18,15 +18,20 @@ suppressPackageStartupMessages({ library(mlr3); library(data.table) })
 # seite bestaetigt - ADR-003-Kriterium (2 unabhaengige Projekte) erfuellt,
 # siehe REFERENZ_GROUP_AWARE_CV.md fuer Details/Zahlen.
 #
-# BEKANNTE EINSCHRAENKUNG (unveraendert aus der Regression uebernommen):
-# `test_group_significance()`/`scan_group_candidates()` (der eta^2-
-# Permutationstest) rechnen intern mit mean()/Varianz auf `target` - das
-# setzt einen NUMERISCHEN Zielwert voraus und funktioniert NICHT direkt
-# fuer einen kategorialen Klassifikations-Zielwert. Auf der Klassifikations-
-# seite bisher in keinem Projekt benoetigt (die Kandidatenspalte war beide
-# Male semantisch bereits bekannt, kein automatisierter Scan noetig) -
-# diese beiden Funktionen bleiben also ein noch NICHT eigenstaendig fuer
-# Classif bestaetigter Teil des Moduls.
+# KLASSIFIKATIONS-ERWEITERUNG (2026-08-17): `test_group_significance()`/
+# `scan_group_candidates()` waren urspruenglich reine eta^2-Permutationstests
+# (Varianzzerlegung, setzt NUMERISCHEN Zielwert voraus) - fuer einen
+# kategorialen Klassifikations-Zielwert nicht direkt nutzbar. Jetzt generisch:
+# `test_group_significance()` erkennt automatisch, ob `target` numerisch
+# (eta^2) oder kategorial (Cramer's V, Chi-Quadrat-basiert) ist - dieselbe
+# Permutationslogik, nur andere Teststatistik. An 2 unabhaengigen
+# Klassifikationsprojekten bestaetigt (`openml-eeg-eye-state-timeseries`/
+# `uci-parkinsons-voice-groupcv`, siehe REFERENZ_GROUP_AWARE_CV.md) - deren
+# Group-CV-Luecken (`diagnose_group_cv()`) waren bereits unabhaengig
+# bestaetigt, der Permutationstest bestaetigt hier zusaetzlich, dass die
+# jeweilige Gruppenspalte auch statistisch von einer Zufallsaufteilung
+# unterscheidbar ist. NUR die Regressionsseite (`MLR3_Regression`) bleibt
+# unveraendert bei reinem eta^2 (dort ist der Zielwert immer numerisch).
 # ============================================================================
 
 # Setzt group_col als Rolle "group" (und entfernt sie aus den Features). Danach
@@ -61,39 +66,69 @@ diagnose_group_cv <- function(task_grouped, learner, measure, folds = 5, seed = 
 # Nullverteilung wird durch tatsaechliches Mischen der Labels erzeugt, nicht per
 # Formel angenommen.
 #
-# Teststatistik eta^2 (Anteil der Gesamtvarianz von `target`, den die
-# Gruppenzugehoerigkeit erklaert - klassische Varianzzerlegung hinter der
-# One-Way-ANOVA/F-Statistik): SS_zwischen / SS_gesamt.
-#
-# target: numerischer Vektor. group: Vektor/Faktor gleicher Laenge (zu testende
-# Gruppierung). n_perm: Anzahl Permutationen fuer die Nullverteilung.
-# Rueckgabe: list(eta2_observed, p_value, eta2_null) - eta2_null fuer eigene
-# Diagnostik/Histogramme.
+# Teststatistik bei NUMERISCHEM target: eta^2 (Anteil der Gesamtvarianz von
+# `target`, den die Gruppenzugehoerigkeit erklaert - klassische
+# Varianzzerlegung hinter der One-Way-ANOVA/F-Statistik): SS_zwischen /
+# SS_gesamt.
 #
 # ADR-003 (Regressionsseite): an 2 unabhaengigen Projekten bestaetigt
 # (SubjektDatensatz/Parkinson-Telemonitoring, AStepAheadOfdrought/
 # Klima-Panel) - siehe REFERENZ_GROUP_AWARE_CV.md fuer Theorie/Herkunft/
-# Zahlen. NUR fuer numerische Zielwerte nutzbar, siehe Kopfkommentar oben.
+# Zahlen.
 .eta_squared <- function(y, g) {
   total_ss <- sum((y - mean(y))^2)
   between_ss <- sum(tapply(y, g, function(yi) length(yi) * (mean(yi) - mean(y))^2))
   between_ss / total_ss
 }
 
+# Teststatistik bei KATEGORIALEM target (2026-08-17, Klassifikations-
+# Erweiterung): Cramer's V - normierte Effektgroesse aus dem Chi-Quadrat-
+# Unabhaengigkeitstest zwischen `target` und `group` (Kontingenztafel).
+# V = sqrt(chi2 / (n * min(r-1, c-1))), liegt in [0, 1] wie eta^2 - dieselbe
+# Interpretation "0 = keine Assoziation, 1 = perfekte Assoziation", nur fuer
+# zwei kategoriale statt eine numerische + eine kategoriale Variable.
+# Degenerierter Fall (nur 1 Level in target ODER group nach dem Mischen -
+# kann bei winzigen Permutations-Stichproben vorkommen): V := 0 statt NaN
+# (keine Assoziation messbar, nicht "undefiniert = signifikant").
+.cramers_v <- function(y, g) {
+  tab <- table(y, g)
+  n <- sum(tab)
+  k <- min(nrow(tab) - 1, ncol(tab) - 1)
+  if (k <= 0) return(0)
+  expected <- outer(rowSums(tab), colSums(tab)) / n
+  chi2 <- sum((tab - expected)^2 / expected)
+  sqrt(chi2 / (n * k))
+}
+
+# Dispatch: numerischer target -> eta^2, sonst (Faktor/Character/Integer-
+# Klassenlabel) -> Cramer's V. Beide liegen auf derselben [0,1]-Skala, daher
+# direkt austauschbar fuer den Permutationstest unten.
+.group_association_stat <- function(y, g) {
+  if (is.numeric(y)) .eta_squared(y, g) else .cramers_v(y, g)
+}
+
+# target: numerischer ODER kategorialer Vektor (Klassifikation: Faktor/
+# Character). group: Vektor/Faktor gleicher Laenge (zu testende Gruppierung).
+# n_perm: Anzahl Permutationen fuer die Nullverteilung.
+# Rueckgabe: list(statistic_observed, statistic_name, p_value, statistic_null)
+# - statistic_null fuer eigene Diagnostik/Histogramme, statistic_name ("eta2"
+# oder "cramers_v") zeigt, welcher Pfad gewaehlt wurde.
 test_group_significance <- function(target, group, n_perm = 999, seed = 42) {
   stopifnot(length(target) == length(group), n_perm >= 1)
-  obs <- .eta_squared(target, group)
+  obs <- .group_association_stat(target, group)
+  stat_name <- if (is.numeric(target)) "eta2" else "cramers_v"
   set.seed(seed)
   # sample(group) permutiert nur die ZUORDNUNG Zeile->Label - die Gruppengroessen
   # (Multiset der Label-Haeufigkeiten) bleiben exakt erhalten, nur wer zu welcher
   # Pseudo-Gruppe gehoert wird zufaellig. Das simuliert "gleiche Gruppengroessen,
   # aber keine echte Entitaetsstruktur".
-  eta2_null <- vapply(seq_len(n_perm), function(i) .eta_squared(target, sample(group)), numeric(1))
-  # Einseitiger p-Wert (echte Gruppenstruktur kann eta^2 nur erhoehen, nie senken) -
-  # +1/+1-Korrektur (Davison & Hinkley 1997): der beobachtete Wert zaehlt selbst
-  # als eine von n_perm+1 moeglichen Anordnungen, verhindert p=0.
-  p_value <- (1 + sum(eta2_null >= obs)) / (n_perm + 1)
-  list(eta2_observed = obs, p_value = p_value, eta2_null = eta2_null)
+  stat_null <- vapply(seq_len(n_perm), function(i) .group_association_stat(target, sample(group)), numeric(1))
+  # Einseitiger p-Wert (echte Gruppenstruktur kann die Statistik nur erhoehen,
+  # nie senken) - +1/+1-Korrektur (Davison & Hinkley 1997): der beobachtete
+  # Wert zaehlt selbst als eine von n_perm+1 moeglichen Anordnungen, verhindert
+  # p=0.
+  p_value <- (1 + sum(stat_null >= obs)) / (n_perm + 1)
+  list(statistic_observed = obs, statistic_name = stat_name, p_value = p_value, statistic_null = stat_null)
 }
 
 # Kandidaten-Scan: wendet test_group_significance() auf mehrere Spalten an, um
@@ -135,12 +170,12 @@ scan_group_candidates <- function(data, target_col, candidate_cols = NULL,
     test <- test_group_significance(data[[target_col]], grp, n_perm = n_perm, seed = seed)
     data.table(
       column = cc, cardinality = card, cardinality_ratio = round(card / n, 4),
-      avg_group_size = round(n / card, 1), eta2 = round(test$eta2_observed, 4),
-      p_value = round(test$p_value, 4),
+      avg_group_size = round(n / card, 1), statistic = round(test$statistic_observed, 4),
+      statistic_name = test$statistic_name, p_value = round(test$p_value, 4),
       moegliche_entitaet = test$p_value < 0.05 && card >= min_cardinality &&
         (card / n) <= max_cardinality_ratio)
   })
   out <- rbindlist(res)
-  setorder(out, p_value, -eta2)
+  setorder(out, p_value, -statistic)
   out
 }

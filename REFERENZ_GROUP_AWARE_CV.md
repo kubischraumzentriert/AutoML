@@ -9,12 +9,16 @@ Klassifikationsseite dieses Templates dazu konkret beitraegt.
 **Fuer die vollstaendige Theorie (i.i.d.-Verletzung, mlr3-Gruppenrolle,
 Permutationstest-Herleitung, Quellen) siehe das Regressions-Pendant**
 [`REFERENZ_GROUP_AWARE_CV.md`](../MLR3_Regression/REFERENZ_GROUP_AWARE_CV.md)
-im `MLR3_Regression`-Template - der Mechanismus (`set_group_role()`/
-`diagnose_group_cv()`) ist identischer, generischer Code (byte-identisch
-uebernommen), keine Duplikation der Herleitung hier. Dieses Dokument
-ergaenzt nur, was auf der Klassifikationsseite EIGENSTAENDIG bestaetigt
-werden musste (ADR-003: eine Bestaetigung in einem Template zaehlt nicht
-automatisch fuers andere).
+im `MLR3_Regression`-Template - `set_group_role()`/`diagnose_group_cv()`
+sind identischer, generischer Code (urspruenglich byte-identisch
+uebernommen), keine Duplikation der Herleitung hier.
+`test_group_significance()`/`scan_group_candidates()` weichen seit
+2026-08-17 leicht ab (Klassifikationsseite erkennt kategoriale Zielwerte
+automatisch und nutzt Cramer's V statt eta^2, siehe Abschnitt 4) - der
+Regressions-Code bleibt unveraendert, da dort der Zielwert immer
+numerisch ist. Dieses Dokument ergaenzt, was auf der Klassifikationsseite
+EIGENSTAENDIG bestaetigt werden musste (ADR-003: eine Bestaetigung in
+einem Template zaehlt nicht automatisch fuers andere).
 
 ---
 
@@ -67,31 +71,70 @@ tatsaechlich die richtige Schaetzung. Fuer den jeweils realistischeren
 Einsatzfall (neue Sitzung/neuer Patient) ist Group-CV bei beiden Projekten
 die relevante Zahl.
 
-## 4. Was NICHT eigenstaendig fuer Classif bestaetigt ist
+## 4. Permutationstest fuer kategoriale Zielwerte (Cramer's V)
 
-`test_group_significance()`/`scan_group_candidates()` (der eta^2-
-Permutationstest, der eine VERMUTETE Gruppenspalte statistisch bestaetigt,
-bevor man ihr vertraut) rechnen intern mit `mean()`/Varianz auf `target` -
-das setzt einen NUMERISCHEN Zielwert voraus und funktioniert nicht direkt
-fuer einen kategorialen Klassifikations-Zielwert. In beiden bisherigen
-Classif-Projekten nicht benoetigt (die Kandidatenspalte war beide Male
-semantisch bereits bekannt - `time_block`/`subject` -, kein automatisierter
-Scan noetig). Eine klassifikationstaugliche Variante (z.B. Cramer's V oder
-ein Chi-Quadrat-basiertes Analogon statt eta^2) ist eine offene Idee, nicht
-umgesetzt - siehe `TARGETS.md`.
+`test_group_significance()`/`scan_group_candidates()` rechneten urspruenglich
+nur mit eta^2 (Varianzzerlegung, setzt NUMERISCHEN Zielwert voraus) - fuer
+einen kategorialen Klassifikations-Zielwert nicht direkt nutzbar. **Ergaenzt
+(2026-08-17)**: `test_group_significance()` erkennt jetzt automatisch, ob
+`target` numerisch (eta^2, Regressionsseite unveraendert) oder kategorial
+(Cramer's V - normierte Effektgroesse aus dem Chi-Quadrat-Unabhaengigkeitstest
+zwischen `target` und `group`, `V = sqrt(chi2 / (n * min(r-1,c-1)))`, dieselbe
+`[0,1]`-Skala wie eta^2) ist - dieselbe Permutationslogik (Nullverteilung
+durch tatsaechliches Mischen der Gruppenzuordnung, +1/+1-korrigierter
+p-Wert), nur andere Teststatistik.
+
+**An 2 unabhaengigen Klassifikationsprojekten bestaetigt** (deren
+Group-CV-Luecken oben bereits unabhaengig ueber `diagnose_group_cv()`
+bestaetigt waren - der Permutationstest bestaetigt hier zusaetzlich, dass
+die jeweilige Gruppenspalte auch statistisch von einer Zufallsaufteilung
+unterscheidbar ist):
+
+| Projekt | Gruppenspalte | Cramer's V | p-Wert |
+|---|---|---:|---:|
+| `openml-eeg-eye-state-timeseries` | `time_block` vs. `class` | 0.9298 | 0.002 |
+| `uci-parkinsons-voice-groupcv` | `subject` vs. `status` | **1.0000** | 0.002 |
+| Negativkontrolle (kuenstliche Zufallsgruppe, eeg-eye-state) | - | 0.0905 | 0.942 |
+
+`uci-parkinsons`s Cramer's V von exakt 1.0 ist kein Fehler, sondern
+mathematisch korrekt: `status` ist eine PER-PROBAND-DIAGNOSE, also
+innerhalb jedes Probanden ueber alle Aufnahmen hinweg konstant (0
+Probanden mit gemischtem Status, siehe Projekt-README) - `subject`
+determiniert `status` deterministisch, die perfekte Assoziation spiegelt
+das exakt wider. Die Zufallskontrolle (kuenstliche 100er-Bloecke auf
+`eeg-eye-state`) zeigt trotz kleiner Stichprobenverzerrung (V=0.09, nicht
+exakt 0) korrekt `p=0.942` - der Permutationstest unterscheidet auch bei
+verrauschtem Rohwert zuverlaessig "keine echte Struktur" von "echte
+Struktur".
+
+Beide Test-Skripte (`verify_group_significance_classif.R`-Stil, direkt
+gegen `train.csv` der jeweiligen Projekte) sind nicht als eigene
+nummerierte Projektskripte angelegt (reine Ad-hoc-Verifikation fuer diesen
+Backport) - die Zahlen oben sind die vollstaendige Dokumentation.
 
 ## 5. Status
 
-**Backportiert (2026-08-17)** als `group_resampling.R` (byte-identischer
-Code zur Regressionsseite, nur der Kopfkommentar dokumentiert die
-Classif-spezifische Bestaetigungshistorie). Kein numeriertes Treiber-Skript
-im Template selbst (wie auf der Regressionsseite auch) - die Gruppenspalte
-ist immer projektspezifisch, `set_group_role()`/`diagnose_group_cv()`
-werden direkt aus einem projekteigenen Skript aufgerufen (siehe
-`openml-eeg-eye-state-timeseries/021_block_cv_comparison.R` bzw.
-`uci-parkinsons-voice-groupcv/021_group_cv_comparison.R` als Vorlagen).
-Keine `000_config.R`-Aenderung noetig (kein Default-Config-Wert, opt-in wie
-`scan_group_candidates()` auf der Regressionsseite).
+**Backportiert (2026-08-17)** als `group_resampling.R` (`set_group_role()`/
+`diagnose_group_cv()` weiterhin identischer Code zur Regressionsseite).
+Kein numeriertes Treiber-Skript im Template selbst (wie auf der
+Regressionsseite auch) - die Gruppenspalte ist immer projektspezifisch,
+`set_group_role()`/`diagnose_group_cv()` werden direkt aus einem
+projekteigenen Skript aufgerufen (siehe `openml-eeg-eye-state-timeseries/
+021_block_cv_comparison.R` bzw. `uci-parkinsons-voice-groupcv/
+021_group_cv_comparison.R` als Vorlagen). Keine `000_config.R`-Aenderung
+noetig (kein Default-Config-Wert, opt-in).
+
+**Cramer's-V-Erweiterung (2026-08-17)**: `test_group_significance()`
+erkennt jetzt automatisch numerische vs. kategoriale Zielwerte (siehe
+Abschnitt 4) - an 2 unabhaengigen Klassifikationsprojekten bestaetigt
+(`eeg-eye-state`/`uci-parkinsons-voice-groupcv`), ADR-003-Kriterium
+erfuellt. Rueckgabefeldnamen von `test_group_significance()` dabei
+generalisiert (`eta2_observed`->`statistic_observed`,
+`eta2_null`->`statistic_null`, neu `statistic_name`) - betrifft nur die
+Klassifikationsseite, kein bisheriger Aufrufer (weder Template noch
+`ML_Learning`-Projekt) hatte diese Funktion bereits genutzt, daher keine
+Rueckwirkungs-Pruefung noetig. `scan_group_candidates()`s Ausgabespalte
+`eta2` entsprechend zu `statistic`/`statistic_name` umbenannt.
 
 ## 6. Quellen
 

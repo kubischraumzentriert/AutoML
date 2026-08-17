@@ -251,12 +251,29 @@ allein auffindbar bleibt.
   Treiber-Skript/keine `000_config.R`-Aenderung noetig (wie auf der
   Regressionsseite - die Gruppenspalte ist immer projektspezifisch, opt-in
   wie `scan_group_candidates()`). `test_group_significance()`/
-  `scan_group_candidates()` (eta^2-Permutationstest) bleiben ein NICHT
-  eigenstaendig fuer Classif bestaetigter Teil (setzen numerischen
-  Zielwert voraus, siehe Kopfkommentar im Modul + REFERENZ-Abschnitt 4).
-  Details in `openml-eeg-eye-state-timeseries/README.md` bzw.
-  `uci-parkinsons-voice-groupcv/README.md`, konsolidiert in
+  `scan_group_candidates()` (eta^2-Permutationstest) waren zunaechst ein
+  NICHT eigenstaendig fuer Classif bestaetigter Teil (setzen numerischen
+  Zielwert voraus). Details in `openml-eeg-eye-state-timeseries/README.md`
+  bzw. `uci-parkinsons-voice-groupcv/README.md`, konsolidiert in
   `SYSTEMATIC_EVALUATION.md`.
+
+  ~~**Klassifikationstaugliche Variante des Gruppen-Permutationstests**~~
+  **ERLEDIGT (2026-08-17): Cramer's V ergaenzt.** `test_group_
+  significance()` erkennt jetzt automatisch numerische (eta^2) vs.
+  kategoriale Zielwerte (Cramer's V - normierte Chi-Quadrat-
+  Effektgroesse, dieselbe `[0,1]`-Skala, dieselbe Permutationslogik). An
+  2 unabhaengigen Klassifikationsprojekten bestaetigt - dieselben, deren
+  `diagnose_group_cv()`-Luecken bereits unabhaengig bestaetigt waren:
+  `eeg-eye-state`s `time_block` vs. `class` (V=0.9298, p=0.002),
+  `uci-parkinsons`s `subject` vs. `status` (V=**1.0000**, p=0.002 - exakt
+  1.0 ist korrekt, `status` ist eine Per-Proband-Diagnose, `subject`
+  determiniert sie deterministisch). Negativkontrolle (kuenstliche
+  Zufallsgruppe auf `eeg-eye-state`): V=0.09, p=0.942, korrekt
+  unauffaellig. Details/vollstaendige Herleitung in
+  `REFERENZ_GROUP_AWARE_CV.md` Abschnitt 4. Rueckgabefeldnamen dabei
+  generalisiert (`eta2_observed`->`statistic_observed` +
+  `statistic_name`) - kein bisheriger Aufrufer betroffen, da diese
+  Funktion auf der Classif-Seite noch nie genutzt wurde.
 
 - ~~**Nelder-Mead in `class_multiplier_tuning.R` noch nicht didaktisch
   aufgearbeitet**~~ **ERLEDIGT (2026-08-15).** Als
