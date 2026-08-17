@@ -506,6 +506,34 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   weiterverfolgt werden soll - aktuell KEIN Backport-Kandidat (0/2
   Projekte positiv). Voller Befund in
   `openml-eeg-eye-state-timeseries/README.md`.
+
+  **Folgetest mit klassischen (statt neuronalen) guenstigen
+  Diversitaetskandidaten (2026-08-17)**, Anlass: externe Projekt-
+  Beurteilung schlug nnet/Ranger-ExtraTrees/kNN/SVM vor, Nutzer ergaenzte
+  Naive Bayes/LDA/QDA. Sechs Kandidaten an zwei Projekten getestet
+  (`health_condition`: nnet/ExtraTrees/kNN; `openml-steel-plates-fault`:
+  SVM/Naive Bayes/LDA/QDA, siehe volle Zahlen in dessen README) - **wieder
+  kein robuster Mehrwert**: nnet/ExtraTrees fast Ranger-Klone (Kappa
+  0.96), kNN/SVM/NaiveBayes/LDA einzeln moderat dekorreliert (Kappa
+  0.72-0.85) aber zu schwach, QDA auf diesem Datensatz technisch nicht
+  lauffaehig (Rang-Defizit bei der kleinsten Klasse). Ein Test mit der
+  ECHTEN Caruana-Greedy-Selektion (statt naivem Blend, Algorithmus
+  identisch zu `149_ensemble_selection.R`) zeigte bei einem Seed einen
+  scheinbaren Ensemble-Gewinn (+0.0155 BAcc gegenueber dem besten
+  Einzelmodell, SVM/Naive Bayes/LDA tatsaechlich ausgewaehlt) - **eine
+  Robustheits-Gegenprobe mit zweitem Seed widerlegte das** (-0.0036,
+  schlechter als das beste Einzelmodell, obwohl SVM/NB erneut ausgewaehlt
+  wurden) - vermutlich Ueberanpassung an eine kleine Selektionsmenge bei
+  grosser Ensemblegroesse (23-49 von 50 Runden), dieselbe "Winner's
+  Curse"-Kategorie wie bei `generalization_gap.R`. Ein echtes SVM-Tuning
+  (30 Random-Search-Evals, log2-Suchraum) verschlechterte das Ergebnis
+  sogar gegenueber den Default-Hyperparametern unter 5-facher CV (0.7418
+  getunt vs. 0.7586 Default) - dieselbe Suchphasen-Ueberanpassung, hier am
+  Tuning-Ergebnis selbst statt an einem nachgelagerten Modell beobachtet.
+  **Fazit**: "guenstige klassische Diversitaetsmodelle" bleibt wie Hebel 1
+  ohne belastbaren Erfolg - kein Backport-Kandidat. Volle Zahlen/Skripte
+  (`098_ensemble_diversity_pool.R`, `098b_..._seed2.R`,
+  `099_svm_tuning.R`) in `openml-steel-plates-fault/README.md`.
 - ~~**Exact-value Target-Encoding auch auf NUMERISCHE Spalten**~~ **ERLEDIGT /
   UEBERNOMMEN (2. Bestaetigung)**: Anlass 4th-Place-Writeup zu `s6e7` (XGBoost OOF
   0.9489 -> 0.9496), zweite unabhaengige Bestaetigung auf `s6e8` (Smartphone
