@@ -84,10 +84,33 @@ learning_curve <- function(task, learner, measure, fractions, cv_folds = 5, repe
 #' n=20/5-fach-CV bleiben nur ~4 Zeilen je Fold, selbst gemittelt instabil).
 #' IQR (Q3-Q1) ignoriert die extremsten 25% auf jeder Seite und ist damit
 #' robust gegen genau diesen Fall, siehe TARGETS.md fuer die Herleitung.
+#'
+#' Mindest-n-Filter fuer die REGRESSION (2026-08-17, zweiter, verwandter
+#' Fund bei der gezielten Suche nach einem echten Plateau-Fall,
+#' `wdbc-plateau-test`): selbst mit dem IQR-Fix blieb ein Datensatz, der
+#' nachweislich schon bei n=68 saettigt (val_score 0.72->0.92->0.96->0.97
+#' bei den ersten vier Punkten, danach nur noch Rauschen zwischen 0.947 und
+#' 0.971), als "NOCH STEIGEND" klassifiziert (114.6% statt der tatsaechlichen
+#' ~7.5% bei Ausschluss der kleinsten Punkte). Ursache: `lm(val_score ~
+#' log(n))` gibt jedem Punkt gleiches Gewicht, unabhaengig von seiner
+#' Zuverlaessigkeit - ein winziger Punkt (n=6, bei 3-fach-CV nur ~2 Zeilen
+#' je Fold) hat im log(n)-Raum denselben Hebel wie ein grosser, obwohl sein
+#' Score kaum belastbar ist. `min_rows_per_fold` filtert genau diese Punkte
+#' VOR der Regression heraus (angezeigt werden weiterhin alle Punkte).
+#' Regressionsgetestet gegen alle 5 real getesteten Projekte plus
+#' `ci_smoke_test`: keine ungewollte Kippung (alle bleiben "noch steigend",
+#' teils mit klarerem Signal) - nur der gezielt gebaute Plateau-Testfall
+#' selbst kippt wie beabsichtigt von "noch steigend" zu "PLATEAU".
 #' @param out_path optional CSV-Speicherpfad
 #' @param plateau_relative Anteil der Gesamtspannweite, den eine Verdopplung
 #'   von n mindestens noch bringen muesste, um als "noch steigend" zu gelten
-report_learning_curve <- function(lc, out_path = NULL, plateau_relative = 0.10) {
+#' @param min_rows_per_fold Punkte mit weniger als `min_rows_per_fold * cv_folds`
+#'   Zeilen werden vor der Regression ausgeschlossen (weiterhin angezeigt/
+#'   gespeichert) - NULL deaktiviert den Filter (kein cv_folds bekannt).
+#' @param cv_folds CV-Folds, mit denen `lc` erzeugt wurde (fuer den
+#'   min_rows_per_fold-Filter; NULL = kein Filter)
+report_learning_curve <- function(lc, out_path = NULL, plateau_relative = 0.10,
+                                   min_rows_per_fold = 10, cv_folds = NULL) {
   data.table::setorder(lc, fraction)
   cat("\n=== Lernkurve ===\n")
   print(lc)
@@ -96,14 +119,27 @@ report_learning_curve <- function(lc, out_path = NULL, plateau_relative = 0.10) 
   gap <- lc$train_score[n_pts] - lc$val_score[n_pts]
   cat(sprintf("\nTrain-Validation-Luecke bei %.0f%%: %.4f\n", lc$fraction[n_pts] * 100, gap))
 
-  if (n_pts < 3) {
+  lc_fit <- lc
+  if (!is.null(cv_folds) && !is.null(min_rows_per_fold)) {
+    n_threshold <- min_rows_per_fold * cv_folds
+    n_dropped <- sum(lc$n < n_threshold)
+    if (n_dropped > 0) {
+      cat(sprintf(
+        "Hinweis: %d Punkt(e) mit < %d Zeilen (< %d Zeilen/Fold bei %d Folds) aus der Regression ausgeschlossen (weiter oben/in der CSV vollstaendig aufgefuehrt).\n",
+        n_dropped, n_threshold, min_rows_per_fold, cv_folds
+      ))
+      lc_fit <- lc[lc$n >= n_threshold, ]
+    }
+  }
+
+  if (nrow(lc_fit) < 3) {
     cat("HINWEIS: mindestens 3 fractions noetig fuer eine Trend-Einordnung.\n")
   } else {
-    fit <- lm(val_score ~ log(n), data = lc)
+    fit <- lm(val_score ~ log(n), data = lc_fit)
     slope <- unname(coef(fit)["log(n)"])
     gain_per_doubling <- slope * log(2)
-    total_range <- max(lc$val_score) - min(lc$val_score)
-    iqr_range <- stats::IQR(lc$val_score)
+    total_range <- max(lc_fit$val_score) - min(lc_fit$val_score)
+    iqr_range <- stats::IQR(lc_fit$val_score)
     relative <- if (iqr_range == 0) NA_real_ else gain_per_doubling / iqr_range
 
     cat(sprintf(

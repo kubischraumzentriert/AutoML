@@ -55,7 +55,8 @@ lc <- learning_curve(task_full, learner, measure, fractions,
                       cv_folds = learning_curve_cv_folds,
                       repeats = learning_curve_repeats, seed = seed)
 report_learning_curve(lc, out_path = learning_curve_results_path,
-                       plateau_relative = learning_curve_plateau_relative)
+                       plateau_relative = learning_curve_plateau_relative,
+                       cv_folds = learning_curve_cv_folds)
 
 # --- Experiment-Tracking (SQLite) -------------------------------------------
 # Ein model_config je fraction (hyperparams: train_fraction, n_train), zwei

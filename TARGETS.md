@@ -1166,6 +1166,41 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     reproduzierbaren Ad-hoc-Analyse. Echte Reproduzierbarkeits-Luecke,
     niedrige Prioritaet (Klassifikation aendert sich unter beiden Nennern
     nicht - 29.7%/59.3%, beide klar "noch steigend").
+
+    **Zweiter Methodik-Fix (2026-08-17): Mindest-n-Filter fuer die
+    Regression.** Anlass: gezielte Suche nach einem ECHTEN Plateau-Fall
+    (`ML_Learning/wdbc-plateau-test`, Wisconsin Breast Cancer via
+    `mlbench::BreastCancer` - OpenML.org antwortete an diesem Tag
+    durchgehend mit 504 Gateway Timeout, daher lokal ueber `mlbench` statt
+    `mlr3oml`), NACHDEM der IQR-Fix den einzigen bisherigen Plateau-Fund
+    (`credit-g`) widerlegt hatte - noch nie war bestaetigt, dass die
+    PLATEAU-Klassifikation ueberhaupt je korrekt anschlaegt. Ergebnis: ein
+    klassisch "sehr sauber trennbarer" Datensatz (Baseline-BAcc 0.983
+    Ranger, 0.963 sogar mit LDA) zeigte ein eindeutiges Saettigungsmuster
+    (val_score 0.722->0.917->0.961->**0.972** bei n=68, danach nur noch
+    Rauschen zwischen 0.947-0.971 bis n=683) - wurde aber TROTZDEM als
+    "NOCH STEIGEND" klassifiziert (114.6% des IQR). Ursache: dieselbe
+    Klasse von Problem wie beim `credit-g`-Fund, aber ueber die REGRESSION
+    statt den Nenner - `lm(val_score ~ log(n))` gewichtet jeden Punkt
+    gleich, unabhaengig von seiner Zuverlaessigkeit; die beiden winzigen
+    Anfangspunkte (n=6/n=14, bei 3-fach-CV nur ~2 Zeilen/Fold) dominierten
+    die Steigung und verschleierten den ab n=68 klar flachen Trend. **Fix**:
+    `report_learning_curve()` bekommt einen neuen `min_rows_per_fold`-
+    Parameter (Default 10) + `cv_folds` (muss vom Aufrufer durchgereicht
+    werden, `023_learning_curve.R` tut das jetzt) - Punkte mit weniger
+    Zeilen als `min_rows_per_fold * cv_folds` werden VOR der Regression
+    ausgeschlossen (in der Konsolen-Ausgabe/CSV weiterhin vollstaendig
+    sichtbar). Mit dem Fix kippt `wdbc-plateau-test` korrekt zu `PLATEAU`
+    (7.5% statt 114.6%). Regressionsgetestet gegen alle 5 real getesteten
+    Projekte (`health_condition`/`satimage`/`credit-g`/`synthetic_control`/
+    `eeg-eye-state`) + `ci_smoke_test`: keine ungewollte Kippung, alle
+    bleiben "noch steigend" (teils sogar mit klarerem Signal, z.B. credit-g
+    23.1%->45.9%, synthetic_control 45.4%->78.0%). Damit ist "NOCH STEIGEND
+    ueberall bei den bisherigen realen Projekten" jetzt ein verlaesslicherer
+    Nullbefund statt einer unbestaetigten Vermutung - die Klassifikation
+    KANN nachweislich Plateaus erkennen, tut es bei den bisher getesteten
+    echten Kaggle/OpenML-Datensaetzen aber tatsaechlich nicht. Siehe
+    `SYSTEMATIC_EVALUATION.md` fuer die eingearbeitete Neubewertung.
   - ~~**§14 Seed-Varianz & Hyperparameter-Rausch-Stabilitaet**~~ **ERLEDIGT
     (2026-08-13)**: `sanity_checks.R` deckte bereits Feature-Rausch-
     Perturbation und Feature-Invarianz ab - neu: `seed_stability.R`

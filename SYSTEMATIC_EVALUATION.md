@@ -49,6 +49,15 @@ Tabelle als publikationsreif gilt.
 | `openml-synthetic-control-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | ✓ (Faktor 1.25x, unauffällig) | ✓ (noch steigend, 17.5%) | ✓ (SD=0.000, vollständig deterministisch) | ✓ (beide unauffällig, z=0.05/-0.63) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096` für Hebel-1-Kandidat, negativ: Kappa 0.976, kein Diversitätsgewinn) | ✓ (keine Verbesserung, exakt balancierte Klassen) | — |
 | `playground-series-s5e12` (Kaggle) | — (kein `015` im Projekt) | ✓ (AUC 0.627, moderater aber echter Shift, Treiber `physical_activity_minutes_per_week`/`triglycerides`) | — (kein `022` im Projekt) | — (kein `023` im Projekt) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | ✗ (KEIN `148`/`149` im heutigen Sinn - lokal `148_select_submission_model.R`/`149_disagreement_check.R`, ZWEI ANDERE Verfahren: datengetriebene Modellwahl aus `experiments.db` bzw. Uneinigkeits-Vertrauenscheck, keine Greedy-Ensemble-Selection; drittes Projekt nach `s6e5`/`s6e6` mit diesem Namenskollisions-Muster) | ~ (`130_threshold_tuning.R` im Ordner, aber keine Artefakte - Zielmetrik AUC ist schwellenwertunabhaengig, `warn_if_threshold_step_low_value()` greift; dasselbe Muster wie `predictingsmartphoneAddiction_s6e8`) | — |
 | `openml-eeg-eye-state-timeseries` | ✓ (unauffällig) | — (kein `115` im Projekt) | — (strukturell übersprungen, >5000 Zeilen) | ✓ (noch steigend, 14.7%) | ✓ (unauffällig, 0.23x/0.21x) | ✓ (beide unauffällig, aber bisher höchste z-Werte: z=1.67/1.27) | — (kein `148`/`149`; stattdessen FT-Transformer-Dekorrelationstest `095`/`096`, 2. Versuch nach `synthetic_control`: Kappa 0.581, DEKORRELIERT (anders als dort), aber FT-Transformer schwächer (BAcc 0.764 vs. Ranger 0.869 bei nur 15 Epochen/n=4500) - Blend-BAcc wegen NaN-Bug offen geblieben, nicht nachgerechnet) | ✓ (binärer `optimize()`/Brent-Pfad, modester Gewinn) | — |
+| `wdbc-plateau-test`¹ | — (kein `015` im Projekt) | — (kein `115` im Projekt) | — (kein `022` im Projekt) | ✓✓ (gezielt gebauter PLATEAU-Fall, 7.5% des IQR nach Mindest-n-Fix - erster echter Plateau-Fund, siehe Fussnote) | — (kein `092` im Projekt) | — (kein `136` im Projekt) | — (kein `148`/`149` im Projekt) | — (kein `130` im Projekt) | — |
+
+¹ `wdbc-plateau-test` ist KEIN regulaeres Kaggle/OpenML-Workflow-Projekt,
+sondern ein gezielt gebauter Diagnose-Testfall (Wisconsin Breast Cancer via
+`mlbench::BreastCancer`, klassisch "sehr sauber trennbar") - nur `020`/
+`023`/`030` gelaufen, deshalb ueberwiegend `—`. Zweck: pruefen, ob die
+Learning-Curve-PLATEAU-Klassifikation ueberhaupt je korrekt anschlaegt,
+nachdem der einzige bisherige Plateau-Fund (`credit-g`) sich als
+Methodik-Artefakt herausstellte (siehe TARGETS.md/Abschnitt unten).
 
 ## Was diese erste Fassung zeigt
 
@@ -319,16 +328,28 @@ unterschiedliche Domaenen/Aufgabentypen)
   Artefakt eines besonders sauber trennbaren synthetischen Datensatzes als
   ein generalisierbarer Befund, sollte in einer Publikationsnotiz nicht als
   typischer Wert zitiert werden.
-- **Learning-Curve (023) - NOCH STEIGEND ueber alle 5 getesteten Projekte,
-  unabhaengig von der Groesse (korrigiert 2026-08-15)**: `health_condition`
-  (690k Zeilen), `satimage` (6430), `credit-g` (1000), `synthetic_control`
-  (600) und `eeg-eye-state` (14980) zeigen alle "noch steigend" - die
-  urspruenglich vermutete Groessen-Korrelation ("kleine Datensaetze
-  plateauen") war ein Methodik-Artefakt (siehe Abschnitt unten), kein
-  echter Befund. Bisher in DIESEM Oekosystem also eher ein robuster
-  Nullbefund ("Ranger/LightGBM plateauen im getesteten Fraktionsbereich
-  praktisch nie") als ein differenzierender - noch kein einziger echter
-  Plateau-Fall beobachtet.
+- **Learning-Curve (023) - NOCH STEIGEND ueber alle 5 realen Projekte,
+  unabhaengig von der Groesse (korrigiert 2026-08-15, praezisiert
+  2026-08-17)**: `health_condition` (690k Zeilen), `satimage` (6430),
+  `credit-g` (1000), `synthetic_control` (600) und `eeg-eye-state` (14980)
+  zeigen alle "noch steigend" - die urspruenglich vermutete Groessen-
+  Korrelation ("kleine Datensaetze plateauen") war ein Methodik-Artefakt
+  (IQR-Nenner, siehe Abschnitt unten), kein echter Befund. **Wichtige
+  Praezisierung (2026-08-17)**: die gezielte Suche nach einem Plateau-Fall
+  (`wdbc-plateau-test`, ein klassisch "sehr sauber trennbarer" Datensatz)
+  deckte einen ZWEITEN, verwandten Methodik-Fund auf - selbst mit dem
+  IQR-Fix blieb dieser eindeutig saettigende Datensatz als "noch steigend"
+  klassifiziert, weil winzige Anfangs-n-Punkte die Regression dominierten.
+  Erst ein weiterer Fix (Mindest-n-Filter vor der Regression) liess ihn
+  korrekt als PLATEAU erkennen - UND bestaetigte per Regressionstest, dass
+  die 5 realen Projekte auch mit dem Fix "noch steigend" bleiben (teils
+  klarer). Damit ist "NOCH STEIGEND ueberall" jetzt ein verlaesslicherer
+  Nullbefund statt einer unbestaetigten Vermutung: der Mechanismus KANN
+  nachweislich Plateaus erkennen (an einem gezielt gebauten Fall bestaetigt),
+  tut es bei den bisher getesteten echten Kaggle/OpenML-Datensaetzen aber
+  tatsaechlich nicht - "Ranger/LightGBM plateauen im getesteten
+  Fraktionsbereich bei REALEN Projekten praktisch nie" ist damit ein
+  belastbarerer Satz als vorher.
 
 ### Projektspezifisch (Effektgroesse/Relevanz haengt an konkreten
 Dateneigenschaften, nicht nur "funktioniert der Mechanismus")
@@ -434,8 +455,18 @@ Abdeckungsquote zu praesentieren.
    Diversität) identifiziert, plus ein methodischer Hinweis zur
    Marker-Lücken-Interpretation für die Notiz selbst.
 6. Perspektivisch: zweiter Beleg für die noch duennen 1-Projekt-Befunde
-   (Learning-Curve-Plateau, Group-aware-CV-Klassifikationsseite), bevor die
-   Diskussion oben als belastbar gilt statt als erste Beobachtung.
+   (Group-aware-CV-Klassifikationsseite), bevor die Diskussion oben als
+   belastbar gilt statt als erste Beobachtung.
+   ~~Learning-Curve-Plateau~~ **umformuliert statt bestaetigt
+   (2026-08-17)**: der urspruengliche Punkt war durch den `credit-g`-
+   IQR-Fix bereits obsolet (kein Plateau-Fund mehr, den man haette
+   bestaetigen koennen). Stattdessen gezielt `wdbc-plateau-test` gebaut
+   (klassisch "sehr sauber trennbarer" Datensatz) - deckte einen zweiten
+   Methodik-Fund auf (Mindest-n-Filter noetig, winzige Anfangspunkte
+   dominierten sonst die Regression) und bestaetigte danach: die
+   PLATEAU-Klassifikation KANN korrekt anschlagen, tut es bei den 5 realen
+   Projekten aber tatsaechlich nicht - siehe Diskussion oben und
+   `TARGETS.md`.
    ~~FT-Transformer-Diversitaet~~ **zweiter Datenpunkt ERLEDIGT
    (2026-08-15, `eeg-eye-state`)**: Ergebnis aber uneindeutig statt
    bestaetigend - Dekorrelations-Befund dreht sich zwischen den beiden
