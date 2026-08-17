@@ -182,6 +182,32 @@ univariate_drift_alpha <- 0.05
 # "Target-Leakage-Audit". CV<->LB-Uebereinstimmung faengt einen Leak NICHT
 # (das Artefakt steckt auch in den Testdaten) - nur ein Feature-Audit tut das.
 leak_audit_importance_share_threshold <- 0.50  # 1 Feature traegt >50% der Gain-Importance
+# Kumulative Top-k-Schwelle (2026-08-17, aus MLR3_Regression zurueckgefuehrt,
+# dort an 2 Projekten bestaetigt: bike-sharing (echter Leak-PAAR-Fund,
+# casual+registered==count, 100.0%) + road-accident-risk (Gegenprobe: 3
+# legitime Features tragen zusammen 88%, korrekt NICHT geflaggt). Faengt
+# einen Leak-PAAR/eine Leak-GRUPPE, bei der kein einzelnes Feature ueber
+# leak_audit_importance_share_threshold liegt, die fuehrenden Features
+# zusammen aber fast die gesamte Importance tragen (Anlass fuer die
+# Klassifikationsseite: CreditScoringChallenge, repay+funding-Gruppe -
+# ohne diese Features F1 0.876->~0.41, aber keins davon zwingend einzeln
+# >50%). leak_audit_cumulative_max_k begrenzt, wie viele fuehrende
+# Features ueberhaupt betrachtet werden - verhindert, dass bei
+# gleichmaessig verteilter Importance am Ende viele Features "verdaechtig"
+# werden (waere kein Leak-Befund mehr, nur triviale Schwellenerschoepfung).
+# BEWUSST hoch (nicht 80%): soll nur bei FAST VOLLSTAENDIGER Erklaerung
+# greifen (typisch fuer einen exakten Leak), nicht schon wenn die
+# fuehrenden Features "nur" den groessten Teil der Varianz erklaeren (das
+# kann bei starken legitimen Praediktoren leicht 80-90% erreichen, ohne
+# Leak zu sein - siehe road-accident-risk-Gegenprobe oben).
+#
+# SICHERHEITSBEDINGUNG (im Skript, nicht hier): der Check laeuft NUR, wenn
+# Schritt 1 bereits mindestens einen Einzelverdaechtigen gefunden hat - er
+# ERWEITERT einen bestehenden Verdacht, statt einen neuen aus einer
+# sauberen Verteilung zu erzeugen (sonst waeren z.B. bei road-accident-risk
+# die 3 legitimen Top-Features faelschlich geflaggt worden).
+leak_audit_cumulative_share_threshold <- 0.98
+leak_audit_cumulative_max_k <- 5L
 leak_audit_suspect_top_n <- 8                  # max. Anzahl Verdaechtiger fuer die Zerlegung
 leak_audit_determinism_min_n <- 30             # Mindestgruppengroesse fuer einen Determinismus-Fund
 leak_audit_determinism_eps <- 1e-9             # Toleranz um Anteil = 1 (numerische Rundung)

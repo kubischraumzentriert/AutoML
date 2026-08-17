@@ -582,11 +582,47 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   optimistisch. **Bekannte Grenze: nur Einzelfeature-Konzentration, keine
   gemeinsam wirkenden Leak-Paare** - bewusst nicht automatisch nachgeschaerft
   (Risiko, legitime starke Feature-Gruppen faelschlich auszuschliessen;
-  Schritt 5 faengt den Rest ab). Details/Backlog-Kandidat (kumulative
-  Top-k-Schwelle) siehe `WORKFLOW_GUARDS.md`/`BACKLOG.md` im
-  Regressions-Template - noch nicht unabhaengig an einem Klassifikations-
-  projekt bestaetigt, dieselbe Code-Logik (`share > threshold`) gilt aber
-  identisch hier.
+  Schritt 5 faengt den Rest ab). Details siehe `WORKFLOW_GUARDS.md`/
+  `BACKLOG.md` im Regressions-Template.
+
+  ~~**Kumulative Top-k-Schwelle - Backlog-Kandidat**~~ **BACKPORTIERT
+  (2026-08-17).** Auf der Regressionsseite laengst an 2 Projekten
+  bestaetigt (bike-sharing: echter Leak-PAAR-Fund, `casual+registered`==
+  `count` exakt 100.0%; road-accident-risk: Gegenprobe, 3 legitime
+  Features tragen zusammen 88%, korrekt NICHT geflaggt). Dieselbe
+  Code-Logik (`share > threshold`, `cumsum()` ueber die Top-k) 1:1 nach
+  `015_target_leak_audit.R` uebernommen: ein neuer kumulativer Check
+  direkt nach Schritt 1, der die fuehrenden `leak_audit_cumulative_max_k`
+  Features darauf prueft, ob sie ZUSAMMEN ueber `leak_audit_cumulative_
+  share_threshold` (Default 0.98) der Gain-Importance tragen -
+  SICHERHEITSBEDINGUNG: laeuft NUR, wenn Schritt 1 bereits mindestens
+  einen Einzelverdaechtigen gefunden hat (erweitert einen bestehenden
+  Verdacht, statt einen neuen aus einer sauberen Verteilung zu erzeugen -
+  sonst haetten z.B. `steel-plates-fault`s oder `satimage`s legitime
+  Top-Features faelschlich angeschlagen).
+
+  **Synthetisch verifiziert** (da kein reales Klassifikationsprojekt mit
+  genau dieser Leak-Paar-Struktur sofort verfuegbar war, analog
+  `road-accident-risk`s Gegenprobe-Logik nachgebaut): Szenario A (`class`
+  aus `leak_a + leak_b > median`, 2 Features tragen zusammen fast 100%,
+  `leak_b` allein bereits 51.0% > Einzelschwelle) - der kumulative Check
+  erweitert korrekt um `leak_a` (zusammen 99.6% > 98%). Szenario B (3
+  legitime, unabhaengige Features tragen zusammen 93.5%, keins einzeln
+  ueber 35.8%) - Sicherheitsbedingung greift korrekt, kein Einzelverdacht
+  vorhanden, Check uebersprungen, keine Fehlalarme. Regressionsgetestet
+  gegen `ci_smoke_test`: unveraendertes Verhalten (keine Verdaechtigen,
+  kumulative Erweiterung korrekt uebersprungen).
+
+  **Realer Klassifikations-Anlass fuer den Port**: `CreditScoringChallenge`
+  (African Credit Scoring) - die repay+funding-Feature-Gruppe (`Total_
+  Amount_to_Repay`/`interest_ratio`/`repay_minus_amount`/`Lender_portion_
+  to_be_repaid`) senkt F1 von 0.876 auf ~0.41, aber keines der Features ist
+  zwingend einzeln ueber 50% (aeltere, ad-hoc-Analyse, nicht mit dem
+  aktuellen `015`-Skript reproduziert). **Echte Bestaetigung AN einem mit
+  dem aktuellen `015`-Skript laufenden Klassifikationsprojekt bleibt
+  offen** - der Backport selbst ist aber synthetisch abgesichert und
+  default-inert (No-op-Kriterium aus `adr/003` erfuellt: opt-in, kein
+  Verhalten aendert sich fuer Projekte ohne Einzelverdacht).
 - ~~**Nested/gepooltes per-Fold-Threshold-Tuning fehlt**~~ **ERLEDIGT
   (2026-08-15), ueber den No-op-Pfad aus ADR-003 backported.** Anlass:
   `CreditScoringChallenge`, Verfeinerung zu `130_threshold_tuning.R`. Der

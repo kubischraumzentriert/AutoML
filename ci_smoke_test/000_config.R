@@ -170,6 +170,8 @@ univariate_drift_alpha <- 0.05
 # "Target-Leakage-Audit". CV<->LB-Uebereinstimmung faengt einen Leak NICHT
 # (das Artefakt steckt auch in den Testdaten) - nur ein Feature-Audit tut das.
 leak_audit_importance_share_threshold <- 0.50  # 1 Feature traegt >50% der Gain-Importance
+leak_audit_cumulative_share_threshold <- 0.98
+leak_audit_cumulative_max_k <- 5L
 leak_audit_suspect_top_n <- 8                  # max. Anzahl Verdaechtiger fuer die Zerlegung
 leak_audit_determinism_min_n <- 30             # Mindestgruppengroesse fuer einen Determinismus-Fund
 leak_audit_determinism_eps <- 1e-9             # Toleranz um Anteil = 1 (numerische Rundung)
