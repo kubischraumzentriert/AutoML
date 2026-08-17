@@ -300,6 +300,31 @@ Ergebnis (Group-aware CV hat noch keine eigene Spalte): Random-CV BAcc
   verifiziert - weiterhin nicht erschoepfend, aber ein durchgehend
   fehlerfreier Ausschnitt ueber inzwischen 3 Runden, ausserhalb der
   bereits bekannten `s6e5`-`148`/`149`-Korrektur.
+- **Vierte Stichproben-Runde an Alt-Zellen (2026-08-17), wieder kein neuer
+  Fehler gefunden**: 8 weitere Zellen aus 8 Projekten/4 Spalten
+  (Adversarial Validation, Ensemble Selection, Threshold-Tuning,
+  Multi-Label) direkt gegen die rohen `_artifacts`-CSVs nachgerechnet -
+  `drivendata_richter`s Adversarial-Validation-AUC (0.500227 ≈ 0.5002
+  exakt), `FinancialStressPredictionChallenge`s AUC (0.49712 ≈ 0.4971
+  exakt), `playground-series-s6e6`s AUC (0.499587 ≈ 0.4996 exakt),
+  `playground-series-s5e12`s AUC (0.627223 ≈ 0.627 exakt - erstmals direkt
+  gegen die Roh-CSV statt nur gegen die README-Tabelle, die diese Zeile
+  erst kuerzlich ergaenzt hatte), `health_condition`s Ensemble-Selection
+  (`ensemble_selection_results.csv`: equal_blend BAcc 0.9524 >
+  best_single 0.9484, Ensemble-Gewinn bestaetigt), `eeg-eye-state`s
+  Threshold-Tuning (bacc_plain 0.9271 -> bacc_tuned 0.9274, tatsaechlich
+  modest wie in der Tabelle behauptet, nicht Null und nicht gross),
+  `synthetic_control`s Threshold-Tuning (bacc_plain = bacc_tuned = 0.95
+  exakt identisch - bestaetigt "keine Verbesserung, exakt balancierte
+  Klassen" woertlich) sowie `openml-yeast-multilabel`s Binary-Relevance-/
+  Threshold-Tuning-Artefakte (`binary_relevance_multilabel_summary.csv`/
+  `threshold_tuning_multilabel_summary.csv`: reale, plausible Metriken -
+  Accuracy-getunte Schwelle schlaegt Default auf 3 von 4 Metriken).
+  Alle acht bestaetigt. Damit sind jetzt 29 von >150 Zellen
+  stichprobenartig direkt gegen Quelle verifiziert - weiterhin nicht
+  erschoepfend, aber ein durchgehend fehlerfreier Ausschnitt ueber
+  inzwischen 4 Runden, ausserhalb der bereits bekannten
+  `s6e5`-`148`/`149`-Korrektur.
 
 ## Diskussion für die Publikationsnotiz (2026-08-15)
 
@@ -455,17 +480,17 @@ Abdeckungsquote zu praesentieren.
    Dateiname geprüft (robust), bereits VORHANDENE `✓`-Zellen aus der
    allerersten Entwurfsfassung dagegen nicht - genau dort sass dieser
    Fehler.
-4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **DREI RUNDEN
-   ERLEDIGT (2026-08-15/2026-08-16)**: 7 (1. Runde) + 6 (2. Runde) + 8
-   (3. Runde) = 21 Alt-Zellen aus insgesamt 9 Projekten/5 Spalten direkt
-   gegen Quelle (Artefakt-CSV, nicht nur TARGETS.md-Prosa) nachgeprüft -
-   alle 21 bestätigt, kein neuer Fehler seit der `s6e5`-Korrektur (siehe
-   Detailauflistungen der 2. und 3. Runde im Abschnitt "Was diese erste
-   Fassung zeigt" oben). Nicht erschöpfend (die Tabelle hat >150 Zellen,
-   ~14% bisher stichprobenartig geprüft) - eine vierte Runde bleibt
-   sinnvoll, ist aber kein akuter Blocker mehr; das durchgehend
-   fehlerfreie Muster ueber 3 Runden spricht fuer die grundsaetzliche
-   Verlaesslichkeit der Tabelle.
+4. ~~Weitere Stichproben unter bereits gefüllten Alt-Zellen~~ **VIER RUNDEN
+   ERLEDIGT (2026-08-15/2026-08-17)**: 7 (1. Runde) + 6 (2. Runde) + 8
+   (3. Runde) + 8 (4. Runde) = 29 Alt-Zellen aus insgesamt 13 Projekten/
+   8 Spalten direkt gegen Quelle (Artefakt-CSV, nicht nur TARGETS.md-Prosa)
+   nachgeprüft - alle 29 bestätigt, kein neuer Fehler seit der
+   `s6e5`-Korrektur (siehe Detailauflistungen der 2.-4. Runde im Abschnitt
+   "Was diese erste Fassung zeigt" oben). Nicht erschöpfend (die Tabelle
+   hat >150 Zellen, ~19% bisher stichprobenartig geprüft) - eine fünfte
+   Runde bleibt sinnvoll, ist aber kein akuter Blocker mehr; das
+   durchgehend fehlerfreie Muster ueber 4 Runden spricht fuer die
+   grundsaetzliche Verlaesslichkeit der Tabelle.
 5. ~~Zusammenfassung/Diskussion für die Publikationsnotiz ableiten~~
    **ERLEDIGT (2026-08-15)**: siehe Abschnitt "Diskussion für die
    Publikationsnotiz" oben - vier robuste, projekttyp-unabhängige
