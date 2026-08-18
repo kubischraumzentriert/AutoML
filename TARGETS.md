@@ -696,11 +696,34 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Amount_to_Repay`/`interest_ratio`/`repay_minus_amount`/`Lender_portion_
   to_be_repaid`) senkt F1 von 0.876 auf ~0.41, aber keines der Features ist
   zwingend einzeln ueber 50% (aeltere, ad-hoc-Analyse, nicht mit dem
-  aktuellen `015`-Skript reproduziert). **Echte Bestaetigung AN einem mit
-  dem aktuellen `015`-Skript laufenden Klassifikationsprojekt bleibt
-  offen** - der Backport selbst ist aber synthetisch abgesichert und
-  default-inert (No-op-Kriterium aus `adr/003` erfuellt: opt-in, kein
-  Verhalten aendert sich fuer Projekte ohne Einzelverdacht).
+  aktuellen `015`-Skript reproduziert).
+
+  **Nachgeholt (2026-08-17), aber KEINE positive Bestaetigung - ein
+  aufschlussreicher Grenzfall statt eines Trigger-Falls.** Das aktuelle
+  `015`-Skript (inkl. kumulativer Schwelle) direkt auf `CreditScoring
+  Challenge`s Rohdaten angewandt: kein Feature ueberschreitet einzeln die
+  50%-Schwelle (`Total_Amount_to_Repay` 23.6%, `Total_Amount` 22.0%,
+  `loan_type` 12.9%, `Amount_Funded_By_Lender` 10.6%, `Lender_portion_
+  to_be_repaid` 9.4%) - die Sicherheitsbedingung blockiert die kumulative
+  Pruefung komplett. Nachgerechnet: selbst OHNE Sicherheitsbedingung
+  waere erst bei `max_k=11` (statt 5) die 98%-Schwelle ueberschritten -
+  das haette dann aber 11 von 13 Features als "verdaechtig" markiert,
+  genau das im Kopfkommentar des Moduls selbst befuerchtete Szenario
+  ("gleichmaessig verteilte Importance -> triviale Schwellenerschoepfung").
+  Dieser reale Leak ist DIFFUS ueber 5 Features verteilt, nicht in 1-2
+  dominanten konzentriert wie beim Bike-Sharing-Regressions-Anlassfall -
+  die konservative Auslegung (Sicherheitsbedingung + `max_k=5`) bleibt
+  hier also korrekt zurueckhaltend, auf Kosten davon, diesen Leak nicht
+  zu fangen. Volle Herleitung in `CreditScoringChallenge/README.md`.
+
+  **Echte POSITIVE Bestaetigung AN einem mit dem aktuellen `015`-Skript
+  laufenden Klassifikationsprojekt bleibt weiterhin offen** - der Backport
+  selbst ist aber synthetisch abgesichert und default-inert (No-op-
+  Kriterium aus `adr/003` erfuellt: opt-in, kein Verhalten aendert sich
+  fuer Projekte ohne Einzelverdacht). Gesucht wird ein Projekt mit EINEM
+  Feature knapp/klar ueber 50% PLUS einem "Partner"-Feature, das die
+  kumulative Summe weiter erhoeht (analog Bike-Sharing: `registered`
+  allein >50%, `casual` als knapper Zusatzverdaechtiger).
 - ~~**Nested/gepooltes per-Fold-Threshold-Tuning fehlt**~~ **ERLEDIGT
   (2026-08-15), ueber den No-op-Pfad aus ADR-003 backported.** Anlass:
   `CreditScoringChallenge`, Verfeinerung zu `130_threshold_tuning.R`. Der
