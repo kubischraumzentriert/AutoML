@@ -68,7 +68,7 @@ Unterschiede (R/mlr3 vs. Python/sklearn) als Modellunterschied
 misszuverstehen (dieser Fehler passierte im ersten Testlauf und wurde
 korrigiert, siehe unten).
 
-## 4. Testergebnisse (2026-08-18, 4 Projekte)
+## 4. Testergebnisse (2026-08-18, 5 Projekte)
 
 Alle Vergleiche: identischer 80/20-Stratified-Holdout (seed=42), TabICLv2/
 RandomForest/LightGBM im selben Python-Skript trainiert (fairer Vergleich).
@@ -76,16 +76,18 @@ RandomForest/LightGBM im selben Python-Skript trainiert (fairer Vergleich).
 | Projekt | Zeilen | Klassen | TabICLv2 BAcc | Bestes Referenzmodell | Kappa (TabICLv2 vs. LightGBM) | Mehrheits-Blend |
 |---|---:|---:|---:|---:|---:|---:|
 | `uci-parkinsons-voice-groupcv` | 196 | 2 | **0.9828** | RF/LightGBM 0.8828 | 0.87 | 0.8828 (kein Gewinn - Blend verwaessert TabICLv2s Vorsprung) |
+| `openml-synthetic-control-timeseries` | 600 | 6 | 1.0000 | RandomForest 1.0000 | 0.98 (fast identisch) | 1.0000 |
 | `wdbc-plateau-test` | 683 | 2 | 0.9671 | RandomForest 0.9671 | 0.98 (fast identisch) | 0.9671 |
-| `openml-steel-plates-fault` | 1941 | 7 | 0.8562 | LightGBM 0.8746 | 0.83 | 0.8708 (kein Gewinn) |
 | `openml-credit-g` | 1000 | 2 | 0.6500 | LightGBM 0.6833 | 0.60 (staerkste Dekorrelation) | 0.6679 (kein Gewinn) |
+| `openml-steel-plates-fault` | 1941 | 7 | 0.8562 | LightGBM 0.8746 | 0.83 | 0.8708 (kein Gewinn) |
 
 **Muster**: klarer Sieg auf dem kleinsten Datensatz (`parkinsons`, 196
-Zeilen), Gleichstand auf dem "leichtesten" (WDBC, nahezu perfekt trennbar,
-Kappa=1.0 - praktisch identische Vorhersagen wie RandomForest), knapp
-unterlegen bzw. schwaechstes Modell auf den beiden groesseren/schwereren
-Projekten. Kein konsistenter Zusammenhang mit Datensatzgroesse allein
-erkennbar (683 vs. 1000 Zeilen zeigen entgegengesetzte Ergebnisse).
+Zeilen), Gleichstand auf zwei nahezu perfekt trennbaren Datensaetzen
+(`synthetic-control`, `wdbc-plateau-test` - beide Kappa~1.0, praktisch
+identische Vorhersagen wie RandomForest, Deckeneffekt), knapp unterlegen
+bzw. schwaechstes Modell auf den beiden groesseren/schwereren Projekten.
+Kein konsistenter Zusammenhang mit Datensatzgroesse allein erkennbar
+(683 vs. 1000 Zeilen zeigen entgegengesetzte Ergebnisse).
 
 **Wichtige methodische Lehre (`parkinsons`)**: der naive Mehrheits-Blend
 kann einen echten Staerkevorteil eines einzelnen Modells ZUNICHTE machen,
@@ -138,7 +140,7 @@ VOLLEN 691K Zeilen (aktuell nicht durchgefuehrt, siehe Restriktion oben).
 
 ## 5. Fazit/Einordnung
 
-Kein robuster, konsistenter Gewinner ueber alle vier Projekte - aber DER
+Kein robuster, konsistenter Gewinner ueber alle fuenf Projekte - aber DER
 erste Kandidat in der gesamten Diversitaets-Testreihe dieser Session
 (nnet/ExtraTrees/kNN/SVM/NaiveBayes/LDA/QDA), der auf mindestens einem
 Projekt klar und deutlich (+0.10 BAcc) vor beiden Baum-Referenzen liegt.

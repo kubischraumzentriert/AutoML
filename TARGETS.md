@@ -567,7 +567,12 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     TabICLv2 BAcc 0.9671, exakter Gleichstand mit RandomForest
     (Kappa=1.0000 - identische Vorhersagen).
 
-  **Fazit ueber alle 4 Projekte**: kein konsistentes Muster (kleinster
+  **Nachtrag (5. Projekt)**: `openml-synthetic-control-timeseries` (600
+  Zeilen, 6 Klassen) - Gleichstand mit RandomForest (BAcc 1.0000,
+  Kappa=1.0 - nahezu perfekt trennbarer Datensatz, Deckeneffekt, aehnlich
+  `wdbc-plateau-test`).
+
+  **Fazit ueber alle 5 Projekte**: kein konsistentes Muster (kleinster
   Datensatz gewinnt klar, mittelgrosse Projekte schwaecher/gemischt,
   Groesse allein erklaert es nicht). Kein Backport-Kandidat fuer den
   naiven Blend (wuerde den Vorteil dort, wo er auftritt, zunichtemachen),
