@@ -724,6 +724,37 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Feature knapp/klar ueber 50% PLUS einem "Partner"-Feature, das die
   kumulative Summe weiter erhoeht (analog Bike-Sharing: `registered`
   allein >50%, `casual` als knapper Zusatzverdaechtiger).
+
+  **Erweiterte Suche (2026-08-17), 17 reale Projekte gegen die
+  Einzelschwelle geprueft** (Werte per LightGBM-Gain-Importance, hoechster
+  zuerst): `s6e8` 49.3%, `amazon-access` 46.7% (`MGR_ID`), `health_
+  condition` 42.9%, `bank-marketing` 39.4% (`duration`), `richter` 39.0%
+  (`geo_level_1_id`), `s6e6` 37.4%, `s5e12` 34.9%, `adult-income` 26.2%,
+  `credit-g` 26.9%, `CreditScoringChallenge` 23.6%, `s6e5` 29.2%, weitere
+  <20%. **Kein einziges Projekt ueberschreitet 50%** - der engste Fall
+  (`s6e8`) verfehlt sie nur knapp. Alle gepruefteten Naeherungsfaelle
+  liessen sich inhaltlich plausibel als legitime Signale einordnen
+  (Bildschirmzeit bei Sucht-Vorhersage, Managerfreigabe bei
+  Zugriffsrechten, Anrufdauer bei Verkaufsgespraechen), keine weitere
+  Untersuchung ausgeloest.
+
+  **Daraus abgeleitet: neue informative Vorstufe statt Schwellen-
+  Absenkung.** Nutzeridee nach dieser Suche: eine niedrigere Schwelle
+  haette bei 7/17 Projekten ausgeloest (34.9-49.3%), obwohl alle sieben
+  bereits als legitim eingeordnet wurden - eine Absenkung der HARTEN
+  50%-Schwelle haette die "selten, aber berechtigt"-Eigenschaft des
+  Guards verwaessert, UND haette den einen bekannten echten (aber
+  diffusen) Leak-Fall trotzdem nicht gefangen (`CreditScoringChallenge`,
+  kein Feature ueber 24%). Stattdessen: `leak_audit_advisory_share_
+  threshold` (Default 0.30) ergaenzt - das staerkste Feature wird jetzt
+  IMMER mit exakter Zahl + qualitativer Einordnung ausgegeben (`<10%`
+  KLEIN, `10-30%` MITTEL, `30-50%` HOCH - nur Hinweis, `>=50%` SEHR HOCH -
+  WARNUNG wie bisher). Der HOCH-Hinweis loest NICHTS in Schritt 3/4/5 aus
+  (keine Zerlegung, kein Ausschluss) - rein informativ fuer den
+  menschlichen Blick. Synthetisch verifiziert (HOCH bei 49.6%, SEHR HOCH
+  bei 83.2% korrekt eingeordnet) und regressionsgetestet gegen
+  `ci_smoke_test` (unveraendertes Verhalten, `x1` bei 28.5% korrekt als
+  MITTEL eingeordnet, kein Hinweis ausgeloest).
 - ~~**Nested/gepooltes per-Fold-Threshold-Tuning fehlt**~~ **ERLEDIGT
   (2026-08-15), ueber den No-op-Pfad aus ADR-003 backported.** Anlass:
   `CreditScoringChallenge`, Verfeinerung zu `130_threshold_tuning.R`. Der

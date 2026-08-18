@@ -75,16 +75,54 @@ fwrite(importance_dt, leak_audit_importance_path)
 print(importance_dt)
 
 suspects_importance <- importance_dt[share > leak_audit_importance_share_threshold, feature]
+
+# Staerkstes Feature IMMER mit exakter Zahl + qualitativer Einordnung
+# zeigen (2026-08-17, Nutzeranregung nach einer Suche ueber 17 reale
+# Projekte, bei der mehrere Faelle knapp unter der 50%-Schwelle lagen -
+# 30-50% ("HOCH") ist informativ genug, um kurz hinzuschauen, aber bei
+# weitem nicht selten genug, um automatisch etwas auszuloesen (7/17
+# gepruefte Projekte lagen in diesem Band, alle bislang als legitim
+# eingeordnet - ein automatischer Trigger dort haette die "selten, aber
+# berechtigt"-Eigenschaft des Guards verwaessert). Rein informativ, loest
+# NICHTS in Schritt 3/4/5 aus - nur der `leak_audit_importance_share_
+# threshold`-Verdacht (>=50%) tut das weiterhin.
+top_feature <- importance_dt$feature[1]
+top_share <- importance_dt$share[1]
+share_rating <- if (top_share >= leak_audit_importance_share_threshold) {
+  "SEHR HOCH"
+} else if (top_share >= leak_audit_advisory_share_threshold) {
+  "HOCH"
+} else if (top_share >= 0.10) {
+  "MITTEL"
+} else {
+  "KLEIN"
+}
+cat(sprintf(
+  "\nStaerkstes Feature: %s (%.1f%% der Gain-Importance, Einordnung: %s)\n",
+  top_feature, top_share * 100, share_rating
+))
+
 if (length(suspects_importance) > 0) {
   cat(sprintf(
-    "\nWARNUNG: %s traegt/tragen ueber %.0f%% der Gain-Importance - genauer pruefen.\n",
+    "WARNUNG: %s traegt/tragen ueber %.0f%% der Gain-Importance - genauer pruefen (moeglicher Leak).\n",
     paste(suspects_importance, collapse = ", "), leak_audit_importance_share_threshold * 100
   ))
 } else {
-  cat(sprintf(
-    "\nKein Feature traegt ueber %.0f%% der Gain-Importance.\n",
-    leak_audit_importance_share_threshold * 100
-  ))
+  advisory_features <- importance_dt[
+    share > leak_audit_advisory_share_threshold & share <= leak_audit_importance_share_threshold, feature
+  ]
+  if (length(advisory_features) > 0) {
+    cat(sprintf(
+      "Hinweis (kein automatischer Verdacht, keine Zerlegung ausgeloest): %s liegt zwischen %.0f%% und %.0f%% - bei Gelegenheit kurz pruefen, ob das Feature zum Vorhersagezeitpunkt wirklich bekannt ist.\n",
+      paste(advisory_features, collapse = ", "),
+      leak_audit_advisory_share_threshold * 100, leak_audit_importance_share_threshold * 100
+    ))
+  } else {
+    cat(sprintf(
+      "Kein Feature traegt ueber %.0f%% der Gain-Importance.\n",
+      leak_audit_advisory_share_threshold * 100
+    ))
+  }
 }
 
 # --- Kumulative Top-k-Erweiterung eines BESTEHENDEN Verdachts --------------

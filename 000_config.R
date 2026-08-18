@@ -182,6 +182,15 @@ univariate_drift_alpha <- 0.05
 # "Target-Leakage-Audit". CV<->LB-Uebereinstimmung faengt einen Leak NICHT
 # (das Artefakt steckt auch in den Testdaten) - nur ein Feature-Audit tut das.
 leak_audit_importance_share_threshold <- 0.50  # 1 Feature traegt >50% der Gain-Importance
+# Rein informative Vorstufe (2026-08-17, Nutzeranregung): Features zwischen
+# dieser und der obigen Schwelle werden mit Hinweis ausgegeben ("HOCH"),
+# loesen aber NICHTS automatisch aus (keine Zerlegung, kein Ausschluss) -
+# empirisch kalibriert nach einer Suche ueber 17 reale Projekte, bei der
+# 7 davon zwischen 30-50% lagen und sich alle als legitim herausstellten
+# (Bildschirmzeit bei Sucht-Vorhersage, Managerfreigabe bei Zugriffsrechten,
+# Anrufdauer bei Verkaufsgespraechen etc.) - ein automatischer Trigger dort
+# haette die "selten, aber berechtigt"-Eigenschaft des Guards verwaessert.
+leak_audit_advisory_share_threshold <- 0.30
 # Kumulative Top-k-Schwelle (2026-08-17, aus MLR3_Regression zurueckgefuehrt,
 # dort an 2 Projekten bestaetigt: bike-sharing (echter Leak-PAAR-Fund,
 # casual+registered==count, 100.0%) + road-accident-risk (Gegenprobe: 3
