@@ -534,6 +534,61 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   ohne belastbaren Erfolg - kein Backport-Kandidat. Volle Zahlen/Skripte
   (`098_ensemble_diversity_pool.R`, `098b_..._seed2.R`,
   `099_svm_tuning.R`) in `openml-steel-plates-fault/README.md`.
+
+  **Folgetest mit TabICLv2 (tabular foundation model, 2026-08-18)**,
+  Anlass: Nutzer teilte arXiv 2602.11139 (offenes In-Context-Learning-
+  Modell, kein Training noetig, schlaegt laut Paper ungetuned Baum-
+  Ensembles auf TabArena/TALENT). Anders als FT-Transformer kein GPU-
+  Trainings-Umweg noetig - lokaler CPU-Test via schlankem Python-Export
+  (venv + PyPI-Paket `tabicl`, bewusst kein `reticulate`, um R-Repos
+  leichtgewichtig zu halten - siehe `openml-steel-plates-fault/README.md`
+  fuer die volle Konventions-Begruendung). Zwei Projekte, identischer
+  Split/Code fuer alle Modelle im selben Skript (fairer Vergleich, keine
+  R-vs-Python-Zahlenmischung):
+  - `openml-steel-plates-fault` (7-Klassen, 1941 Zeilen): TabICLv2 BAcc
+    0.8562 - staerkstes Nicht-Baum-Modell dieser ganzen Testreihe, aber
+    unter LightGBM (0.8746). Kappa vs. LightGBM 0.83 (moderat). Mehrheits-
+    Blend (0.8708) kein Gewinn.
+  - `openml-credit-g` (binaer, 1000 Zeilen, schwerer/verrauschter):
+    TabICLv2 BAcc 0.6500 - SCHWAECHSTES der drei Modelle, sogar unter dem
+    R-Baseline (LDA 0.699). Kappa vs. LightGBM 0.60 (erstmals echt
+    "dekorreliert" nach der Kappa-Konvention), aber zu schwach - Blend
+    (0.6679) wieder kein Gewinn.
+
+  **Gegenprobe an 2 weiteren Projekten (2026-08-18)**, gleicher Aufbau
+  (identischer Split/Code im selben Python-Skript):
+  - `uci-parkinsons-voice-groupcv` (196 Zeilen, binaer): TabICLv2 BAcc
+    **0.9828** vs. RandomForest/LightGBM je 0.8828 - **klarer Sieg**
+    (+0.10), der erste in der gesamten Diversitaets-Testreihe. Der naive
+    Mehrheits-Blend faellt trotzdem auf 0.8828 zurueck (RF+LightGBM
+    ueberstimmen TabICLv2 2-zu-1) - starkes Argument fuer die GEWICHTETE
+    Greedy-Selektion (`149`) statt eines starren Mehrheitsvotums.
+  - `wdbc-plateau-test` (683 Zeilen, binaer, nahezu perfekt trennbar):
+    TabICLv2 BAcc 0.9671, exakter Gleichstand mit RandomForest
+    (Kappa=1.0000 - identische Vorhersagen).
+
+  **Fazit ueber alle 4 Projekte**: kein konsistentes Muster (kleinster
+  Datensatz gewinnt klar, mittelgrosse Projekte schwaecher/gemischt,
+  Groesse allein erklaert es nicht). Kein Backport-Kandidat fuer den
+  naiven Blend (wuerde den Vorteil dort, wo er auftritt, zunichtemachen),
+  aber der erste Kandidat dieser Testreihe mit einem echten, deutlichen
+  Einzelsieg.
+
+  **Echte Greedy-Selektion statt naivem Blend** (`predictingsmartphoneAddiction_s6e8`,
+  5000-Zeilen-Stichprobe aus 691K Zeilen - zu gross fuer TabICLv2 auf der
+  CPU, Nutzer-Entscheidung fuer einen groessenbeschraenkten Machbarkeits-
+  Test statt der vollen Daten): Pool aus RandomForest x2/LightGBM x2/
+  CatBoost x2 (Referenz) + TabICLv2 x1, 3-Wege-Split. **TabICLv2 wird von
+  allen 7 Kandidaten am HAEUFIGSTEN gezogen** (9 von 22 Selektionen) -
+  Greedy-Ensemble-BAcc 0.8411 vs. bestes Einzelmodell 0.8382 (+0.003,
+  klein aber echt). Anders als beim naiven Blend bei `parkinsons`
+  (zerstoert TabICLv2s Vorsprung) bevorzugt die gewichtete Selektion
+  TabICLv2 hier tatsaechlich. Effekt klein genug fuer Rauschen bei ~1000
+  Bestaetigungszeilen - kein Beweis, aber ein ermutigendes Signal fuer
+  einen kuenftigen GPU-gestuetzten Test auf den vollen Daten.
+
+  Volle Herleitung, Paper-/Repo-Referenzen und Setup-Anleitung (Python-
+  Export statt reticulate) in `REFERENZ_TABICLV2.md`.
 - ~~**Exact-value Target-Encoding auch auf NUMERISCHE Spalten**~~ **ERLEDIGT /
   UEBERNOMMEN (2. Bestaetigung)**: Anlass 4th-Place-Writeup zu `s6e7` (XGBoost OOF
   0.9489 -> 0.9496), zweite unabhaengige Bestaetigung auf `s6e8` (Smartphone
