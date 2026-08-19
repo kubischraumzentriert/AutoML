@@ -1,10 +1,14 @@
 name: CI Smoke Test
 
-# Laeuft die Kernskripte (015-136) end-to-end auf einer kleinen,
-# synthetischen Fixture durch - siehe TARGETS.md fuer Herkunft/Design.
-# Kein Korrektheitstest (keine Score-Schwellenwerte), nur "laeuft es noch
-# fehlerfrei durch" - genau das, was diese Session mehrfach manuell an
-# steel-plates-fault/satimage gemacht hat.
+# Zwei unabhaengige Jobs:
+# - unit-tests: echte Korrektheitstests (testthat, tests/testthat/) fuer
+#   einzelne Funktionen mit bekanntem Erwartungswert (2026-08-19, aus
+#   einem externen Review-Hinweis - siehe TARGETS.md).
+# - smoke-test: laeuft die Kernskripte (015-136) end-to-end auf einer
+#   kleinen, synthetischen Fixture durch - siehe TARGETS.md fuer
+#   Herkunft/Design. Kein Korrektheitstest (keine Score-Schwellenwerte),
+#   nur "laeuft es noch fehlerfrei durch" - genau das, was diese Session
+#   mehrfach manuell an steel-plates-fault/satimage gemacht hat.
 
 on:
   push:
@@ -14,6 +18,28 @@ on:
     paths: ["**.R", "DESCRIPTION", ".Rprofile", ".github/workflows/ci-smoke-test.yml"]
 
 jobs:
+  unit-tests:
+    # Echte Korrektheitstests (testthat), unabhaengig vom Smoke-Test unten -
+    # siehe tests/testthat.R fuer die Begruendung, warum test_check() hier
+    # nicht funktioniert (kein installierbares Paket).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: 1
+          # Nur die fuer die getesteten Module benoetigten Pakete + testthat
+          # selbst - deutlich schneller als der volle Smoke-Test-Dependency-Baum.
+          extra-packages: any::testthat, any::mlr3, any::mlr3measures, any::data.table
+
+      - name: testthat-Suite
+        run: Rscript tests/testthat.R
+
   smoke-test:
     runs-on: ubuntu-latest
     env:

@@ -1633,6 +1633,54 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   `cache-version: 1` im Paket-Schritt deutlich schneller sein (erster Lauf
   baut den Cache erst auf).
 
+- **`testthat`-Grundgeruest fuer echte Korrektheitstests (2026-08-19).**
+  Anlass: externes ChatGPT-Review des Repos identifizierte zutreffend,
+  dass die CI bisher NUR ein Smoke-Test ist (der Workflow-Kommentar sagt
+  das selbst schon so) - keine automatisierten Tests mit bekanntem
+  Erwartungswert. Gegen den Code geprueft statt blind uebernommen: die
+  Behauptung stimmt (kein `tests/testthat/`, `DESCRIPTION` explizit "kein
+  echtes R-Paket"); der Vorschlag "Windows-CI waere wertvoll" traf
+  hingegen aus dem falschen Grund zu (die Smoke-Test-CI laeuft auf
+  `ubuntu-latest`, nicht Windows - die dokumentierten Windows-Bugs dieser
+  Session waeren dort gar nicht aufgefallen). Groessere Vorschlaege des
+  Reviews (volle Paketifizierung, YAML-Config-Schicht, gemeinsamer Core
+  mit `MLR3_Regression`) bewusst NICHT uebernommen - passen nicht zur
+  etablierten Arbeitsweise (lose Kopplung, nummerierte Skripte) und haben
+  unklaren Zusatznutzen fuer ein Ein-Personen-Forschungsrepo.
+
+  Umgesetzt: `tests/testthat/` mit 3 Testdateien (24 Checks, alle gruen)
+  fuer bereits mehrfach manuell verifizierte, aber bisher nicht
+  konservierte Pruef-Logik:
+  - `test-group_resampling.R`: `.eta_squared()`/`.cramers_v()`/
+    `test_group_significance()` - Positiv-/Negativ-Kontrollen (perfekte
+    Gruppenstruktur -> Statistik=1/kleiner p-Wert, keine Struktur ->
+    Statistik~0/grosser p-Wert), degenerierter Fall (1 Level -> 0 statt
+    NaN), Dispatch numerisch/kategorial.
+  - `test-class_multiplier_tuning.R`: `apply_class_multipliers()` von
+    Hand nachgerechnet, `prior_correction_multipliers()` gegen die
+    1/prior-Formel verifiziert, `tune_class_multipliers()` monoton
+    besser als Grid/Prior/roher argmax auf einem synthetischen
+    unbalancierten 3-Klassen-Fall.
+  - `test-generalization_gap.R`: `cohens_d()` gegen die gepoolte-SD-
+    Formel von Hand + NA-statt-Division-durch-0-Fall,
+    `bootstrap_score_distribution()` Laenge/Plausibilitaet,
+    `compare_score_distributions()` erkennt eine echte Luecke UND zeigt
+    KEINE bei identischen Verteilungen.
+
+  `tests/testthat.R` als Runner (`test_check()` funktioniert nicht ohne
+  echtes Paket, daher `test_dir()` + jede Testdatei sourced ihr Modul
+  direkt via `testthat::test_path()`). Neuer `unit-tests`-Job in
+  `.github/workflows/ci-smoke-test.yml` (parallel zum bestehenden
+  `smoke-test`-Job, eigene schlanke Dependency-Liste statt des vollen
+  Smoke-Test-Baums). `DESCRIPTION` um `Suggests: testthat` +
+  `Config/testthat/edition: 3` ergaenzt.
+
+  **Naechste Kandidaten fuer weitere Tests** (nicht in diesem Schritt):
+  Ensemble-Selection-Greedy-Algorithmus (aktuell nur als Skriptlogik in
+  `149_ensemble_selection.R`, keine eigenstaendige Funktion - muesste erst
+  extrahiert werden), Leak-Audit-Einzelschritte (`015` ist ebenfalls ein
+  monolithisches Skript, keine Funktionen).
+
 - **Ranger-Absturz bei leerer Zielklasse - Root Cause bestaetigt UND
   Absicherung umgesetzt (2026-08-14).**
   Nachtrag zum obigen Spawn-Task (`classif.ranger` stuerzt auf eine
