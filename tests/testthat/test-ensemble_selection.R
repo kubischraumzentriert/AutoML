@@ -102,3 +102,30 @@ test_that("greedy_ensemble_selection() liefert nie eine schlechtere Selektions-B
   res <- greedy_ensemble_selection(list(probs_a, probs_b), truth, class_names, rounds = 20)
   expect_gte(res$best_bacc, best_single_bacc)
 })
+
+test_that("greedy_ensemble_selection() funktioniert mit eigenem metric_fn auf einem Wahrscheinlichkeits-VEKTOR (binaeres AUC)", {
+  # Reales Vorbild: predictingsmartphoneAddiction_s6e8/149_ensemble_selection.R
+  # nutzt AUC auf P(positive_class) statt Multiclass-BAcc auf einer Matrix -
+  # derselbe Algorithmus, andere Zielmetrik/Datenform.
+  set.seed(5)
+  n <- 500
+  truth <- factor(sample(c("yes", "no"), n, replace = TRUE), levels = c("yes", "no"))
+
+  make_auc_probs <- function(strength, seed) {
+    set.seed(seed)
+    score <- ifelse(truth == "yes", 1, 0) * strength + rnorm(n, sd = 1 - strength * 0.5)
+    (score - min(score)) / (max(score) - min(score))
+  }
+  probs_strong <- make_auc_probs(0.9, seed = 100)
+  probs_weak <- make_auc_probs(0.3, seed = 200)
+
+  auc_fn <- function(p, t) mlr3measures::auc(t, p, positive = "yes")
+  best_single_auc <- max(auc_fn(probs_strong, truth), auc_fn(probs_weak, truth))
+
+  res <- greedy_ensemble_selection(
+    list(strong = probs_strong, weak = probs_weak), truth,
+    metric_fn = auc_fn, rounds = 20
+  )
+  expect_gte(res$best_bacc, best_single_auc)
+  expect_true(1 %in% res$selected)  # der starke Kandidat (Index 1) muss gezogen werden
+})
