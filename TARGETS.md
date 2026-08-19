@@ -594,6 +594,26 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
 
   Volle Herleitung, Paper-/Repo-Referenzen und Setup-Anleitung (Python-
   Export statt reticulate) in `REFERENZ_TABICLV2.md`.
+
+  **MotherNet (arXiv:2312.08598, Microsoft, ICLR 2025) - aktuell NICHT
+  testbar (2026-08-19).** Anlass: MotherNet erzeugt in einem Forward-Pass
+  ein eigenstaendiges kleines MLP statt bei jeder Vorhersage ueber den
+  vollen Trainings-Kontext zu attendieren - haette genau das `s6e8`-
+  Vorhersage-Problem geloest (siehe oben). Setup-Versuch: Paket `ticl`
+  (nur via GitHub installierbar) zieht eager die komplette Trainings-
+  Abhaengigkeitskette (wandb/mlflow/gpytorch/interpret/... nachinstalliert),
+  zusaetzlich ein PyTorch-Versionsbug in `ticl/models/layer.py` lokal
+  gepatcht (`Optional`/`Dropout`/etc. nicht mehr aus
+  `torch.nn.modules.transformer` re-exportiert). Danach lauffaehig, aber
+  **Checkpoint-Download scheitert**: der einzige offizielle Host
+  (`amuellermothernet.blob.core.windows.net`) existiert laut DNS nicht
+  mehr (NXDOMAIN) - bestaetigt durch offenes, unbeantwortetes GitHub-
+  Issue microsoft/ticl#27. Der HuggingFace-Spiegel enthaelt nur einen
+  alten TabPFN-Referenz-Checkpoint, nicht die MotherNet-Gewichte.
+  Eigentraining unpraktikabel (~4 Wochen/A100 laut Paper). Kein Test
+  moeglich - vor einem erneuten Versuch zuerst pruefen, ob das Issue
+  inzwischen geloest wurde. Volle Details in `REFERENZ_TABICLV2.md`
+  Abschnitt 6.
 - ~~**Exact-value Target-Encoding auch auf NUMERISCHE Spalten**~~ **ERLEDIGT /
   UEBERNOMMEN (2. Bestaetigung)**: Anlass 4th-Place-Writeup zu `s6e7` (XGBoost OOF
   0.9489 -> 0.9496), zweite unabhaengige Bestaetigung auf `s6e8` (Smartphone

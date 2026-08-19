@@ -1,10 +1,10 @@
-# Referenz: TabICLv2 als Ensemble-Diversitaets-Kandidat
+# Referenz: Tabular Foundation Models als Ensemble-Diversitaets-Kandidaten
 
-Herkunft, Nutzung und alle bisherigen Testergebnisse fuer TabICLv2 als
-klassischen Diversitaets-Kandidaten (analog Hebel 1/FT-Transformer,
-SVM/Naive Bayes/LDA - siehe `TARGETS.md` und
-`openml-steel-plates-fault/README.md`), aber mit einem tabular foundation
-model statt klassischer ML.
+Herkunft, Nutzung und alle bisherigen Testergebnisse fuer TabICLv2 (und,
+als Anlassuntersuchung, MotherNet) als Diversitaets-Kandidaten (analog
+Hebel 1/FT-Transformer, SVM/Naive Bayes/LDA - siehe `TARGETS.md` und
+`openml-steel-plates-fault/README.md`), aber mit tabular foundation
+models statt klassischer ML.
 
 ---
 
@@ -155,3 +155,77 @@ allein erklaert das Restmuster nicht). **Naechster sinnvoller Schritt,
 falls fortgesetzt**: derselbe Greedy-Pool-Test auf den VOLLEN Daten eines
 Projekts (GPU noetig fuer akzeptable Laufzeit bei TabICLv2 - bisher nur
 CPU-Machbarkeitstests mit Stichproben/kleinen Projekten durchgefuehrt).
+
+## 6. MotherNet - aktuell NICHT testbar (2026-08-19)
+
+### Herkunft
+
+- **Paper**: Muller, Curino, Ramakrishnan (Microsoft Gray Systems Lab).
+  "MotherNet: Fast Training and Inference via Hyper-Network
+  Transformers." arXiv:2312.08598v2 [cs.LG], ICLR 2025 (Camera-Ready
+  9. Mai 2025).
+- **Code**: https://github.com/microsoft/ticl (PyPI-Paket `ticl` NICHT
+  verfuegbar, Installation nur via `pip install git+https://github.com/microsoft/ticl.git`).
+- Anlass: Nutzer teilte das Paper direkt nach den TabICLv2-Tests. Idee:
+  MotherNet erzeugt in EINEM Forward-Pass die Gewichte eines kleinen,
+  eigenstaendigen MLPs (statt bei jeder Vorhersage ueber den vollen
+  Trainings-Kontext zu attendieren wie TabPFN/TabICLv2) - genau das haette
+  unser Problem bei `s6e8` geloest (10+h CPU-Schaetzung fuer 296K
+  Testzeilen mit TabICLv2, weil JEDE Vorhersage teuer bleibt). MotherNet:
+  einmal teuer (ein Forward-Pass, ~0.14s laut Paper), danach beliebig
+  viele Testzeilen guenstig wie ein normales MLP.
+- Klarstellung vorab (Nutzerfrage): TorchScript-Export (`torch.jit.trace`/
+  `script()` in Python, `torch::jit_load()` in R) haette hier NICHT
+  geholfen - loest weder das eigentliche Rechenzeit-Problem (aendert nur
+  die Aufruf-Sprache, nicht die zugrundeliegenden LibTorch-FLOPs) noch ist
+  die Architektur sauber traceable (dynamische, datensatzabhaengige
+  Logik: Mixed-Radix-Ensembling, zirkulaere Permutationen etc. liegen
+  ausserhalb des reinen Forward-Pass-Graphen).
+
+### Setup-Versuch und Befund
+
+Installation im selben `tabicl_venv` (siehe Abschnitt 3) via
+`pip install git+https://github.com/microsoft/ticl.git`. Das Paket ist
+schlecht fuer reine Inferenz verpackt - `ticl/__init__.py` importiert
+eager die GESAMTE Trainings-/Auswertungs-Abhaengigkeitskette, auch fuer
+einen simplen `MotherNetClassifier`-Import. Nacheinander fehlende
+Pakete nachinstalliert: `wandb`, `mlflow`, `gpytorch`, `tqdm`,
+`configspace`, `interpret`, `einops`. Zusaetzlich ein echter
+Versions-Bug gefunden und lokal gepatcht: `ticl/models/layer.py`
+importierte `Optional`/`Dropout`/`LayerNorm`/`Linear`/`Module` aus
+`torch.nn.modules.transformer` - diese Re-Exports existieren in
+aktuellen PyTorch-Versionen (hier 2.13.0) nicht mehr. Gepatcht auf
+direkte Imports aus `typing`/`torch`/`torch.nn`.
+
+Nach all dem laesst sich `MotherNetClassifier` erfolgreich importieren
+UND instanziieren startet - **scheitert aber am Checkpoint-Download**:
+
+```
+Downloading model from https://amuellermothernet.blob.core.windows.net/models/...
+socket.gaierror: [Errno 11001] getaddrinfo failed
+```
+
+`nslookup amuellermothernet.blob.core.windows.net` bestaetigt: **die
+Domain existiert nicht mehr** ("Non-existent domain", NXDOMAIN) - kein
+Problem auf unserer Seite. Bestaetigt durch das offene, unbeantwortete
+GitHub-Issue microsoft/ticl#27 ("TabFlex and MotherNet checkpoints
+unavailable - Azure host returns NXDOMAIN"), das exakt dasselbe Problem
+beschreibt. Der dort genannte HuggingFace-Spiegel (`microsoft/mothernet`)
+enthaelt NUR `tabpfn_07_24_2023_epoch1650.cpkt` (ein alter TabPFN-
+Referenz-Checkpoint) - NICHT den fuer `MotherNetClassifier` benoetigten
+`mn_Dclass_average_03_25_2024_17_14_32_epoch_3970.cpkt`. Direkt per API
+gegengeprueft (`huggingface.co/api/models/microsoft/mothernet`), Befund
+bestaetigt.
+
+### Fazit
+
+**MotherNet ist aktuell nicht nutzbar** - nicht wegen eines Setup-
+Fehlers, sondern weil der Modell-Herausgeber selbst den einzigen
+offiziellen Checkpoint-Host abgeschaltet hat, ohne Ersatz bereitzustellen
+(GitHub Issue seit Erstellung unbeantwortet). Einzige verbleibende
+Option waere ein Eigentraining (~4 Wochen auf einer A100-GPU laut Paper)
+- unpraktikabel. Kein aktiver Test moeglich, daher kein Eintrag in der
+Ergebnistabelle unter Abschnitt 4. **Falls spaeter erneut relevant**:
+zuerst pruefen, ob microsoft/ticl#27 inzwischen geschlossen wurde bzw.
+ob ein neuer Checkpoint-Host verfuegbar ist, bevor der Setup-Aufwand
+(Abhaengigkeitskette + `layer.py`-Patch, siehe oben) wiederholt wird.
