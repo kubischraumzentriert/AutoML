@@ -8,6 +8,13 @@ Experimentauswertungen.
 
 ---
 
+> **Wie aktualisiere ich die DuckDB-Dateien?** Nicht automatisch - siehe
+> Abschnitt 15. Kurzfassung: `Rscript 170_build_duckdb_experiment_mart.R`
+> (Template-lokal) bzw. `Rscript merge_duckdb_experiment_marts.R`
+> (projektuebergreifend), jeweils VOR einer Analyse-Session manuell
+> ausfuehren - beide Dateien werden von keinem anderen Skript automatisch
+> nachgezogen und koennen tagealt sein.
+
 ## 1. Kurzfazit
 
 DuckDB passt sehr gut als **lokaler Experiment-Mart**:
@@ -355,3 +362,40 @@ CSVs nicht ohne Weiteres zu beantworten war. Regressions-Projekte
 - Fuer dieses Template folgt daraus: DuckDB ist ein sehr guter Analyse-Mart,
   aber kein Ersatz fuer die bestehende Experiment-DB und kein produktives
   Transaktionssystem.
+
+## 15. Wie man den Mart aktualisiert (2026-08-19)
+
+Beide Dateien werden von KEINEM anderen Skript automatisch nachgezogen
+(bewusste Entkopplung, siehe Kopfkommentare der beiden Skripte und
+Abschnitt 11 "Risiken und Regeln") - der Anlass fuer diesen Abschnitt war,
+dass beide Dateien beim Nachfragen 4 Tage alt waren, ohne dass das
+irgendwo aufgefallen ist.
+
+**Vor jeder DuckDB-Analyse-Session** (nicht automatisch, nicht Teil der
+uebrigen Pipeline):
+
+```bash
+# Template-lokaler Mart (nur MLR3_Classifikation/_artifacts/*_results.csv)
+Rscript 170_build_duckdb_experiment_mart.R
+
+# Projektuebergreifender Mart (alle Projekte unter R_Workspace/ML_Learning)
+Rscript merge_duckdb_experiment_marts.R
+```
+
+Beide Skripte sind idempotent (`CREATE OR REPLACE TABLE`) - mehrfaches
+Ausfuehren ist unproblematisch, es gibt keinen inkrementellen Modus (jeder
+Lauf liest ALLE `*_results.csv` neu ein).
+
+**Bekannte Falle**: ist die `.duckdb`-Datei gerade in einem externen Tool
+geoeffnet (z.B. DBeaver), schlaegt der Schreibzugriff mit einer klaren
+`IO`-Fehlermeldung fehl ("Cannot open file... File is already open in
+[...]"). Erst die externe Verbindung trennen, dann erneut versuchen - die
+Datei nicht ungefragt per Prozess-Kill freizwingen.
+
+Bewusst KEINE Automatisierung (z.B. Git-Hook, Scheduled Task, Trigger nach
+jedem Skriptlauf) - siehe Abschnitt 1 "Kurzfazit" und Abschnitt 11: DuckDB
+ist eine zusaetzliche Analyseschicht, keine Wahrheit, und soll die
+uebrigen Skripte nicht mit einer zusaetzlichen Abhaengigkeit verkoppeln.
+"Vor der Analyse kurz neu bauen" kostet Sekunden und ist genau dann
+noetig, wenn man ohnehin mit DuckDB arbeiten will - dazwischen "immer
+frisch" zu halten bringt keinen Mehrwert.
