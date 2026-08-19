@@ -7,6 +7,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
+source(file.path(project_dir, "ensemble_selection.R"))
 
 # Caruana-Greedy-Ensemble-Selection (Caruana et al. 2004, wie in Auto-
 # sklearn) - verifiziert an 2 unabhaengigen OpenML-Datensaetzen
@@ -35,10 +36,11 @@ confirmation_ids <- setdiff(seq_len(n_eval), selection_ids)
 cat(sprintf("Eval-Split (147): %d Zeilen -> Selektion=%d, Bestaetigung=%d\n",
             n_eval, length(selection_ids), length(confirmation_ids)))
 
-bacc_from_probs <- function(prob_mat, truth_subset) {
-  response <- factor(class_names[max.col(prob_mat, ties.method = "first")], levels = levels(truth_subset))
-  mlr3measures::bacc(truth_subset, response)
-}
+# bacc_from_probs() jetzt in ensemble_selection.R als .bacc_from_probs()
+# (mit explizitem class_names-Argument statt Closure-Capture, damit die
+# Funktion eigenstaendig testbar ist) - lokaler Wrapper haelt die
+# Aufrufstellen unten unveraendert.
+bacc_from_probs <- function(prob_mat, truth_subset) .bacc_from_probs(prob_mat, truth_subset, class_names)
 
 truth_sel <- truth[selection_ids]
 truth_conf <- truth[confirmation_ids]
@@ -59,23 +61,9 @@ cat(sprintf("Gleichgewichteter Blend (alle %d): Bestaetigung=%.4f\n", n_candidat
 
 # --- Caruana Greedy Ensemble Selection (auf der Selektionsmenge) -----------
 cat("\n=== Caruana Greedy Ensemble Selection (Selektionsmenge) ===\n")
-selected <- integer(0)
-running_sum_sel <- matrix(0, nrow = length(selection_ids), ncol = length(class_names))
-best_sel_bacc_so_far <- -Inf
-best_selected_at_step <- integer(0)
-for (round in seq_len(ensemble_selection_rounds)) {
-  gains <- vapply(seq_len(n_candidates), function(i) {
-    trial_mean <- (running_sum_sel + probs_sel[[i]]) / (length(selected) + 1)
-    bacc_from_probs(trial_mean, truth_sel)
-  }, numeric(1))
-  best_gain_idx <- which.max(gains)
-  selected <- c(selected, best_gain_idx)
-  running_sum_sel <- running_sum_sel + probs_sel[[best_gain_idx]]
-  if (gains[best_gain_idx] > best_sel_bacc_so_far) {
-    best_sel_bacc_so_far <- gains[best_gain_idx]
-    best_selected_at_step <- selected
-  }
-}
+greedy_result <- greedy_ensemble_selection(probs_sel, truth_sel, class_names, rounds = ensemble_selection_rounds)
+best_selected_at_step <- greedy_result$selected
+best_sel_bacc_so_far <- greedy_result$best_bacc
 cat(sprintf("Beste Selektions-BAcc waehrend der Selektion: %.4f bei Ensemblegroesse %d\n",
             best_sel_bacc_so_far, length(best_selected_at_step)))
 sel_counts <- table(pool$labels[best_selected_at_step])
