@@ -947,6 +947,23 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   akzeptierte Guard-Grenze - siehe README_DETAILS.md "Target-Leakage-Audit"
   Schritt 1b fuer die volle Einordnung.
 
+  **Positive synthetische Bestaetigung des Schritt-1b-Mechanismus
+  (2026-08-21, `synth-redundant-leak-test`).** Statt eines weiteren echten
+  Datensatzes (3 Fehlversuche bereits) ein kontrollierter Ground-Truth-
+  Test: 50k Zeilen, 5 legitime + 4 outcome-abgeleitete "Leak"-Features mit
+  gemeinsamem latentem Faktor + eigenstaendigem Rauschen, paarweise
+  Korrelation 0.55-0.56 (deutlich unter Lending Clubs praktischer
+  Fast-1.0-Substituierbarkeit). Ergebnis: **Schritt-1b funktioniert wie
+  beabsichtigt** - staerkstes Einzelfeature nur 30.7% (unter der 50%-
+  Warnschwelle, Guard waere ohne Schritt 1b still geblieben), Cluster-
+  Check findet die Gruppe SAUBER (keine Kontamination durch die legitimen
+  Features), Score-Abfall 29.8 Punkte klar ueber der 15-Punkte-Schwelle,
+  WARNUNG korrekt ausgeloest, Schritt 4 bestaetigt identisch. Bestaetigt:
+  der Mechanismus selbst ist tragfaehig - Lending Clubs Fast-Perfekt-
+  Redundanz (10 Felder, ~1.0 gegenseitige Substituierbarkeit) war ein
+  besonders haerter Extremfall, kein Hinweis auf einen fundamentalen
+  Designfehler. Volle Herleitung in `synth-redundant-leak-test/README.md`.
+
   **Erweiterte Suche (2026-08-17), 17 reale Projekte gegen die
   Einzelschwelle geprueft** (Werte per LightGBM-Gain-Importance, hoechster
   zuerst): `s6e8` 49.3%, `amazon-access` 46.7% (`MGR_ID`), `health_
