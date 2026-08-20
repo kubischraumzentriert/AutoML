@@ -907,6 +907,46 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   offen** - drei Versuche (AER/GMSC/Lending-Club), keiner hat es
   reproduziert.
 
+  **Guard-Verbesserung versucht (2026-08-21) - Teilerfolg, keine
+  vollstaendige Loesung.** Nutzerentscheidung: Guard um einen Mechanismus
+  erweitern, der einen ueber viele redundante Features verteilten Leak
+  auch OHNE Einzelverdacht findet. Zwei Ansaetze getestet:
+  - **Korrelations-Cluster-Zerlegung (implementiert, behalten)**: neuer
+    "Schritt 1b" in `015_target_leak_audit.R` - numerische Features nach
+    paarweiser Korrelation clustern, groessten Cluster (nach summierter
+    Gain-Importance) per Retraining testen, nur bei Score-Abfall
+    `>leak_audit_cluster_drop_threshold` (15 Punkte) als Verdacht flaggen.
+    **Ergebnis am Lending-Club-Fall selbst**: zeigt immerhin ein
+    informatives 7.9-Punkte-Signal (vorher: NICHTS sichtbar), ueberschreitet
+    die Warnschwelle aber NICHT - bei Korrelationsschwelle 0.5 vermischt
+    der groesste Cluster legitime Groessen-Features (`loan_amnt`,
+    `funded_amnt`, `installment`) mit den echten Leak-Feldern (Kontamination,
+    verwaessert den Effekt); bei Schwelle 0.8 trennt er sauber, aber
+    `total_rec_int`/`last_pymnt_amnt` werden zu Singletons und fallen aus
+    jedem >=2er-Cluster raus (Fragmentierung) - kein Cluster erreicht dann
+    ueberhaupt die 30%-Vorfilter-Schwelle. Ein echter NA-Bug beim Clustern
+    (Nullvarianz-Spalte macht auch die Diagonale der Korrelationsmatrix
+    `NaN`) wurde dabei gefunden und gefixt (`diag(cor_mat) <- 1` nach dem
+    NA-Fixup erzwingen).
+  - **Iterative Einzelfeature-Entfernung (getestet, NICHT implementiert)**:
+    wiederholt das staerkste Gain-Feature entfernen+neu trainieren (12
+    Runden). Ergebnis: BAcc bleibt bei ~0.998 durch 11 Runden (obwohl 5 der
+    10 bekannten Leak-Felder darunter entfernt wurden), faellt erst in
+    Runde 12 (6 von 10 Leak-Feldern + 6 legitime Features entfernt) auf
+    0.9655 - IMMER NOCH weit ueber dem ehrlichen Wert 0.5317. Zeigt, wie
+    EXTREM redundant diese spezielle Leak-Gruppe ist (die verbleibenden 4
+    Leak-Felder allein tragen fast die volle Leistung) - ein generischer
+    Ansatz braeuchte hier unpraktikabel viele Retrainings, um zuverlaessig
+    zu greifen. Verworfen (zu teuer, zu unzuverlaessig).
+  **Entscheidung**: Korrelations-Cluster-Check BEHALTEN (echte, wenn auch
+  unvollstaendige Verbesserung, bei sauberen Projekten praktisch kostenlos -
+  regressionsgetestet gegen `health_condition` (still, byte-identische
+  Schritt-1-Werte), `sba-loan-default` (Detektion unveraendert, 91%+7%=98.1%),
+  `aer-creditcard-leak-test` (still, kein False Positive)). Der
+  Lending-Club-Extremfall selbst bleibt eine dokumentierte, bewusst
+  akzeptierte Guard-Grenze - siehe README_DETAILS.md "Target-Leakage-Audit"
+  Schritt 1b fuer die volle Einordnung.
+
   **Erweiterte Suche (2026-08-17), 17 reale Projekte gegen die
   Einzelschwelle geprueft** (Werte per LightGBM-Gain-Importance, hoechster
   zuerst): `s6e8` 49.3%, `amazon-access` 46.7% (`MGR_ID`), `health_

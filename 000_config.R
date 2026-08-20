@@ -217,6 +217,33 @@ leak_audit_advisory_share_threshold <- 0.30
 # die 3 legitimen Top-Features faelschlich geflaggt worden).
 leak_audit_cumulative_share_threshold <- 0.98
 leak_audit_cumulative_max_k <- 5L
+# Korrelierte Feature-Cluster (2026-08-21, aus lending-club-leak-test):
+# ein Leak kann ueber viele MITEINANDER REDUNDANTE Features verteilt sein,
+# von denen jedes einzeln UND die kumulative Top-k-Summe (oben, nur die
+# FUEHRENDEN Gain-Features) unter der Schwelle bleiben, weil Gain-Share bei
+# Redundanz irrefuehrend ist (LightGBM-Gain summiert ueber alle Splits -
+# ein Feature mit wenigen, aber sehr entscheidenden fruehen Splits sammelt
+# weniger Gain an als Features, die fuer viele feine Splits wiederverwendet
+# werden). Lending-Club-Befund: 10 Post-Outcome-Felder tragen zusammen nur
+# ~31% Gain, aber ihr Entfernen laesst BAcc von 0.9983 auf 0.5317
+# einbrechen - waehrend das Entfernen der TOP-5-GAIN-Features (nur 1 der 10
+# Leak-Felder) BAcc UNVERAENDERT laesst (0.9984), weil die uebrigen 9
+# redundanten Felder die Leistung tragen. Mechanismus: numerische Features
+# nach Korrelation clustern (Redundanz zeigt sich in hoher gegenseitiger
+# Korrelation, unabhaengig von individueller Gain-Importance); nur der
+# groesste Cluster wird per Retraining geprueft (Kostenkontrolle: hoechstens
+# 1 zusaetzliches Retraining), und nur wenn seine summierte Gain-Importance
+# bereits die Advisory-Schwelle ueberschreitet (billiger Vorfilter). Der
+# Cluster wird nur als ECHTER Verdacht behandelt, wenn das Entfernen seiner
+# Features den Score um mehr als leak_audit_cluster_drop_threshold einbrechen
+# laesst (Beweis durch Retraining, nicht nur Schwellenwert - dieselbe
+# "quantifizieren, nicht nur behaupten"-Philosophie wie Schritt 4).
+# leak_audit_cluster_drop_threshold bewusst hoch (15 Prozentpunkte) - soll
+# nur bei einem grossen, schwer durch normalen Signalverlust erklaerbaren
+# Einbruch greifen (Lending-Club-Fall: 47 Punkte), nicht schon wenn eine
+# legitime korrelierte Gruppe ein paar Prozentpunkte Signal traegt.
+leak_audit_cluster_correlation_threshold <- 0.5
+leak_audit_cluster_drop_threshold <- 0.15
 leak_audit_suspect_top_n <- 8                  # max. Anzahl Verdaechtiger fuer die Zerlegung
 leak_audit_determinism_min_n <- 30             # Mindestgruppengroesse fuer einen Determinismus-Fund
 leak_audit_determinism_eps <- 1e-9             # Toleranz um Anteil = 1 (numerische Rundung)
