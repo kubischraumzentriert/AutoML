@@ -827,6 +827,26 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   kein aktiver Suchauftrag mehr - der Backport war ohnehin schon
   synthetisch abgesichert und default-inert).
 
+  **2. Bestaetigung gesucht (2026-08-21) - KEIN Treffer, aber ein
+  verwandter Negativbefund.** `aer-creditcard-leak-test` (AER Credit
+  Card Data, Greene - der Datensatz aus dem offiziellen Kaggle-Learn-
+  "Data Leakage"-Tutorial, ueber das CRAN-Paket `AER` geladen statt
+  Kaggle-Download). Drei Runden: (1) volle Features - `expenditure`
+  dominiert einzeln mit 89.2% (Ex-post-Feature: Kartenausgaben nur MIT
+  bereits genehmigter Karte moeglich); (2) `expenditure` entfernt - das
+  stark korrelierte `share` (= expenditure/income, r=0.84) uebernimmt
+  fast identisch mit 89.5%, wieder EIN einzelnes dominantes Feature,
+  keine kumulative Zusatzerkennung; (3) BEIDE entfernt - sauber, kein
+  Feature ueber 30%. **Unterschied zu sba-loan-default**: dort ein
+  echtes Leak-PAAR mit unterschiedlichem Einzelgewicht (91%+7%=98.1%
+  kumulativ), hier eine 2-stufige Substitutionskette aus praktisch
+  redundanten Features, die sich 1:1 ersetzen statt gemeinsam in
+  moderaten Anteilen beizutragen - strukturell naeher am `MIS_Status`-
+  Verdraengungseffekt als am gesuchten kumulativen Muster. Volle
+  Herleitung in `aer-creditcard-leak-test/README.md` (nur lokal
+  committet, kein Push-Ziel fuer `ML_Learning`). **2. unabhaengige
+  Bestaetigung bleibt offen** - Suche geht weiter.
+
   **Erweiterte Suche (2026-08-17), 17 reale Projekte gegen die
   Einzelschwelle geprueft** (Werte per LightGBM-Gain-Importance, hoechster
   zuerst): `s6e8` 49.3%, `amazon-access` 46.7% (`MGR_ID`), `health_
