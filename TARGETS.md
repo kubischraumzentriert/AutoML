@@ -796,14 +796,36 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   hier also korrekt zurueckhaltend, auf Kosten davon, diesen Leak nicht
   zu fangen. Volle Herleitung in `CreditScoringChallenge/README.md`.
 
-  **Echte POSITIVE Bestaetigung AN einem mit dem aktuellen `015`-Skript
-  laufenden Klassifikationsprojekt bleibt weiterhin offen** - der Backport
-  selbst ist aber synthetisch abgesichert und default-inert (No-op-
-  Kriterium aus `adr/003` erfuellt: opt-in, kein Verhalten aendert sich
-  fuer Projekte ohne Einzelverdacht). Gesucht wird ein Projekt mit EINEM
-  Feature knapp/klar ueber 50% PLUS einem "Partner"-Feature, das die
-  kumulative Summe weiter erhoeht (analog Bike-Sharing: `registered`
-  allein >50%, `casual` als knapper Zusatzverdaechtiger).
+  **Echte POSITIVE Bestaetigung gefunden (2026-08-20) - ERLEDIGT.**
+  Gezielt (statt zufaellig) nach einem Datensatz mit dokumentiertem
+  Ex-post-Leak gesucht: `sba-loan-default` (SBA Loans Case Data Set,
+  Kaggle `larsen0966/sba-loans-case-data-set`, CC0, extern als
+  Lehrbeispiel fuer Target-Leakage dokumentiert). Zwei Runden:
+  - **Runde 1** (alle Rohfeatures): `MIS_Status` traegt 100% Gain-
+    Importance - eine EXAKTE 1:1-Duplizierung des Ziels (kein Leak im
+    eigentlichen Sinn, sondern das Label selbst), so dominant, dass die
+    Kumulativ-Erweiterung nichts findet (Top-1 schon bei 100%,
+    `ChgOffPrinGr`/`ChgOffDate` bekommen praktisch 0% Importance, weil
+    ein Baum sie neben dem perfekten Duplikat nie braucht). Lehre: ein
+    exaktes Label-Duplikat verdraengt jede weitere Leak-Erkennung.
+  - **Runde 2** (`MIS_Status` entfernt, wie es ein Data Scientist ohnehin
+    VOR jeder Analyse taete): `ChgOffDate` traegt 91.0% (Einzelschwelle
+    ausgeloest), die kumulative Top-2-Summe mit `ChgOffPrinGr` (+7.0%)
+    erreicht 98.1% - `ChgOffPrinGr` wird korrekt als NEU markiert
+    ("Verdacht auf ein Leak-PAAR/eine Leak-GRUPPE"), genau das gesuchte
+    Bike-Sharing-analoge Muster.
+
+  **Quantifizierter Beweis, warum das zaehlt**: volles Modell BAcc
+  0.9965. NUR `ChgOffDate` entfernt (Einzelschwelle allein) -> BAcc
+  **weiterhin 0.9965, keine Aenderung** (der Baum verlagert sich
+  komplett auf das redundante `ChgOffPrinGr`, derselbe geleakte Score).
+  Erst BEIDE entfernt -> BAcc 0.8624, der ehrliche Wert. Ein Data
+  Scientist, der nur der Einzelschwelle vertraut, haette faelschlich
+  angenommen, der Leak sei behoben. Volle Herleitung in
+  `sba-loan-default/README.md`. Erfuellt die ADR-003-Schwelle "1. realer
+  Anlass bestaetigt" (1. Bestaetigung, 2. unabhaengige noch offen, aber
+  kein aktiver Suchauftrag mehr - der Backport war ohnehin schon
+  synthetisch abgesichert und default-inert).
 
   **Erweiterte Suche (2026-08-17), 17 reale Projekte gegen die
   Einzelschwelle geprueft** (Werte per LightGBM-Gain-Importance, hoechster
