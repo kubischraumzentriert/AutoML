@@ -847,6 +847,29 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   committet, kein Push-Ziel fuer `ML_Learning`). **2. unabhaengige
   Bestaetigung bleibt offen** - Suche geht weiter.
 
+  **Weiterer Versuch (2026-08-21), ebenfalls kein Treffer.**
+  `gmsc-leak-test` (Give Me Some Credit, Kaggle 2011): die oft als
+  "Leakage"-Beispiel zitierten PastDue-Zaehler (NumberOfTime30-59/60-89
+  DaysPastDueNotWorse, NumberOfTimes90DaysLate) sind bei genauerem
+  Hinsehen legitime HISTORISCHE Praediktoren, kein Ex-post-Leak - kein
+  Feature ueber 30-50%, kumulative Erweiterung gar nicht ausgeloest.
+  Wertvoll als zusaetzliche Spezifitaets-Bestaetigung (stark korrelierte
+  legitime Praediktoren loesen keinen falschen Verdacht aus), aber kein
+  Fortschritt fuer die 2. Bestaetigung. Volle Herleitung in
+  `gmsc-leak-test/README.md`. Erkenntnis aus beiden Fehlversuchen: gut
+  dokumentierte "Leakage-Lehrbeispiele" sind entweder (a) eine einzelne/
+  redundante dominante Substitution (AER) oder (b) gar kein echter Leak,
+  nur eine missverstandene starke legitime Korrelation (GMSC) - fuer das
+  gesuchte VERTEILTE Gruppen-Muster (wie SBA/Bike-Sharing) braucht es
+  offenbar einen Datensatz mit MEHREREN, jeweils NUR TEILWEISE
+  informativen Ex-post-Feldern (z.B. mehrere getrennte Zahlungs-/
+  Abschluss-Felder wie bei Lending-Club-Rohdaten total_pymnt/recoveries/
+  last_pymnt_amnt) statt einem einzelnen starken Praediktor oder dessen
+  Duplikat/Substitut - naechster Kandidat waere ein Lending-Club-Mirror
+  mit unbereinigten Post-Outcome-Spalten (Suche abgebrochen: verfuegbare
+  Mirrors waren entweder zu gross/login-pflichtig oder bereits
+  leak-bereinigt).
+
   **Erweiterte Suche (2026-08-17), 17 reale Projekte gegen die
   Einzelschwelle geprueft** (Werte per LightGBM-Gain-Importance, hoechster
   zuerst): `s6e8` 49.3%, `amazon-access` 46.7% (`MGR_ID`), `health_
