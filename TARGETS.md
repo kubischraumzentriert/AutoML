@@ -870,6 +870,43 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Mirrors waren entweder zu gross/login-pflichtig oder bereits
   leak-bereinigt).
 
+  **Lending Club (2026-08-21, Nutzer hat `loan.csv` manuell von Kaggle
+  `adarshsng/lending-club-loan-data-csv` besorgt) - KEIN Treffer fuer das
+  gesuchte Muster, aber ein WICHTIGERER, unerwarteter Fund.**
+  `lending-club-leak-test` (1.303.607 Zeilen, Fully Paid vs. Charged Off,
+  10 bekannte Post-Outcome-Kandidaten: out_prncp(_inv), total_pymnt(_inv),
+  total_rec_prncp/_int/_late_fee, recoveries, collection_recovery_fee,
+  last_pymnt_amnt): staerkstes Feature `int_rate` nur 18.9% Gain - die
+  Einzelschwelle (30/50%) bleibt VOELLIG still, kumulative Erweiterung
+  wird nie ausgeloest. **Trotzdem bricht der ehrliche Score massiv ein**:
+  BAcc voll 0.9983 vs. ohne alle 10 Post-Outcome-Felder **0.5317**
+  (praktisch Zufallsniveau) - der GROESSTE je in diesem Template
+  gemessene Leak-Effekt, deutlich groesser als SBA (0.9965->0.8624), und
+  der Guard haette ihn NICHT gefunden. Die 10 Leak-Features tragen
+  zusammen nur ~31% Gain - selbst ein hypothetischer "kumulativ ohne
+  Ausgangsverdacht"-Modus mit hoher Schwelle haette das nicht gefangen,
+  die Gain-Verteilung selbst ist irrefuehrend, nicht nur unkonzentriert.
+  **Wahrscheinliche Ursache**: LightGBM-Gain-Importance summiert Gain
+  UEBER ALLE Splits/Baeume - ein hochentscheidendes Feature, das nur in
+  wenigen fruehen Splits genutzt wird, sammelt weniger KUMULIERTEN Gain
+  an als legitime Features, die fuer viele feine Splits wiederverwendet
+  werden (bekanntes Problem von Split-/Gain-basierter Importance in der
+  Literatur, Permutation-/SHAP-Importance waeren robuster, aber teurer).
+  Volle Herleitung in `lending-club-leak-test/README.md`. **Einordnung**:
+  dies ist die 2. unabhaengige Bestaetigung, dass Schritt 1 (Gain-
+  Konzentration) einen massiven diffusen Leak systematisch uebersehen
+  kann (1. war CreditScoringChallenge, 5-Feature-diffuser Leak, dort aber
+  MEHRHEIT der Gain-Importance) - hier ist der Fall staerker: nur ~31%
+  Gain-Anteil reicht schon fuer einen fast-vollstaendigen Score-Einbruch.
+  **Offene Entscheidung fuer den Nutzer** (nicht eigenmaechtig
+  entschieden): Guard um einen Pflicht-Decomposition-Schritt (Schritt 4
+  IMMER laufen lassen, nicht nur bei bestehendem Verdacht) oder eine
+  robustere Importance-Methode erweitern, oder als dokumentierte
+  Guard-Grenze stehen lassen. **Die urspruenglich gesuchte 2.
+  Bestaetigung fuer das SBA-analoge Leak-PAAR-Muster bleibt weiterhin
+  offen** - drei Versuche (AER/GMSC/Lending-Club), keiner hat es
+  reproduziert.
+
   **Erweiterte Suche (2026-08-17), 17 reale Projekte gegen die
   Einzelschwelle geprueft** (Werte per LightGBM-Gain-Importance, hoechster
   zuerst): `s6e8` 49.3%, `amazon-access` 46.7% (`MGR_ID`), `health_
