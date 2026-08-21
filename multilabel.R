@@ -6,11 +6,13 @@
 # 1 sein). Weder mlr3 noch CRAN haben ein natives Multi-Label-Paket
 # (geprueft 2026-08-13/14) - Standardweg ist Problem-Transformation.
 #
-# Verifiziert an 3 unabhaengigen OpenML-Datensaetzen (Standalone-Skripte,
-# kein Git): `openml-yeast-multilabel` (14 Labels, Protein),
+# Verifiziert an 4 unabhaengigen Datensaetzen (Standalone-Skripte, kein
+# Git): `openml-yeast-multilabel` (14 Labels, Protein),
 # `openml-scene-multilabel` (6 Labels, Bild), `openml-birds-multilabel`
-# (19 Labels, Bioakustik, GEMISCHTE Feature-Typen). Volle Zahlen dort
-# bzw. in REFERENZ_METRIC_TARGET_MISMATCH.md.
+# (19 Labels, Bioakustik, GEMISCHTE Feature-Typen), `tox21-multilabel`
+# (12 Labels, Chemie/molekulare Fingerprints, ERSTER Datensatz mit echten
+# fehlenden Labels - siehe NA-Maskierung unten). Volle Zahlen dort bzw. in
+# REFERENZ_METRIC_TARGET_MISMATCH.md.
 #
 # EMPFOHLENER WEG (3/3 bestaetigt bester Ansatz): Binary Relevance
 # (N unabhaengige Binaerklassifikatoren) + Schwellenwert je Label auf
@@ -89,22 +91,41 @@ tune_threshold_accuracy <- function(prob, truth01, threshold_grid) {
 #' mlr3-Learner mit predict_type="prob" zurueckgibt (z.B.
 #' `function() lrn("classif.ranger", predict_type="prob", num.trees=200)`).
 #' `dt` muss die Spalten `feature_cols` + `label_cols` enthalten, Labels
-#' als 0/1 (integer). Gibt je Split eine benannte Liste von
-#' Wahrscheinlichkeits-Vektoren zurueck (ein Eintrag je Label).
+#' als 0/1 (integer) ODER NA (= fuer dieses Label nicht getestet - siehe
+#' unten). Gibt je Split eine benannte Liste von Wahrscheinlichkeits-
+#' Vektoren zurueck (ein Eintrag je Label).
+#'
+#' NA-Maskierung (2026-08-21, aus `tox21-multilabel` generalisiert; erster
+#' Datensatz mit ECHTEN fehlenden Labels, nicht jede Zeile auf jedes Label
+#' getestet - anders als yeast/scene/birds mit vollstaendigen Matrizen):
+#' `train_ids`/jede Menge in `predict_ids_list` wird PRO LABEL auf
+#' nicht-NA-Zeilen gefiltert, bevor trainiert/vorhergesagt wird. Die
+#' zurueckgegebenen Wahrscheinlichkeits-Vektoren sind NACH ROW-ID BENANNT
+#' (nicht mehr rein positional) - der Aufrufer muss `names(...)` nutzen,
+#' um die passenden Wahrheitswerte zuzuordnen (siehe
+#' `021_multilabel_workflow.R`), NICHT einfach positional gegen die
+#' urspruengliche `ids`-Reihenfolge indizieren. Bei VOLLSTAENDIGEN
+#' Labelmatrizen (kein NA) ist das ein reiner No-op: keine Zeile wird
+#' gefiltert, Reihenfolge/Laenge bleiben identisch zur vorherigen Version
+#' (nur zusaetzlich benannt) - regressionsgetestet byte-identisch gegen
+#' yeast/scene/birds.
 binary_relevance_pool <- function(dt, feature_cols, label_cols, train_ids, predict_ids_list, learner_constructor, seed = 42) {
   set.seed(seed)
   result <- setNames(vector("list", length(label_cols)), label_cols)
   learners <- setNames(vector("list", length(label_cols)), label_cols)
   for (lbl in label_cols) {
+    label_vals <- dt[[lbl]]
+    lbl_train_ids <- train_ids[!is.na(label_vals[train_ids])]
     dt_lbl <- copy(dt[, c(feature_cols, lbl), with = FALSE])
     dt_lbl[[lbl]] <- factor(dt_lbl[[lbl]], levels = c(0, 1), labels = c("no", "yes"))
     task <- as_task_classif(dt_lbl, target = lbl, id = lbl, positive = "yes")
     learner <- learner_constructor()
-    learner$train(task, row_ids = train_ids)
+    learner$train(task, row_ids = lbl_train_ids)
     learners[[lbl]] <- learner
     result[[lbl]] <- lapply(predict_ids_list, function(ids) {
-      pred <- learner$predict(task, row_ids = ids)
-      pred$prob[, "yes"]
+      lbl_ids <- ids[!is.na(label_vals[ids])]
+      pred <- learner$predict(task, row_ids = lbl_ids)
+      setNames(pred$prob[, "yes"], as.character(lbl_ids))
     })
   }
   list(probs = result, learners = learners)

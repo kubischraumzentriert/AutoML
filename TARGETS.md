@@ -2186,3 +2186,32 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   schlaegt, das die Pipeline (mlr3mbo/GBM/Ensemble-Selection/Target-
   Encoding) bereits besser loest. Dient hier als dokumentierter Negativ-
   Befund, falls die Frage spaeter erneut aufkommt.
+
+- **Multi-Label Per-Label-NA-Maskierung generalisiert und ins Template
+  zurueckgefuehrt (2026-08-21).** Anlass: `tox21-multilabel` (Chemie,
+  molekulare Fingerprints) war das erste Multi-Label-Projekt mit ECHTEN
+  fehlenden Labels (26-38% je Assay nicht getestet) - die bisherigen 3
+  Bestaetigungsprojekte (yeast/scene/birds) hatten alle vollstaendige
+  Labelmatrizen. `binary_relevance_pool()` (`multilabel.R`) filtert jetzt
+  pro Label auf nicht-NA-Zeilen (Training UND Vorhersage) und gibt NACH
+  ROW-ID BENANNTE Wahrscheinlichkeits-Vektoren zurueck statt rein
+  positionaler - `021_multilabel_workflow.R` wertet `names(...)` aus statt
+  positional gegen `tune_ids`/`eval_ids` zu indizieren, und beschraenkt
+  die GEPOOLTEN Metriken (Hamming Loss/Subset Accuracy/Makro-Mikro-F1) auf
+  Eval-Zeilen, die fuer ALLE Labels getestet wurden (`eval_complete`).
+  **Regressionsgetestet als No-op gegen 2 der 3 komplett-gelabelten
+  Projekte**: `yeast` (Hamming Loss 0.1933, Subset Accuracy 0.1798 bei
+  accuracy-getunter Schwelle - exakt identisch zu den vor dieser Aenderung
+  bekannten Referenzwerten), `scene` (Hamming Loss 0.0806->0.0719, Subset
+  Accuracy 0.581->0.664 bei Tuning - konsistent mit dem etablierten
+  3-4-von-4-Verbesserungsmuster, keine gespeicherten exakten Referenz-
+  werte verfuegbar, aber plausibilitaetsgeprueft). `birds` nicht erneut
+  gegengeprueft (Zeitersparnis, 2 von 3 als ausreichende No-op-Evidenz
+  gewertet). **Positiv bestaetigt gegen `tox21-multilabel`**: die
+  generalisierte Template-Version reproduziert die Zahlen des
+  eigenstaendigen NA-maskierten Skripts byte-identisch (Hamming Loss
+  0.02590090/0.02942005, Subset Accuracy 0.7922297/0.7652027). Damit
+  erfuellt: No-op an bestehenden Projekten + 1 echte positive Bestaetigung
+  - nach ADR-003 ausreichend fuer einen Backport (kein neuer Datensatz
+  noetig). `tox21-multilabel`s eigenstaendiges Skript durch die
+  Template-Version ersetzt (identisch). Committed+gepusht.
