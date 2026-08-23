@@ -95,30 +95,47 @@ Arbeitshypothese fuer kuenftige Sessions:
 
 Naechste Schritte, die bei neuen Arbeiten mitgedacht werden sollen:
 
-1. Systematische Evaluation vorbereiten: 8-15 diverse OpenML/Kaggle/
-   DrivenData-Datensaetze mit demselben Workflow durchlaufen lassen.
-   **Aktiver Fokus (Stand 2026-08-15)**: der Durchlauf selbst ist ueber
-   die Session-Historie hinweg faktisch schon an ~20 Projekten passiert
-   (siehe `ML_Learning/README.md` fuer die vollstaendige Liste) - der
-   fehlende Teil ist Schritt 3, die konsolidierte Ergebnistabelle.
-2. Fuer jeden Datensatz dieselben Artefakte sammeln: Baseline, Tuning,
+1. ~~Systematische Evaluation vorbereiten: 8-15 diverse OpenML/Kaggle/
+   DrivenData-Datensaetze mit demselben Workflow durchlaufen lassen.~~
+   **ERLEDIGT.** Ueber die Session-Historie hinweg an ~20+ Projekten
+   passiert (siehe `ML_Learning/README.md` fuer die vollstaendige Liste).
+2. ~~Fuer jeden Datensatz dieselben Artefakte sammeln: Baseline, Tuning,
    ggf. Ensemble, Laufzeit, manuelle Eingriffe, Drift-/Leak-/Segment-/
-   Sanity-Befunde.
-3. Eine Ergebnistabelle pflegen: Welche Workflow-Komponente wurde auf
-   welchem Projekt bestaetigt, war neutral, oder wurde verworfen? **Noch
-   nicht begonnen, aktueller Arbeitsschwerpunkt.**
+   Sanity-Befunde.~~ **ERLEDIGT**, in `SYSTEMATIC_EVALUATION.md`
+   konsolidiert.
+3. ~~Eine Ergebnistabelle pflegen: Welche Workflow-Komponente wurde auf
+   welchem Projekt bestaetigt, war neutral, oder wurde verworfen?~~
+   **ERLEDIGT.** `SYSTEMATIC_EVALUATION.md` ist fertig (eigener
+   Status-Header: "alle Zellen aufgeloest, keine `?` mehr offen") -
+   dieser Punkt hier war bis 2026-08-21 faelschlich noch als "aktueller
+   Arbeitsschwerpunkt/noch nicht begonnen" markiert, obwohl die Tabelle
+   laengst abgeschlossen war. Pflege der Tabelle bei neuen Befunden
+   bleibt laufende Aufgabe, aber der Erstaufbau ist fertig.
 4. ~~Greedy Ensemble Selection als groessten offenen Backport-Kandidaten
    priorisieren~~ **ERLEDIGT**: `148_ensemble_candidate_pool.R`/
    `149_ensemble_selection.R` (+ `156`/`157` fuer den Full-Train-Export)
    sind seit dem Backport Teil des nummerierten Workflows, verifiziert
    gegen `health_condition` und live an `s6e6`/`s6e8` bestaetigt
-   (`s6e8`: als echte Kaggle-Submission deployed). Naechster offener
-   Backport-Kandidat: aktuell keiner in TARGETS.md dokumentiert - wird
-   die systematische Evaluation (Punkt 1-3) einen neuen Kandidaten
-   finden, hier eintragen statt eines veralteten Punktes.
+   (`s6e8`: als echte Kaggle-Submission deployed). Als eigenstaendige,
+   testbare Funktion + erste `testthat`-Unit-Tests weiter gehaertet
+   (2026-08-19, `ensemble_selection.R`).
+   **Weitere Backports seit diesem Punkt (2026-08-21)**: Leak-Audit
+   Schritt 1b (Korrelations-Cluster-Zerlegung, `015_target_leak_audit.R`
+   - findet redundante, ueber viele Features verteilte Leak-Gruppen ohne
+   Einzelverdacht, mit dokumentierter Grenze am Lending-Club-Extremfall);
+   Multi-Label Per-Label-NA-Maskierung (`multilabel.R`/
+   `021_multilabel_workflow.R` - erstmals echte fehlende Labels
+   unterstuetzt, aus `tox21-multilabel` generalisiert). **Naechster
+   offener Backport-Kandidat**: aktuell keiner in `TARGETS.md`
+   dokumentiert (die gesuchte 2. Bestaetigung fuer das kumulative
+   Leak-PAAR-Muster selbst bleibt offen, aber das ist eine Suche nach
+   einem Datensatz, kein Code-Kandidat).
 5. Negative Ergebnisse explizit behalten, insbesondere den Meta-Learning-
    Warmstart-Befund: kleine Referenzpools bringen hier bisher praktisch
-   keinen messbaren Vorteil.
+   keinen messbaren Vorteil. Weitere Beispiele seit 2026-08-21: AER
+   Credit Card/Give Me Some Credit (kein Leak-Paar-Muster reproduziert),
+   SVM als "immer mitnehmen"-Kandidat bei Chemie-Fingerprints (gemischtes
+   Ergebnis, Laufzeit macht es ohne Tuning unpraktikabel).
 6. Bei jeder neuen Methode pruefen, ob sie Score-Hebel, Trust-Gate,
    Workflow-Automatisierung oder reine Dokumentation ist. Diese Rolle spaeter
    fuer eine Publikation klar trennen.
