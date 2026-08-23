@@ -32,10 +32,41 @@ error_dt <- data.table(
   lda_confidence = lda_confidence[misclassified_idx],
   lda_correct = lda_response[misclassified_idx] == truth[misclassified_idx]
 )
-# 0.5 ist bei 3 Klassen kein willkuerlicher Bruchteil: darunter war nicht mal
-# die vorhergesagte Klasse selbst mehrheitsfaehig (Ranger "unsicher"), darueber
-# war sich Ranger trotz falscher Antwort mehrheitlich sicher ("selbstsicher falsch").
-error_dt[, ranger_confidence_bucket := fifelse(ranger_confidence < 0.5, "unsicher (<0.5)", "selbstsicher falsch (>=0.5)")]
+
+# error_analysis_uncertainty_threshold (Default 0.5) ist bei >=3 Klassen kein
+# willkuerlicher Bruchteil: darunter war nicht mal die vorhergesagte Klasse
+# selbst mehrheitsfaehig (Ranger "unsicher"), darueber war sich Ranger trotz
+# falscher Antwort mehrheitlich sicher ("selbstsicher falsch"). Bei GENAU 2
+# Klassen ist dieselbe Schwelle STRUKTURELL ENTARTET: die vorhergesagte Klasse
+# hat per Konstruktion immer Wahrscheinlichkeit >=0.5 (beide Klassen summieren
+# sich zu 1, die vorhergesagte ist per Definition die groessere) - der
+# "unsicher"-Eimer bliebe bei 0.5 also praktisch immer leer (Anlass:
+# playground-series-s6e5/TEMPLATE_FRICTION.md, 2026-07, nie zurueckgefuehrt).
+# Fix: bei binaeren Aufgaben faellt die "keine Klasse hat >=50%"-Semantik weg,
+# also stattdessen den MEDIAN der Ranger-Konfidenz UNTER DEN FEHLERN als
+# adaptive Grenze nutzen - teilt die tatsaechlich beobachteten Fehler in eine
+# unsicherere und eine selbstsicherere Haelfte, ohne einen projektuebergreifend
+# sinnvollen Fixwert vorauszusetzen. Bei >=3 Klassen bleibt exakt der
+# konfigurierte Wert (No-op fuer alle bisherigen Projekte, inkl. des
+# Template-eigenen 3-Klassen-Projekts).
+n_classes <- length(unique(truth))
+effective_uncertainty_threshold <- if (n_classes <= 2) {
+  median(ranger_confidence[misclassified_idx])
+} else {
+  error_analysis_uncertainty_threshold
+}
+if (n_classes <= 2) {
+  cat(sprintf(
+    "Hinweis: binaere Aufgabe (%d Klassen) - error_analysis_uncertainty_threshold (%.2f) waere entartet (vorhergesagte Klasse hat immer >=0.5). Nutze stattdessen den Fehler-Median der Ranger-Konfidenz als adaptive Schwelle: %.4f.\n",
+    n_classes, error_analysis_uncertainty_threshold, effective_uncertainty_threshold
+  ))
+}
+
+error_dt[, ranger_confidence_bucket := fifelse(
+  ranger_confidence < effective_uncertainty_threshold,
+  sprintf("unsicher (<%.3f)", effective_uncertainty_threshold),
+  sprintf("selbstsicher falsch (>=%.3f)", effective_uncertainty_threshold)
+)]
 
 rescue_summary <- error_dt[, .(
   n_fehler = .N,
@@ -73,18 +104,18 @@ cat("Zum Vergleich (umgekehrt): Ranger rettet", sprintf("%.1f%%", 100 * lightgbm
 # Grenzfaelle/Label-Rauschen (siehe README-Diskussion).
 hard_case_idx <- which(
   ranger_response != truth & lightgbm_response != truth & lda_response != truth &
-    ranger_confidence >= error_analysis_uncertainty_threshold
+    ranger_confidence >= effective_uncertainty_threshold
 )
 same_wrong_class <- ranger_response[hard_case_idx] == lightgbm_response[hard_case_idx] &
   ranger_response[hard_case_idx] == lda_response[hard_case_idx]
 
 cat("\n=== 'Alle drei Modelle selbstsicher falsch' (Ranger, LightGBM, LDA) ===\n")
-cat(length(hard_case_idx), "von", length(misclassified_idx), "Ranger-Fehlern sind auch fuer LightGBM UND LDA falsch, bei Ranger-Konfidenz >=", error_analysis_uncertainty_threshold, ".\n")
+cat(length(hard_case_idx), "von", length(misclassified_idx), "Ranger-Fehlern sind auch fuer LightGBM UND LDA falsch, bei Ranger-Konfidenz >=", effective_uncertainty_threshold, ".\n")
 cat(sum(same_wrong_class), "von", length(hard_case_idx), "davon sagen sogar dieselbe falsche Klasse voraus.\n")
 
 correct_all_idx <- which(ranger_response == truth & lightgbm_response == truth & lda_response == truth)
 correct_idx <- which(ranger_response == truth)
-low_confidence_idx <- which(ranger_confidence < error_analysis_uncertainty_threshold)
+low_confidence_idx <- which(ranger_confidence < effective_uncertainty_threshold)
 interesting_idx <- union(misclassified_idx, low_confidence_idx)
 
 indices <- list(
@@ -93,7 +124,8 @@ indices <- list(
   correct_all_idx = correct_all_idx,
   correct_idx = correct_idx,
   low_confidence_idx = low_confidence_idx,
-  interesting_idx = interesting_idx
+  interesting_idx = interesting_idx,
+  effective_uncertainty_threshold = effective_uncertainty_threshold
 )
 saveRDS(indices, error_analysis_indices_path)
 

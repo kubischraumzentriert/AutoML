@@ -87,7 +87,14 @@ db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = "Fehleranalyse
 db_log_run_config(db_con, db_run_id, list(
   validation_ratio = validation_ratio,
   class_weight_power = class_weight_power,
-  error_analysis_uncertainty_threshold = error_analysis_uncertainty_threshold,
+  # tatsaechlich verwendeter Wert (kann bei binaeren Aufgaben vom
+  # konfigurierten Default abweichen, siehe 147_error_analysis_ranger_
+  # confidence.R) statt des rohen Config-Defaults geloggt.
+  error_analysis_uncertainty_threshold = if (is.null(indices$effective_uncertainty_threshold)) {
+    error_analysis_uncertainty_threshold
+  } else {
+    indices$effective_uncertainty_threshold
+  },
   error_analysis_tabpfn_context_size = error_analysis_tabpfn_context_size
 ))
 

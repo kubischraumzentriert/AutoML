@@ -693,6 +693,8 @@ Erkenntnis: Der BAcc-Gewinn gegenueber Ranger allein (+0.0003) ist Rauschen, MCC
 
 `147_error_analysis_ranger.R` untersucht Rangers falsch klassifizierte Zeilen auf einem eigenen Holdout-Split (`power=1.5`, `predict_type="prob"` fuer alle Vergleichsmodelle): Wie sicher war Ranger, als es falsch lag, haetten andere Modelle (LightGBM, LDA, TabPFN) bei denselben Zeilen richtig entschieden, sind die hartnaeckigsten Fehler Feature-Ausreisser, und welche Features treiben Ranger ueberproportional in die falsche Klasse?
 
+**Binaere Aufgaben (2026-08-21 gefixt, Anlass `playground-series-s6e5/TEMPLATE_FRICTION.md`)**: `error_analysis_uncertainty_threshold` (Default 0.5) waere bei GENAU 2 Klassen strukturell entartet - die vorhergesagte Klasse hat per Konstruktion immer Wahrscheinlichkeit >=0.5, der "unsicher"-Eimer bliebe also immer leer. `147_error_analysis_ranger_confidence.R` erkennt das jetzt automatisch (`n_classes <= 2`) und nutzt stattdessen den Median der Ranger-Konfidenz UNTER DEN FEHLERN als adaptive Grenze (teilt die beobachteten Fehler in eine unsicherere und eine selbstsicherere Haelfte). Bei >=3 Klassen (wie unten, Template-eigenes Projekt) bleibt exakt der konfigurierte Wert - regressionsgetestet byte-identisch zu den bisherigen Zahlen unten.
+
 **Konfidenz und LightGBM-Vergleich** (beide `power=1.5`-gewichtet, fairer Vergleich):
 
 | Ranger-Konfidenz bei Fehlern | n Fehler | LightGBM-Rescue-Rate | Ø Ranger-Konfidenz |
