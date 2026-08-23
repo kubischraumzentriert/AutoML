@@ -705,6 +705,31 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   1-Projekt-Befund, bis ein zweites Projekt mit numerischen Sentinels
   auftritt - nur die STRUKTURELLE Integration ins Template gilt als
   abgeschlossen.
+
+  **2. Projekt getestet (2026-08-21) - KEIN Nutzen bestaetigt, echter
+  Negativbefund.** `pima-diabetes-sentinel-test` (UCI Pima Indians
+  Diabetes, klassischer Lehrbuch-Sentinel-Fall: `0` kodiert fehlende
+  Werte bei `glucose`/`blood_pressure`/`skin_thickness`/`insulin`/`bmi`,
+  0.7-48.7% der Zeilen betroffen). Repeated 10x5-fold CV, Ranger UND
+  logistische Regression (skaliert): korrekte spaltenspezifische
+  Sentinel-Behandlung ist NICHT besser als roh (0 als Wert belassen) -
+  bei BAcc/MCC leicht schlechter (beide Lerner), bei AUC nur marginal
+  besser (+0.003 bis +0.006, innerhalb der CV-Rauschgrenze bei 768
+  Zeilen). Selbst bei linearem Modell (wo der Sentinel-Effekt laut
+  Lehrbuch am staerksten sein sollte) kein klarer Vorteil. **Damit
+  1 positiver (aquaculture) + 1 negativer/neutraler (Pima) Datenpunkt** -
+  der Nutzen ist projektspezifisch, kein generischer Score-Hebel.
+
+  **Nebenbei ein echter Architektur-Fund**: `sentinel_to_na()` wendet die
+  Sentinel-Liste GLOBAL auf ALLE numerischen Spalten an (kein
+  Spalten-Scoping) - bei Pima ist `0` NUR bei 5 der 8 Features ein
+  Sentinel, bei `pregnancies` ist `0` legitim (14.5% der Zeilen). Ein
+  naives `sentinel_values <- c(0)` waere dort AKTIV SCHAEDLICH, nicht nur
+  wirkungslos. Kandidat fuer eine Erweiterung (`sentinel_values` als
+  benannte Liste statt eines flachen Vektors), angesichts des
+  ausbleibenden Nutzens hier aber NICHT prioritaer verfolgt - kein
+  aktiver Code-Kandidat, nur dokumentiert. Volle Herleitung in
+  `pima-diabetes-sentinel-test/README.md`.
 - ~~**Target-Leakage-Audit als Workflow-Guard fehlt**~~ **ERLEDIGT**: Anlass
   `CreditScoringChallenge` (African Credit Scoring, stark unbalanciert, ~1.8%
   positive Klasse). Die naive Baseline erreichte F1 0.88 - getrieben durch einen
