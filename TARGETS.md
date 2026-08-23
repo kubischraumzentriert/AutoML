@@ -2299,3 +2299,27 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Gain-Anteil eines derart grossen Clusters ein hohes Fehlalarm-Risiko
   gehabt. Reiht sich ein neben `health_condition`/`sba-loan-default`/
   `aer-creditcard-leak-test`/`bbbp-classification` (alle korrekt still).
+
+- **CI Smoke Test war 3 Commits lang rot, unbemerkt (2026-08-20 bis
+  2026-08-23), gefixt.** Root Cause: beim Hinzufuegen von Schritt 1b
+  (Korrelations-Cluster, Commit `17ecf56`) wurde `ci_smoke_test/000_
+  config.R` nicht mitgepflegt - nur das Haupt-`000_config.R` bekam
+  `leak_audit_cluster_correlation_threshold`/`_drop_threshold`. Die CI
+  kopiert `015_target_leak_audit.R` bei jedem Lauf frisch aus dem Root
+  (`ci_smoke_test/*.R` ist gitignored, reine Laufzeit-Kopie), aber die
+  Config-Datei bleibt der committete Stand - lief deshalb lokal ueberall
+  erfolgreich (jedes getestete Projekt hatte seine eigene, nachgepflegte
+  Config), aber nie gegen die CI-Fixture selbst. Betraf 3 Commits/CI-Laeufe
+  (`17ecf56` Schritt 1b, `94d0eed` NA-Maskierung, `103c4e4` uncertainty-
+  threshold-Fix) - alle schlugen am selben fruehen Schritt fehl, spaetere
+  Commits wurden also nie tatsaechlich gegen die Fixture getestet, obwohl
+  sie inhaltlich unabhaengig und korrekt waren. Gefixt (Commit `4dedbb6`),
+  lokal gegen die Fixture verifiziert, CI-Lauf `32658179935` gruen
+  (smoke-test + unit-tests). **Lehre**: `ci_smoke_test/000_config.R` ist
+  eine SEPARATE, eigenstaendig zu pflegende Config-Datei - neue
+  `leak_audit_*`/sonstige Config-Variablen dort IMMER mitziehen, wenn ein
+  Skript im CI-Kopierpfad (`.github/workflows/ci-smoke-test.yml`) davon
+  abhaengt. Regressionstests gegen reale Projekte reichen nicht aus, um
+  das zu fangen - jede reale Projekt-Config wird ja selbst nachgepflegt.
+  Nach jedem Push, der ein CI-abgedecktes Skript aendert, `gh run list`
+  pruefen statt sich auf lokale Tests allein zu verlassen.
