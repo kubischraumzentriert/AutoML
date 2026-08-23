@@ -2362,3 +2362,24 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   gezielt fuer schwache lineare Baseline-Modelle einsetzen, nicht fuer
   bereits starke Kandidaten (Baeume, RBF-SVM). Volle Herleitung in
   `bbbp-classification/README.md`.
+
+- **Autoencoder (ANN2) als nichtlineare Alternative zu PCA getestet
+  (2026-08-23, `bbbp-classification`) - LogReg-Gewinn robust bestaetigt,
+  aber Ranger diesmal geschadet.** Dritter Nachtest der K-Means-Idee
+  (nach K-Means/`health_condition` und PCA/`bbbp-classification`).
+  Reduzierter Umfang (1 Autoencoder-Fit/Fold statt /Lerner, 3 statt 5
+  Folds, nur 30 Komponenten) wegen Laufzeit (~3-6 Min./Fit, siehe README
+  fuer die Kostenabschaetzung, mit Nutzer vorab abgestimmt). **LogReg-
+  Gewinn fast identisch zu PCA** (+0.059 vs. +0.061 BAcc) - bestaetigt,
+  dass Dimensionsreduktion an sich (nicht PCA-Spezifisches) das
+  Quasi-Separations-Problem loest. **Anders als PCA schadet der
+  Autoencoder aber auch RANGER spuerbar** (-0.035, PCA war dort neutral)
+  - plausibel durch die ungetunte, verrauschte nichtlineare Kompression
+  (Split-Grenzen verwischt, waehrend PCAs saubere orthogonale Komponenten
+  das nicht tun). SVM linear/radial aehnlich neutral/negativ wie bei PCA.
+  **Wichtiger Vorbehalt**: schneller, ungetunter Autoencoder (50 Epochen),
+  kein Bestwert-Vergleich. **Einordnung**: PCA hat hier das bessere
+  Aufwand-Nutzen-Verhaeltnis (exakte Loesung, Sekunden statt Minuten,
+  kein Ranger-Schaden) - kein Hinweis, dass laengeres Autoencoder-Tuning
+  sich lohnen wuerde, nicht weiterverfolgt. Volle Herleitung in
+  `bbbp-classification/README.md`.
