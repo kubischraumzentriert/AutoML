@@ -2339,3 +2339,26 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Hauptkandidaten (z.B. hochdimensionale duennbesetzte Chemie-Daten, wo
   SVM/LogReg ohnehin Kandidaten sind). Volle Herleitung in
   `health-condition-kmeans-feature-test/README.md`.
+
+- **PCA-Feature-Test an einem Chemie-Projekt (2026-08-23,
+  `bbbp-classification`) - Nachtest zum K-Means-Befund, differenzierteres
+  Bild.** Fold-sicher (`prcomp()` nur auf Train gefittet), PCA ERSETZT die
+  750 rohen Fingerprint-Bits (statt additiv wie beim K-Means-Test).
+  Ergebnis widerlegt die einfache "linear vs. Baum"-Faustregel aus dem
+  K-Means-Befund: **echte lineare Modelle (LogReg, SVM linear)
+  profitieren klar und monoton** (LogReg BAcc 0.680->0.767, AUC
+  0.723->0.873 bei 100 Komponenten) - passt zur Erklaerung (PCA loest die
+  Quasi-perfekte-Separation bei 750 duennbesetzten Bits vs. ~1640 Zeilen).
+  **SVM mit RBF-Kernel wird dagegen DEUTLICH schlechter** (0.809->0.730
+  bei 10 Komponenten, naehert sich mit mehr Komponenten wieder an, erreicht
+  aber nie das Rohdaten-Niveau) - der Kernel-Trick nutzt die
+  hochdimensionalen Rohdaten offenbar schon gut, PCA-Reduktion verliert
+  nur Information ohne entsprechenden Stabilitaetsgewinn. **Ranger bleibt
+  unbeeindruckt** (Differenzen <=0.014, kein Trend), konsistent mit dem
+  K-Means-Befund. **Praktische Lehre**: bei SVM kommt es auf den KERNEL
+  an, nicht nur "linear vs. nichtlinear" als grobe Kategorie. Kein
+  Backport-Kandidat, aber ein reusable Muster fuer kuenftige
+  hochdimensionale duennbesetzte Projekte (Chemie/Text/Genomik): PCA
+  gezielt fuer schwache lineare Baseline-Modelle einsetzen, nicht fuer
+  bereits starke Kandidaten (Baeume, RBF-SVM). Volle Herleitung in
+  `bbbp-classification/README.md`.
