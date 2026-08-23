@@ -2268,3 +2268,21 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Verhaeltnis zum Erkenntnisgewinn. Die 2. unabhaengige Bestaetigung
   bleibt offen, aber ohne aktiven Suchauftrag. Volle Herleitung in
   `fremtpl2-claim-leak-test/README.md`.
+
+- **`error_analysis_uncertainty_threshold` bei binaeren Aufgaben gefixt
+  (2026-08-21).** Bei einer Bestandsaufnahme lokaler `TEMPLATE_FRICTION.md`-
+  Dateien (ML_Learning) auf noch offene Backport-Kandidaten fiel auf, dass
+  die meisten bereits erledigt waren (Docs nur nie nachgezogen - gleiches
+  Muster wie bei `AGENTS.md`, siehe oben), ABER `playground-series-s6e5`s
+  Fund von 2026-07 zur strukturell entarteten `error_analysis_uncertainty_
+  threshold=0.5` bei GENAU 2 Klassen (vorhergesagte Klasse hat immer
+  Wahrscheinlichkeit >=0.5, "unsicher"-Eimer bleibt immer leer) war
+  tatsaechlich nie zurueckgefuehrt. Gefixt in `147_error_analysis_ranger_
+  confidence.R`: bei `n_classes<=2` wird der Median der Ranger-Konfidenz
+  UNTER DEN FEHLERN als adaptive Grenze genutzt statt des Fixwerts.
+  Regressionsgetestet byte-identisch gegen `health_condition` (3-Klassen,
+  719/22 Fehler, 8.6%/77.7% Rescue-Rate, 138/136 harte Faelle - exakt wie
+  vorher dokumentiert), binaerer Zweig isoliert synthetisch verifiziert
+  (alter Bucket waere leer gewesen, neuer sinnvoll ~50/50 gefuellt).
+  Nebenbei einen inkonsistenten hartcodierten `0.5`-Literal in der
+  Bucket-Kategorisierung gefixt (nutzte die Konfigvariable bisher nicht).
