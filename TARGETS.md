@@ -2323,3 +2323,19 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   das zu fangen - jede reale Projekt-Config wird ja selbst nachgepflegt.
   Nach jedem Push, der ein CI-abgedecktes Skript aendert, `gh run list`
   pruefen statt sich auf lokale Tests allein zu verlassen.
+
+- **K-Means-Cluster-Features als Feature Engineering getestet (2026-08-23,
+  `health-condition-kmeans-feature-test`) - modellabhaengiger Befund, kein
+  Backport.** Nutzeridee: Cluster-ID + Distanz-zu-Zentren als zusaetzliche
+  Features, fold-sicher gefittet (wie Target-Encoding). An `health_
+  condition` (10%-Subset, 5-fold CV) getestet: bei **Ranger** klarer,
+  monotoner NEGATIVBEFUND (-0.0035 bis -0.0076 BAcc, k=3/5/8) - Ranger
+  kann Cluster-Struktur ueber Splits selbst approximieren, die Zusatz-
+  Features sind nur Rauschen. Bei **multinomialer logistischer Regression**
+  (linear) UMGEKEHRTER Trend, positiv (+0.009 BAcc bei k=8) - bestaetigt
+  die Erklaerung direkt (gezielter Nachtest auf Nutzeranregung statt nur
+  Vermutung). **Kein Backport-Kandidat**, da das Template primaer auf
+  GBM/Ranger setzt, aber relevant fuer Projekte mit linearen Modellen als
+  Hauptkandidaten (z.B. hochdimensionale duennbesetzte Chemie-Daten, wo
+  SVM/LogReg ohnehin Kandidaten sind). Volle Herleitung in
+  `health-condition-kmeans-feature-test/README.md`.
