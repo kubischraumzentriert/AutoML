@@ -2240,3 +2240,31 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   - nach ADR-003 ausreichend fuer einen Backport (kein neuer Datensatz
   noetig). `tox21-multilabel`s eigenstaendiges Skript durch die
   Template-Version ersetzt (identisch). Committed+gepusht.
+
+- **4. und letzter Versuch fuer die kumulative Leak-PAAR-Bestaetigung
+  (2026-08-21), Suche eingestellt.** `fremtpl2-claim-leak-test`: bewusst
+  konstruierter Leak aus echten French-Motor-TPL-Daten (OpenML
+  `freMTPL2freq`/`freMTPL2sev`) - Ziel "hat mindestens 1 Schaden",
+  Features faelschlich inkl. zweier Ex-post-Aggregate aus der Severity-
+  Tabelle (`claim_amount_total`, `claim_record_count`), nach demselben
+  Muster wie SBAs Datum+Betrag konstruiert. Ergebnis: `claim_amount_total`
+  dominiert einzeln (85.4%), `claim_record_count` bekommt **0% Gain**
+  (ueber die 0-vs->0-Schwelle nahezu perfekt redundant zu
+  `claim_amount_total`) - erscheint nie in der Top-k-Gain-Rangliste, die
+  kumulative Erweiterung ist dafuer strukturell blind. **Schritt 2
+  (Determinismus) faengt es trotzdem** (100% Reinheit bei den Werten
+  1/2/3) - beide Features landen als Verdaechtige in Schritt 4 (BAcc
+  0.8662->0.5012), nur ueber zwei verschiedene Mechanismen statt ueber
+  die kumulative Schwelle. **Mechanistische Erklaerung fuer den
+  wiederholten Fehlschlag**: SBAs Paar (`ChgOffDate`+`ChgOffPrinGr`)
+  behielt trotz Korrelation genug UNABHAENGIGE Information, dass
+  LightGBM beide nutzte (91%+7%) - bei allen 4 hier getesteten
+  Kandidaten war das Paar entweder nahezu perfekt redundant
+  (Substitutionskette, 0% Gain fuer den Partner) oder ueber viele
+  Features verteilt (Lending Club). Diese spezifische Zwischenstufe
+  laesst sich offenbar nicht einfach konstruieren. **Entscheidung (mit
+  Nutzer abgestimmt): die gezielte Suche fuer dieses Muster wird nach 4
+  Fehlversuchen eingestellt** - der Aufwand steht nicht mehr im
+  Verhaeltnis zum Erkenntnisgewinn. Die 2. unabhaengige Bestaetigung
+  bleibt offen, aber ohne aktiven Suchauftrag. Volle Herleitung in
+  `fremtpl2-claim-leak-test/README.md`.
