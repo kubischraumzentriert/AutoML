@@ -2383,3 +2383,23 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   kein Ranger-Schaden) - kein Hinweis, dass laengeres Autoencoder-Tuning
   sich lohnen wuerde, nicht weiterverfolgt. Volle Herleitung in
   `bbbp-classification/README.md`.
+
+- **UMAP (`uwot`) als dritte Dimensionsreduktions-Alternative getestet
+  (2026-08-23, `bbbp-classification`) - klarer, robuster Negativbefund.**
+  Vierter Test der K-Means-Ideenlinie (nach K-Means/PCA/Autoencoder).
+  `uwot::umap()` ist deutlich schneller als der ANN2-Autoencoder (~11s
+  statt ~6 Min./Fit) - voller Testumfang wie bei PCA moeglich (3
+  Komponentenzahlen x 5 Folds x 4 Lerner). **Ergebnis: ALLE 4 Lerner UND
+  alle Komponentenzahlen schneiden schlechter ab als roh** - deutlich
+  schlechter als bei PCA/Autoencoder. Vermutung (euklidische Distanz
+  unpassend fuer binaere Fingerprints) durch Nachtest mit `metric=
+  "hamming"` (uwot bietet kein direktes Jaccard) GEPRUEFT UND VERWORFEN -
+  praktisch dasselbe schlechte Bild, keine Metrik-Verwechslung. Plausible
+  Erklaerung: UMAP optimiert primaer lokale Nachbarschaftsstruktur
+  (Visualisierungs-Ursprung), nicht diskriminative/klassentrennende
+  Information - anders als PCA (Varianz-Maximierung) oder ein
+  Autoencoder (Rekonstruktion). **Einordnung im Methoden-Trio**: PCA
+  bleibt klarer Gewinner - schnell, robust, hilft LogReg substanziell,
+  schadet niemandem stark. Gutes Gegenbeispiel dafuer, Methoden empirisch
+  statt nach Reputation ("moderne nichtlineare Technik") zu waehlen.
+  Volle Herleitung in `bbbp-classification/README.md`.
