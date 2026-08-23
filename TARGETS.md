@@ -2286,3 +2286,16 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   (alter Bucket waere leer gewesen, neuer sinnvoll ~50/50 gefuellt).
   Nebenbei einen inkonsistenten hartcodierten `0.5`-Literal in der
   Bucket-Kategorisierung gefixt (nutzte die Konfigvariable bisher nicht).
+
+- **Schritt 1b (Korrelations-Cluster): 5. reale Spezifitaetsbestaetigung,
+  bisher groesster Cluster (2026-08-21, `geoai-aquaculture-pond-
+  identification-challenge`).** Groesster gefundener Cluster: 36 Features
+  (VH/VV-Radar- + optische Baender ueber mehrere Beobachtungsmonate),
+  56.3% Gain-Importance - legitime, natuerlich stark korrelierte
+  Zeitreihen-Wiederholung DERSELBEN Messung (kein Leak). Score-Effekt
+  beim Entfernen: -0.0001 (praktisch null) - korrekt NICHT geflaggt.
+  Wichtiger Beleg: der Retraining-Beweis (nicht nur Korrelation+Gain-
+  Summe) entscheidet - ein reiner Schwellenwert-Check haette bei 56.3%
+  Gain-Anteil eines derart grossen Clusters ein hohes Fehlalarm-Risiko
+  gehabt. Reiht sich ein neben `health_condition`/`sba-loan-default`/
+  `aer-creditcard-leak-test`/`bbbp-classification` (alle korrekt still).
