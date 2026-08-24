@@ -208,6 +208,10 @@ Nacharbeit Literaturvergleich:
   Nur `credit-g` landet als `split_match_candidate`; Adult/Amazon bleiben
   wegen lokaler 5-fold-CV vs. Literatur-10-fold im Resampling-Mismatch,
   Bank-Marketing wegen Holdout vs. 10-fold ebenfalls.
+- Manueller Quellenreview mit `review_literature_split_candidates.R`:
+  `credit-g` bleibt `keep_context_only`. Quelle bestaetigt F1-Werte,
+  OpenML-Suite und 10-fold-Wording, aber nicht exakte OpenML-Task-ID,
+  positive Klasse, Harness-/Preprocessing-Details oder Zeitbudget.
 
 ## Naechste Entscheidungen
 
@@ -220,6 +224,5 @@ Nacharbeit Literaturvergleich:
   wenn `lres_comparability` explizit gepflegt ist; fuer die 32
   `no_local_dataset` bevorzugt zuerst datasets mit OpenML-ID und klarer
   Metrik/Split-Beschreibung auswaehlen.
-- Vor einer DB-Umschreibung der `lres_comparability`-Werte zuerst die
-  `split_match_candidate`-Zeilen manuell anhand der Quelle pruefen
-  (positive Klasse, OpenML Task, Preprocessing, Zeitbudget).
+- Keine DB-Umschreibung der `lres_comparability`-Werte aus dem aktuellen
+  FEDOT-F1-Block; der gepruefte Split-Kandidat bleibt `context_only`.

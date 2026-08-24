@@ -321,7 +321,11 @@ Produktion sauber zu trennen.
   `resampling_mismatch_context`, 7 `source_context_missing_openml_id`,
   4 `split_match_candidate`. Nur `credit-g` ist aktuell Split-Kandidat;
   Adult/Amazon/Bank-Marketing bleiben wegen Resampling-Mismatch
-  `context_only`.
+  `context_only`. Manueller Quellenreview mit
+  `review_literature_split_candidates.R`: auch `credit-g` bleibt
+  `keep_context_only`, weil die FEDOT-Dokumentation zwar F1/10-fold/OpenML-
+  Suite bestaetigt, aber keine exakte OpenML-Task-ID, positive Klasse,
+  Harness-Details oder Zeitbudget fuer ein echtes Upgrade liefert.
   Danach Agentenfolge:
   Literatur-Agent (Quellen/Annahmen), Repo-Architektur-Agent (ADR-/Workflow-
   Impact), Implementierungs-Agent A (Portfolio/Warmstart), Agent B
