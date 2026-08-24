@@ -183,6 +183,26 @@ Zweck: Paper-/Benchmark-/Dokumentationswerte als Kontext speichern, aber
 strikt getrennt von lokalen `metric_result`-Runs. `build_portfolio_warmstart_
 evidence.R` nutzt diese Tabellen bewusst nicht.
 
+Nacharbeit Literaturvergleich:
+
+- `compare_literature_vs_own_results.R` erstellt.
+- OpenML-Dataset-IDs gepflegt: adult=179, Amazon_employee_access=4135,
+  bank-marketing=1461, credit-g=31.
+- Seed erweitert um AutoMLBench-Dataset-Metadaten und externe Binary-
+  Classification-Rangliste.
+- `reproduce_literature_f1_adult_amazon.R` erstellt und ausgefuehrt, um fuer
+  bereits vorhandene lokale Projekte die Literaturmetrik F1 bewusst lokal zu
+  loggen.
+- `reproduce_literature_f1_credit_bank.R` erstellt und ausgefuehrt: gezielt
+  nur Kandidaten mit OpenML-ID, klarer F1-Metrik und lokaler Evidenz
+  (`credit-g` 10-fold-CV, `bank-marketing` vorhandene Holdout-Predictions
+  aus Ensemble-Selection).
+- Aktueller Triage-Befund nach zweitem Nachlauf: 32
+  `matched_context_only`, 32 `no_local_dataset`. Die grossen Deltas,
+  besonders bei `amazon_employee_access` und `bank-marketing`, sind ein
+  Signal fuer fehlende direkte Vergleichbarkeit, nicht fuer ein lokales
+  Leaderboard-Urteil.
+
 ## Naechste Entscheidungen
 
 - Nur Diagnose/Ranking reicht ohne `WorkflowDescription.md`-Aenderung.
@@ -190,3 +210,7 @@ evidence.R` nutzt diese Tabellen bewusst nicht.
   `WorkflowDescription.md` und ggf. ein ADR erfordern.
 - Vor Backport nach ADR-003: mindestens zwei reale Projektbestaetigungen
   oder ein expliziter No-op-Beleg.
+- Naechster sinnvoller Schritt: echte Paper-Tabellen nur dann weiter importieren,
+  wenn `lres_comparability` explizit gepflegt ist; fuer die 32
+  `no_local_dataset` bevorzugt zuerst datasets mit OpenML-ID und klarer
+  Metrik/Split-Beschreibung auswaehlen.

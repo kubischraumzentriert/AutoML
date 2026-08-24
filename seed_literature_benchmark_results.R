@@ -140,6 +140,33 @@ src_tabpfn <- upsert_source(
   "Nature TabPFN paper; aggregate claims are context only unless exact benchmark tables are imported later."
 )
 
+src_automlbench_datasets <- upsert_source(
+  "automlbench_100_datasets",
+  "AutoMLBench benchmark dataset overview",
+  2026,
+  "benchmark_page",
+  "https://datasystemsgrouput.github.io/AutoMLBench/datasets.html",
+  "AutoMLBench 100 OpenML datasets",
+  "Dataset metadata table; imported only for dataset IDs and dimensions."
+)
+
+src_alex_automl_benchmark <- upsert_source(
+  "alex_automl_benchmark_binary",
+  "AutoML Benchmark binary-classification ranking",
+  2019,
+  "repository",
+  "https://github.com/alex-lekov/automl-benchmark",
+  "Binary classification benchmark on OpenML datasets",
+  "External benchmark ranking table; context only because benchmark implementation and versioning differ from local mlr3 runs."
+)
+
+openml_dataset_ids <- c(
+  adult = 179L,
+  amazon_employee_access = 4135L,
+  `bank-marketing` = 1461L,
+  `credit-g` = 31L
+)
+
 automl39 <- data.frame(
   method = c("AutoGluon", "H2O AutoML", "auto-sklearn", "GCP-Tables", "TPOT", "Auto-WEKA"),
   avg_rank = c(1.5455, 3.1818, 3.7273, 2.8182, 4.0909, 5.6364),
@@ -189,8 +216,54 @@ for (i in seq_len(nrow(fedot_scores))) {
     paste0("fedot_docs_", row$dataset, "_", gsub("[^a-z0-9]+", "_", tolower(row$method)), "_f1"),
     row$dataset, row$method, "f1", row$f1,
     "maximize", "dataset_score", "context_only",
+    openml_dataset_id = unname(openml_dataset_ids[[row$dataset]]),
     resampling = "10 folds according to documentation table",
     notes = "Documentation benchmark table; direct comparability to local mlr3 results is not guaranteed."
+  )
+}
+
+automlbench_dataset_meta <- data.frame(
+  dataset = c("adult", "Amazon_employee_access", "bank-marketing", "credit-g"),
+  openml_dataset_id = c(179L, 4135L, 1461L, 31L),
+  n_features = c(14, 9, 16, 20),
+  n_rows = c(48842, 32769, 45211, 1000),
+  stringsAsFactors = FALSE
+)
+for (i in seq_len(nrow(automlbench_dataset_meta))) {
+  row <- automlbench_dataset_meta[i, ]
+  dataset_key <- gsub("[^a-z0-9]+", "_", tolower(row$dataset))
+  upsert_result(
+    src_automlbench_datasets,
+    paste0("automlbench_dataset_", dataset_key, "_n_features"),
+    row$dataset, "dataset_metadata", "n_features", row$n_features,
+    "count", "metadata_only", "context_only",
+    openml_dataset_id = row$openml_dataset_id,
+    notes = "AutoMLBench dataset overview table."
+  )
+  upsert_result(
+    src_automlbench_datasets,
+    paste0("automlbench_dataset_", dataset_key, "_n_rows"),
+    row$dataset, "dataset_metadata", "n_rows", row$n_rows,
+    "count", "metadata_only", "context_only",
+    openml_dataset_id = row$openml_dataset_id,
+    notes = "AutoMLBench dataset overview table."
+  )
+}
+
+alex_binary_rank <- data.frame(
+  method = c("AutoML_Alex", "AutoGluon", "H2O", "CatBoost", "Auto_ml", "auto-sklearn", "LightGBM", "TPOT"),
+  reverse_position_sum = c(79, 74, 54, 52, 41, 37, 36, 23),
+  stringsAsFactors = FALSE
+)
+for (i in seq_len(nrow(alex_binary_rank))) {
+  row <- alex_binary_rank[i, ]
+  method_key <- gsub("[^a-z0-9]+", "_", tolower(row$method))
+  upsert_result(
+    src_alex_automl_benchmark,
+    paste0("alex_binary_", method_key, "_reverse_position_sum"),
+    "Binary classification benchmark datasets", row$method, "reverse_position_sum", row$reverse_position_sum,
+    "maximize", "leaderboard_summary", "context_only",
+    notes = "Repository benchmark table: sum of reverse positions over binary classification datasets."
   )
 }
 

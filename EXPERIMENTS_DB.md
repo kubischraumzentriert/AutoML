@@ -246,7 +246,18 @@ View ist `v_literature_benchmark_results`.
 
 **Wichtig:** `build_portfolio_warmstart_evidence.R` nutzt diese Tabellen
 absichtlich NICHT. Wer Literaturwerte mit lokalen Ergebnissen vergleichen
-will, soll ein separates Vergleichsskript mit explizitem Join/Filter bauen.
+will, nutzt `compare_literature_vs_own_results.R`; das Skript erzeugt einen
+expliziten Triage-Report statt die Werte automatisch zu vermischen.
+Wenn fuer bereits vorhandene lokale Projekte nur die Literaturmetrik fehlt,
+kann `reproduce_literature_f1_adult_amazon.R` bewusst lokale F1-Laeufe fuer
+`adult` und `amazon_employee_access` nachloggen. Auch diese Matches bleiben
+`context_only`, solange Split, positive Klasse, Zeitbudget und Feature
+Engineering nicht quellenidentisch belegt sind.
+`reproduce_literature_f1_credit_bank.R` erweitert diesen Ansatz fuer
+`credit-g` (10-fold-CV) und `bank-marketing` (bestehende Holdout-
+Predictions aus der Ensemble-Selection-Verifikation). Das Skript ist ein
+gezielter Triage-Nachlogger fuer OpenML-ID/F1-Kandidaten, kein Ersatz fuer
+einen paper-identischen Benchmark-Harness.
 
 ### `prediction` / `prediction_prob`
 
