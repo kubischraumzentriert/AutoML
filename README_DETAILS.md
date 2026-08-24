@@ -38,6 +38,10 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `005_benchmark_runtime.R` | Hilfsfunktion fuer Modellbenchmarking mit Laufzeitmessung |
 | `006_tuning_diagnostics.R` | `diagnose_mbo_search()` - prueft nach `tnr("mbo")`-Laeufen auf echte sequenzielle Verfeinerung vs. reines Initialdesign, Plateau-Indikator |
 | `008_curve_diagnostics.R` | Helferfunktionen fuer ROC-/PR-Kurven aus in `experiments.db` geloggten Vorhersagen (Schwellenwert-Sweep, AUC per Trapezregel); funktioniert bei >=3 Klassen als One-vs-Rest (siehe Notiz unten) |
+| `seed_literature_benchmark_results.R` | Seedet externe Paper-/Benchmark-/Dokumentationswerte in eigene Literaturtabellen (`literature_source`, `literature_benchmark_result`), getrennt von lokalen `metric_result`-Runs |
+| `build_portfolio_warmstart_evidence.R` | Optionaler Portfolio-Warmstart-Helper: wertet die zentrale `experiments.db` als internes Mini-TabRepo aus (Gewinner, Top-3-Rate, Regret, Laufzeit je Modellfamilie) |
+| `recommend_portfolio_warmstart.R` | Erzeugt aus der Portfolio-Evidenz eine budget- und groessenabhaengige Startempfehlung fuer neue Klassifikationsprojekte (`lightgbm`/`ranger` frueh, Ensemble spaet optional) |
+| `validate_portfolio_warmstart_retrospective.R` | Retrospektive und Leave-one-project-out-Pruefung der Portfolio-Warmstart-Linie gegen die zentrale Experiment-DB; Evidenz-/Diagnoseskript, nicht Teil der Produktionspipeline |
 | `010_eda.R` | Datenueberblick auf 10%-Subset mit `skimr` |
 | `015_target_leak_audit.R` | Prueft eine zu gute Baseline auf Target-Leakage: Feature-Importance-Konzentration, Determinismus-Check (`P(Ziel\|Feature=Wert)`), optionale Within-Stratum-Zieltrennung, Ehrlich-vs-aufgeblasen-Zerlegung (mit/ohne Verdaechtige) - bewusst auf vollen Daten, kein Subset |
 | `020_task.R` | Erzeugt den Rohfeature-`TaskClassif` |
@@ -96,6 +100,10 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > [`REFERENZ_PROBABILITY_CALIBRATION.md`](REFERENZ_PROBABILITY_CALIBRATION.md):
 > OOF-Kalibrierung, Platt-Scaling und die Fairness-Regel "lokal validieren,
 > einmal bestaetigen, dann keine Mikrovarianten ans Leaderboard schicken".
+> Fuer den aus TabRepo/AutoGluon abgeleiteten Portfolio-Warmstart siehe
+> [`REFERENZ_PORTFOLIO_WARMSTART.md`](REFERENZ_PORTFOLIO_WARMSTART.md):
+> zentrale Experiment-DB als internes Mini-TabRepo, `lightgbm`/`ranger` als
+> frueher Kern, Ensemble als optionaler spaeter Score-Hebel.
 > Fuer neuronale Tabellenmodelle (FT-Transformer) als Ensemble-Diversitaet siehe
 > [`NEURAL_DEPLOY.md`](NEURAL_DEPLOY.md): R-only-Policy, wann sich ein neuronales
 > Modell lohnt, und der Python-GPU-Export-Workflow fuer Kaggle.

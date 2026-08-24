@@ -198,6 +198,115 @@ Produktion sauber zu trennen.
 
 ## Backlog (bei einer Uebertragung gefunden, noch nicht umgesetzt)
 
+- **Literatur-Roadmap 2026-08-24: agentisches Portfolio-Warmstarting und
+  moderne Tabular-Kandidaten.** Anlass: Nutzerwunsch nach Literaturrecherche
+  zu 10 Veroeffentlichungen, davon 5 priorisiert, mit Ablaufplan zur
+  agentenbasierten Umsetzung neuer Technologien zur Template-/Score-
+  Verbesserung. Wichtigste priorisierte Quellen und Uebertragung:
+  (1) TabRepo (Salinas et al., 2024) -> eigene konsolidierte Experiment-DB
+  als kleines internes TabRepo nutzen, Algorithmen/Hyperparameter nicht mehr
+  nur manuell, sondern evidenzbasiert vorpriorisieren; (2) AutoGluon-Tabular
+  (Erickson et al., 2020) -> multi-layer/OOF-Stacking und diverse Kandidaten-
+  Pools als Score-Hebel; (3) TabPFN/TabICL -> Foundation-Modelle als
+  selektive, groessenbegrenzte Kandidaten, nicht blind als Default; (4)
+  Hyperband/BOHB bzw. Auto-sklearn 2.0 -> Multi-Fidelity-Budgetierung statt
+  teurer Voll-CV fuer jeden Kandidaten; (5) TabM -> leichtgewichtiger
+  Neural-Baseline-Kandidat neben FT-Transformer/TabICL, erst nach
+  `NEURAL_DEPLOY.md`-Gate.
+
+  **Abgrenzung zum alten Meta-Learning-Warmstart-Negativbefund** unten:
+  der fruehere 8-OpenML-Datensatz-Pool zeigte keinen robusten Vorteil und
+  bleibt NICHT als Template-Default uebernommen. Diese neue Aufgabe ist
+  breiter und repo-naeher: erst die eigene, ueber viele Projekte gemergte
+  `experiments.db` auswerten, daraus ein kleines Portfolio-/Warmstart-
+  Ranking bauen, dann per Agentenlauf gezielt gegen mindestens zwei reale
+  Projekte pruefen (ADR-003), bevor Workflow-Backports entstehen.
+
+  **Erster Sprint gestartet (2026-08-24)**:
+  `build_portfolio_warmstart_evidence.R` als Diagnose-/Evidenzskript, das
+  aus `v_metric_results` algorithmische Gewinner, Top-3-Haeufigkeit,
+  mittlere/mediane Regrets und Laufzeit aus allen gemergten Projektmetriken
+  ableitet. Darauf aufbauend erzeugt `recommend_portfolio_warmstart.R` eine
+  konkrete, budget- und groessenabhaengige Candidate-Startliste als CSV und
+  Markdown. Aktuelle Default-Empfehlung fuer das Template-Beispiel:
+  `lightgbm` + `ranger` frueh, `ensemble` spaet; `catboost`/`xgboost` nur
+  bei kleinerem Projekt oder groesserem Budget, `tabpfn` nur selektiv.
+  `validate_portfolio_warmstart_retrospective.R` prueft diese Linie
+  retrospektiv gegen die vorhandene Projekt-DB: 50 Projekt-Metriken aus
+  16 realen Projekten, Gewinnerfamilie in Leave-in und Leave-one-project-out
+  jeweils 48/50 in der empfohlenen Top-3, Median-Regret nach 1/2/3
+  Kandidaten jeweils 0. Noch kein externer Benchmark-Beweis, aber genug
+  interne Evidenz fuer den naechsten Schritt: echte Projektvalidierung mit
+  vorher festgelegter Empfehlung.
+
+  **Erste echte Projektvalidierung (pre-registered, 2026-08-24)**:
+  `PORTFOLIO_WARMSTART_PREREG_PUMPITUP.md` legte vor dem Lauf fuer
+  `drivendata-pump-it-up` die Reihenfolge `lightgbm -> ranger -> ensemble`
+  fest. Das Projekt war nicht als regulaerer Klassifikationsbenchmark in der
+  Portfolio-LOO-Evidenz enthalten; Besonderheit: hochkardinale Faktoren,
+  deshalb Ranger fair mit zielwertfreiem Frequency-Encoding. 3-fold CV,
+  kein Tuning, keine externen Daten (`validate_portfolio_warmstart_pumpitup.R`):
+  Probability-Average-Ensemble gewinnt klar nach Accuracy **0.8116** vor
+  `ranger_frequency` **0.8039** und `lightgbm_native` **0.8032**. Das ist
+  ein erster echter positiver Projektbeleg fuer die AutoGluon/TabRepo-Linie:
+  nicht nur "LightGBM zuerst", sondern frueh zwei robuste Baumfamilien plus
+  spaeter Ensemble-Hebel.
+
+  **Zweite echte Projektvalidierung (pre-registered, 2026-08-24)**:
+  `PORTFOLIO_WARMSTART_PREREG_CREDIT_G.md` legte vor dem Lauf fuer
+  `openml-credit-g` dieselbe Reihenfolge `lightgbm -> ranger -> ensemble`
+  fest. Anders als PumpItUp: klein, binaer, BAcc/MCC, kein hochkardinaler
+  DrivenData-Multiclass-Fall. 5-fold CV, kein Tuning, keine externen Daten
+  (`validate_portfolio_warmstart_credit_g.R`): `ranger` gewinnt knapp nach
+  BAcc **0.6640**, Ensemble **0.6636**, LightGBM **0.6629**. Interpretation:
+  zweite positive Bestaetigung fuer das Startportfolio (`lightgbm`/`ranger`
+  decken den Gewinner ab), aber auch eine wichtige Nuance: das schlichte
+  Probability-Average-Ensemble ist ein spaeter, optionaler Score-Hebel, kein
+  garantierter Gewinner auf jedem Projekt. Damit ist das Backport-Kriterium
+  fuer einen **optionalen Empfehlungs-/Diagnose-Helper** erfuellt, nicht fuer
+  einen harten Workflow-Zwang.
+
+  **Dritte echte Projektvalidierung (pre-registered, 2026-08-24)**:
+  `PORTFOLIO_WARMSTART_PREREG_PIMA.md` legte vor dem Lauf fuer
+  `pima-diabetes-sentinel-test` erneut `lightgbm -> ranger -> ensemble` fest.
+  Neues Profil: klein, binaer, rein numerisch; rohe Sentinel-Variante bewusst
+  vorab fixiert, weil die fruehere Pima-Analyse keinen klaren Score-Nutzen
+  fuer korrektes Sentinel-Handling gezeigt hatte. 5-fold CV, kein Tuning,
+  keine externen Daten (`validate_portfolio_warmstart_pima.R`): `ranger`
+  gewinnt klar nach BAcc **0.7172** (AUC 0.8244, MCC 0.4537), Ensemble
+  **0.7019**, LightGBM **0.6960**. Interpretation: dritte positive
+  Bestaetigung fuer das Startportfolio; die Evidenz stuetzt jetzt besonders
+  stark "LightGBM und Ranger frueh als Kern pruefen". Das Ensemble bleibt
+  optionaler spaeter Hebel: auf PumpItUp klarer Gewinner, auf Credit-G/Pima
+  zwischen den Einzelmodellen. **Template-Ueberfuehrung abgeschlossen**:
+  `build_portfolio_warmstart_evidence.R`,
+  `recommend_portfolio_warmstart.R`,
+  `validate_portfolio_warmstart_retrospective.R` und
+  `REFERENZ_PORTFOLIO_WARMSTART.md` dokumentieren/implementieren die Linie
+  als optionalen Diagnose-Helper. Kein neuer Pflichtschritt im nummerierten
+  Workflow und keine `_targets`-Aenderung, weil es um explorative
+  Modellauswahl geht, nicht um die finale Produktionspipeline.
+
+  **Literaturwerte-Layer umgesetzt (2026-08-24)**: Auf Nutzerwunsch gibt es
+  jetzt ein eigenes Schema fuer Paper-/Benchmark-/Dokumentationswerte:
+  `literature_source`, `literature_benchmark_result` und
+  `v_literature_benchmark_results` in `db_schema.sql`, geseedet ueber
+  `seed_literature_benchmark_results.R`. Erste Kontextwerte: AutoML-39-
+  Leaderboard-Aggregate (SOTA2), FEDOT-Dokumentationsscores fuer bekannte
+  OpenML-Datensaetze (`adult`, `amazon_employee_access`, `bank-marketing`,
+  `credit-g`), AutoGluon-Quickstart-Example `knot_theory` sowie Metadaten
+  zu TabRepo und TabPFN. Alle Eintraege sind bewusst `context_only`, nicht
+  lokale Evidenz: andere Splits/Zeitbudgets/Frameworks duerfen nicht
+  automatisch in `build_portfolio_warmstart_evidence.R` einfliessen.
+  Danach Agentenfolge:
+  Literatur-Agent (Quellen/Annahmen), Repo-Architektur-Agent (ADR-/Workflow-
+  Impact), Implementierungs-Agent A (Portfolio/Warmstart), Agent B
+  (Successive-Halving/BOHB-Budgetierung), Agent C (Foundation/Neural-
+  Kandidaten), Validierungs-Agent (synthetischer No-op + >=2 reale Projekte),
+  Dokumentations-Agent (`README_DETAILS.md`, `TARGETS.md`,
+  `WorkflowDescription.md` nur falls Reihenfolge/Entscheidungen geaendert
+  werden).
+
 - **`renv.lock` eingefuehrt (2026-08-17) - Dokumentations-Snapshot, KEINE
   renv-Aktivierung.** Anlass: externe Projekt-Beurteilung
   (`Beurteilung_AutoML_Projekt.md`, Nutzer-Downloads) empfahl `renv` fuer

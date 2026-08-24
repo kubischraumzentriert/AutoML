@@ -63,6 +63,12 @@ Skript-Wiederausfuehrung verlassen zu muessen.
 - **Submission-Result** (`submission_result`): ein externer Leaderboard-Score
   zu einem finalen Modell, getrennt nach Public und Private Score. So bleibt
   nachvollziehbar, welche Submission mit welchem Modell erzeugt wurde.
+- **Literature-Source / Literature-Benchmark-Result** (`literature_source`,
+  `literature_benchmark_result`): externe Paper-/Benchmark-/Dokumentationswerte
+  als **Kontextschicht**, strikt getrennt von eigenen `metric_result`-Runs.
+  Diese Werte duerfen nicht unbemerkt in lokale Portfolio-/Backport-
+  Entscheidungen einfliessen, weil Splits, Zeitbudgets, Preprocessing und
+  Metrikdefinitionen oft anders sind.
 
 ## Namenskonvention
 
@@ -103,6 +109,9 @@ project (1)───<(n) workflow (1)───<(n) run (1)───<(n) run_conf
                                                      └──<(n) hyperparam
 
 prediction (1)───<(n) prediction_prob   [ueber pred_seq, keine UUID]
+
+literature_source (1)───<(n) literature_benchmark_result
+  [externe Kontextwerte, getrennt von eigenen Runs]
 ```
 
 `metric_result` haengt an **beiden** Elternteilen (`model_config` UND
@@ -213,6 +222,31 @@ Late Submissions (`late_submission`).
 `db_log_submission_result()` legt den Eintrag an oder aktualisiert ihn bei
 einem erneuten Aufruf fuer dieselbe Modell-/Plattform-/Status-Kombination.
 Die Modellreferenz liefert `db_get_latest_model_config_id(con, algorithm)`.
+
+### `literature_source` / `literature_benchmark_result`
+
+Diese Tabellen speichern Paper-, Benchmarkseiten- oder Dokumentationswerte,
+die fuer Einordnung und spaetere Publikationsarbeit nuetzlich sind, aber
+nicht dieselbe Evidenzklasse wie eigene reproduzierte mlr3-Laeufe haben.
+
+`literature_source` beschreibt die Quelle (`paper`, `benchmark_page`,
+`documentation`, `repository`, `other`) mit Titel, Jahr, URL und optionaler
+Benchmark-Suite. `literature_benchmark_result` speichert einzelne Werte oder
+Aggregate: Datensatz, Methode, Metrik, Score, Zeitbudget, Resampling und zwei
+wichtige Labels:
+
+- `lres_result_kind`: `dataset_score`, `aggregate_score`,
+  `leaderboard_summary` oder `metadata_only`.
+- `lres_comparability`: aktuell meist `context_only`, weil direkte
+  Vergleichbarkeit erst nach genauer Split-/Metrik-/Budget-Pruefung gegeben
+  ist.
+
+Seed-Daten kommen aus `seed_literature_benchmark_results.R`. Die wichtigste
+View ist `v_literature_benchmark_results`.
+
+**Wichtig:** `build_portfolio_warmstart_evidence.R` nutzt diese Tabellen
+absichtlich NICHT. Wer Literaturwerte mit lokalen Ergebnissen vergleichen
+will, soll ein separates Vergleichsskript mit explizitem Join/Filter bauen.
 
 ### `prediction` / `prediction_prob`
 

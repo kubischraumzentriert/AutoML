@@ -117,6 +117,46 @@ CREATE TABLE IF NOT EXISTS submission_result (
   UNIQUE (subm_mconf_id, subm_platform, subm_status, subm_metric_name)
 );
 
+-- Literatur-/externe Benchmarkwerte -----------------------------------
+-- Bewusst GETRENNT von project/workflow/run/model_config/metric_result:
+-- Paper- oder Webseitenwerte haben andere Zeitbudgets, Splits,
+-- Preprocessing-Konventionen und teils nur aggregierte Ergebnisse. Sie
+-- duerfen deshalb nicht wie eigene reproduzierte mlr3-Runs behandelt werden,
+-- sondern dienen als Kontext-/Einordnungsschicht.
+CREATE TABLE IF NOT EXISTS literature_source (
+  lsrc_seq INTEGER PRIMARY KEY,
+  lsrc_id TEXT NOT NULL UNIQUE,
+  lsrc_key TEXT NOT NULL UNIQUE,
+  lsrc_title TEXT NOT NULL,
+  lsrc_year INTEGER,
+  lsrc_source_type TEXT NOT NULL CHECK (lsrc_source_type IN ('paper', 'benchmark_page', 'documentation', 'repository', 'other')),
+  lsrc_url TEXT,
+  lsrc_benchmark_suite TEXT,
+  lsrc_notes TEXT,
+  lsrc_created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS literature_benchmark_result (
+  lres_seq INTEGER PRIMARY KEY,
+  lres_id TEXT NOT NULL UNIQUE,
+  lres_source_id TEXT NOT NULL REFERENCES literature_source (lsrc_id),
+  lres_key TEXT NOT NULL UNIQUE,
+  lres_dataset_name TEXT,
+  lres_openml_task_id INTEGER,
+  lres_openml_dataset_id INTEGER,
+  lres_method TEXT NOT NULL,
+  lres_metric_name TEXT NOT NULL,
+  lres_metric_value REAL,
+  lres_metric_direction TEXT CHECK (lres_metric_direction IN ('maximize', 'minimize', 'rank', 'count', 'unknown')),
+  lres_rank REAL,
+  lres_time_budget_minutes REAL,
+  lres_resampling TEXT,
+  lres_result_kind TEXT NOT NULL CHECK (lres_result_kind IN ('dataset_score', 'aggregate_score', 'leaderboard_summary', 'metadata_only')),
+  lres_comparability TEXT NOT NULL CHECK (lres_comparability IN ('context_only', 'roughly_comparable', 'not_comparable', 'unknown')),
+  lres_notes TEXT,
+  lres_recorded_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Zeilenebene fuer einzelne Vorhersagen - bewusst NICHT fuer jede Model-Config
 -- befuellt (waere bei CV ueber alle Zeilen x alle Konfigurationen viel zu
 -- gross), sondern nur fuer die "interessanten" Faelle: falsch klassifiziert
@@ -158,6 +198,9 @@ CREATE INDEX IF NOT EXISTS idx_hyperparam_mconf ON hyperparam (hparam_mconf_id);
 CREATE INDEX IF NOT EXISTS idx_metric_result_mconf ON metric_result (mres_mconf_id);
 CREATE INDEX IF NOT EXISTS idx_metric_result_rsmp ON metric_result (mres_rsmp_id);
 CREATE INDEX IF NOT EXISTS idx_submission_result_mconf ON submission_result (subm_mconf_id);
+CREATE INDEX IF NOT EXISTS idx_literature_result_source ON literature_benchmark_result (lres_source_id);
+CREATE INDEX IF NOT EXISTS idx_literature_result_dataset ON literature_benchmark_result (lres_dataset_name);
+CREATE INDEX IF NOT EXISTS idx_literature_result_method ON literature_benchmark_result (lres_method);
 CREATE INDEX IF NOT EXISTS idx_prediction_mconf ON prediction (pred_mconf_id);
 CREATE INDEX IF NOT EXISTS idx_prediction_rsmp ON prediction (pred_rsmp_id);
 CREATE INDEX IF NOT EXISTS idx_prediction_row ON prediction (pred_row_id);
@@ -391,3 +434,33 @@ JOIN model_config mc ON mc.mconf_id = sr.subm_mconf_id
 JOIN run r ON r.run_id = mc.mconf_run_id
 JOIN workflow wf ON wf.wf_id = r.run_wf_id
 JOIN project p ON p.proj_id = wf.wf_proj_id;
+
+-- Literatur-/Benchmarkwerte als Kontextschicht. Diese View darf NICHT fuer
+-- lokale Portfolio-Entscheidungen ohne expliziten Filter verwendet werden:
+-- lres_comparability beschreibt nur, ob eine grobe Einordnung moeglich ist.
+DROP VIEW IF EXISTS v_literature_benchmark_results;
+CREATE VIEW v_literature_benchmark_results AS
+SELECT
+  s.lsrc_key,
+  s.lsrc_title,
+  s.lsrc_year,
+  s.lsrc_source_type,
+  s.lsrc_url,
+  s.lsrc_benchmark_suite,
+  r.lres_key,
+  r.lres_dataset_name,
+  r.lres_openml_task_id,
+  r.lres_openml_dataset_id,
+  r.lres_method,
+  r.lres_metric_name,
+  r.lres_metric_value,
+  r.lres_metric_direction,
+  r.lres_rank,
+  r.lres_time_budget_minutes,
+  r.lres_resampling,
+  r.lres_result_kind,
+  r.lres_comparability,
+  r.lres_notes,
+  r.lres_recorded_at
+FROM literature_benchmark_result r
+JOIN literature_source s ON s.lsrc_id = r.lres_source_id;
