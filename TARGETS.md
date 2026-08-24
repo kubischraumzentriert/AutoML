@@ -2403,3 +2403,15 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   schadet niemandem stark. Gutes Gegenbeispiel dafuer, Methoden empirisch
   statt nach Reputation ("moderne nichtlineare Technik") zu waehlen.
   Volle Herleitung in `bbbp-classification/README.md`.
+
+  **Nachtrag (2026-08-23): SOM/LLE bewusst NICHT getestet, Ideenlinie
+  abgeschlossen.** Nutzerfrage nach zwei weiteren Kandidaten -
+  Einschaetzung statt Test: beide gehoeren zur selben nachbarschafts-/
+  topologieerhaltenden Familie wie UMAP (robust gescheitert), aehnliches
+  oder schlechteres Ergebnis erwartet. LLE zusaetzlich praktisch
+  problematisch (keine saubere Fold-sichere Out-of-Sample-Projektion in
+  verfuegbaren R-Paketen wie `lle`, anders als `uwot::umap_transform()`).
+  Aufwand/Nutzen nicht mehr verhaeltnismaessig nach 4 sauber getesteten
+  Methoden (K-Means, PCA, Autoencoder, UMAP) mit klarem, erklaertem
+  Gewinner (PCA). Cluster-/Struktur-Features als Feature-Engineering-
+  Ideenlinie damit abgeschlossen.
