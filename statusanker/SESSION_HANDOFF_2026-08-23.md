@@ -1,19 +1,21 @@
-# Session Handoff (Stand 2026-08-23, Abend) - Statusanker
+# Session Handoff (Stand 2026-08-23, spaeter Abend, 2. Update) - Statusanker
 
 Dies ist der committete, zeitgestempelte Zwilling der lokalen Arbeitskopie
 unter `C:\Users\HP\Downloads\SESSION_HANDOFF.md`. Die lokale Kopie wird bei
 jeder Session überschrieben (keine Dauerdokumentation); dieser Statusanker
-bleibt als Verlaufs-Schnappschuss im Repo stehen.
+bleibt als Verlaufs-Schnappschuss im Repo stehen. Innerhalb desselben
+Session-Tages wird dieser Anker aktualisiert (wie jetzt, 2. Aktualisierung
+2026-08-23); ein neuer Tag bekommt eine neue Datei.
 
 ## Repo-Zustand
 
 Alle drei Repos sauber, nichts uncommittet, Templates gepusht:
 - `MLR3_Classifikation` (`C:\Users\HP\OneDrive\Dokumente\R_Workspace\MLR3_Classifikation`)
-  @ `0c82e9e` "TARGETS.md: CI-Ausfall (3 Commits, ci_smoke_test/000_config.R nicht mitgepflegt) dokumentiert"
+  @ `4c55ff5` "TARGETS.md: SOM/LLE-Einschaetzung ergaenzt, Cluster-/Struktur-Feature-Ideenlinie abgeschlossen"
 - `MLR3_Regression` (`C:\Users\HP\OneDrive\Dokumente\R_Workspace\MLR3_Regression`)
-  @ `5dde371` "BACKLOG.md: Nummernkollision behoben"
+  @ `5dde371` "BACKLOG.md: Nummernkollision behoben" (unveraendert seit dem 1. Update heute)
 - `ML_Learning` (`C:\Users\HP\ML_Learning`, rein lokal, kein Remote)
-  @ `7e06f28` "geoai-aquaculture: Leak-Audit Schritt 1b getestet"
+  @ `771125b` "bbbp-classification: SOM/LLE-Einschaetzung dokumentiert"
 - **GitHub Actions CI (Klassifikation) ist gruen** (`smoke-test` + `unit-tests`,
   Lauf `32658179935`) - war 3 Commits lang rot, siehe unten. Regressions-Repo
   hat keine CI eingerichtet.
@@ -105,6 +107,43 @@ Configs das nicht faengen konnten. Gefixt, CI jetzt gruen. Als Prozess-Lehre
 im Memory festgehalten: nach Pushes, die CI-abgedeckte Skripte aendern,
 aktiv `gh run list` pruefen.
 
+**10. Cluster-/Struktur-Feature-Engineering-Ideenlinie (Nutzeridee, NACH
+dem ersten Handoff-Update heute) - vollstaendig durchgespielt.** Frage:
+kann man Clustering/Dimensionsreduktion als zusaetzliche Features nutzen,
+und welcher Algorithmus zuerst? Vier Methoden fold-sicher getestet
+(Fitten IMMER nur auf Trainingsdaten, wie Target-Encoding):
+- **K-Means** (`health-condition-kmeans-feature-test`, additive Cluster-
+  ID+Distanz-Features): modellabhaengig - schadet Ranger (Rauschen,
+  Baeume finden Cluster-Struktur selbst), hilft linearem Modell
+  (Multinom +0.009 BAcc bei k=8).
+- **PCA** (`bbbp-classification/032`, ERSETZT die 750/1024 rohen
+  Fingerprint-Bits): hilft LogReg stark (+0.087 BAcc, loest Quasi-
+  Separation), schadet SVM-RBF deutlich, Ranger neutral. Differenziertes
+  Bild: bei SVM zaehlt der KERNEL, nicht nur "linear vs. Baum".
+- **Autoencoder** (ANN2, `033`, wegen ~6 Min./Fit reduzierter Umfang -
+  3 statt 5 Folds, 1 Komponentenzahl): LogReg-Gewinn fast identisch zu
+  PCA (+0.059), aber schadet zusaetzlich Ranger (-0.035, PCA neutral) -
+  ungetunter/verrauschter als PCAs exakte Loesung.
+- **UMAP** (`uwot`, `034`, schnell genug fuer vollen Umfang): klarer,
+  ROBUSTER Negativbefund - alle 4 Lerner, alle Komponentenzahlen
+  schlechter als roh. Metrik-Hypothese (euklidisch unpassend fuer
+  Bit-Vektoren) durch Hamming-Distanz-Nachtest GEPRUEFT UND VERWORFEN -
+  kein Metrik-Artefakt, echter struktureller Nachteil (UMAP erhaelt
+  lokale Nachbarschaft, nicht Klassentrennung).
+- **SOM/LLE**: bewusst NICHT getestet, begruendete Einschaetzung
+  dokumentiert statt Test (beide UMAP-Familie, LLE zusaetzlich keine
+  saubere Fold-sichere Out-of-Sample-Projektion in R verfuegbar).
+
+**Gesamtfazit**: PCA ist der klare Gewinner im Methoden-Vergleich -
+schnell (Sekunden), robust, substanzieller Nutzen fuer schwache lineare
+Baselines, schadet niemandem stark. Gutes Beispiel dafuer, Methoden
+empirisch statt nach Reputation zu waehlen (UMAP "modern" != besser).
+Kein Backport-Kandidat fuers Template (das primaer auf GBM/Ranger setzt),
+aber ein wiederverwendbares Muster fuer kuenftige hochdimensionale
+duennbesetzte Projekte mit linearen Modellen als Kandidaten.
+Alles dokumentiert in `bbbp-classification/README.md` +
+`health-condition-kmeans-feature-test/README.md` + `TARGETS.md`.
+
 ## Offene Punkte fuer die naechste Session
 
 1. **Keine dringenden.** Backlog ist leer im Sinne von "alles bearbeitet und
@@ -146,6 +185,19 @@ aktiv `gh run list` pruefen.
   verifizieren.
 - **NEU diese Session**: SVM-Laufzeitschaetzungen NIE von einem Item auf N
   extrapolieren (Konvergenz, nicht nur Datengroesse, treibt die Zeit).
+- **NEU diese Session**: unbeaufsichtigte Feature-Engineering-Schritte
+  (Clustering/Dimensionsreduktion als Features) MUESSEN fold-sicher sein -
+  IMMER nur auf Trainingsdaten fitten, auf Test/Validierung nur
+  transformieren (wie Target-Encoding). PCA/`uwot::umap_transform()`
+  unterstuetzen das sauber, klassisches `lle` NICHT (kein Out-of-Sample-
+  Transform) - vor einer Methode kurz pruefen, ob eine echte Fit/Transform-
+  Trennung existiert.
+- **NEU diese Session**: bei Methodenvergleichen (welcher Algorithmus
+  zuerst?) empirisch statt nach Reputation urteilen - UMAP schlug hier
+  trotz "modernerer" nichtlinearer Technik klar schlechter als PCA.
+  Ebenso gilt: nicht jede plausible Erklaerung (Metrik falsch?) sofort
+  glauben - gezielt gegenpruefen (Hamming-Nachtest bei UMAP), bevor ein
+  Negativbefund als robust gilt.
 - Aufgabentyp-unabhaengige Module werden identisch in beide Templates
   uebernommen (`univariate_drift.R`, `sanity_checks.R`, jetzt auch Schritt
   1b des Leak-Audits).
