@@ -212,6 +212,17 @@ Nacharbeit Literaturvergleich:
   `credit-g` bleibt `keep_context_only`. Quelle bestaetigt F1-Werte,
   OpenML-Suite und 10-fold-Wording, aber nicht exakte OpenML-Task-ID,
   positive Klasse, Harness-/Preprocessing-Details oder Zeitbudget.
+- Zusaetzliche Paper-Tabelle importiert: LightAutoML Table 7
+  (`lightautoml_openml_table7_2021`) mit ROC-AUC-Werten fuer `adult`,
+  `amazon_employee_access`, `bank-marketing`, `credit-g` und sechs
+  Frameworks. Neuer Vergleich: 110 `matched_context_only`, 32
+  `no_local_dataset`. Neue Comparability-Triage: 35
+  `aggregate_or_metadata_context`, 30 `resampling_mismatch_context`,
+  10 `split_match_candidate`, 7 `source_context_missing_openml_id`.
+- Erweiterter Quellenreview: auch LightAutoML-`credit-g`-AUC bleibt
+  `keep_context_only`; Appendix-Kontext ist besser (10 Folds, 1h, 8 CPU,
+  32 GB), aber Task-/Class-Ordering-/Harness-Aequivalenz ist nicht in der
+  DB belegt.
 
 ## Naechste Entscheidungen
 
@@ -224,5 +235,6 @@ Nacharbeit Literaturvergleich:
   wenn `lres_comparability` explizit gepflegt ist; fuer die 32
   `no_local_dataset` bevorzugt zuerst datasets mit OpenML-ID und klarer
   Metrik/Split-Beschreibung auswaehlen.
-- Keine DB-Umschreibung der `lres_comparability`-Werte aus dem aktuellen
-  FEDOT-F1-Block; der gepruefte Split-Kandidat bleibt `context_only`.
+- Keine DB-Umschreibung der `lres_comparability`-Werte aus den aktuellen
+  FEDOT-F1- oder LightAutoML-AUC-Bloecken; die geprueften Split-Kandidaten
+  bleiben `context_only`.

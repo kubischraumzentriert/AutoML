@@ -49,8 +49,8 @@ metric_alias <- function(x) {
 
 parse_literature_folds <- function(x) {
   x <- tolower(ifelse(is.na(x), "", x))
-  fifelse(grepl("10\\s*-?\\s*fold|10\\s+fold", x), 10L,
-    fifelse(grepl("5\\s*-?\\s*fold|5\\s+fold", x), 5L, NA_integer_)
+  fifelse(grepl("10\\s*-?\\s*fold|10\\s+fold|10.*fold", x), 10L,
+    fifelse(grepl("5\\s*-?\\s*fold|5\\s+fold|5.*fold", x), 5L, NA_integer_)
   )
 }
 

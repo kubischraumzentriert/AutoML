@@ -326,6 +326,16 @@ Produktion sauber zu trennen.
   `keep_context_only`, weil die FEDOT-Dokumentation zwar F1/10-fold/OpenML-
   Suite bestaetigt, aber keine exakte OpenML-Task-ID, positive Klasse,
   Harness-Details oder Zeitbudget fuer ein echtes Upgrade liefert.
+  Zusaetzliche Paper-Tabelle importiert: LightAutoML Table 7 (OpenML
+  ROC-AUC, 10 Folds, 1h/8CPU/32GB Appendix-Kontext) fuer `adult`,
+  `amazon_employee_access`, `bank-marketing`, `credit-g` und sechs
+  Frameworks. Neuer Vergleich: 110 `matched_context_only`, 32
+  `no_local_dataset`; neue Comparability-Triage: 35
+  `aggregate_or_metadata_context`, 30 `resampling_mismatch_context`,
+  10 `split_match_candidate`, 7 `source_context_missing_openml_id`.
+  Der erweiterte Quellenreview haelt auch die LightAutoML-`credit-g`-
+  AUC-Zeilen bei `keep_context_only`, weil trotz besserem Appendix-Kontext
+  keine exakte Task-/Class-Ordering-/Harness-Aequivalenz dokumentiert ist.
   Danach Agentenfolge:
   Literatur-Agent (Quellen/Annahmen), Repo-Architektur-Agent (ADR-/Workflow-
   Impact), Implementierungs-Agent A (Portfolio/Warmstart), Agent B

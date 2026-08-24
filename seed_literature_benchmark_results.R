@@ -140,6 +140,16 @@ src_tabpfn <- upsert_source(
   "Nature TabPFN paper; aggregate claims are context only unless exact benchmark tables are imported later."
 )
 
+src_lightautoml_paper <- upsert_source(
+  "lightautoml_openml_table7_2021",
+  "LightAutoML: AutoML Solution for a Large Financial Services Ecosystem",
+  2021,
+  "paper",
+  "https://www.researchgate.net/publication/354379217_LightAutoML_AutoML_Solution_for_a_Large_Financial_Services_Ecosystem",
+  "OpenML AutoML benchmark, Table 7",
+  "Paper Table 7 reports OpenML benchmark scores; imported subset keeps exact rows context_only until task/harness equivalence is proven."
+)
+
 src_automlbench_datasets <- upsert_source(
   "automlbench_100_datasets",
   "AutoMLBench benchmark dataset overview",
@@ -219,6 +229,31 @@ for (i in seq_len(nrow(fedot_scores))) {
     openml_dataset_id = unname(openml_dataset_ids[[row$dataset]]),
     resampling = "10 folds according to documentation table",
     notes = "Documentation benchmark table; direct comparability to local mlr3 results is not guaranteed."
+  )
+}
+
+lightautoml_table7_auc <- data.frame(
+  dataset = rep(c("adult", "amazon_employee_access", "bank-marketing", "credit-g"), each = 6),
+  method = rep(c("LightAutoML", "AutoGluon", "H2OAutoML", "auto-sklearn", "Auto-WEKA", "TPOT"), times = 4),
+  auc = c(
+    0.9306, 0.9286, 0.9295, 0.9300, 0.9140, 0.9250,
+    0.9003, 0.8758, 0.8756, 0.8524, 0.8363, 0.8674,
+    0.9401, 0.9371, 0.9373, 0.9380, 0.8103, 0.9314,
+    0.7921, 0.7766, 0.7968, 0.7756, 0.7526, 0.7824
+  ),
+  stringsAsFactors = FALSE
+)
+for (i in seq_len(nrow(lightautoml_table7_auc))) {
+  row <- lightautoml_table7_auc[i, ]
+  upsert_result(
+    src_lightautoml_paper,
+    paste0("lightautoml_table7_", row$dataset, "_", gsub("[^a-z0-9]+", "_", tolower(row$method)), "_auc"),
+    row$dataset, row$method, "auc", row$auc,
+    "maximize", "dataset_score", "context_only",
+    openml_dataset_id = unname(openml_dataset_ids[[row$dataset]]),
+    time_budget_minutes = 60,
+    resampling = "10 OpenML benchmark folds according to paper appendix",
+    notes = "Table 7 ROC-AUC for binary OpenML datasets; keep context_only until exact task, class ordering, framework harness and environment equivalence are proven."
   )
 }
 

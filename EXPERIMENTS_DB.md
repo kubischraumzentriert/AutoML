@@ -264,10 +264,11 @@ konservativen Vorschlagslabels. Es schreibt die Literaturtabellen bewusst
 nicht automatisch um.
 `review_literature_split_candidates.R` dokumentiert die anschliessende
 manuelle Quellenpruefung fuer `split_match_candidate`-Zeilen. Beim aktuellen
-`credit-g`-Review bleibt die Entscheidung `keep_context_only`, weil die
-FEDOT-Dokumentation zwar F1/10-fold/OpenML-Suite bestaetigt, aber keine
-exakte OpenML-Task-ID, positive Klasse, Harness-Details oder Zeitbudget
-fuer ein DB-Upgrade liefert.
+`credit-g`-Review bleibt die Entscheidung `keep_context_only`: die
+FEDOT-Dokumentation bestaetigt F1/10-fold/OpenML-Suite, die
+LightAutoML-Paper-Tabelle 7 bestaetigt AUC/10-fold/1h/8CPU/32GB-Kontext,
+aber fuer ein DB-Upgrade fehlen weiterhin exakte Task-/Class-Ordering- und
+Harness-Aequivalenz.
 
 ### `prediction` / `prediction_prob`
 
