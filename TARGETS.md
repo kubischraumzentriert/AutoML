@@ -298,6 +298,24 @@ Produktion sauber zu trennen.
   zu TabRepo und TabPFN. Alle Eintraege sind bewusst `context_only`, nicht
   lokale Evidenz: andere Splits/Zeitbudgets/Frameworks duerfen nicht
   automatisch in `build_portfolio_warmstart_evidence.R` einfliessen.
+  Nacharbeit: OpenML-Dataset-IDs fuer `adult=179`,
+  `Amazon_employee_access=4135`, `bank-marketing=1461`, `credit-g=31`
+  gepflegt; zusaetzliche Kontextwerte aus AutoMLBench-Dataset-Metadaten und
+  einer externen Binary-Classification-Rangliste importiert. Neuer Triage-
+  Helper `compare_literature_vs_own_results.R`: erster Lauf ergab 8
+  `local_dataset_metric_mismatch` (lokaler Datensatz vorhanden, aber
+  Literaturmetrik F1 noch nicht lokal geloggt) und 40 `no_local_dataset`;
+  Nachlauf nach `reproduce_literature_f1_adult_amazon.R` loggt lokale F1-
+  Werte fuer `adult` und `amazon_employee_access` und reduziert den Triage-
+  Befund auf 16 `matched_context_only` plus 40 `no_local_dataset`. Zweiter
+  gezielter Nachlauf: `reproduce_literature_f1_credit_bank.R` waehlt nur
+  Kandidaten mit OpenML-ID, klarer F1-Metrik und lokaler Evidenz (`credit-g`
+  per 10-fold-CV, `bank-marketing` per vorhandenen Ensemble-Selection-
+  Holdout-Predictions) und bringt den Triage-Befund auf 32
+  `matched_context_only` plus 32 `no_local_dataset`. Die grossen Deltas,
+  insbesondere Amazon/Bank-Marketing, bleiben ausdruecklich nur Kontext:
+  positive Klasse, Split, Zeitbudget, Framework und Feature Engineering sind
+  nicht paper-identisch.
   Danach Agentenfolge:
   Literatur-Agent (Quellen/Annahmen), Repo-Architektur-Agent (ADR-/Workflow-
   Impact), Implementierungs-Agent A (Portfolio/Warmstart), Agent B
@@ -2524,3 +2542,28 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Methoden (K-Means, PCA, Autoencoder, UMAP) mit klarem, erklaertem
   Gewinner (PCA). Cluster-/Struktur-Features als Feature-Engineering-
   Ideenlinie damit abgeschlossen.
+
+- **Neue Domaene: Genomik, erstes echtes p>>n-Projekt (2026-08-24,
+  `leukemia-genomics-pn-test`).** Golub Leukemia (72 Proben, 7128 Gene,
+  ~99:1 p:n) - anders als die Chemie-Projekte (Tox21/BBBP, beide n>p)
+  der erste GENUINE "wenig Zeilen, viele Features"-Fall, der die
+  urspruengliche SVM-Hypothese aus der Feature-Engineering-Diskussion
+  endlich sauber testet. Ergebnis: **SVM linear gewinnt** (BAcc 0.978),
+  dicht gefolgt von glmnet Elastic Net (0.972), klar vor allen
+  Baummodellen (Ranger 0.964, LightGBM 0.965) - genau die Rangfolge, die
+  die Genomik-Literatur fuer Microarray-Daten empfiehlt. Kein
+  Backport-Kandidat (projektspezifischer Datenpunkt), aber eine saubere
+  Bestaetigung des schon vermuteten Musters.
+  **Prozess-Vorfall dabei**: plain `classif.log_reg` haengt bei p>>n
+  (7128 Features vs. ~58 Trainingszeilen/Fold) in `glm.fit()`s IRLS-
+  Konvergenz fest - 75+ Minuten ohne Fortschritt, unbemerkt bis der
+  Nutzer nachfragte. `setTimeLimit()` griff nicht (C-Level-Schleife ohne
+  R-Interrupt-Checkpoints). Isolierter Einzel-Lerner-Timing-Test
+  identifizierte `log_reg` als alleinigen Uebeltaeter (alle anderen 7
+  Lerner liefen einzeln unter 2,3s) - bewusst aus dem Vergleich entfernt,
+  `glmnet` als korrekter regularisierter Ersatz. **Lehre**: bei p>>n
+  grundsaetzlich `glmnet` statt plain `log_reg` verwenden - nicht nur
+  wegen Genauigkeit, sondern weil `glm.fit()` bei (quasi-)perfekter
+  Separation unbegrenzt haengen kann statt nur zu warnen (anders als bei
+  BBBP/Tox21, dort n>p, `log_reg` warnte nur). Volle Herleitung in
+  `leukemia-genomics-pn-test/README.md`.
