@@ -316,6 +316,12 @@ Produktion sauber zu trennen.
   insbesondere Amazon/Bank-Marketing, bleiben ausdruecklich nur Kontext:
   positive Klasse, Split, Zeitbudget, Framework und Feature Engineering sind
   nicht paper-identisch.
+  `classify_literature_comparability.R` erzeugt danach einen Review-Queue-
+  Report ohne DB-Umschreibung: 35 `aggregate_or_metadata_context`, 12
+  `resampling_mismatch_context`, 7 `source_context_missing_openml_id`,
+  4 `split_match_candidate`. Nur `credit-g` ist aktuell Split-Kandidat;
+  Adult/Amazon/Bank-Marketing bleiben wegen Resampling-Mismatch
+  `context_only`.
   Danach Agentenfolge:
   Literatur-Agent (Quellen/Annahmen), Repo-Architektur-Agent (ADR-/Workflow-
   Impact), Implementierungs-Agent A (Portfolio/Warmstart), Agent B

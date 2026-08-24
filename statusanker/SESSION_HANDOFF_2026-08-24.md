@@ -202,6 +202,12 @@ Nacharbeit Literaturvergleich:
   besonders bei `amazon_employee_access` und `bank-marketing`, sind ein
   Signal fuer fehlende direkte Vergleichbarkeit, nicht fuer ein lokales
   Leaderboard-Urteil.
+- `classify_literature_comparability.R` erstellt und ausgefuehrt. Ergebnis:
+  35 `aggregate_or_metadata_context`, 12 `resampling_mismatch_context`,
+  7 `source_context_missing_openml_id`, 4 `split_match_candidate`.
+  Nur `credit-g` landet als `split_match_candidate`; Adult/Amazon bleiben
+  wegen lokaler 5-fold-CV vs. Literatur-10-fold im Resampling-Mismatch,
+  Bank-Marketing wegen Holdout vs. 10-fold ebenfalls.
 
 ## Naechste Entscheidungen
 
@@ -214,3 +220,6 @@ Nacharbeit Literaturvergleich:
   wenn `lres_comparability` explizit gepflegt ist; fuer die 32
   `no_local_dataset` bevorzugt zuerst datasets mit OpenML-ID und klarer
   Metrik/Split-Beschreibung auswaehlen.
+- Vor einer DB-Umschreibung der `lres_comparability`-Werte zuerst die
+  `split_match_candidate`-Zeilen manuell anhand der Quelle pruefen
+  (positive Klasse, OpenML Task, Preprocessing, Zeitbudget).

@@ -258,6 +258,10 @@ Engineering nicht quellenidentisch belegt sind.
 Predictions aus der Ensemble-Selection-Verifikation). Das Skript ist ein
 gezielter Triage-Nachlogger fuer OpenML-ID/F1-Kandidaten, kein Ersatz fuer
 einen paper-identischen Benchmark-Harness.
+`classify_literature_comparability.R` erzeugt darauf aufbauend einen
+Review-Queue-Report (`_artifacts/literature_comparability_triage.*`) mit
+konservativen Vorschlagslabels. Es schreibt die Literaturtabellen bewusst
+nicht automatisch um.
 
 ### `prediction` / `prediction_prob`
 
