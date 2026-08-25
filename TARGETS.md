@@ -574,6 +574,50 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   im Kandidaten-Pool ist - bislang nur fuer den simplen Blend geprueft
   (s6e8), nicht fuer Stacking. Skript bleibt im Repo (`multilayer_stack_test.R`)
   als wiederverwendbare Vorlage fuer diesen Folgetest.
+
+  **Ausweitung auf 3 weitere Projekte (2026-08-25, Nutzerwunsch nach einem
+  belastbareren Fundament vor einer endgueltigen Entscheidung).** Dieselbe
+  Architektur (3-Wege-Split, Layer-1 aus 3 Meta-Learner-Familien, Layer-2
+  NUR aus Layer-1-Vorhersagen) gegen 3 strukturell verschiedene, bereits
+  vorhandene Ensemble-Pools laufen lassen (`multilayer_stack_test.R`,
+  projektspezifisch angepasst, jeweils im Zielprojekt abgelegt, kein neues
+  Basis-Training):
+
+  | Projekt | Metrik | best_single | equal_blend | greedy | single_layer | multilayer |
+  |---|---|---|---|---|---|---|
+  | health_condition (3-Klassen, unbalanciert) | BAcc | 0.9561 | **0.9575** | 0.9573 | 0.9376 | 0.9493 |
+  | s6e6 stellar-class (3-Klassen) | BAcc | 0.9655 | 0.9650 | 0.9664 | 0.9619 | **0.9668** |
+  | s6e8 Smartphone-Addiction (binaer) | AUC | 0.9587 | 0.9466 | 0.9590 | **0.9593** | 0.9579 |
+  | MLR3_Regression-Eigenprojekt (accident_risk) | RMSE (niedriger=besser) | 0.05624 | 0.05690 | **0.05615** | 0.05703 | 0.05693 |
+
+  (Fett = bester Wert je Zeile.) `s6e6`/`s6e8` nutzen den bereits
+  vorhandenen 146-/149-Pool dieser Projekte, die Regression den 127-Pool
+  von `MLR3_Regression` selbst - alle 4 Laeufe zusammen decken beide
+  Aufgabentypen und alle 3 im Template genutzten Metrikklassen ab
+  (schwellenwertabhaengig/BAcc, schwellenwertunabhaengig/AUC, RMSE).
+
+  **Klare Befunde aus den 4 Laeufen zusammen:**
+  1. **Mehrschichten schlaegt einlagiges Stacking in 3 von 4 Projekten**
+     (health_condition, s6e6, Regression) - die AutoGluon-These "mehr
+     Schichten helfen" haelt sich also robust, mit EINER Ausnahme (s6e8,
+     binaer/AUC, wo einlagig knapp vorne liegt).
+  2. **Aber Stacking (egal ob ein- oder mehrschichtig) schlaegt die
+     bestehende Greedy Ensemble Selection nur in 1 von 4 Projekten**
+     (s6e6, +0.0004 - ein Rand-/Rauschmarge, kein klarer Gewinn) und liegt
+     in den anderen 3 klar oder knapp dahinter. Der Payoff ist also nicht
+     zuverlaessig genug, um Ensemble Selection zu ersetzen oder zu
+     ergaenzen.
+  3. **Kein Muster nach Aufgabentyp/Metrik erkennbar** (die einzige
+     Ausnahme fuer Befund 1 ist binaer/AUC, aber die Regression - eine
+     dritte, nochmal andere Struktur - folgt wieder der Mehrschichten->
+     einlagig-Richtung) - spricht gegen eine bedingte Backport-Regel
+     ("nur bei Multiclass" o.ae.).
+  4. **Endgueltiges Urteil: NICHT ins Template zurueckfuehren, Frage als
+     beantwortet betrachten** (nicht nur als "noch nicht genug Evidenz"
+     offen lassen). Die Kalibrierungs-Lehre (Meta-Learner-Gewichtung bei
+     unbalancierten BAcc-Aufgaben) bleibt der wichtigste uebertragbare
+     Fund aus diesem Test - eigenstaendig relevant fuer jeden kuenftigen
+     Stacking-Versuch, unabhaengig vom Multi-Layer-Ergebnis selbst.
   (Die beiden folgenden Punkte - SQL-Views und `080`-Split - hatten nach
   `openml-adult-income` eine zweite unabhaengige Bestaetigung und wurden
   daraufhin umgesetzt, siehe die durchgestrichenen ERLEDIGT-Eintraege oben.)
