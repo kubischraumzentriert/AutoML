@@ -1545,6 +1545,51 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     Gegensaetzliche Richtung an den beiden Datensaetzen, beide Effekte
     winzig gegenueber der Seed-Streuung - kein robuster Effekt, aehnlich
     dem Meta-Learning-Warmstart-Befund oben. **Nicht weiterverfolgt.**
+
+    **Nachtest (2026-08-25): echtes Hyperband (mehrere Brackets, Li et al.
+    2018) statt einer einzelnen festen SH-Aggressivitaet - erneut
+    NEGATIV/uneindeutig, jetzt gegen das Template-eigene Projekt.** Anlass:
+    Literaturroadmap Punkt 4 (siehe oben) nennt "Hyperband/BOHB" explizit -
+    der obige Test deckte nur die einfachste SH-Variante mit EINER
+    Aggressivitaet ab, nicht Hyperbands Kernidee (mehrere Brackets von sehr
+    aggressiv bis "kein fruehes Verwerfen" parallel, damit man die
+    Aggressivitaet nicht vorab festlegen muss). **BOHB ist im R-mlr3-
+    Oekosystem nicht verfuegbar** (`mlr3hyperband` bietet nur Successive
+    Halving/Hyperband, kein Bayesian-Optimization-Hyperband-Hybrid) - dieser
+    Test deckt daher gezielt Hyperband ab, nicht BOHB.
+    `hyperband_budget_test.R` (Root-Skript, per Hand implementiert wie der
+    urspruengliche SH-Test - volle Kontrolle ueber die Budget-Buchhaltung
+    via `lgb.train(..., init_model=)`-Fortsetzung): 4 Brackets (`eta=2`,
+    `R_MAX=200`=`lightgbm_tuning_final_iterations`, `R_MIN=25`=
+    `lightgbm_tuning_search_iterations`, s=3..0) vs. Baseline (mehrere
+    Kandidaten direkt auf vollem Budget, exakt dasselbe Gesamtbudget wie
+    Hyperband) - isoliert bewusst "adaptive fruehe Elimination vs. volles
+    Budget je Kandidat" von der separat bereits beantworteten Frage "Random
+    Search vs. Bayesian Optimization" (dieses Projekt: `tnr("mbo")`-Befund
+    oben, "Tuning bringt marginale Gewinne"). 3-Wege-Split von
+    `task_train_small` (Tune-Train 60%/Tune-Valid 20%/Bestaetigung 20%,
+    klassenstratifiziert), 2 Seeds, Bewertung auf der unberuehrten
+    Bestaetigungsmenge:
+
+    | Seed | Hyperband TEST-BAcc (Budget) | Baseline TEST-BAcc (Budget) |
+    |---|---|---|
+    | 1 | 0.8805 (2450) | 0.8733 (2400) |
+    | 2 | 0.8757 (2450) | 0.8791 (2400) |
+    | Mittel | **0.8781** | 0.8762 |
+
+    Differenz +0.0019, aber gegensaetzliche Richtung je Seed (+0.0072/
+    -0.0034) - genau dasselbe Muster wie beim urspruenglichen einfachen
+    SH-Test: winzig, nicht robust, innerhalb der Seed-Streuung. Selbst mit
+    der methodisch saubereren Mehrbracket-Variante bleibt kein zuverlaessiger
+    Vorteil gegenueber "mehrere Kandidaten auf vollem Budget" (dem
+    bestehenden Template-Muster) bei GLEICHEM Gesamtbudget. **Nicht ins
+    Template zurueckgefuehrt** - zweite unabhaengige Bestaetigung (anderer
+    Datensatz, andere Metrik BAcc statt AUC, UND die methodisch vollstaendigere
+    Variante) fuer denselben Negativbefund. Roadmap-Punkt 4 damit fuer
+    Hyperband beantwortet; BOHB bleibt mangels R-Tooling ungetestet, waere
+    nur mit erheblichem Eigenbau-Aufwand (eigener TPE/SMAC-Sampler pro
+    Bracket) machbar - Aufwand/Nutzen angesichts des bereits zweimal
+    negativen Hyperband/SH-Befunds nicht gerechtfertigt.
 - **Univariate Drift-Tests: geprueft, verifiziert UND ins Template
   zurueckgefuehrt (2026-08-08)** - Herkunft: "Introducing MLOps"
   (Treveil/Dataiku 2020, offenes O'Reilly-Kapitel-Werk), Kap. 7. Domain-
