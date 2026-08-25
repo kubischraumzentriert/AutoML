@@ -847,6 +847,44 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Volle Herleitung, Paper-/Repo-Referenzen und Setup-Anleitung (Python-
   Export statt reticulate) in `REFERENZ_TABICLV2.md`.
 
+  **Dasselbe Follow-up fuer TabPFN (nicht TabICLv2) nachgeholt (2026-08-25)
+  - klarer NEGATIVER Befund, staerker als der urspruengliche Naiv-Blend-
+  Befund.** Anlass: Literaturroadmap Punkt 3 ("TabPFN/TabICL als selektive
+  Kandidaten") + ein seit 2026-08-08 offener Hebel aus `tabpfn_diversity_
+  check.R` (`predictingsmartphoneAddiction_s6e8`): TabPFN dekorreliert dort
+  echt von den GBMs (Korrelation 0.899), ist aber schwaecher (eigene AUC
+  0.9352 vs. GBMs ~0.964) - ein GLEICHGEWICHTETER Blend verwaesserte
+  dadurch (0.9634 < 0.9652 ohne TabPFN). Offene Frage: rettet eine
+  GEWICHTETE Greedy-Selektion (wie bei TabICLv2s Parkinsons-Fund oben) den
+  Kandidaten? `tabpfn_greedy_selection_test.R` (im s6e8-Ordner): Pool aus
+  6 GBM-Varianten (2x Ranger/LightGBM/CatBoost) + 1x TabPFN (Kontext
+  999 Zeilen, gehosteter Dienst), Caruana Greedy Ensemble Selection (AUC
+  maximieren) auf 1000 Selektions-/1000 Bestaetigungszeilen:
+
+  | Ansatz | AUC (Bestaetigung) |
+  |---|---|
+  | Blend nur GBMs (ohne TabPFN) | **0.9569** |
+  | Greedy Ensemble Selection (7 Kandidaten) | 0.9564 |
+  | Bestes Einzelmodell (catboost) | 0.9564 |
+  | Gleichgewichteter Blend (inkl. TabPFN) | 0.9563 |
+
+  **TabPFN wurde in 0 von 7 Greedy-Selektions-Zuegen gewaehlt** - anders
+  als bei TabICLv2 (dort rettete die gewichtete Selektion den Kandidaten
+  explizit) schliesst der Algorithmus TabPFN hier VOLLSTAENDIG aus, nicht
+  nur niedrig gewichtet. Das ist ein staerkeres Signal als der urspruengliche
+  Naiv-Blend-Befund: nicht nur "Gleichgewichtung verwaessert", sondern
+  "selbst bei freier Gewichtswahl ist TabPFN nie die bessere Wahl" - auf
+  diesem Projekt/Kontextgroesse zu schwach, keine Blend-Gewichtungsfrage.
+  **Nicht ins Template zurueckgefuehrt.** Bestaetigt gleichzeitig die
+  Roadmap-Linie selbst ("selektiv, nicht blind als Default"): TabPFN bleibt
+  bei kleinen/mittleren, wenig verrauschten Datensaetzen (siehe die
+  aeltere Fehleranalyse-Nutzung in `147_error_analysis_ranger_tabpfn.R`,
+  wo TabPFN als Diagnose-Werkzeug, nicht als Ensemble-Mitglied, weiterhin
+  sinnvoll ist) potenziell nuetzlich, aber auf diesem grossen (691K-Zeilen-
+  Basis), wenig verrauschten Tabular-Problem mit starken GBM-Baselines
+  bringt der begrenzte Kontext (999 von potenziell Millionen Zeilen) zu
+  wenig Information gegenueber Baeumen, die die volle Datenmenge sehen.
+
   **MotherNet (arXiv:2312.08598, Microsoft, ICLR 2025) - aktuell NICHT
   testbar (2026-08-19).** Anlass: MotherNet erzeugt in einem Forward-Pass
   ein eigenstaendiges kleines MLP statt bei jeder Vorhersage ueber den
