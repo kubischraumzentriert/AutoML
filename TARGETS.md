@@ -513,6 +513,67 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   neutral (Stack nur +0.00016 AUC vs. bestes Einzelmodell, unter dem
   Rausch-Band, bei ~19x hoeherem Rechenaufwand). Nicht als eigener Schritt
   ins Template zurueckgefuehrt - Aufwand/Nutzen sprach dagegen.
+
+  **Nachtest (2026-08-25): echtes Mehrschichten-Stacking (AutoGluon-Idee)
+  geprueft - immer noch NICHT uebernommen, aber mit klarerer Erklaerung
+  UND einer wichtigen Methodik-Lehre.** Anlass: die Literaturroadmap
+  (siehe oben, Punkt 2 "AutoGluon-Tabular") nennt Multi-*Layer*-Stacking
+  als eigenen, bisher ungetesteten Hebel - der obige Befund testete nur
+  EINEN Meta-Learner auf den rohen Basis-Wahrscheinlichkeiten (einlagig),
+  nicht die gestapelte Mehrschichten-Architektur selbst.
+  `multilayer_stack_test.R` (Root-Skript, baut auf dem bestehenden
+  `148_ensemble_candidate_pool.R`-Pool auf, kein neues Basis-Training):
+  3-Wege-Split des 147/148-Eval-Splits (Layer1=35%/Layer2=35%/
+  Bestaetigung=30%, klassenstratifiziert) - Layer-1 (3 verschiedene
+  Meta-Learner-Familien: multinom/ranger/lightgbm) lernt aus den rohen
+  Basis-Wahrscheinlichkeiten, Layer-2 (multinom) lernt NUR aus den
+  Layer-1-Vorhersagen (nie direkt aus den Rohdaten - der strukturelle
+  Unterschied zum einlagigen Stacking).
+
+  **Wichtiger Methodik-Fund unterwegs**: der erste Lauf (Meta-Learner
+  UNGEWICHTET trainiert, wie im urspruenglichen einlagigen Test) ergab ein
+  irrefuehrend starkes Negativ (einlagig 0.8888, mehrschichtig sogar nur
+  0.8572 - schlechter als einlagig UND weit unter allen Baselines).
+  Diagnose ergab: reines Kalibrierungsartefakt, kein Stacking-Befund -
+  bei `health_condition`s starker Klassenunbalance (~72/5/7%) faellt ein
+  UNGEWICHTETER Meta-Learner beim argmax Richtung Mehrheitsklasse zurueck
+  und verliert genau die Kalibrierung, die die Basismodelle durch ihr
+  gewichtetes Training (`class_weight_power`) schon hatten (glmnet
+  ungewichtet 0.8956 -> **gewichtet 0.9562**, praktisch gleichauf mit dem
+  besten Einzelmodell 0.9561; Prior-Korrektur allein, `argmax(p/prior)`,
+  holte fast genausoviel: 0.9519). **Lehre fuer kuenftige Stacking-Tests
+  auf einer BAcc-optimierten, unbalancierten Aufgabe: der Meta-Learner
+  braucht dieselbe Klassengewichtung/Prior-Korrektur wie die Basismodelle
+  - sonst ist ein "Stacking bringt nichts"-Befund nicht von einem reinen
+  Kalibrierungsfehler zu unterscheiden.** Nach Fix (beide Stacking-Stufen
+  mit `attach_balanced_weights()`, denselben Gewichten wie die Basismodelle,
+  neu trainiert):
+
+  | approach            | BAcc (Bestaetigung) |
+  |---|---|
+  | equal_blend          | 0.9575 |
+  | greedy_ensemble       | 0.9573 |
+  | best_single           | 0.9561 |
+  | multilayer_stack      | 0.9493 |
+  | single_layer_stack    | 0.9376 |
+
+  **Ergebnis**: Mehrschichten-Stacking schlaegt einlagiges Stacking klar
+  (+0.0117 BAcc) - die AutoGluon-These "mehr Schichten helfen" ist also
+  fuer sich genommen bestaetigt, kein Artefakt. Aber BEIDE Stacking-
+  Varianten bleiben unter dem bestehenden gleichgewichteten Blend/Greedy-
+  Ensemble/besten Einzelmodell - dieselbe wiederkehrende Lehre wie beim
+  urspruenglichen Logits-Stacking und beim per-Klassen-gewichteten Blend
+  oben: mit stark KORRELIERTEN Basiskandidaten (hier weiterhin nur
+  Ranger/LightGBM/CatBoost aus dem 148-Pool, keine echte Diversitaet)
+  limitiert die Basis-Korrelation den Nutzen JEDER Kombinationsmethode,
+  egal wie ausgefeilt. **Nicht ins Template zurueckgefuehrt** - kein
+  Zusatznutzen ueber die bereits vorhandene, einfachere Greedy-Ensemble-
+  Selection hinaus, bei deutlich mehr Komplexitaet (3-Wege-Split,
+  2 Meta-Learner-Stufen). Naechster echter Test dieser Idee waere erst
+  sinnvoll, sobald ein diversifizierendes Mitglied (z.B. FT-Transformer)
+  im Kandidaten-Pool ist - bislang nur fuer den simplen Blend geprueft
+  (s6e8), nicht fuer Stacking. Skript bleibt im Repo (`multilayer_stack_test.R`)
+  als wiederverwendbare Vorlage fuer diesen Folgetest.
   (Die beiden folgenden Punkte - SQL-Views und `080`-Split - hatten nach
   `openml-adult-income` eine zweite unabhaengige Bestaetigung und wurden
   daraufhin umgesetzt, siehe die durchgestrichenen ERLEDIGT-Eintraege oben.)
