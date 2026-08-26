@@ -95,9 +95,24 @@ umgesetzt, P1-P3 folgen bei Bedarf in derselben angepassten Form.**
   Testfile ist dafür unsichtbar; behoben mit
   `assign("project_dir", ..., envir = globalenv())` vor dem Sourcen.
   Volle Suite weiterhin grün (jetzt 6 Testdateien).
-  **Offen aus P0.1**: `learning_curve.R`, `split_size_sensitivity.R`,
-  `multilabel.R`, Probability-/Calibration-Helper, Config-Validierung
-  (letztere existiert noch nicht, siehe P0.3).
+- **`split_size_sensitivity.R` getestet** (5. Punkt aus P0.1, auf Nutzerwunsch
+  vorgezogen vor `learning_curve.R`): zwei Funktionen -
+  `report_split_ratio_sensitivity()` ist reine Logik (operiert auf einer
+  bereits berechneten `sens`-Tabelle), `split_ratio_sensitivity()` braucht
+  echtes mlr3-Training (`rsmp("subsampling")`, misst Streuung durch
+  UNTERSCHIEDLICHE Splits desselben Anteils). Neue
+  `tests/testthat/test-split_size_sensitivity.R`, 7 Fälle: `report_split_
+  ratio_sensitivity()` flaggt/flaggt nicht korrekt je nach Faktor zum
+  Minimum-CV (per `capture.output()` an der tatsächlichen Konsolenmeldung
+  geprüft, nicht nur am Rückgabewert), Hinweis bei nicht getestetem
+  `chosen_ratio`, Speichern. `split_ratio_sensitivity()` an einem winzigen
+  synthetischen Task verifiziert: korrekte `n_train`/`n_test` je ratio,
+  `cv`-Spalte stimmt mit `sd/|mean|` überein, Determinismus bei fixem Seed.
+  mlr3-INFO-Logging fürs Testfile auf "warn" gedrosselt (sauberer
+  Testoutput). Volle Suite weiterhin grün (jetzt 7 Testdateien).
+  **Offen aus P0.1**: `learning_curve.R`, `multilabel.R`, Probability-/
+  Calibration-Helper, Config-Validierung (letztere existiert noch nicht,
+  siehe P0.3).
 
 ## Zielbild
 
