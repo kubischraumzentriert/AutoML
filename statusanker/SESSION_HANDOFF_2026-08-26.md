@@ -1,20 +1,25 @@
-# Session Handoff (Stand 2026-08-26) - Statusanker
+# Session Handoff (Stand 2026-08-26, 2. Aktualisierung) - Statusanker
 
 Vorheriger Anker: `statusanker/SESSION_HANDOFF_2026-08-25.md` (Multi-Layer-
 Stacking-Evidenzrunde). Dieselbe Sitzung lief ueber den Datumswechsel
 hinweg weiter - dieser Anker deckt alles ab, was NACH dem 25.08.-Handoff
 passiert ist: die restlichen 3 Punkte der Literatur-Roadmap vom 24.08.
-(Hyperband, TabPFN, TabM), womit die gesamte Roadmap jetzt abgeschlossen ist.
+(Hyperband, TabPFN, TabM), womit die gesamte Roadmap jetzt abgeschlossen ist
+- und, als 2. Aktualisierung desselben Tages, ein Housekeeping-Merge der
+zentralen Experiment-DB (Abschnitt 4 unten).
 
 ## Repo-Zustand am Ende dieser Session
 
 Alle drei Repos sauber (bis auf harmlose, nicht committete Catboost-
 Trainings-Logs in `ML_Learning`, keine echten Aenderungen):
-- `MLR3_Classifikation` @ `1a6429f` "Test TabM as a cheap neural candidate,
-  close the full literature roadmap" - gepusht.
+- `MLR3_Classifikation` @ `b07e691` "Add session handoff for 2026-08-26
+  (Hyperband/TabPFN/TabM, roadmap complete)" - gepusht.
 - `MLR3_Regression` @ `645d6f5` (unveraendert seit dem 25.08.-Handoff).
 - `ML_Learning` (rein lokal, kein Remote) @ `968437f` "Add TabM diversity
   check (s6e8)".
+- Zentrale `experiments.db` (`_artifacts/`, gitignored - siehe ADR-001)
+  wurde per `merge_project_experiments.R` aktualisiert (Abschnitt 4), das
+  aendert keinen Commit-Hash der drei Repos oben.
 
 ## Was in dieser Session passiert ist (Fortsetzung nach dem 25.08.-Anker)
 
@@ -109,6 +114,23 @@ abschliessenden Befund**: Punkt 1 (TabRepo/Portfolio-Warmstart) positiv
 umgesetzt (optionaler Diagnose-Helper), Punkte 2 (Multi-Layer-Stacking, aus
 dem 25.08.-Anker), 3 (TabPFN), 4 (Hyperband) und 5 (TabM) negativ, aber
 jeweils sauber quantifiziert statt offen liegengelassen.
+
+**4. Housekeeping: zentrale Experiment-DB gemergt (2. Aktualisierung,
+selber Tag, Nutzeranfrage "Housekeeping-Check machen").** Letzter echter
+Merge war 2026-08-14 - `merge_project_experiments.R` (idempotent/
+inkrementell, automatisches Backup vor jedem Schreibzugriff) lief seither
+nicht mehr. Ergebnis: 7 komplett neue Projekte in die zentrale DB
+aufgenommen (`openml-eeg-eye-state-timeseries` 163 Metrik-Ergebnisse,
+`openml-synthetic-control-timeseries` 181, `wdbc-plateau-test` 48,
+`sba-loan-default` 12, `aer-creditcard-leak-test` 8,
+`fremtpl2-claim-leak-test` 4, `synth-redundant-leak-test` 4) + 2 bestehende
+Projekte mit neuen Runs (`dat-parkinsons-challenge` +216,
+`openml-steel-plates-fault` +8). `git status` im Klassifikations-Repo
+zeigt danach keine Aenderung - `_artifacts/` (inkl. `experiments.db`) ist
+gitignored (ADR-001: lokale Projekt-DBs, keine geteilte Live-DB), nichts zu
+committen. Zwei Backup-Dateien entstanden (Skript einmal zur Diagnose ein
+zweites Mal aufgerufen, harmlos/idempotent) - keine Bereinigung noetig, nur
+Speicherplatz (~20MB je Backup).
 
 ## Offene Punkte fuer die naechste Session
 
