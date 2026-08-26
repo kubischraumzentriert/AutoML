@@ -42,6 +42,20 @@ umgesetzt, P1-P3 folgen bei Bedarf in derselben angepassten Form.**
   alle 4 bestehenden + die neue Datei gruen.
 - CI-Workflow um `target_leak_audit_helpers.R` in der Fixture-Kopierliste
   ergänzt (sonst würde `015` in der CI-Fixture ab jetzt fehlschlagen).
+- **CI bestätigt grün** (Run `32993648579`, beide Jobs `unit-tests` +
+  `smoke-test` erfolgreich, commit `8d06e30`).
+- **`univariate_drift.R` getestet** (2. Punkt aus ChatGPTs korrigierter
+  P0.1-Liste): war bereits eine saubere, eigenständige Funktionsdatei
+  (`run_univariate_drift_tests()`/`report_univariate_drift()`), keine
+  Extraktion nötig. Neue `tests/testthat/test-univariate_drift.R`, 9 Fälle
+  mit bekanntem Ground Truth (echter numerischer/kategorialer Drift, echte
+  Spezifitätskontrolle bei identischer Verteilung, degenerierte Randfälle
+  ohne Absturz - konstante Spalte, Einzel-Auspägung -, BH-Korrektur-
+  Monotonie, Spaltennamen-Mismatch, Speichern/Rückgabe-Konsistenz). Volle
+  Suite weiterhin komplett grün.
+  **Offen aus P0.1**: `seed_stability.R`, `db_logging.R`, `learning_curve.R`,
+  `split_size_sensitivity.R`, `multilabel.R`, Probability-/Calibration-
+  Helper, Config-Validierung (letztere existiert noch nicht, siehe P0.3).
 
 ## Zielbild
 
