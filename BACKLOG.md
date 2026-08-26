@@ -273,6 +273,79 @@ an die tatsächliche, absichtliche Architektur dieses Templates angepasst
 statt der wörtlichen Vorlage zu folgen, wo diese mit der Realität des
 Repos kollidierte.
 
+## P1.1 - Status (2026-08-26)
+
+**Nutzerentscheidung zum Scope**: "Prototyp zuerst: nur `health_condition`,
+3 Outer Folds" - statt der von ChatGPTs korrigiertem Plan verlangten
+>= 2 Datensätze bewusst auf 1 Projekt reduziert. P1.2 (Evidence Registry)
+und P1.3 (Experiment-/Daten-Provenienz) aus demselben Plan sind NICHT
+angefasst - nur explizit angeforderte Punkte werden umgesetzt.
+
+**Umgesetzt**: `outer_workflow_evaluation.R` (neu, Repo-Wurzel, analog zu
+`multilayer_stack_test.R`/`hyperband_budget_test.R` - ein Evaluations-
+Skript, kein Teil der nummerierten Produktions-Pipeline). Frage: wie gut
+generalisiert der TATSÄCHLICH gelebte Projekt-Workflow (klassengewichteter
+Ranger via `add_balanced_class_weights()` + BAcc-optimales Multiplier-
+Tuning via `class_multiplier_tuning.R`) auf Outer-Test-Folds, die NIE von
+einer Inner-Entscheidung (Hyperparameter-Suche, Multiplier-Suche) berührt
+werden?
+
+4 Vergleichs-Arme je Outer-Fold (3 stratifizierte Folds via
+`rsmp("cv", folds = 3)`):
+1. `ranger_default` - ungewichteter Ranger, Default-Hyperparameter.
+2. `lightgbm_default` - ungewichtetes LightGBM, Default-Hyperparameter.
+3. `lightgbm_tuned` - kleines MBO-Suchbudget (8 Evaluationen, reduziert
+   gegenüber `100_lightgbm_tuning.R`s 25, da dieser Arm 3x statt 1x läuft)
+   auf einem Inner-Train/Tune-Split des Outer-Train; finales Modell mit
+   gefundenen Hyperparametern auf dem VOLLEN Outer-Train.
+4. `workflow_ranger` - der echte Projekt-Workflow: Multiplier werden auf
+   einem Inner-Tune-Split gesucht, das finale (gewichtete) Modell wird auf
+   dem VOLLEN Outer-Train trainiert.
+
+Leckage-Garantie (Kernkriterium von P1.1): jeder Outer-Test-Fold wird
+GENAU EINMAL angefasst - für die finale Vorhersage bereits fertig
+entschiedener Modelle/Hyperparameter/Multiplikatoren. Keine Inner-
+Entscheidung sieht jemals Outer-Test-Zeilen.
+
+**Ergebnis** (Mittel über 3 Outer Folds, BAcc):
+
+| Arm | mean BAcc | SD | worst fold | mean Laufzeit |
+|---|---|---|---|---|
+| `workflow_ranger` | **0.9480** | 0.0051 | 0.9427 | 72s |
+| `lightgbm_default` | 0.8745 | 0.0085 | 0.8646 | 10s |
+| `lightgbm_tuned` | 0.8707 | 0.0065 | 0.8638 | 266s |
+| `ranger_default` | 0.8633 | 0.0091 | 0.8532 | 58s |
+
+Der echte Projekt-Workflow generalisiert klar und konsistent besser als
+alle 3 Baselines (+7.3 bis +8.5 BAcc-Punkte, in JEDEM der 3 Outer Folds
+vorne, niedrige Streuung) - auf Daten, die während Multiplier-Tuning nie
+gesehen wurden. Das leicht getunte LightGBM (Arm 3) bringt hier trotz
+~4.5 Minuten Laufzeit keinen Vorteil gegenüber Default-LightGBM - im
+Rahmen des reduzierten 8-Evaluationen-Budgets konsistent mit der bereits
+dokumentierten Hyperband-/Successive-Halving-Erfahrung dieses Projekts
+(LightGBM-Tuning-Gewinn hier klein/rauschbehaftet).
+
+**Aufgetretener Bug (gefunden und gefixt)**: Namenskollision zwischen
+`mlr3tuning::tnr()` (Tuner-Konstruktor) und `mlr3measures::tnr()` (True
+Negative Rate) - da `library(mlr3measures)` NACH `library(mlr3tuning)`
+geladen wird, maskiert Letzteres die Tuner-Funktion. `tnr("mbo")` rief
+dadurch `mlr3measures::tnr("mbo", ...)` auf und scheiterte an
+`assert_binary()`, weil `"mbo"` als `truth`-Argument interpretiert wurde.
+Fix: expliziter `mlr3tuning::tnr("mbo")`-Aufruf statt des unqualifizierten
+Namens - robust unabhängig von der Ladereihenfolge.
+
+**Kein dediziertes `testthat`-Testfile**: analog zu
+`multilayer_stack_test.R`/`hyperband_budget_test.R` (Evaluations-Skripte,
+keine wiederverwendbaren Bausteine) - die eingesetzten Bausteine
+(`add_balanced_class_weights()`, `class_multiplier_tuning.R`) sind bereits
+andernorts testabgedeckt.
+
+**Limitationen** (bewusst, siehe Scope-Entscheidung): nur 1 Projekt/
+Datensatz (health_condition), nur 3 Outer Folds, reduziertes LightGBM-
+Tuning-Budget für Arm 3. Vor einer Verallgemeinerung dieses Befunds auf
+andere Projekte wäre eine Wiederholung auf einem 2. Datensatz nötig
+(P1.1 mit vollem Scope) - aktuell nicht angefordert.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
