@@ -134,6 +134,24 @@ umgesetzt, P1-P3 folgen bei Bedarf in derselben angepassten Form.**
   Seed. Volle Suite weiterhin grün (jetzt 8 Testdateien).
   **Offen aus P0.1**: `multilabel.R`, Probability-/Calibration-Helper,
   Config-Validierung (letztere existiert noch nicht, siehe P0.3).
+- **`multilabel.R` getestet** (7. Punkt aus P0.1): Binary-Relevance-
+  Multi-Label-Klassifikation. Fünf reine Metrik-/Schwellenwert-Funktionen
+  (`hamming_loss()`, `subset_accuracy()`, `f1_binary()` inkl. `tp=0 -> 0`
+  statt `NaN`, `macro_f1()`/`micro_f1()` - Ground Truth so konstruiert,
+  dass sich Makro und Mikro nachweislich UNTERSCHEIDEN bei unbalancierten
+  Labelhäufigkeiten, genau die im Kopfkommentar behauptete Eigenschaft -,
+  `accuracy_at_threshold()`, `tune_threshold_accuracy()`) vollständig von
+  Hand nachgerechnet. `binary_relevance_pool()`/`classifier_chain_pool()`
+  (brauchen echtes mlr3-Training) an einem winzigen synthetischen
+  2-Label-Task verifiziert - insbesondere die **NA-Maskierung** (2026-08-21-
+  Fund aus `tox21-multilabel`, bislang ungetestet): NA-Zeilen fehlen im
+  Ergebnis für das betroffene Label vollständig (nicht nur beim Training),
+  ein NA-freies zweites Label bleibt unverändert vollständig (No-op-
+  Verhalten wie bei yeast/scene/birds), außerdem eigene Learner-Objekte je
+  Label und Reproduzierbarkeit bei fixem Seed. Neue
+  `tests/testthat/test-multilabel.R`, 10 Fälle. Volle Suite weiterhin grün
+  (jetzt 9 Testdateien). **Damit ist P0.1 aus ChatGPTs Liste bis auf die
+  Probability-/Calibration-Helper vollständig abgearbeitet.**
 
 ## Zielbild
 
