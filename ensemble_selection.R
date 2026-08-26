@@ -58,9 +58,12 @@
 #'   beobachtete Zielmetrik - Name aus Kompatibilitaetsgruenden `best_bacc`
 #'   auch bei einer anderen `metric_fn`]).
 greedy_ensemble_selection <- function(probs_list, truth, class_names = NULL, rounds = 50, metric_fn = NULL) {
-  stopifnot(length(probs_list) >= 1, rounds >= 1)
+  stopifnot(
+    "probs_list darf nicht leer sein" = length(probs_list) >= 1,
+    "rounds muss mindestens 1 sein" = rounds >= 1
+  )
   if (is.null(metric_fn)) {
-    stopifnot(!is.null(class_names))
+    stopifnot("class_names ist erforderlich, wenn kein eigenes metric_fn uebergeben wird" = !is.null(class_names))
     metric_fn <- function(probs_combined, truth) .bacc_from_probs(probs_combined, truth, class_names)
   }
   n_candidates <- length(probs_list)

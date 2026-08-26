@@ -64,6 +64,15 @@ test_that("warn_if_threshold_step_low_value() meldet 'relevant' bei einer schwel
   expect_true(any(grepl("ist hier relevant", out)))
 })
 
+test_that("warn_if_threshold_step_low_value() akzeptiert primary_metric explizit (P0.2-Haertung), ohne globalenv() anzufassen", {
+  # Bewusst KEIN assign() auf baseline_measure_ids hier - die Funktion soll
+  # per explizitem Argument funktionieren, unabhaengig vom globalen Wert.
+  out <- capture.output(warn_if_threshold_step_low_value(
+    "105", "Klassengewichtung", is_weighting_step = TRUE, primary_metric = "classif.logloss"
+  ))
+  expect_true(any(grepl("kalibrierungssensitiv", out)))
+})
+
 # --- db_connect()/Schema --------------------------------------------------
 
 test_that("db_connect() legt eine funktionsfaehige DB mit dem erwarteten Schema an", {
@@ -80,6 +89,20 @@ test_that("db_connect() ist idempotent (zweimaliges Verbinden auf denselben Pfad
   con2 <- db_connect(path)  # CREATE TABLE IF NOT EXISTS darf nicht scheitern
   on.exit({ dbDisconnect(con2); unlink(path) })
   expect_true("project" %in% dbListTables(con2))
+})
+
+test_that("db_connect() nutzt ein explizit uebergebenes project_dir STATT der globalen Variable (P0.2-Haertung)", {
+  # globalenv()$project_dir wird bewusst auf einen NICHT existierenden Pfad
+  # gesetzt - wuerde db_connect() ihn trotz des Arguments verwenden, wuerde
+  # dieser Aufruf fehlschlagen (db_schema.sql nicht gefunden).
+  old <- get("project_dir", envir = globalenv())
+  assign("project_dir", tempfile(), envir = globalenv())
+  on.exit(assign("project_dir", old, envir = globalenv()), add = TRUE)
+
+  path <- tempfile(fileext = ".sqlite")
+  con <- db_connect(path, project_dir = old)  # alter, echter Pfad EXPLIZIT uebergeben
+  on.exit({ dbDisconnect(con); unlink(path) }, add = TRUE)
+  expect_true("project" %in% dbListTables(con))
 })
 
 # --- get_or_create-Idempotenz ----------------------------------------------

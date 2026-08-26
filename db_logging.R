@@ -47,8 +47,12 @@ calibration_sensitive_measures <- c("classif.logloss")
 # threshold_independent_measures tatsaechlich wirkungslos (aendert nur den
 # Cutoff, nicht die zugrunde liegenden Wahrscheinlichkeiten), nur die
 # Gewichtung braucht die kalibrierungssensitive Sonderbehandlung.
-warn_if_threshold_step_low_value <- function(script_name, step_description, is_weighting_step = FALSE) {
-  primary_metric <- baseline_measure_ids[1]
+# `primary_metric` als explizites Argument (P0.2) statt einer stillen freien
+# Variable - Default `baseline_measure_ids[1]` erhaelt das bisherige
+# Verhalten fuer JEDEN bestehenden Aufrufer 1:1 (000_config.R definiert
+# `baseline_measure_ids` global), macht die Abhaengigkeit aber sichtbar.
+warn_if_threshold_step_low_value <- function(script_name, step_description, is_weighting_step = FALSE,
+                                              primary_metric = baseline_measure_ids[1]) {
   if (is_weighting_step && primary_metric %in% calibration_sensitive_measures) {
     cat(
       "Hinweis (", script_name, "): Zielmetrik '", primary_metric, "' ist zwar schwellenwert-",
@@ -77,7 +81,13 @@ warn_if_threshold_step_low_value <- function(script_name, step_description, is_w
 
 # Oeffnet (und legt bei Bedarf an) die Experiment-Tracking-SQLite-Datenbank.
 # Fuehrt db_schema.sql aus (idempotent dank CREATE TABLE IF NOT EXISTS).
-db_connect <- function(db_path = experiments_db_path) {
+# `project_dir` als explizites Argument (P0.2, stabile interne API) statt
+# einer stillen freien Variable - Default `get("project_dir", envir =
+# globalenv())` erhaelt das bisherige Verhalten fuer JEDEN bestehenden
+# Aufrufer (000_config.R definiert `project_dir` global) 1:1, macht die
+# Abhaengigkeit aber sichtbar und erlaubt es, sie explizit zu uebergeben
+# (z.B. in Tests, ohne globalenv() manipulieren zu muessen).
+db_connect <- function(db_path = experiments_db_path, project_dir = get("project_dir", envir = globalenv())) {
   con <- dbConnect(RSQLite::SQLite(), db_path)
   dbExecute(con, "PRAGMA foreign_keys = ON;")
   # WAL erlaubt gleichzeitige Leser/Schreiber besser als der Default-Modus,

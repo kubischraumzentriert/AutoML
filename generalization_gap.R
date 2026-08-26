@@ -25,7 +25,7 @@
 #' @param n_boot Anzahl Bootstrap-Resamples (Checkliste: 30-1000)
 #' @return numerischer Vektor der Laenge n_boot
 bootstrap_score_distribution <- function(truth, response, measure_fn, n_boot = 200, seed = NULL) {
-  stopifnot(length(truth) == length(response))
+  stopifnot("truth und response muessen gleich lang sein" = length(truth) == length(response))
   if (!is.null(seed)) set.seed(seed)
   n <- length(truth)
   vapply(seq_len(n_boot), function(i) {
@@ -66,7 +66,8 @@ compare_score_distributions <- function(scores_a, scores_b, name_a = "cv", name_
 #'   Algorithmus), Namen muessen uebereinstimmen.
 #' @return data.table mit einer Zeile je Algorithmus (Spalte "gap")
 reference_gap_distribution <- function(cv_scores_list, test_scores_list) {
-  stopifnot(identical(names(cv_scores_list), names(test_scores_list)))
+  stopifnot("cv_scores_list und test_scores_list muessen dieselben (gleich sortierten) Namen haben" =
+    identical(names(cv_scores_list), names(test_scores_list)))
   algos <- names(cv_scores_list)
   data.table::rbindlist(lapply(algos, function(a) {
     data.table::data.table(

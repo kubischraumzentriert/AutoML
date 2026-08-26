@@ -168,6 +168,48 @@ umgesetzt, P1-P3 folgen bei Bedarf in derselben angepassten Form.**
   `db_logging` jetzt mit mehr Fällen). **P0.1 ist damit vollständig
   abgeschlossen** - kein weiterer Punkt aus ChatGPTs Liste offen.
 
+## P0.2 - Status (2026-08-26)
+
+Audit ergab: von den 9 in P0.1 mit Tests versehenen Root-Helper-Dateien
+hatten **nur 2 Funktionen** (beide in `db_logging.R`) eine stille
+Abhängigkeit von einer globalen Variable statt eines expliziten Arguments
+(`db_connect()` -> `project_dir`, `warn_if_threshold_step_low_value()` ->
+`baseline_measure_ids`) - alle anderen Helper-Dateien waren bereits
+sauber (reine Funktionen mit expliziten Parametern). Zusätzlich hatten
+7 `stopifnot()`-Aufrufe (in `group_resampling.R`, `univariate_drift.R`,
+`generalization_gap.R`, `ensemble_selection.R`) keine Fehlermeldung -
+im Fehlerfall nur R-Standardtext wie `"length(gcol) == 1 is not TRUE"`.
+
+**Umgesetzt, beides 100% rückwärtskompatibel** (keine Pfad-/Signatur-
+Brüche für bestehende Aufrufer, siehe P0.2-Akzeptanzkriterium):
+
+1. `db_connect(db_path, project_dir = get("project_dir", envir =
+   globalenv()))` - Default erhält das bisherige Verhalten für JEDEN
+   bestehenden Aufrufer 1:1, macht die Abhängigkeit aber sichtbar und
+   explizit übergebbar (kein `assign(..., envir = globalenv())`-Workaround
+   in Tests mehr nötig).
+2. `warn_if_threshold_step_low_value(..., primary_metric =
+   baseline_measure_ids[1])` - dieselbe Idee.
+3. Alle 7 `stopifnot()`-Aufrufe bekamen eine benannte, verständliche
+   Fehlermeldung (`stopifnot("Meldung" = Bedingung)` - reine
+   Meldungsergänzung, keine Logikänderung).
+
+**Regressionsgetestet**: volle `testthat`-Suite weiterhin grün (7 neue
+Testfälle für die gehärteten Signaturen/Meldungen ergänzt, u.a. ein Test,
+der `project_dir` in `globalenv()` bewusst auf einen NICHT existierenden
+Pfad setzt und beweist, dass das explizite Argument trotzdem greift), UND
+`015_target_leak_audit.R` End-to-End gegen `health_condition` erneut
+gelaufen - byte-identisches Ergebnis zu vorher (stress_level 42.9%,
+sleep_duration 34.8%).
+
+**Bewusst NICHT angefasst**: die repo-weite Konvention, dass Skripte
+`seed`/`validation_ratio`/`cv_folds`/etc. aus `000_config.R` als globale
+Variablen lesen - das ist die etablierte, funktionierende Architektur
+dieses Templates (jedes numerierte Skript liest seine Config so), keine
+versehentliche stille Abhängigkeit wie die zwei oben gefundenen Fälle.
+Eine Umstellung DIESES Musters wäre P0.3-/Architektur-Territorium
+(`validate_config()`), nicht P0.2s "Helper haerten".
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

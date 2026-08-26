@@ -49,7 +49,7 @@ set_group_role <- function(task, group_col) {
 # task_grouped: eine mit set_group_role() vorbereitete Aufgabe.
 diagnose_group_cv <- function(task_grouped, learner, measure, folds = 5, seed = 42) {
   gcol <- task_grouped$col_roles$group
-  stopifnot(length(gcol) == 1)
+  stopifnot("task_grouped braucht genau eine Gruppenspalte (set_col_roles(col, roles = \"group\"))" = length(gcol) == 1)
   # random-Variante: group-Rolle entfernen -> group_col ist rollenlos (kein Feature,
   # keine Gruppe) und wird ignoriert -> zufaellige CV.
   t_rand <- task_grouped$clone(deep = TRUE); t_rand$col_roles$group <- character(0)
@@ -114,7 +114,10 @@ diagnose_group_cv <- function(task_grouped, learner, measure, folds = 5, seed = 
 # - statistic_null fuer eigene Diagnostik/Histogramme, statistic_name ("eta2"
 # oder "cramers_v") zeigt, welcher Pfad gewaehlt wurde.
 test_group_significance <- function(target, group, n_perm = 999, seed = 42) {
-  stopifnot(length(target) == length(group), n_perm >= 1)
+  stopifnot(
+    "target und group muessen gleich lang sein" = length(target) == length(group),
+    "n_perm muss mindestens 1 sein" = n_perm >= 1
+  )
   obs <- .group_association_stat(target, group)
   stat_name <- if (is.numeric(target)) "eta2" else "cramers_v"
   set.seed(seed)

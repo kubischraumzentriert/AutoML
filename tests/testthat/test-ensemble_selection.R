@@ -129,3 +129,15 @@ test_that("greedy_ensemble_selection() funktioniert mit eigenem metric_fn auf ei
   expect_gte(res$best_bacc, best_single_auc)
   expect_true(1 %in% res$selected)  # der starke Kandidat (Index 1) muss gezogen werden
 })
+
+test_that("greedy_ensemble_selection() gibt verstaendliche Fehlermeldungen bei ungueltigen Argumenten (P0.2-Haertung)", {
+  expect_error(greedy_ensemble_selection(list(), factor("a"), rounds = 5), "probs_list darf nicht leer sein")
+  expect_error(
+    greedy_ensemble_selection(list(matrix(1)), factor("a"), rounds = 0),
+    "rounds muss mindestens 1 sein"
+  )
+  expect_error(
+    greedy_ensemble_selection(list(matrix(1)), factor("a"), class_names = NULL, rounds = 1),
+    "class_names ist erforderlich"
+  )
+})

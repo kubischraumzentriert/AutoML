@@ -42,3 +42,22 @@ test_that("compare_score_distributions() zeigt bei identischen Verteilungen kein
   res <- compare_score_distributions(scores_a, scores_b)
   expect_gt(res$wilcox_p, 0.05)
 })
+
+test_that("bootstrap_score_distribution() gibt eine verstaendliche Fehlermeldung bei ungleicher Laenge (P0.2-Haertung)", {
+  expect_error(bootstrap_score_distribution(c(1, 2, 3), c(1, 2), function(t, r) 0), "gleich lang")
+})
+
+test_that("reference_gap_distribution() berechnet die Luecke je Algorithmus korrekt", {
+  cv_list <- list(ranger = c(0.80, 0.82), lightgbm = c(0.85, 0.87))
+  test_list <- list(ranger = c(0.75, 0.77), lightgbm = c(0.86, 0.88))
+  res <- reference_gap_distribution(cv_list, test_list)
+  expect_equal(sort(res$algorithm), c("lightgbm", "ranger"))
+  expect_equal(res[algorithm == "ranger"]$gap, mean(test_list$ranger) - mean(cv_list$ranger), tolerance = 1e-10)
+})
+
+test_that("reference_gap_distribution() gibt eine verstaendliche Fehlermeldung bei nicht uebereinstimmenden Namen (P0.2-Haertung)", {
+  expect_error(
+    reference_gap_distribution(list(ranger = 1), list(lightgbm = 1)),
+    "dieselben"
+  )
+})

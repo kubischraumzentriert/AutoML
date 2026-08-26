@@ -68,3 +68,7 @@ test_that("test_group_significance() liefert bei fehlender Gruppenstruktur KEINE
   res <- test_group_significance(y, g, n_perm = 199, seed = 42)
   expect_gt(res$p_value, 0.05)
 })
+
+test_that("test_group_significance() gibt eine verstaendliche Fehlermeldung bei ungleicher Laenge (P0.2-Haertung)", {
+  expect_error(test_group_significance(c(1, 2, 3), c("a", "b")), "gleich lang")
+})

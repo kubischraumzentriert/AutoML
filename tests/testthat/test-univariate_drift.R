@@ -72,10 +72,10 @@ test_that("run_univariate_drift_tests() wendet BH-Korrektur ueber mehrere Featur
   expect_equal(res$p_adj_BH, sort(res$p_adj_BH))
 })
 
-test_that("run_univariate_drift_tests() bricht bei unterschiedlichen Spaltennamen ab", {
+test_that("run_univariate_drift_tests() bricht mit einer verstaendlichen Fehlermeldung bei unterschiedlichen Spaltennamen ab (P0.2-Haertung)", {
   ref <- data.frame(x = 1:10)
   new <- data.frame(y = 1:10)
-  expect_error(run_univariate_drift_tests(ref, new))
+  expect_error(run_univariate_drift_tests(ref, new), "dieselben Spaltennamen")
 })
 
 test_that("report_univariate_drift() speichert die Ergebnisse und gibt dieselbe Tabelle zurueck", {
