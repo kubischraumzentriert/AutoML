@@ -248,3 +248,49 @@ Skalierung zu extrapolieren - ein anderer, billigerer Algorithmus (rpart/
 LDA) ist dafuer KEIN verlaesslicher Proxy (andere Skalierungscharakteristik,
 bei neuronalen Netzen zusaetzlich ein fixer Overhead pro Epoche, der nicht
 mit der Zeilenzahl schrumpft).
+
+## Geprueft und verworfen: TabM als billiger neuronaler Kandidat (s6e8, 2026-08-25)
+
+Literaturroadmap Punkt 5 (`TARGETS.md`): TabM (Gorishniy et al. 2024, Yandex
+Research, "Advancing Efficiency of Tabular Deep Learning") - statt Attention
+(FT-Transformer) trainiert TabM EIN geteiltes MLP-Backbone mit k "virtuellen"
+Ensemble-Mitgliedern via BatchEnsemble-Parametrisierung (Wen et al. 2020):
+jede Schicht hat ein gemeinsames Gewicht W, aber pro Mitglied einen eigenen
+Eingangs-/Ausgangs-Skalierungsvektor (Rang-1-Stoerung) - Kosten ~ k * ein
+MLP, nicht k unabhaengige MLPs. In `mlr3torch` nicht vorhanden - selbst
+gebaut als eigenstaendiges `torch`-`nn_module` (kein mlr3torch-Learner-
+Wrapper, analog zum selbstgebauten Python-FT-Transformer), Architektur an
+einem synthetischen Smoke-Test vorab verifiziert (Shapes/Forward/Backward),
+bevor der volle Lauf gestartet wurde. Gleiches Preprocessing wie `nnet`
+(One-Hot + Median-Impute + Skalierung, bewusst keine eigenen Embeddings, um
+den Test auf den BatchEnsemble-Mechanismus selbst zu fokussieren).
+
+`tabm_diversity_check.R` (Projektordner, k=8 Mitglieder, 2x96 Hidden-Units,
+30 Epochen, identischer Holdout-Split wie `nnet_diversity_check.R`/
+`tabpfn_diversity_check.R`):
+
+| Modell | AUC (Holdout) |
+|---|---:|
+| CatBoost | 0.9612 |
+| XGBoost | 0.9609 |
+| LightGBM | 0.9599 |
+| ranger | 0.9577 |
+| **TabM** | **0.9558** |
+| Blend3 (GBM) | 0.9616 |
+| Blend4 (+TabM) | 0.9614 |
+
+**Effizienz-These bestaetigt**: 30 Epochen auf ~104k Zeilen brauchten nur
+4.8 Minuten - deutlich billiger als der FT-Transformer (33 Minuten fuer nur
+15 Epochen bei gleicher Groessenordnung, siehe oben). **Diversitaets-These
+NICHT bestaetigt**: Korrelation zu den GBMs 0.975 - ueber der 0.95-Gate-
+Schwelle, sogar leicht schwaecher als `nnet` (0.9558 vs. 0.9566 AUC) UND
+staerker mit den GBMs korreliert als `nnet` (0.975 vs. 0.976 - praktisch
+gleich). Blend4 < Blend3 (0.9614 < 0.9616), Gate schlaegt fehl. **Plausible
+Ursache, dieselbe wie bei `nnet`**: ohne Embeddings/Attention-Mechanismus
+lernt auch ein effizient ensembletes MLP strukturell eine den Baeumen
+aehnliche Funktion - der BatchEnsemble-Mechanismus macht das Training
+billiger, aendert aber nichts an der fehlenden strukturellen Diversitaet der
+zugrundeliegenden Architektur (reines MLP auf One-Hot-Features). **Nicht
+weiterverfolgt.** Fuer neuronale Diversitaet bleibt der FT-Transformer-Weg
+(mit Tokenizer/Attention) die einzige bislang bestaetigte Option - TabMs
+Effizienzvorteil allein reicht ohne die Embedding-/Attention-Struktur nicht.

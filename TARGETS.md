@@ -214,6 +214,21 @@ Produktion sauber zu trennen.
   Neural-Baseline-Kandidat neben FT-Transformer/TabICL, erst nach
   `NEURAL_DEPLOY.md`-Gate.
 
+  **Punkt 5 (TabM) getestet und abgeschlossen (2026-08-25) - NEGATIV.**
+  Selbstgebautes `torch`-BatchEnsemble-MLP (`tabm_diversity_check.R`,
+  `predictingsmartphoneAddiction_s6e8`) gegen dasselbe Gate wie `nnet`/
+  TabPFN/FT-Transformer: Effizienz-These bestaetigt (4.8 Min. fuer 30
+  Epochen, deutlich billiger als FT-Transformer), aber Diversitaets-These
+  NICHT (Korrelation zu den GBMs 0.975, ueber der 0.95-Schwelle, AUC 0.9558
+  sogar leicht unter `nnet`s 0.9566) - Blend4 < Blend3, Gate schlaegt fehl.
+  Volle Zahlen/Herleitung in `NEURAL_DEPLOY.md`. **Damit haben jetzt ALLE 5
+  Punkte der urspruenglichen Literaturroadmap einen abschliessenden Befund**:
+  Punkt 1 (TabRepo/Portfolio-Warmstart) positiv umgesetzt (optionaler
+  Diagnose-Helper); Punkte 2 (Multi-Layer-Stacking), 3 (TabPFN als
+  selektiver Kandidat), 4 (Hyperband) und 5 (TabM) negativ/nicht ins
+  Template zurueckgefuehrt, aber jeweils sauber quantifiziert und
+  dokumentiert statt offen liegengelassen.
+
   **Abgrenzung zum alten Meta-Learning-Warmstart-Negativbefund** unten:
   der fruehere 8-OpenML-Datensatz-Pool zeigte keinen robusten Vorteil und
   bleibt NICHT als Template-Default uebernommen. Diese neue Aufgabe ist
