@@ -210,6 +210,69 @@ versehentliche stille Abhängigkeit wie die zwei oben gefundenen Fälle.
 Eine Umstellung DIESES Musters wäre P0.3-/Architektur-Territorium
 (`validate_config()`), nicht P0.2s "Helper haerten".
 
+## P0.3 - Status (2026-08-26)
+
+**Struktur-Konflikt wie schon bei P1 gefunden und mit dem Nutzer geklärt**:
+ChatGPTs Vorschlag, `000_config.R` physisch in `config_defaults.R`/
+`config_validation.R`/`config_derived.R` aufzuteilen, würde das
+etablierte Wiederverwendungsmuster dieses Templates brechen - ein neues
+Projekt entsteht durch **Kopieren einer einzelnen Datei** (`000_config.R`)
+und Anpassen der Werte (siehe `TARGETS.md`-Checkliste "Übertragung auf
+einen neuen Kaggle-Wettbewerb"). Eine Aufteilung würde daraus "mehrere
+Dateien kopieren und synchron halten" machen. **Nutzerentscheidung**: nur
+`validate_config()` als neue, rein additive Datei umsetzen, `000_config.R`
+selbst bleibt strukturell unverändert.
+
+**Umgesetzt**: `config_validation.R`, eine einzelne Funktion
+`validate_config(env = parent.frame())`, die die BESTEHENDEN
+`000_config.R`-Werte auf Konsistenz prüft - kein bestehendes Skript ruft
+sie automatisch auf (rein additiv, kein Verhalten geändert), ein
+Nutzer/eine Session ruft sie manuell nach dem Anpassen der Config auf.
+
+Deckt aus ChatGPTs Checkliste ab, was auf tatsächlich existierende
+Config-Variablen dieses Templates abbildet:
+- `target_col` vorhanden und nicht-leer.
+- `id_col` `NULL` oder gültiger Zeichenvektor.
+- `baseline_measure_ids` nicht leer, jede ID ein bekanntes mlr3-Maß
+  (fängt Tippfehler wie `classif.baccc`).
+- `positive_class`-Konsistenz: warnt (nicht fatal), wenn `NULL` bei einer
+  schwellenwertunabhängigen Metrik (AUC/LogLoss) - könnte binär sein.
+- Multi-Label-Konsistenz: `multilabel_train_ratio`/`_tune_ratio` müssen
+  Platz für die Eval-Menge lassen, `target_col` darf nicht in `label_cols`
+  auftauchen.
+- Split-/Budget-Anteile (`validation_ratio`, `subset_fraction`, `cv_folds`,
+  `class_weight_power`) in sinnvollen Bereichen.
+- **Tippfehler-Schutz**: `model_feature_sets`/`model_class_weight_power`/
+  `submission_model_override` müssen auf tatsächliche Einträge in
+  `base_learner_constructors` verweisen (der konkrete Anlass:
+  "lgihtgbm" statt "lightgbm" bei der Übertragung auf ein neues Projekt).
+- `directional_expectation_specs`: Pflichtfelder je Typ (`delta` bei
+  `numeric`, `level_order` bei `ordinal`), gültige `direction`.
+
+**Bewusst ausgelassen** (aus ChatGPTs Liste, aber ohne Entsprechung in
+diesem Template): "Group-CV ohne Group-Spalte"/"Time-CV ohne
+Zeitinformation" - dieses Template hat keine feste `group_col`/`date_col`-
+Konvention in `000_config.R` (das ist Panel-/Forecasting-spezifisch,
+siehe das analoge, bereits umgesetzte Kapitel im Regressions-Template).
+Eine Erfindung einer nicht existierenden Konvention hätte hier keinen
+Wert gehabt. "Schwellenwertunabhängige Metrik + Threshold-Tuning" deckt
+bereits `warn_if_threshold_step_low_value()` (P0.2) ab, nicht dupliziert.
+
+**Verifiziert**: Sammelt ALLE gefundenen Probleme in einer einzigen
+Fehlermeldung (nicht nur das erste), damit man nicht wiederholt
+aufrufen/fixen muss. 6 handgebaute kaputte Configs lösten alle die
+richtige Meldung aus (Positivkontrolle), die echte `000_config.R` von
+`health_condition` läuft fehlerfrei durch (Spezifitätskontrolle,
+regressionsgetestet). Neue `tests/testthat/test-config_validation.R`,
+16 Fälle (29 Erwartungen) - inkl. eines End-to-End-Tests gegen die echte
+Config. Volle Suite weiterhin grün (jetzt 11 Testdateien).
+
+**Damit ist P0 aus ChatGPTs Plan vollständig abgeschlossen** (P0.1
+Testabdeckung, P0.2 Helper-Härtung, P0.3 `validate_config()`) - jeweils
+an die tatsächliche, absichtliche Architektur dieses Templates angepasst
+statt der wörtlichen Vorlage zu folgen, wo diese mit der Realität des
+Repos kollidierte.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
