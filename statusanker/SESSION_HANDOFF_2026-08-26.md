@@ -1,19 +1,22 @@
-# Session Handoff (Stand 2026-08-26, 2. Aktualisierung) - Statusanker
+# Session Handoff (Stand 2026-08-26, 3. Aktualisierung) - Statusanker
 
 Vorheriger Anker: `statusanker/SESSION_HANDOFF_2026-08-25.md` (Multi-Layer-
 Stacking-Evidenzrunde). Dieselbe Sitzung lief ueber den Datumswechsel
 hinweg weiter - dieser Anker deckt alles ab, was NACH dem 25.08.-Handoff
 passiert ist: die restlichen 3 Punkte der Literatur-Roadmap vom 24.08.
-(Hyperband, TabPFN, TabM), womit die gesamte Roadmap jetzt abgeschlossen ist
-- und, als 2. Aktualisierung desselben Tages, ein Housekeeping-Merge der
-zentralen Experiment-DB (Abschnitt 4 unten).
+(Hyperband, TabPFN, TabM), womit die gesamte Roadmap abgeschlossen wurde
+- ein Housekeeping-Merge der zentralen Experiment-DB (2. Aktualisierung,
+Abschnitt 4) - und, als 3. Aktualisierung desselben Tages, ein komplett
+neuer Strang: ein von aussen (Codex/ChatGPT) vorgeschlagener P0-P3-
+Refactor-Plan fuer `BACKLOG.md`, P0 vollstaendig umgesetzt, plus ein
+P1.1-Prototyp (Abschnitt 5 unten).
 
 ## Repo-Zustand am Ende dieser Session
 
 Alle drei Repos sauber (bis auf harmlose, nicht committete Catboost-
 Trainings-Logs in `ML_Learning`, keine echten Aenderungen):
-- `MLR3_Classifikation` @ `b07e691` "Add session handoff for 2026-08-26
-  (Hyperband/TabPFN/TabM, roadmap complete)" - gepusht.
+- `MLR3_Classifikation` @ `af154a0` "Add P1.1 prototype: full-workflow
+  outer evaluation on health_condition" - gepusht, CI Smoke Test gruen.
 - `MLR3_Regression` @ `645d6f5` (unveraendert seit dem 25.08.-Handoff).
 - `ML_Learning` (rein lokal, kein Remote) @ `968437f` "Add TabM diversity
   check (s6e8)".
@@ -132,15 +135,98 @@ committen. Zwei Backup-Dateien entstanden (Skript einmal zur Diagnose ein
 zweites Mal aufgerufen, harmlos/idempotent) - keine Bereinigung noetig, nur
 Speicherplatz (~20MB je Backup).
 
+**5. Neuer Strang: externer BACKLOG.md-Refactor-Plan (Codex/ChatGPT), P0
+vollstaendig umgesetzt, P1.1-Prototyp abgeschlossen (3. Aktualisierung).**
+
+Ein neues `BACKLOG.md` erschien im Repo (vom Nutzer selbst ueber sein
+GitHub-Konto verfasst, per `git pull` geholt) - ein Codex-orientierter
+Refactor-Plan in 4 Phasen (P0 Stabilisieren/Absichern, P1 Kernlogik
+testbar machen, P2 Evaluation/Nachvollziehbarkeit, P3 Aufraeumen). Nutzer:
+"die Anweisung ist auch fuer Claude" - der Plan war also nicht nur zur
+Kenntnisnahme, sondern explizit auch von Claude umzusetzen.
+
+**Struktur-Konflikt erkannt und geklaert**: Der Plan setzt an mehreren
+Stellen (P1 woertlich, P0.3 implizit) eine klassische R-Package-Struktur
+voraus (`R/`, `NAMESPACE`, physisch aufgeteilte Config-Dateien). Das
+kollidiert mit der bewusst FLACHEN Architektur dieses Templates (ein neues
+Projekt entsteht durch Kopieren EINER Datei, z.B. `000_config.R` - siehe
+`TARGETS.md`-Checkliste). Auf Nutzerwunsch ("schreibe eine Entgegnung ...
+Begruende die Entgegnung") wurde eine begruendete Entgegnung verfasst und
+an ChatGPT gegeben; ChatGPTs korrigierte Antwort akzeptierte die
+Entgegnung. Scope-Entscheidung des Nutzers: "Erst nur P0 angehen, Rest
+spaeter entscheiden."
+
+**P0 komplett abgeschlossen** (Details/Commits: `BACKLOG.md`-Abschnitte
+"P0 - Status", "P0.2 - Status", "P0.3 - Status", je datiert 2026-08-26):
+- **P0.1 Testabdeckung**: neue `testthat`-Dateien fuer 8 bislang
+  ungetestete Module (`target_leak_audit_helpers.R` [aus
+  `015_target_leak_audit.R` extrahiert], `univariate_drift.R`,
+  `seed_stability.R`, `db_logging.R`, `split_size_sensitivity.R`,
+  `learning_curve.R`, `multilabel.R`, Probability-/Calibration-Helper
+  [Teil von `db_logging.R`]) - Testsuite waechst von 4 auf 11 Dateien.
+- **P0.2 Helper-Haertung**: implizite globale Abhaengigkeiten in
+  `db_logging.R` (`project_dir`, `baseline_measure_ids`) durch explizite
+  Parameter mit rueckwaertskompatiblem Default ersetzt; 7 nackte
+  `stopifnot()`-Aufrufe in `group_resampling.R`/`univariate_drift.R`/
+  `generalization_gap.R`/`ensemble_selection.R` mit verstaendlichen
+  benannten Fehlermeldungen versehen.
+- **P0.3 `validate_config()`**: neue, rein additive Datei
+  `config_validation.R` (EINE Funktion, prueft die BESTEHENDEN
+  `000_config.R`-Werte auf Konsistenz/Tippfehler - `000_config.R` selbst
+  bewusst NICHT physisch aufgeteilt, analoger Struktur-Konflikt wie bei
+  P1, gleiche Nutzerentscheidung: additiv statt aufteilend). 16 Testfaelle
+  (29 Erwartungen) inkl. End-to-End-Kontrolle gegen die echte, geladene
+  `000_config.R` von `health_condition`.
+
+Volle Testsuite nach jedem Schritt gruen gehalten (jetzt 12 Testdateien
+inkl. `config_validation`), jeder Schritt einzeln committet und gepusht,
+CI Smoke Test nach jedem Push per `gh run list`/Monitor verifiziert.
+
+**P1.1-Prototyp ("Full-Workflow Outer Evaluation") umgesetzt.** Auf "ja,
+mach weiter mit P1" folgte ein Scope-/Kosten-Hinweis (per
+`AskUserQuestion`); Nutzerentscheidung: "Prototyp zuerst: nur
+`health_condition`, 3 Outer Folds" (statt ChatGPTs verlangten >= 2
+Datensaetzen). Neues `outer_workflow_evaluation.R` (Repo-Wurzel, analog zu
+`multilayer_stack_test.R`/`hyperband_budget_test.R` - kein Teil der
+nummerierten Pipeline, daher kein dediziertes Testfile). 4 Vergleichs-Arme
+je Outer-Fold, wobei Outer-Test-Zeilen NIE von einer Inner-Entscheidung
+(Hyperparameter-Suche, Multiplier-Tuning) beruehrt werden:
+
+| Arm | mean BAcc | SD | worst fold |
+|---|---|---|---|
+| `workflow_ranger` (echter Projekt-Workflow) | **0.9480** | 0.0051 | 0.9427 |
+| `lightgbm_default` | 0.8745 | 0.0085 | 0.8646 |
+| `lightgbm_tuned` (8-Eval-MBO, reduziertes Budget) | 0.8707 | 0.0065 | 0.8638 |
+| `ranger_default` | 0.8633 | 0.0091 | 0.8532 |
+
+Der echte, gelebte Workflow (klassengewichteter Ranger +
+`class_multiplier_tuning.R`) generalisiert klar und konsistent besser als
+alle 3 Baselines - in allen 3 Folds vorne, auf Daten, die das
+Multiplier-Tuning nie gesehen hat. Dabei ein Bug gefunden und gefixt:
+`mlr3measures::tnr()` (True Negative Rate) maskiert `mlr3tuning::tnr()`
+(Tuner-Konstruktor), wenn `mlr3measures` nach `mlr3tuning` geladen wird -
+`tnr("mbo")` rief dadurch die falsche Funktion auf und scheiterte kryptisch
+an `assert_binary()`. Fix: expliziter `mlr3tuning::tnr("mbo")`-Aufruf.
+Details/Limitationen in `BACKLOG.md`-Abschnitt "P1.1 - Status".
+
 ## Offene Punkte fuer die naechste Session
 
-**Keine dringenden.** Die komplette Literatur-Roadmap vom 24.08. ist
-abgeschlossen. Backlog ist wieder "leer" im Sinne von "alles bearbeitet und
-ehrlich dokumentiert", auch wenn 4 von 5 Punkten negativ ausgingen -
-bewusst als Erfolg zu werten (jede Frage wurde sauber quantifiziert
-beantwortet, kein Punkt bleibt vage offen). Falls der Nutzer nichts
-Konkretes mitbringt: `TARGETS.md`/Memory auf neue Ideen durchsehen, oder
-eine neue Literaturrunde/Domaenenerweiterung anstossen.
+**Aus dem Literatur-Roadmap-Strang: keine dringenden**, komplett
+abgeschlossen (siehe oben).
+
+**Aus dem BACKLOG.md-Refactor-Strang**: P1.2 (Evidence Registry) und P1.3
+(Experiment-/Daten-Provenienz) aus ChatGPTs korrigiertem Plan sind NICHT
+angefasst - bislang nur explizit angeforderte Punkte umgesetzt (P0
+komplett, P1.1 als Prototyp). P2/P3 aus demselben Plan komplett
+unangefasst. Falls die naechste Session hier weitermachen soll: explizit
+erfragen, WELCHER Punkt als naechstes drankommt (Muster dieser Session:
+"ja, mach weiter mit X" je Einzelschritt, keine Bulk-Umsetzung). Ein
+moeglicher voller P1.1-Nachfolger (>= 2 Datensaetze statt Prototyp) ist
+ebenfalls offen, aber nicht angefordert.
+
+Falls der Nutzer nichts Konkretes mitbringt: `TARGETS.md`/Memory auf neue
+Ideen durchsehen, oder eine neue Literaturrunde/Domaenenerweiterung
+anstossen.
 
 ## Wichtige Konventionen (falls die naechste Session sie noch nicht kennt)
 
@@ -166,13 +252,34 @@ eine neue Literaturrunde/Domaenenerweiterung anstossen.
   TabPFN/Hyperband alle klar als "nicht weiterverfolgt" markiert, nicht als
   vage Restfrage).
 - Vollstaendiger Kontext: `TARGETS.md` (Klassifikation), `NEURAL_DEPLOY.md`
-  (neuronale Kandidaten), `BACKLOG.md` (Regression), sowie das persistente
-  Gedaechtnis (`project_mlr3_automl_template.md`, Claude-Memory, automatisch
-  geladen).
+  (neuronale Kandidaten), `BACKLOG.md` (Klassifikation - jetzt zusaetzlich
+  der Codex/ChatGPT-Refactor-Plan mit P0/P1.1-Status; Regression hat ein
+  eigenes `BACKLOG.md`), sowie das persistente Gedaechtnis
+  (`project_mlr3_automl_template.md`, Claude-Memory, automatisch geladen).
+- Wenn ein extern (z.B. per `git pull`) eingebrachter Plan mit der
+  bewusst flachen Architektur dieses Templates kollidiert (z.B. eine
+  R-Package-Struktur mit `R/`/`NAMESPACE` voraussetzt): NICHT stillschweigend
+  umsetzen oder ablehnen - eine begruendete Entgegnung formulieren und dem
+  Nutzer zur Weitergabe an die externe Quelle anbieten, dann nach deren
+  Antwort weiterarbeiten. In dieser Session zweimal so gehandhabt (P1
+  R-Package-Struktur, P0.3 Config-Datei-Aufteilung), beide Male mit
+  `AskUserQuestion` und Nutzerentscheidung fuer die additive/nicht-
+  brechende Variante.
+- Bei einem mehrstufigen externen Plan (P0/P1/P2/...): nur explizit vom
+  Nutzer angeforderte Einzelschritte umsetzen ("ja, mach weiter mit X"),
+  keine Bulk-Vorabumsetzung des gesamten Plans, auch wenn er als Ganzes
+  "auch fuer Claude" gilt.
+- Namenskollisionsfalle: `mlr3measures` UND `mlr3tuning` definieren beide
+  eine Funktion `tnr()` (True Negative Rate vs. Tuner-Konstruktor). Wird
+  `mlr3measures` NACH `mlr3tuning` geladen, maskiert es Letzteres - immer
+  `mlr3tuning::tnr("mbo")` explizit qualifizieren, sobald beide Pakete in
+  einem Skript geladen sind.
 
 ## Empfohlener erster Schritt der naechsten Session
 
-Kein zwingender Einstiegspunkt - Backlog ist leer. Falls der Nutzer nichts
-Konkretes mitbringt: kurz pruefen, ob es seit dem letzten Merge neue
-Projekte in `merge_project_experiments.R`s Auto-Discovery gibt, oder eine
-neue Literatur-/Ideenrunde anstossen (aehnlich der vom 24.08.).
+Kein zwingender Einstiegspunkt. Zwei offene Baustellen zur Auswahl (siehe
+"Offene Punkte" oben): (a) BACKLOG.md-Refactor-Plan fortsetzen (P1.2/P1.3
+oder P2/P3, nur nach expliziter Nutzeranfrage), (b) Literatur-/Ideenrunde
+wie gehabt (kurz pruefen, ob es seit dem letzten Merge neue Projekte in
+`merge_project_experiments.R`s Auto-Discovery gibt, oder eine neue Runde
+aehnlich der vom 24.08. anstossen).
