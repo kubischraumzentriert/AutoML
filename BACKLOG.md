@@ -53,7 +53,23 @@ umgesetzt, P1-P3 folgen bei Bedarf in derselben angepassten Form.**
   ohne Absturz - konstante Spalte, Einzel-Auspägung -, BH-Korrektur-
   Monotonie, Spaltennamen-Mismatch, Speichern/Rückgabe-Konsistenz). Volle
   Suite weiterhin komplett grün.
-  **Offen aus P0.1**: `seed_stability.R`, `db_logging.R`, `learning_curve.R`,
+- **CI bestätigt grün** (Run `32994042694`, commit `42f31b5`).
+- **`seed_stability.R` getestet** (3. Punkt aus P0.1): drei Funktionen -
+  `report_stability()` ist reine Statistik (analog `cohens_d()`/
+  `compare_score_distributions()` in `generalization_gap.R`), `seed_
+  stability()`/`hyperparam_jitter_stability()` brauchen echtes mlr3-Training
+  (messen Modell-eigene Streuung, kein Umweg möglich). Neue
+  `tests/testthat/test-seed_stability.R`, 9 Fälle: `report_stability()`
+  vollständig ground-truth-getestet (flaggt/flaggt nicht korrekt je nach
+  Verhältnis zur CV-Referenzstreuung, `NA` statt Division-durch-0 bei
+  konstanter Referenz, `NA` rutscht NICHT als "auffällig" durch, custom
+  Schwellenwert, CSV-Append-Verhalten). `seed_stability()` an einem winzigen
+  synthetischen Task mit 2 echten mlr3-Lernern verifiziert: `classif.rpart`
+  (seed-unempfindlich) -> SD=0 (Spezifität), `classif.ranger` (seed-
+  empfindlich, 5 Bäume) -> SD>0 (Positivkontrolle).
+  `hyperparam_jitter_stability()`: Plumbing (Parameter-Ziehung, Score je Zug)
+  + Determinismus bei fixem Seed verifiziert. Volle Suite weiterhin grün.
+  **Offen aus P0.1**: `db_logging.R`, `learning_curve.R`,
   `split_size_sensitivity.R`, `multilabel.R`, Probability-/Calibration-
   Helper, Config-Validierung (letztere existiert noch nicht, siehe P0.3).
 
