@@ -69,9 +69,35 @@ umgesetzt, P1-P3 folgen bei Bedarf in derselben angepassten Form.**
   empfindlich, 5 Bäume) -> SD>0 (Positivkontrolle).
   `hyperparam_jitter_stability()`: Plumbing (Parameter-Ziehung, Score je Zug)
   + Determinismus bei fixem Seed verifiziert. Volle Suite weiterhin grün.
-  **Offen aus P0.1**: `db_logging.R`, `learning_curve.R`,
-  `split_size_sensitivity.R`, `multilabel.R`, Probability-/Calibration-
-  Helper, Config-Validierung (letztere existiert noch nicht, siehe P0.3).
+- **CI bestätigt grün** (Run `32994649311`, commit `bfa6d27`).
+- **`db_logging.R` getestet** (4. Punkt aus P0.1): das SQLite-Experiment-
+  Tracking-Backend - bislang der einzige Baustein mit echten DB-
+  Schreib-/Lesezugriffen statt reiner Statistik/ML-Logik. Neue
+  `tests/testthat/test-db_logging.R`, 15 Fälle gegen eine frische temporäre
+  Datei-DB je Test (`db_connect()` auf `tempfile()`, echtes Schema aus
+  `db_schema.sql`): Schema-Anlage + Idempotenz von `db_connect()`,
+  `db_get_or_create_project()`/`_workflow()` geben beim 2. Aufruf dieselbe ID
+  zurück statt zu duplizieren (inkl. Unterscheidung gleichnamiger Workflows
+  unterschiedlichen Typs), `db_create_run()`/`db_finish_run()` setzen
+  `run_finished_at` korrekt, `db_log_run_config()`/`db_create_model_config()`
+  (inkl. Hyperparameter-Zeilen) inserten korrekt verknüpft,
+  `db_log_predictions()` vergibt `pred_seq` fortlaufend UND kollisionsfrei
+  über mehrere Aufrufe hinweg und entrollt die Wahrscheinlichkeitsmatrix
+  korrekt in die EAV-Tabelle `prediction_prob`, `db_log_submission_result()`s
+  Upsert-Verhalten (2. Aufruf mit gleichem Platform/Status/Metric
+  aktualisiert statt zu duplizieren), `db_get_latest_model_artifact_path()`/
+  `_model_config_id()` finden korrekt den ZULETZT trainierten Lauf (Zeit-
+  stempel explizit auseinandergezogen, da `datetime('now')` nur Sekunden-
+  auflösung hat) und geben `NA` zurück, wenn nichts geloggt ist.
+  **Technischer Fund**: `db_connect()` löst `project_dir` über seine
+  Definitionsumgebung auf (`source()` ohne `local=TRUE` definiert in
+  `.GlobalEnv`) - ein testthat-sandboxed lokales `project_dir <-` im
+  Testfile ist dafür unsichtbar; behoben mit
+  `assign("project_dir", ..., envir = globalenv())` vor dem Sourcen.
+  Volle Suite weiterhin grün (jetzt 6 Testdateien).
+  **Offen aus P0.1**: `learning_curve.R`, `split_size_sensitivity.R`,
+  `multilabel.R`, Probability-/Calibration-Helper, Config-Validierung
+  (letztere existiert noch nicht, siehe P0.3).
 
 ## Zielbild
 
