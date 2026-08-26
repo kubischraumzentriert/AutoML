@@ -152,6 +152,21 @@ umgesetzt, P1-P3 folgen bei Bedarf in derselben angepassten Form.**
   `tests/testthat/test-multilabel.R`, 10 Fälle. Volle Suite weiterhin grün
   (jetzt 9 Testdateien). **Damit ist P0.1 aus ChatGPTs Liste bis auf die
   Probability-/Calibration-Helper vollständig abgearbeitet.**
+- **Probability-/Calibration-Helper getestet (8., letzter Punkt aus
+  P0.1) - Fund: es existiert KEIN eigenständiges Modul dafür.**
+  `REFERENZ_PROBABILITY_CALIBRATION.md` ist explizit als reine Referenz
+  ohne Code-Änderung markiert ("Dies ist eine Referenz, keine
+  Template-Code-Änderung"). Der einzige tatsächliche Template-Code zu
+  diesem Thema liegt bereits in `db_logging.R` (`calibration_sensitive_
+  measures`, `is_threshold_independent_metric()` - beide schon getestet)
+  - übersehen wurde dabei `warn_if_threshold_step_low_value()`, die
+  Konsolenwarnung, die zwischen "kalibrierungssensitiv" (LogLoss +
+  Gewichtungsschritt), "schwellenwertunabhängig, wenig Effekt" (AUC) und
+  "schwellenwertabhängig, relevant" (BAcc) unterscheidet. 3 neue Fälle in
+  `tests/testthat/test-db_logging.R` (ergänzt, keine neue Datei) decken
+  alle 3 Zweige ab. Volle Suite weiterhin grün (weiterhin 9 Testdateien,
+  `db_logging` jetzt mit mehr Fällen). **P0.1 ist damit vollständig
+  abgeschlossen** - kein weiterer Punkt aus ChatGPTs Liste offen.
 
 ## Zielbild
 

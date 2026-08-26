@@ -31,6 +31,39 @@ test_that("is_threshold_independent_metric() erkennt Rangfolge-/Kalibrierungs-Me
   expect_false(is_threshold_independent_metric("classif.mcc"))
 })
 
+# --- warn_if_threshold_step_low_value(): rein (cat()-Ausgabe), aber haengt
+# von der globalen `baseline_measure_ids` ab (wie 000_config.R sie setzt) -
+# analog zu `project_dir` oben in globalenv() gesetzt, jeweils vor dem
+# entsprechenden Testfall auf den zu pruefenden Fall umgestellt. Deckt die
+# drei Zweige ab, die db_logging.R als Kalibrierungs-/Schwellenwert-Hinweis
+# fuer Gewichtungs- vs. Post-hoc-Schwellenwert-Schritte unterscheidet (siehe
+# REFERENZ_PROBABILITY_CALIBRATION.md fuer den theoretischen Hintergrund -
+# diese Funktion ist der einzige TEMPLATE-CODE-Baustein dazu, das Dokument
+# selbst ist explizit reine Referenz ohne Code-Aenderung).
+
+test_that("warn_if_threshold_step_low_value() warnt bei einer Gewichtungsstufe UND kalibrierungssensitiver Metrik (LogLoss)", {
+  assign("baseline_measure_ids", c("classif.logloss"), envir = globalenv())
+  out <- capture.output(warn_if_threshold_step_low_value("105", "Klassengewichtung", is_weighting_step = TRUE))
+  expect_true(any(grepl("kalibrierungssensitiv", out)))
+})
+
+test_that("warn_if_threshold_step_low_value() meldet 'wenig Effekt' bei einer reinen Rangfolge-Metrik (AUC), unabhaengig vom Schritt-Typ", {
+  assign("baseline_measure_ids", c("classif.auc"), envir = globalenv())
+  out_weighting <- capture.output(warn_if_threshold_step_low_value("105", "Klassengewichtung", is_weighting_step = TRUE))
+  out_threshold <- capture.output(warn_if_threshold_step_low_value("130", "Schwellenwert-Tuning", is_weighting_step = FALSE))
+  # AUC ist schwellenwertunabhaengig UND NICHT kalibrierungssensitiv -> in
+  # BEIDEN Faellen "wenig/kein Effekt", nicht der Kalibrierungs-Sonderfall.
+  expect_true(any(grepl("wenig/keinen Effekt", out_weighting)))
+  expect_true(any(grepl("wenig/keinen Effekt", out_threshold)))
+  expect_false(any(grepl("kalibrierungssensitiv", out_weighting)))
+})
+
+test_that("warn_if_threshold_step_low_value() meldet 'relevant' bei einer schwellenwertabhaengigen Metrik (BAcc)", {
+  assign("baseline_measure_ids", c("classif.bacc"), envir = globalenv())
+  out <- capture.output(warn_if_threshold_step_low_value("130", "Schwellenwert-Tuning", is_weighting_step = FALSE))
+  expect_true(any(grepl("ist hier relevant", out)))
+})
+
 # --- db_connect()/Schema --------------------------------------------------
 
 test_that("db_connect() legt eine funktionsfaehige DB mit dem erwarteten Schema an", {
