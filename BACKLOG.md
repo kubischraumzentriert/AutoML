@@ -110,9 +110,30 @@ umgesetzt, P1-P3 folgen bei Bedarf in derselben angepassten Form.**
   `cv`-Spalte stimmt mit `sd/|mean|` überein, Determinismus bei fixem Seed.
   mlr3-INFO-Logging fürs Testfile auf "warn" gedrosselt (sauberer
   Testoutput). Volle Suite weiterhin grün (jetzt 7 Testdateien).
-  **Offen aus P0.1**: `learning_curve.R`, `multilabel.R`, Probability-/
-  Calibration-Helper, Config-Validierung (letztere existiert noch nicht,
-  siehe P0.3).
+- **`learning_curve.R` getestet** (6. Punkt aus P0.1): das bisher am
+  dichtesten mit dokumentierter Bugfix-Historie versehene Modul (IQR- statt
+  Range-Fix wegen eines Ausreissers bei `openml-credit-g`,
+  `min_rows_per_fold`-Filter wegen `wdbc-plateau-test`). Beide Fixes wurden
+  als kalibrierte synthetische Regressionstests nachgebaut (nicht nur
+  behauptet): PLATEAU-Erkennung bei reinem Rauschen, NOCH-STEIGEND trotz
+  eines extremen Ausreissers bei winzigem `n` (**mit Gegenprobe im Test
+  selbst**: `gain/volle_Spannweite` liegt unter der 10%-Schwelle - waere
+  also faelschlich PLATEAU gewesen -, `gain/IQR` bleibt klar darueber,
+  exakt die im Kopfkommentar beschriebene Bug-Signatur), sowie PLATEAU nach
+  Ausschluss eines unzuverlaessigen Frueh-Punkts (`min_rows_per_fold`).
+  Alle Test-Kurven wurden vorab per Skript kalibriert (nicht aus der Luft
+  gegriffen) - eine erste Version mit plausibel wirkenden, aber nicht
+  nachgerechneten Werten schlug bei 3 von 7 Fällen fehl, weil eine "typisch
+  aussehende" Lernkurvenform nicht automatisch der beabsichtigten
+  Klassifikation entspricht (die Regression laeuft ueber ALLE Punkte in
+  log(n)-Raum, ein einzelner frueher Anstieg kann den Gesamttrend staerker
+  dominieren als intuitiv erwartet). Neue
+  `tests/testthat/test-learning_curve.R`, 7 Fälle. `learning_curve()`
+  selbst (braucht echtes mlr3-Training) an einem winzigen synthetischen
+  Task verifiziert: `n` waechst mit `fraction`, Determinismus bei fixem
+  Seed. Volle Suite weiterhin grün (jetzt 8 Testdateien).
+  **Offen aus P0.1**: `multilabel.R`, Probability-/Calibration-Helper,
+  Config-Validierung (letztere existiert noch nicht, siehe P0.3).
 
 ## Zielbild
 
