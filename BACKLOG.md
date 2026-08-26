@@ -2,6 +2,47 @@
 
 Dieses Dokument übersetzt die aktuelle Bewertung des Classification-Templates in einen konkreten Arbeitsplan für Codex.
 
+## Hinweis zur Struktur-Prämisse (wichtig vor der Umsetzung von P1-P3)
+
+Dieses Repo ist **bewusst kein R-Paket** (siehe `TARGETS.md`: `DESCRIPTION`
+existiert nur als CI-Dependency-Manifest, keine installierbare Paketstruktur).
+Die in P1/P3 genannten Pfade (`R/000_config.R`, `R/classification/`,
+`NAMESPACE`, `vignettes/`) passen nicht zur tatsächlichen, absichtlichen
+Flach-Struktur (nummerierte Skripte im Root, siehe `WorkflowDescription.md`).
+Ein Umzug nach `R/` würde `source()`-Aufrufe in einem Dutzend+ abhängiger
+Projekte brechen (`ML_Learning/*`, `MLR3_Regression`), die diese Dateien über
+ihren aktuellen flachen Pfad einbinden. Die inhaltlichen Ziele von P1
+("fachliche Logik in kleine, testbare Funktionen lösen") werden hier bereits
+im etablierten Muster erreicht - eigenständige Helper-Dateien im Root
+(`ensemble_selection.R`, `group_resampling.R`, `sanity_checks.R`, jetzt auch
+`target_leak_audit_helpers.R`) statt eines Pfad-Umzugs. **P0 wird unten
+umgesetzt, P1-P3 folgen bei Bedarf in derselben angepassten Form.**
+
+## P0 - Status (2026-08-26)
+
+- **Testabdeckungs-Audit**: 4 der 5 genannten Kernbausteine hatten bereits
+  `testthat`-Tests (Class-Multiplier/Threshold-Tuning, Ensemble Selection,
+  Generalization Gap, Group Resampling). Einzige Lücke: **Leakage-Schutz**
+  (`015_target_leak_audit.R`) hatte keinen Unit-Test.
+- **CI-Trennung Unit-/Smoke-Test**: existierte bereits (`unit-tests`- und
+  `smoke-test`-Jobs in `.github/workflows/ci-smoke-test.yml`, seit 2026-08-19).
+- **Lücke geschlossen**: die drei eigenständig testbaren Kernberechnungen aus
+  `015_target_leak_audit.R` (Determinismus-Check, kumulative Top-k-Schwelle,
+  Cluster-Erkennung) wurden - ohne Verhaltensänderung - in eine neue Datei
+  `target_leak_audit_helpers.R` extrahiert (analog `group_resampling.R`).
+  `015_target_leak_audit.R` ruft sie jetzt auf, statt sie inline zu
+  definieren. Regressionsgetestet: byte-identisches Ergebnis gegen die
+  CI-Fixture UND das Template-eigene Projekt (health_condition: stress_level
+  42.9%/sleep_duration 34.8%, exakt wie zuvor dokumentiert).
+- **Neue Tests**: `tests/testthat/test-target_leak_audit_helpers.R`, 12 Faelle
+  mit bekanntem Ground Truth - u.a. die bereits dokumentierten realen
+  Positiv-/Negativ-Kontrollen als synthetische Regressionstests nachgebaut
+  (bike-sharing-Leak-PAAR, road-accident-risk-Spezifitätskontrolle,
+  lending-club-redundanter-Cluster). Volle Suite (`Rscript tests/testthat.R`):
+  alle 4 bestehenden + die neue Datei gruen.
+- CI-Workflow um `target_leak_audit_helpers.R` in der Fixture-Kopierliste
+  ergänzt (sonst würde `015` in der CI-Fixture ab jetzt fehlschlagen).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

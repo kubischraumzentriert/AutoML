@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
+source(file.path(project_dir, "target_leak_audit_helpers.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -149,18 +150,12 @@ if (length(suspects_importance) > 0) {
 # zusammen 88%, keins einzeln ueber 50% - ohne diese Bedingung waeren sie
 # faelschlich geflaggt worden). Nur die fuehrenden `leak_audit_cumulative_
 # max_k` Features werden ueberhaupt betrachtet.
-importance_dt[, cum_share := cumsum(share)]
+suspects_cumulative <- find_cumulative_suspects(
+  importance_dt, suspects_importance, leak_audit_cumulative_share_threshold, leak_audit_cumulative_max_k
+)
 if (length(suspects_importance) == 0) {
-  suspects_cumulative <- character(0)
   cat("Kein Feature ueber der Einzelschwelle - kumulative Erweiterung uebersprungen (kein Ausgangsverdacht, siehe Kommentar oben).\n")
 } else {
-  top_k_candidates <- importance_dt[seq_len(min(leak_audit_cumulative_max_k, nrow(importance_dt)))]
-  crossing_idx <- which(top_k_candidates$cum_share > leak_audit_cumulative_share_threshold)
-  suspects_cumulative <- if (length(crossing_idx) > 0) {
-    top_k_candidates$feature[seq_len(min(crossing_idx))]
-  } else {
-    character(0)
-  }
   new_cumulative_suspects <- setdiff(suspects_cumulative, suspects_importance)
   if (length(new_cumulative_suspects) > 0) {
     cat(sprintf(
@@ -207,23 +202,16 @@ if (length(numeric_cols_all) < 2) {
   cor_mat <- suppressWarnings(cor(train[, ..numeric_cols_all], use = "pairwise.complete.obs"))
   cor_mat[is.na(cor_mat)] <- 0
   diag(cor_mat) <- 1
-  hc <- hclust(as.dist(1 - abs(cor_mat)), method = "complete")
-  clusters <- cutree(hc, h = 1 - leak_audit_cluster_correlation_threshold)
-  cluster_dt <- data.table(feature = names(clusters), cluster_id = as.integer(clusters))
-  cluster_dt <- merge(cluster_dt, importance_dt[, .(feature, share)], by = "feature", all.x = TRUE)
-  cluster_sizes <- cluster_dt[, .(n = .N, total_share = sum(share, na.rm = TRUE)), by = cluster_id]
-  cluster_sizes <- cluster_sizes[n >= 2]
+  cluster_result <- find_correlated_clusters(cor_mat, importance_dt, leak_audit_cluster_correlation_threshold)
 
-  if (nrow(cluster_sizes) == 0) {
+  if (length(cluster_result$features) == 0) {
     cat(sprintf(
       "Keine Gruppe von >=2 korrelierten (|r|>=%.2f) Features gefunden.\n",
       leak_audit_cluster_correlation_threshold
     ))
   } else {
-    setorder(cluster_sizes, -total_share)
-    top_cluster_id <- cluster_sizes$cluster_id[1]
-    top_cluster_share <- cluster_sizes$total_share[1]
-    top_cluster_features <- cluster_dt[cluster_id == top_cluster_id, feature]
+    top_cluster_share <- cluster_result$total_share
+    top_cluster_features <- cluster_result$features
     cat(sprintf(
       "Groesster korrelierter Cluster (|r|>=%.2f): %s (%d Features, zusammen %.1f%% Gain-Importance)\n",
       leak_audit_cluster_correlation_threshold, paste(top_cluster_features, collapse = ", "),
@@ -276,19 +264,6 @@ low_card_cols <- feature_cols[vapply(feature_cols, function(c) {
   data.table::uniqueN(train[[c]]) <= leak_audit_cardinality_max
 }, logical(1))]
 
-compute_determinism <- function(col_name) {
-  dt <- data.table(value = as.character(train[[col_name]]), target = target_vals)
-  dt <- dt[!is.na(value)]
-  agg <- dt[, .(n = .N), by = .(value, target)]
-  agg[, total := sum(n), by = value]
-  agg[, share := n / total]
-  best <- agg[agg[, .I[which.max(share)], by = value]$V1]
-  data.table(
-    feature = col_name, value = best$value, n_group = best$total,
-    dominant_class = as.character(best$target), purity = best$share
-  )
-}
-
 if (length(low_card_cols) == 0) {
   # z.B. rein kontinuierliche Feature-Saetze (Spektralindizes etc.) ohne jede
   # Spalte <= leak_audit_cardinality_max - rbindlist(list()) haette hier eine
@@ -303,7 +278,9 @@ if (length(low_card_cols) == 0) {
     dominant_class = character(0), purity = numeric(0), flagged = logical(0)
   )
 } else {
-  determinism_dt <- rbindlist(lapply(low_card_cols, compute_determinism), fill = TRUE)
+  determinism_dt <- rbindlist(lapply(low_card_cols, function(col_name) {
+    compute_determinism(train[[col_name]], target_vals, col_name)
+  }), fill = TRUE)
   determinism_dt[, flagged := purity >= (1 - leak_audit_determinism_eps) & n_group >= leak_audit_determinism_min_n]
   setorder(determinism_dt, -flagged, -n_group)
 }
