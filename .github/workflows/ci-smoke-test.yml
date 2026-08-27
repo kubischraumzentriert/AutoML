@@ -35,7 +35,7 @@ jobs:
           cache-version: 1
           # Nur die fuer die getesteten Module benoetigten Pakete + testthat
           # selbst - deutlich schneller als der volle Smoke-Test-Dependency-Baum.
-          extra-packages: any::testthat, any::mlr3, any::mlr3measures, any::data.table
+          extra-packages: any::testthat, any::mlr3, any::mlr3measures, any::data.table, any::digest
 
       - name: testthat-Suite
         run: Rscript tests/testthat.R

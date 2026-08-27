@@ -411,6 +411,72 @@ die logische Fortsetzung, sollte aber als eigener, bewusst geplanter
 Arbeitsschritt behandelt werden statt beilaeufig mit P1.2 vermischt zu
 werden.
 
+## P1.3 - Status (2026-08-27)
+
+**Ziel laut ChatGPTs korrigiertem Plan**: "Was hat sich zwischen zwei
+Runs geändert?" - wenn praktikabel loggen: SHA256 Trainings-/Testdaten,
+Git Commit, R-Version, Config-Hash, Resampling-Hash, Feature-Set-
+Bezeichnung/-Hash, Modellartefakt-Checksumme, Environment-/Paketreferenz.
+
+**Umgesetzt**: neue Datei `provenance.R` mit `sha256_file(path)`,
+`hash_value(x)` (generischer SHA256-Hash beliebiger R-Objekte ueber deren
+Serialisierung) und `capture_run_provenance(...)`, die eine benannte
+Liste (Praefix `provenance.*`) baut, direkt uebergebbar an die
+BESTEHENDE `db_log_run_config()` (db_logging.R) - **keine neue Tabelle**,
+da Provenienzwerte konzeptionell zusaetzliche Konfigurationswerte EINES
+Runs sind und die vorhandene `run_config`-EAV-Tabelle das bereits
+verlustfrei abbildet. Git Commit ist bereits ueber `run_git_commit`
+(`get_git_commit()`) abgedeckt, hier bewusst nicht dupliziert.
+
+"Wenn praktikabel" woertlich umgesetzt: jeder Parameter ist optional
+(`NULL` = "hier nicht anwendbar", kein Fehler) - `train_data_path`/
+`test_data_path`/`model_artifact_path` (SHA256 der Datei),
+`config_env` (Environment ODER Liste, wird GEHASHT statt im Klartext
+geloggt - kann sensible lokale Pfade enthalten, der Hash beantwortet
+trotzdem "hat sich die Config geaendert?"), `resampling` (ein
+instanziiertes mlr3-`Resampling`-Objekt wird ueber seine TATSAECHLICHEN
+Fold-Zuweisungen gehasht, nicht ueber das R6-Objekt selbst - dessen
+interne Env-Referenzen waeren nicht reproduzierbar hashbar),
+`feature_set` (einzelner String -> Klartext-Label, Spaltennamen-Vektor
+-> Hash), `packages` (installierte Versionen im `name=version`-Format,
+Default deckt `mlr3`/`mlr3learners`/`mlr3extralearners`/
+`mlr3pipelines`/`ranger`/`lightgbm` ab). `R.version.string` immer
+enthalten.
+
+**Testabdeckung**: neue `tests/testthat/test-provenance.R`, 8 Faelle
+(Datei-Hash deterministisch/aendert sich bei Inhaltsaenderung,
+Objekt-Hash, leerer Minimalaufruf, Trainings-/Test-Hashes, Config-Hash
+UNABHAENGIG von Environment- vs. Listen-Eingabeform - dabei einen echten
+Bug gefunden und gefixt: `as.list()` auf einem Environment hat KEINE
+garantierte Reihenfolge, was `digest()` unterschiedliche Hashes fuer
+inhaltlich identische Configs liefern liess, je nachdem ob als
+Environment oder Liste uebergeben - Fix: Sortierung nach Namen vor dem
+Hashen -, Feature-Set Klartext-vs.-Hash-Verzweigung, Resampling-Hash
+haengt von der tatsaechlichen Fold-Zuweisung ab (zwei unabhaengig
+instanziierte CV-Resamplings hashen unterschiedlich), Paketversions-
+Format, End-to-End-Integrationstest gegen eine echte Test-DB via
+`db_log_run_config()`). Volle Suite weiterhin gruen (jetzt 14
+Testdateien). CI: `digest` zu `DESCRIPTION`s Imports UND zur
+`unit-tests`-Job-`extra-packages`-Zeile hinzugefuegt.
+
+**Bewusst kein Live-Demo in der echten `experiments.db`** (anders als
+bei P1.2): Provenienzwerte muessen ZUM ZEITPUNKT eines echten Laufs
+erfasst werden, nicht rueckwirkend an einen bereits abgeschlossenen
+historischen Run angehaengt werden - das wuerde falsche Provenienz
+vortaeuschen (z.B. einen "heutigen" Config-Hash an einen Lauf von vor
+Wochen haengen). Echte Nutzung beginnt beim naechsten Aufruf von
+`db_create_run()` in einem numerierten Skript, der `capture_run_provenance()`
+tatsaechlich einbindet - das ist NICHT Teil dieses Prototyps (kein
+bestehendes nummeriertes Skript wurde geaendert, analog zu
+`validate_config()`/P0.3: ein manuell einzubindendes Werkzeug).
+
+**Damit sind P1.1 (Prototyp), P1.2 (Schritt 1) und P1.3 aus ChatGPTs
+korrigiertem Plan umgesetzt.** Nicht angefasst bleiben P2 (DB-Housekeeping-
+Automatisierung, Classification-/Regression-Shared-Core-Analyse,
+Environment-Reproduzierbarkeit) und P3 (Versionierung/Releases,
+Publikationsbenchmark, hypothesengetriebene Modellpruefung) - nur nach
+expliziter Nutzeranfrage weiterzuverfolgen.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

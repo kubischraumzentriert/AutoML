@@ -23,6 +23,7 @@ Imports:
     DBI,
     RSQLite,
     uuid,
+    digest,
     DiceKriging,
     rgenoud,
     nloptr,
