@@ -189,6 +189,36 @@ CREATE TABLE IF NOT EXISTS prediction_prob (
   pprob_value REAL NOT NULL
 );
 
+-- P1.2 (Evidence Registry, siehe BACKLOG.md): maschinenlesbares Log neuer
+-- Workflow-/Literatur-Befunde, ERGAENZEND zu (nicht Ersatz fuer)
+-- TARGETS.md/README_DETAILS.md/SYSTEMATIC_EVALUATION.md/Statusankern.
+-- Bewusst OHNE Fremdschluessel auf project/workflow/run/model_config: ein
+-- Befund bezieht sich oft auf eine ganze Roadmap-Frage ueber mehrere Runs/
+-- Projekte hinweg (z.B. "TabM getestet, negativ, Korrelation 0.975") statt
+-- auf einen einzelnen mlr3-Lauf - eine Pflicht-FK haette hier erzwungen,
+-- vorher einen passenden run/model_config anzulegen, wo keiner sinnvoll
+-- existiert. `evid_project` ist deshalb reiner Text (Projektordnername),
+-- keine Referenz auf `project.proj_id`.
+CREATE TABLE IF NOT EXISTS evidence (
+  evid_seq INTEGER PRIMARY KEY,
+  evid_id TEXT NOT NULL UNIQUE,
+  evid_project TEXT NOT NULL,
+  evid_dataset_type TEXT,
+  evid_module TEXT NOT NULL,
+  evid_role TEXT NOT NULL CHECK (evid_role IN ('score_lever', 'trust_gate', 'workflow_automation', 'documentation')),
+  evid_metric TEXT,
+  evid_baseline_value REAL,
+  evid_result_value REAL,
+  evid_delta REAL,
+  evid_runtime_seconds REAL,
+  evid_status TEXT NOT NULL CHECK (evid_status IN ('confirmed', 'core_finding', 'neutral', 'negative', 'not_applicable', 'open')),
+  evid_backport_status TEXT,
+  evid_evidence_source TEXT,
+  evid_git_commit TEXT,
+  evid_notes TEXT,
+  evid_created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_workflow_proj ON workflow (wf_proj_id);
 CREATE INDEX IF NOT EXISTS idx_run_wf ON run (run_wf_id);
 CREATE INDEX IF NOT EXISTS idx_run_config_run ON run_config (rconf_run_id);
@@ -201,6 +231,9 @@ CREATE INDEX IF NOT EXISTS idx_submission_result_mconf ON submission_result (sub
 CREATE INDEX IF NOT EXISTS idx_literature_result_source ON literature_benchmark_result (lres_source_id);
 CREATE INDEX IF NOT EXISTS idx_literature_result_dataset ON literature_benchmark_result (lres_dataset_name);
 CREATE INDEX IF NOT EXISTS idx_literature_result_method ON literature_benchmark_result (lres_method);
+CREATE INDEX IF NOT EXISTS idx_evidence_project ON evidence (evid_project);
+CREATE INDEX IF NOT EXISTS idx_evidence_module ON evidence (evid_module);
+CREATE INDEX IF NOT EXISTS idx_evidence_status ON evidence (evid_status);
 CREATE INDEX IF NOT EXISTS idx_prediction_mconf ON prediction (pred_mconf_id);
 CREATE INDEX IF NOT EXISTS idx_prediction_rsmp ON prediction (pred_rsmp_id);
 CREATE INDEX IF NOT EXISTS idx_prediction_row ON prediction (pred_row_id);

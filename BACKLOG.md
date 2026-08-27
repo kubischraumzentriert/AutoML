@@ -346,6 +346,71 @@ Tuning-Budget für Arm 3. Vor einer Verallgemeinerung dieses Befunds auf
 andere Projekte wäre eine Wiederholung auf einem 2. Datensatz nötig
 (P1.1 mit vollem Scope) - aktuell nicht angefordert.
 
+## P1.2 - Status (2026-08-27)
+
+**Ziel laut ChatGPTs korrigiertem Plan**: Experimentwissen verteilt sich
+aktuell auf `TARGETS.md`, `README_DETAILS.md`, `SYSTEMATIC_EVALUATION.md`,
+Projekt-READMEs, Statusanker, Commits und die Experiment-DB - eine
+maschinenlesbare "Evidence Registry" als zusaetzliche, strukturierte
+Quelle fuer neue Befunde. Der Plan selbst schreibt ein 3-Schritte-Vorgehen
+vor: "1. nur neue Befunde strukturiert loggen, 2. wichtige historische
+Befunde nachziehen, 3. SYSTEMATIC_EVALUATION.md automatisch erzeugen.
+**Nicht sofort alles migrieren.**"
+
+**Scope dieses Prototyps**: NUR Schritt 1. Schritt 2 (rueckwirkendes
+Nachtragen von `SYSTEMATIC_EVALUATION.md`s ~20 Projekten x 9 Modulen in
+die Registry) und Schritt 3 (automatische Generierung dieser Datei aus der
+Registry) sind NICHT umgesetzt - beides waere angesichts der Detailtiefe
+von `SYSTEMATIC_EVALUATION.md` (Fussnoten, Korrekturvermerke, Methodik-
+Hinweise je Zelle) ein eigener, erheblich groesserer Arbeitsschritt, den
+ChatGPTs eigener Plan ausdruecklich vertagt.
+
+**Umgesetzt**:
+- Neue Tabelle `evidence` in `db_schema.sql` (additiv, `CREATE TABLE IF
+  NOT EXISTS`, wie der Rest des Schemas). Bewusst OHNE Fremdschluessel auf
+  `project`/`workflow`/`run`/`model_config` - ein Befund bezieht sich oft
+  auf eine ganze Roadmap-Frage ueber mehrere Projekte/Laeufe hinweg (z.B.
+  "TabM getestet, negativ") statt auf einen einzelnen mlr3-Lauf.
+  `evid_project` ist deshalb reiner Text, keine FK. Felder wie im Plan
+  vorgeschlagen: `evid_role` (`score_lever`/`trust_gate`/
+  `workflow_automation`/`documentation`), `evid_status`
+  (`confirmed`/`core_finding`/`neutral`/`negative`/`not_applicable`/`open`),
+  Metrik/Baseline/Ergebnis/Delta/Laufzeit, Backport-Status, Quelle,
+  Git-Commit, Notizen.
+- Neue Datei `evidence_registry.R`: `db_log_evidence(con, project, module,
+  role, status, ...)` (validiert role/status, verstaendliche
+  Fehlermeldungen bei Tippfehlern) und `evidence_registry_summary(con)`
+  (liest die komplette Tabelle als `data.table`, neueste zuerst).
+- `merge_project_experiments.R`: `evidence` zur `merge_tables`-Liste
+  hinzugefuegt (keine FK-Abhaengigkeit, daher gefahrlos anfuegbar) - neue
+  Befunde aus einzelnen Projekt-DBs fliessen damit wie die anderen
+  Tabellen in die zentrale, gemergte DB (ADR-001: lokale Projekt-DBs,
+  keine geteilte Live-DB - der Merge bleibt ein expliziter, manueller
+  Schritt).
+- Testabdeckung: neue `tests/testthat/test-evidence_registry.R`, 5 Faelle
+  (Positivkontrolle mit allen Feldern, Minimalaufruf mit optionalen
+  NA-Feldern, 3 Fehlerfaelle fuer ungueltiges `role`/`status`/leeres
+  `project`, Sortierreihenfolge von `evidence_registry_summary()`). Volle
+  Suite weiterhin gruen (jetzt 12 Testdateien).
+- **Live demonstriert**: 2 erste echte Eintraege in die tatsaechliche
+  `health_condition`-`experiments.db` geloggt (nicht nur in einer
+  Test-DB) - der P1.1-Kernbefund (`trust_gate`, `core_finding`, BAcc
+  0.8633 -> 0.9480, delta +0.0847) und ein Selbstverweis auf die
+  Umsetzung von P1.2 selbst (`workflow_automation`, `confirmed`).
+
+**Bewusst ausgelassen**: keine neue SQL-View fuer die `evidence`-Tabelle
+(die Tabelle ist bereits flach/direkt abfragbar, eine View haette hier
+keinen echten Mehrwert gehabt, anders als bei den Join-lastigen
+Tabellen weiter oben im Schema). Keine automatische Aufrufstelle in einem
+bestehenden nummerierten Skript - wie bei `validate_config()` (P0.3) ein
+manuell aufzurufendes Werkzeug, kein Teil der Pipeline.
+
+**Naechster moeglicher Schritt (nicht angefordert)**: Schritt 2 (historische
+Befunde aus `SYSTEMATIC_EVALUATION.md` in die Registry nachtragen) waere
+die logische Fortsetzung, sollte aber als eigener, bewusst geplanter
+Arbeitsschritt behandelt werden statt beilaeufig mit P1.2 vermischt zu
+werden.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

@@ -75,7 +75,11 @@ cat("\n")
 merge_tables <- c(
   project = "proj_id", workflow = "wf_id", run = "run_id", run_config = "rconf_id",
   model_config = "mconf_id", resampling = "rsmp_id", hyperparam = "hparam_id",
-  metric_result = "mres_id"
+  metric_result = "mres_id",
+  # P1.2 Evidence Registry (siehe BACKLOG.md): keine FK-Abhaengigkeit zu den
+  # Tabellen oben, deshalb an beliebiger Stelle in der Liste einfuegbar -
+  # ans Ende gesetzt, um den bestehenden Lauf nicht umzusortieren.
+  evidence = "evid_id"
 )
 
 if (!file.exists(target_db_path)) {
