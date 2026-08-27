@@ -477,6 +477,76 @@ Environment-Reproduzierbarkeit) und P3 (Versionierung/Releases,
 Publikationsbenchmark, hypothesengetriebene Modellpruefung) - nur nach
 expliziter Nutzeranfrage weiterzuverfolgen.
 
+## P2.1 - Status (2026-08-27)
+
+**Ziel laut ChatGPTs korrigiertem Plan**: ein lokaler, rein lesender
+Diagnose-Helfer `db_housekeeping_check()` fuer die zentrale, gemergte
+Experiment-DB - zeigt letzte Merge-Zeit, Projekt-DBs mit Aenderungen,
+fehlende Projekte, neue Runs, moegliche Duplikate, unvollstaendige Runs,
+Runs ohne Git Commit, optional Backup-Anzahl/Speicherverbrauch. "Die
+Diagnose darf keine DB veraendern. Ein tatsaechlicher Merge bleibt bewusst
+explizit."
+
+**Umgesetzt**: neue Datei `db_housekeeping.R` mit `db_housekeeping_check(
+target = target_db_path, sources = NULL)`. Deckt alle im Plan genannten
+Punkte ab: letzte Aenderung der Ziel-DB (Datei-mtime als Proxy fuer
+"letzter Merge"), fehlende Projekte (lokal vorhanden, nie gemergt), neue
+Runs (Projekt bereits gemergt, aber lokale `run_id`s, die die Ziel-DB noch
+nicht kennt), moegliche Duplikate (mehrere `metric_result`-Zeilen fuer
+dieselbe Model-Config/Metrik/Fold-Kombination - im Schema nicht per
+Constraint verhindert), unvollstaendige Runs (`run_finished_at IS NULL`),
+Runs ohne Git Commit, Backup-Anzahl/-Groesse. Gibt zusaetzlich zur
+Konsolenausgabe eine Liste von `data.table`s zurueck (programmatisch
+weiterverarbeitbar).
+
+**Rein lesend GARANTIERT, nicht nur per Konvention**: beide
+DB-Verbindungen (Ziel- und Quell-DBs) werden mit `flags = RSQLite::SQLITE_RO`
+geoeffnet - ein versehentlicher Schreibversuch wuerde auf DB-Ebene
+fehlschlagen, nicht nur "wir haben halt kein `dbExecute()` aufgerufen".
+
+**`discover_source_db_paths()` + Pfad-Konstanten aus
+`merge_project_experiments.R` HIERHER verschoben, nicht dupliziert** -
+Diagnose und tatsaechlicher Merge muessen dieselben Projekte finden, sonst
+drifted eine Kopie unbemerkt von der anderen auseinander (Analogie zu
+`target_leak_audit_helpers.R`, P0.1). `merge_project_experiments.R`
+sourced jetzt `db_housekeeping.R` statt die Logik selbst zu definieren -
+Verhalten regressionsgetestet unveraendert (Syntax-Check + identisches
+Discovery-Verhalten in `test-db_housekeeping.R`).
+
+**Live gegen die echte zentrale DB verifiziert** (rein lesend, keine
+Aenderung): fand 12 lokale Projekte, die noch nie gemergt wurden (u.a.
+mehrere Regressions-Projekte - siehe Hinweis unten), 10 neue lokale Runs
+bei `openml-credit-g`, 3 unvollstaendige Runs (abgebrochene Skripte), 129
+Runs ohne Git Commit (aeltere Laeufe von vor der Commit-Protokollierung),
+0 Duplikate, 9 Backup-Dateien mit 153.6 MB Gesamtgroesse (Hinweis auf
+manuelles Aufraeumen ab >3 Backups). **Kein Merge wurde durchgefuehrt** -
+das bleibt bewusst der explizite, separate Aufruf von
+`merge_project_experiments.R`.
+
+**Testabdeckung**: neue `tests/testthat/test-db_housekeeping.R`, 13
+Faelle gegen frische, ueber `db_connect()`/`db_schema.sql` aufgebaute
+Test-DBs (Discovery-Logik, jeder der 5 Befund-Typen einzeln, "saubere DB
+meldet nichts", Fehlermeldung bei fehlender Ziel-DB, Read-Only-Garantie,
+sowie ein dabei gefundener Randfall-Bug: `sub("\\.db$", ...)` auf einem
+Zielpfad OHNE `.db`-Endung war ein No-op, wodurch `Sys.glob()` die
+Ziel-DB-Datei selbst faelschlich als eigenes Backup gezaehlt haette -
+in der Produktion nie sichtbar, da `experiments.db` immer auf `.db`
+endet, aber ein echter Bug, der durch den Test mit einer `.sqlite`-Endung
+sichtbar wurde - gefixt: Backup-Suche nur bei tatsaechlicher `.db`-Endung).
+Volle Suite weiterhin gruen (jetzt 15 Testdateien).
+
+**Nebenbefund, NICHT behoben (ausserhalb des Scopes von P2.1)**: unter den
+12 "fehlenden Projekten" sind mehrere erkennbare REGRESSIONS-Projekte
+(z.B. `WineQualityDataset`, `openml-diamonds-regression`,
+`openml-house-prices-regression`, `playground-series-s5e9`) - das
+bestehende, unveraendert uebernommene Discovery-Verhalten von
+`merge_project_experiments.R` durchsucht `R_Workspace`/`ML_Learning`
+projekt-typ-unabhaengig und wuerde diese beim naechsten Merge in die
+KLASSIFIKATIONS-Ziel-DB einsortieren. Ob das gewollt ist (eine Datenbank
+fuer alle mlr3-Projekte) oder ein latenter Bug (Regression sollte in
+`MLR3_Regression`s eigene Ziel-DB gemergt werden), war nicht Teil dieser
+Aufgabe und wird hier nur dokumentiert, nicht entschieden.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

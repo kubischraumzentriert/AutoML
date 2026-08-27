@@ -41,27 +41,12 @@ suppressPackageStartupMessages({
 # um kein Projekt versehentlich mit sich selbst oder dem falschen Template
 # zu mergen.
 
-target_db_path <- "C:/Users/HP/OneDrive/Dokumente/R_Workspace/MLR3_Classifikation/_artifacts/experiments.db"
-
-project_roots <- c(
-  "C:/Users/HP/OneDrive/Dokumente/R_Workspace",
-  "C:/Users/HP/ML_Learning"
-)
-exclude_dirs <- c("MLR3_Classifikation", "MLR3_Regression")
-
-discover_source_db_paths <- function(roots, exclude, target) {
-  target_norm <- normalizePath(target, winslash = "/", mustWork = FALSE)
-  found <- unlist(lapply(roots, function(root) {
-    if (!dir.exists(root)) return(character(0))
-    Sys.glob(file.path(root, "*", "_artifacts", "experiments.db"))
-  }))
-  found <- unique(normalizePath(found, winslash = "/", mustWork = FALSE))
-  found <- found[found != target_norm]
-  project_dir_name <- basename(dirname(dirname(found)))
-  found <- found[!project_dir_name %in% exclude]
-  project_dir_name <- basename(dirname(dirname(found)))
-  setNames(found, project_dir_name)
-}
+# target_db_path/project_roots/exclude_dirs/discover_source_db_paths() sind
+# nach db_housekeeping.R ausgelagert (P2.1) - dieses Skript UND
+# db_housekeeping_check() muessen dieselben Projekte finden, sonst driften
+# Diagnose und tatsaechlicher Merge auseinander. Verhalten unveraendert,
+# nur an einer Stelle definiert statt dupliziert.
+source("db_housekeeping.R")
 
 source_db_paths <- discover_source_db_paths(project_roots, exclude_dirs, target_db_path)
 cat("Gefundene Quell-DBs (", length(source_db_paths), "):\n", sep = "")
