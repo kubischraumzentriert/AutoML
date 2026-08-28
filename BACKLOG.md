@@ -635,6 +635,46 @@ Publikationsbenchmark, hypothesengetriebene Modellpruefung) bleibt aus dem
 gesamten Plan unangetastet - nur nach expliziter Nutzeranfrage
 weiterzuverfolgen.
 
+## P3 - Status (2026-08-27)
+
+**Ziel laut ChatGPTs korrigiertem Plan**: P3 hat 3 Checklisten-Punkte
+("Versionierung/Releases vorbereiten", "Publikationsbenchmark
+standardisieren", "neue Modellfamilien nur noch hypothesengetrieben
+pruefen"), aber nur der DRITTE Punkt ist im Plan-Dokument mit einer
+konkreten Checkliste ausgefuehrt (Hypothese, Datensatztyp, Baseline,
+Primaermetrik, Diversitaetsmetrik, Laufzeitbudget, Abbruchkriterium,
+Backport-Kriterium). Die ersten beiden bleiben im Plan-Dokument OHNE
+Detailausfuehrung.
+
+**Scope-Entscheidung**: per Rueckfrage an den Nutzer (unbeantwortet)
+mit der empfohlenen Option fortgefahren - NUR den klar spezifizierten
+dritten Punkt umgesetzt. "Versionierung/Releases vorbereiten" und
+"Publikationsbenchmark standardisieren" bleiben UNANGETASTET, bis der
+Nutzer sie konkretisiert (der Plan selbst liefert dafuer keine
+verwertbare Spezifikation - ein Umsetzungsversuch ohne Konkretisierung
+haette geraten statt spezifiziert).
+
+**Umgesetzt**: neue, reine Doku-Datei `MODEL_HYPOTHESIS_CRITERIA.md` -
+kodifiziert eine Regel, die dieses Projekt bereits informell befolgt hat
+(kein neues Verhalten, nur explizit aufgeschrieben). 8 Pflichtpunkte vor
+jedem neuen Modellkandidaten-Test (Hypothese/Datensatztyp/Baseline/
+Primaermetrik/Diversitaetsmetrik+Schwelle/Laufzeitbudget inkl.
+Smoke-Test-Vorabverifikation/Abbruchkriterium/Backport-Kriterium via
+Verweis auf `adr/003-backport-after-confirmation.md`). Mit einer
+Beispieltabelle retroactiv gegen 4 bereits gelaufene Tests dieser Woche
+(TabPFN, TabM, Hyperband - alle negativ; Multi-Layer Stacking - positiv,
+ADR-003-Schwelle erreicht) gefuellt, um zu zeigen, wie ausgefuellte
+Kriterien aussehen, statt nur abstrakt zu bleiben.
+
+**Damit ist aus ChatGPTs korrigiertem Plan alles umgesetzt, was das
+Dokument selbst konkret spezifiziert hat** - P0 (vollstaendig), P1.1
+(Prototyp), P1.2 (Schritt 1 von 3), P1.3, P2.1-P2.3, sowie der
+spezifizierte Teil von P3. Offen bleiben ausschliesslich die zwei nicht
+naeher spezifizierten P3-Punkte (Versionierung/Releases,
+Publikationsbenchmark) sowie P1.2s Schritte 2/3 (historisches Nachtragen,
+automatische Generierung) - alle vier bewusst nicht angefasst, bis der
+Nutzer sie konkret anfordert.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
