@@ -547,6 +547,58 @@ fuer alle mlr3-Projekte) oder ein latenter Bug (Regression sollte in
 `MLR3_Regression`s eigene Ziel-DB gemergt werden), war nicht Teil dieser
 Aufgabe und wird hier nur dokumentiert, nicht entschieden.
 
+## P2.2 - Status (2026-08-27)
+
+**Ziel laut ChatGPTs korrigiertem Plan**: NICHT sofort einen gemeinsamen
+Package-Core bauen - zuerst per Vergleichstabelle
+(`Component | Classification | Regression | identical | candidate`)
+ehrlich pruefen, welche von 9 genannten Komponenten (Experiment Logging,
+DB Schema, Runtime Helpers, Resampling, Generalization Gap, Provenienz,
+Config Validation, Evidence Registry, Artifact Management) tatsaechlich
+identisch sind. Nur extrahieren, wenn reale Doppelpflege ein Problem
+darstellt.
+
+**Umgesetzt**: neue, reine Analyse-Datei `SHARED_CORE_ANALYSIS.md` -
+**kein Code geaendert**, keine Extraktion durchgefuehrt. Methodik: jede
+der 9 Komponenten wurde tatsaechlich gegen die entsprechende Datei in
+`MLR3_Regression` diff't (nicht aus Erinnerung/Doku geschaetzt) -
+Funktionsnamen verglichen, bei kleinen Diffs der komplette
+Funktionskoerper Zeile fuer Zeile.
+
+**Kernbefund**: nur 4 von 9 Komponenten existieren ueberhaupt in BEIDEN
+Repos (Experiment Logging, DB Schema, Runtime Helpers, Resampling) - nur
+dort ist "identisch vs. dupliziert" ueberhaupt eine sinnvolle Frage. Bei
+diesen 4 ist der KERN tatsaechlich weitgehend identisch bis
+byte-identisch (`set_group_role()` in `group_resampling.R` ist
+byte-identisch, `run_timed_benchmark()` in `005_benchmark_runtime.R`
+unterscheidet sich nur um 6 Zeilen, die 11 Kern-Tabellen in `db_schema.sql`
+sind strukturell deckungsgleich, alle 18 gemeinsamen `db_logging.R`-
+Funktionsnamen sind identisch). Die restlichen 5 Komponenten
+(Generalization Gap, Provenienz, Config Validation, Evidence Registry,
+Artifact Management) existieren bislang NUR in `MLR3_Classifikation`
+(diese Woche als P0/P1/P2.1 entstanden) - dort gibt es nichts zu
+deduplizieren, das ist stattdessen eine spaetere Backport-Frage, keine
+Extraktions-Frage. Diese Unterscheidung stand nicht explizit im Plan und
+wurde als methodischer Hinweis in der Analyse ergaenzt.
+
+**Konkreter Beleg fuer echtes Doppelpflege-Risiko gefunden**: laut
+eigenem Kopfkommentar in `MLR3_Regression/merge_project_experiments.R`
+war diese Datei bis 2026-08-08 eine "unangepasste Kopie der
+Klassifikations-Version" - `target_db_path` zeigte faelschlich auf die
+KLASSIFIKATIONS-DB statt auf die eigene. Genau das Szenario, vor dem eine
+Shared-Core-Extraktion schuetzen wuerde, und genau das im Plan geforderte
+Kriterium ("nur wenn reale Doppelpflege ein Problem darstellt").
+`db_logging.R`/`db_schema.sql` haben strukturell dasselbe Risikoprofil.
+
+**Empfehlung (dokumentiert, NICHT umgesetzt)**: 3 Kandidaten fuer eine
+spaetere, bewusste Extraktion, priorisiert nach Risiko/Aufwand -
+`db_schema.sql`-Kern (risikoaermste, reine Struktur), `db_logging.R`-
+Kernfunktionen (groesster potenzieller Schaden, aber aufwendigster
+Umbau), `group_resampling.R`/`run_timed_benchmark()` (kleinster erster
+Schritt). Keine dieser Extraktionen wurde in dieser Session begonnen -
+der Plan verlangt ausdruecklich, erst bei einer KONKRETEN
+Doppelpflege-Situation zu extrahieren, nicht prophylaktisch.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
