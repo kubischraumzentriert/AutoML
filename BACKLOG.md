@@ -675,6 +675,43 @@ Publikationsbenchmark) sowie P1.2s Schritte 2/3 (historisches Nachtragen,
 automatische Generierung) - alle vier bewusst nicht angefasst, bis der
 Nutzer sie konkret anfordert.
 
+## Git-Tags pro Backlog-Meilenstein (2026-08-27, "Versionierung/Releases")
+
+Konkretisierung des Nutzers fuer den bislang unspezifizierten P3-Punkt
+"Versionierung/Releases vorbereiten": **ein annotierter Git-Tag pro
+erledigtem Backlog-Meilenstein**, gesetzt auf den Commit, der den
+jeweiligen Meilenstein abschliesst (nicht auf spaetere Folge-Commits wie
+Statusanker-Updates). Kein semantisches Versionsschema (`v1.2.3`) - dieses
+Template hat keine Versionsnummer im klassischen Sinn (kein installierbares
+Paket, siehe `DESCRIPTION`-Kopfkommentar), sondern fortlaufende
+Meilensteine. Tag-Namensschema: `backlog-<punkt>` (z.B. `backlog-p1.2`),
+bei P3-Teilpunkten ohne Nummer ein sprechendes Suffix (z.B.
+`backlog-p3-hypothesis-criteria`).
+
+**Zweck**: ein `git checkout <tag>` bringt den exakten Stand direkt nach
+Abschluss eines Meilensteins zurueck - nuetzlich, um z.B. "wie sah das
+Repo aus, bevor P1.2 dazukam" zu beantworten, ohne Commit-Hashes aus
+`BACKLOG.md`-Prosa heraussuchen zu muessen.
+
+**Rueckwirkend gesetzt** fuer alle in dieser Session abgeschlossenen
+Meilensteine (Tag -> Commit):
+
+| Tag | Commit | Meilenstein |
+|---|---|---|
+| `backlog-p0` | `9914c44` | P0 komplett (P0.1 Testabdeckung, P0.2 Helper-Haertung, P0.3 `validate_config()`) |
+| `backlog-p1.1` | `af154a0` | P1.1-Prototyp (Full-Workflow Outer Evaluation) |
+| `backlog-p1.2` | `c51c45d` | P1.2 Schritt 1 (Evidence Registry) |
+| `backlog-p1.3` | `b37fbc8` | P1.3 (Experiment-/Daten-Provenienz) |
+| `backlog-p2.1` | `0bdc776` | P2.1 (`db_housekeeping_check()`) |
+| `backlog-p2.2` | `04f810f` | P2.2 (Shared-Core-Analyse) |
+| `backlog-p2.3` | `fb0c244` | P2.3 (Environment-Referenzpfad-Doku) |
+| `backlog-p3-hypothesis-criteria` | `96051c2` | P3, spezifizierter Teil (Modell-Hypothesen-Kriterien) |
+
+**Ab jetzt laufend**: nach jedem zukuenftigen abgeschlossenen
+Backlog-Meilenstein wird direkt nach dem finalen Commit (vor dem naechsten
+Punkt) ein neuer annotierter Tag gesetzt und gepusht - Teil des
+`backlog-item-workflow`-Skills, nicht ein separat anzustossender Schritt.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
