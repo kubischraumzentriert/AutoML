@@ -712,6 +712,58 @@ Backlog-Meilenstein wird direkt nach dem finalen Commit (vor dem naechsten
 Punkt) ein neuer annotierter Tag gesetzt und gepusht - Teil des
 `backlog-item-workflow`-Skills, nicht ein separat anzustossender Schritt.
 
+## P1.2 Schritt 2 - Status (2026-08-27): historisches Nachtragen
+
+**Nutzeranfrage**: "wir sollten die Historie nachtragen d.h. migrieren"
+- konkretisiert den bislang vertagten Schritt 2 aus ChatGPTs 3-Schritte-
+Vorgehen fuer die Evidence Registry ("wichtige historische Befunde
+nachziehen").
+
+**Umgesetzt**: neues, einmaliges Migrations-Skript
+`migrate_systematic_evaluation_to_evidence.R` (Repo-Wurzel, kein Teil der
+nummerierten Pipeline, analog zu `merge_project_experiments.R`) - liest
+die grosse Projekt-x-Modul-Tabelle aus `SYSTEMATIC_EVALUATION.md` (Stand
+"alle Zellen aufgeloest", 2026-08-15) und loggt jede Zelle mit einem
+echten Legenden-Symbol (✓/✓✓/~/✗) als eigene `evidence`-Zeile via
+`db_log_evidence()`.
+
+**Scope-Entscheidung (bewusst getroffen, nicht nachgefragt)**: `—`-Zellen
+(strukturelle Nicht-Anwendbarkeit - das Modul existiert schlicht nicht im
+jeweiligen Projektordner) wurden NICHT migriert - das waeren >140
+inhaltsleere Zeilen gewesen, kein Befund im Sinn von "wichtige historische
+Befunde". Numerische Werte (AUC, BAcc, Prozentsaetze, z-Werte) wurden
+NICHT automatisiert aus dem Fliesstext in
+`evid_baseline_value`/`evid_result_value`/`evid_delta` geparst - bei
+uneinheitlicher Prosa (unterschiedliche Metriken, mal ein, mal zwei Werte
+pro Zelle) waere das fehleranfaellig gewesen und haette stillschweigend
+falsche Zahlen erzeugt. Stattdessen bleibt der urspruengliche Zellentext
+(leicht gekuerzt um reine Klammer-Boilerplate) vollstaendig als `notes`
+erhalten - durchsuchbar, aber nicht falsch-praezise.
+
+**Rollen-/Status-Zuordnung** (fest je Spalte/Symbol): Leak-Audit (015),
+Adversarial Validation (115), Split-Size-Sensitivity (022),
+Learning-Curve (023), Seed-Stabilitaet (092), Generalisierungsluecke
+(136) -> `trust_gate`; Ensemble Selection (148/149), Threshold-Tuning
+(130) -> `score_lever`; Multi-Label-Workflow (021) -> `workflow_automation`.
+✓ -> `confirmed`, ✓✓ -> `core_finding`, ~ -> `neutral`, ✗ -> `negative`.
+
+**Ergebnis**: 56 Zeilen migriert (manuell aus der Tabelle abgezaehlt und
+programmatisch bestaetigt - Uebereinstimmung), Verteilung: 47
+`confirmed`, 6 `core_finding` (u.a. der CreditScoringChallenge-Leak, der
+geoai-Adversarial-Validation-Fund, `health_condition`s Ensemble-Selection-
+UND Threshold-Tuning-Kernbefunde, `s6e8`s Live-Kaggle-Bestaetigung, der
+wdbc-plateau-test-Plateau-Fund), 2 `negative` (s6e5/s5e12s abgelehnte
+Ensemble-Alternativen), 1 `neutral` (s5e12s strukturell uebersprungenes
+Threshold-Tuning). `evidence_source` einheitlich auf
+"SYSTEMATIC_EVALUATION.md (historischer Backfill, P1.2 Schritt 2,
+2026-08-27)" gesetzt, damit die Migration in der Registry selbst als
+eigene, unterscheidbare Charge erkennbar bleibt.
+
+**`SYSTEMATIC_EVALUATION.md` selbst bleibt unveraendert** - dieses
+Skript kopiert Befunde IN die Registry, ersetzt die Markdown-Tabelle
+nicht (das waere Schritt 3, automatische Generierung, weiterhin nicht
+umgesetzt).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
