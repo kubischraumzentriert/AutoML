@@ -888,6 +888,142 @@ Evidence-Registry-Generator (P1.2 Schritt 3); E) Publikationsvorbereitung
 Runs mit Provenienz - explizit vom Bewertungsdokument ausgeschlossen
 ("Nicht rueckwirkend historische Runs 'nachbessern'").
 
+### Phase C - Status (2026-08-28): Outer Evaluation auf 7 Datensaetze/Kategorien
+
+**Punkte 8+9 (Datensaetze definieren + Auswahl begruenden)**: statt neuer
+Datensaetze werden bewusst BEREITS ERKUNDETE Projekte aus diesem Templates
+eigener Historie wiederverwendet (kein neues Setup-Risiko, Balance/Groesse/
+Shift-Eigenschaften bereits bekannt). 7 Kategorien (A-G laut Bewertungsdok.)
+-> 7 Projekte, `health_condition` wird als bereits vorhandener P1.1-
+Prototyp WIEDERVERWENDET (kein Rerun):
+
+| Kategorie | Projekt | Begruendung |
+|---|---|---|
+| A. binaer, ausgeglichen* | `openml-credit-g` | binaer, BAcc-primaer, moderat unausgeglichen (~70/30) |
+| B. binaer, unausgeglichen | `CreditScoringChallenge` | ~1.8% positive Klasse, extrem unausgeglichen |
+| C. multiclass | `health_condition` | **wiederverwendet aus P1.1**, kein Rerun |
+| D. kleiner Datensatz | `wdbc-plateau-test` | klassisch klein, sauber trennbar |
+| E. groesserer Datensatz | `PumpItUp` | ~59k Zeilen, 3 Klassen |
+| F. Covariate Shift | `geoai-aquaculture-pond-identification-challenge` | bereits bestaetigter extremer Shift (AUC 0.99998) |
+| G. Group-/Time-Struktur | `openml-eeg-eye-state-timeseries` | Time-Block-Struktur, Group-CV-Effekt bereits gezeigt |
+
+\* Kein Projekt in der Historie ist ein textbuchmaessig EXAKT 50/50
+balanciertes binaeres Problem - `openml-credit-g` (70/30) ist die
+naechstliegende verfuegbare Naeherung; real-world-Datensaetze sind selten
+exakt balanciert, die Kategorien sollen Diversitaet abbilden, keine
+akademische Reinheit.
+
+**Nutzerentscheidung zur Ausfuehrung**: alle 6 neuen Laeufe nacheinander im
+Hintergrund, laufende Rueckmeldung statt Einzelbestaetigung je Datensatz.
+
+**Notwendige Generalisierung VOR der Ausfuehrung** (waehrend der Vorbereitung
+entdeckt, nicht Teil des urspruenglichen P1.1-Scripts): der P1.1-Prototyp
+war fest auf `health_condition` (BAcc-primaer, `class_multiplier_tuning.R`
+vorhanden) zugeschnitten. Eine Pruefung der 6 Zielprojekte zeigte zwei
+strukturelle Unterschiede, die eine 1:1-Kopie unehrlich gemacht haetten:
+- `predictingsmartphoneAddiction_s6e8` (urspruenglich fuer Kategorie A
+  vorgesehen) und `geoai-aquaculture...` sind AUC-/F-beta-primaer
+  (schwellenwertunabhaengig) - bei diesen Projekten fehlt
+  `class_multiplier_tuning.R` im Projektordner UEBERHAUPT, weil
+  Multiplier-Tuning fuer eine Rangfolgen-Metrik methodisch nicht greift
+  (bereits so in `SYSTEMATIC_EVALUATION.md` dokumentiert: "Threshold-
+  Tuning strukturell uebersprungen"). Ein hartkodierter BAcc-Score
+  (wie im P1.1-Original) haette bei diesen Projekten die FALSCHE Metrik
+  optimiert/verglichen.
+- `CreditScoringChallenge` und `PumpItUp` haben ebenfalls KEIN
+  `class_multiplier_tuning.R` im Ordner, obwohl BAcc-primaer - der reale
+  Workflow dieser Projekte nutzt klassengewichtetes Training OHNE
+  Multiplier-Schritt.
+
+**Deshalb**: neue, generalisierte Skript-Fassung (`outer_workflow_evaluation.R`,
+je Zielprojekt kopiert, Datei-Kern identisch) mit 3 statt 4 Vergleichs-
+Armen:
+1. `ranger_default`, 2. `lightgbm_default` (unveraendert ggue. P1.1), 3.
+`workflow_ranger` - klassengewichtetes Training (`class_weight_power` aus
+dem jeweiligen `000_config.R`), ERGAENZT um Multiplier-Tuning NUR wenn
+BEIDE Bedingungen gelten: `class_multiplier_tuning.R` existiert im
+Projektordner UND die Primaermetrik ist schwellenwertABHAENGIG
+(`is_threshold_independent_metric()`, db_logging.R). Scoring generisch
+ueber `msr(tuning_measure_id)$score()` statt hartkodiertem
+`mlr3measures::bacc()` - funktioniert korrekt fuer jede Primaermetrik.
+
+**Der `lightgbm_tuned`-Arm aus P1.1 ist HIER BEWUSST WEGGELASSEN** - er
+zeigte im P1.1-Prototyp keinen Vorteil ggue. Default-LightGBM (konsistent
+mit der bereits dokumentierten Hyperband-Erfahrung dieses Templates) und
+war mit Abstand der teuerste Arm (~5 Min./Fold). Eine bereits negativ
+beantwortete Frage 6x zu wiederholen haette Rechenzeit gekostet, ohne
+neue Information zu liefern - das spart bei 6 Datensaetzen mehrere
+Stunden Laufzeit.
+
+**Punkte 10-12 (Ausfuehrung, Baselines/Laufzeiten erfassen, in Evidence
+Registry loggen)**: alle 6 Laeufe abgeschlossen (Skripte + Ergebnisse
+liegen in `ML_Learning/<projekt>/outer_workflow_evaluation.R`, jeweils
+eigener lokaler Commit dort - `ML_Learning` ist ein rein lokales Repo
+ohne Remote). Zwei Skript-Anpassungen waehrend der Ausfuehrung noetig
+(aeltere Projekte ohne die spaeteren Konventionen): `CreditScoringChallenge`/
+`PumpItUp` nutzen einen fest kodierten Task-Pfad statt
+`task_train_small_path`, `geoai-aquaculture...`/`PumpItUp` hatten kein
+`class_weight_power` gesetzt - beides per Fallback im jeweiligen
+Skript nachgereicht (Default `1.5`, Template-Konvention), keine
+Aenderung an den Projekten selbst. Alle 7 Ergebnisse in die zentrale
+Evidence Registry geloggt (`db_log_evidence()`, Projekt-DB von
+`health_condition`, `evidence_source = "outer_workflow_evaluation.R
+(Phase C, generalisierte Fassung)"`).
+
+**Gesamtergebnis (7 Datensaetze/Kategorien, `workflow_ranger` vs. beste
+Baseline)**:
+
+| Kategorie | Projekt | Metrik | Baseline (beste) | workflow_ranger | Delta |
+|---|---|---|---|---|---|
+| C multiclass | `health_condition` (P1.1) | BAcc | 0.8745 | **0.9480** | **+8.5** |
+| A binaer, moderat unausgeglichen | `openml-credit-g` | BAcc | 0.6603 | **0.7092** | **+4.9** |
+| D klein | `wdbc-plateau-test` | BAcc | 0.9677 | **0.9727** | **+0.5** |
+| G Group/Time | `openml-eeg-eye-state-timeseries` | BAcc | 0.9339 | 0.9323 | -0.2 |
+| F Covariate Shift | `geoai-aquaculture...` | AUC | 0.9971 | 0.9957 | -0.1 |
+| E groesser | `PumpItUp` | Accuracy | 0.8111 | 0.7428 | **-6.8** |
+| B binaer, extrem unausgeglichen | `CreditScoringChallenge` | F-beta | 0.3953 | **0.1088** | **-28.7** |
+
+**Wichtigster uebergreifender Befund (als eigener `cross-project`-Evidence-
+Eintrag geloggt, `core_finding`)**: der klassengewichtete `workflow_ranger`-
+Arm **gewinnt oder haelt mindestens mit** bei allen 4 BAcc-primaeren
+Aufgaben (klar vorn bei 3, minimal hinter LightGBM aber vor Default-
+Ranger bei der 4.). Er **faellt drastisch ab** bei den beiden
+Accuracy-/F-beta-primaeren Aufgaben, die KEINEN begleitenden Multiplier-/
+Schwellenwert-Korrekturschritt hatten (`class_multiplier_tuning.R` fehlt
+in beiden Projektordnern). Bei der AUC-primaeren Aufgabe (schwellenwert-
+unabhaengig, Multiplier-Tuning entfaellt strukturell) liegt er nahe an
+Default-Ranger, leicht hinter LightGBM.
+
+**Erklaerung**: BAcc belohnt Pro-Klasse-Balance - genau das Ziel von
+`add_balanced_class_weights()`. Accuracy/F-beta belohnen dagegen
+Mehrheits-/Positiv-Klassen-Performance - das GEGENTEIL. Ohne einen
+Korrekturschritt (Multiplier-/Threshold-Tuning), der das wieder
+ausgleicht, uebersteuert die Gewichtung bei diesen Metriken. Bei
+`health_condition` (mit Multiplier-Tuning) und `openml-credit-g` (auch
+mit Multiplier-Tuning) UND `wdbc-plateau-test` (OHNE Multiplier-Tuning,
+aber BAcc-primaer) hilft reine Gewichtung bereits/zusaetzlich; bei
+`CreditScoringChallenge`/`PumpItUp` (Accuracy/F-beta-primaer, OHNE
+Multiplier-Tuning) schadet sie deutlich.
+
+**Wichtige Einschraenkung fuer die Trust-/Publikations-Story** (siehe
+Bewertungsdokument Abschnitt 15): "der Workflow generalisiert" gilt NICHT
+pauschal - er generalisiert MIT einer zur Zielmetrik passenden
+Korrekturkette (Gewichtung + Multiplier/Threshold), NICHT mit
+Gewichtung allein. Das ist kein Rueckschritt gegenueber dem P1.1-
+Befund, sondern eine noetige Praezisierung: P1.1 testete nur EIN
+Projekt, bei dem zufaellig beide Zutaten (BAcc + Multiplier-Tuning)
+vorhanden waren - die Breite von Phase C deckt jetzt eine echte
+Grenzbedingung auf, die mit nur einem Datensatz unsichtbar geblieben
+waere. Das ist genau der Wert einer breiteren Outer Evaluation, den das
+Bewertungsdokument als Hebel 1 einfordert.
+
+**Naechster moeglicher Schritt (nicht Teil dieser Phase)**: pruefen, ob
+das Nachruesten eines Multiplier-/Threshold-Korrekturschritts bei
+`CreditScoringChallenge`/`PumpItUp` den Abfall behebt - das waere ein
+eigener, gezielter Test (P3-Hypothesenkriterien anwenden:
+Hypothese/Baseline/Metrik/Abbruchkriterium vorab definieren), nicht
+automatisch Teil von Phase C.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
