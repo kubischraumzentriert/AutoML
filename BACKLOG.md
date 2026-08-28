@@ -1152,6 +1152,24 @@ vorgeschlagene gezielte Nachpruefung (Multiplier-Korrektur bei
 `CreditScoringChallenge`/`PumpItUp` nachruesten) - beides bewusst NICHT
 automatisch angestossen, nur dokumentiert als naechstmoegliche Schritte.
 
+## Ablation A2 (Leak-Audit) - Status (2026-08-28)
+
+Auf Nutzeranfrage ausgefuehrt: die in `ABLATION_STUDIES_PLAN.md`
+definierte Ablation A2 (Full Workflow vs. ohne Leak-Audit) ist
+abgeschlossen - siehe [`ABLATION_A2_LEAK_AUDIT.md`](ABLATION_A2_LEAK_AUDIT.md)
+fuer die volle Auswertung. Wie geplant ueberwiegend Dokumentations-
+Zusammenstellung bereits vorhandener Befunde (kein neues Modelltraining -
+der Leak-Audit ist kein Score-Hebel). 4 Kategorien mit konkreten Zahlen:
+echter Treffer (`CreditScoringChallenge`, F1 0.88->0.41, extern via
+Zindi-Leaderboard 0.4191 bestaetigt), 7x korrekt still bei sauberen
+Daten, 1x Graubereich-Fund korrekt NICHT als Leak entfernt
+(`openml-steel-plates-fault`), und - bewusst ehrlich mitdokumentiert
+statt nur die Erfolgsfaelle zu zeigen - 1 bekannter blinder Fleck
+(`Lending Club`, BAcc 0.998->0.53 honest, extremer diffuser Leak, Guard
+still) mit einem Gegenbeispiel, das zeigt, wo die Guard-Verbesserung
+(Korrelations-Cluster-Zerlegung) noch greift (`synth-redundant-leak-test`,
+moderatere Redundanz). Abbruchkriterium mehrfach uebererfuellt.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

@@ -81,6 +81,16 @@ faellt.
   waere sonst falsch gewesen"-Fall UND mindestens 1 "kein Leak, Audit
   war zurecht still"-Fall dokumentiert sind.
 - **Rolle**: Fehlervermeidung (Kern-Trust-Gate-Rolle), NICHT Score.
+- **Status**: **AUSGEFUEHRT (2026-08-28)** - siehe
+  [`ABLATION_A2_LEAK_AUDIT.md`](ABLATION_A2_LEAK_AUDIT.md). Abbruchkriterium
+  mehrfach uebererfuellt: 1 echter Volltreffer (`CreditScoringChallenge`,
+  F1 0.88->0.41, extern via Zindi-Leaderboard 0.4191 bestaetigt), 7 korrekt
+  stille "sauber"-Faelle, 1 Graubereich-Fall (`openml-steel-plates-fault`,
+  Fund geprueft und NICHT als Leak entfernt), sowie - ehrlich mit
+  dokumentiert statt verschwiegen - 1 bekannter blinder Fleck
+  (`Lending Club`, extremer diffuser Leak, Standard-Guard still) mit
+  Gegenbeispiel (`synth-redundant-leak-test`, moderatere Redundanz, Guard
+  loest korrekt aus).
 
 ### A3: Full Workflow vs. ohne Drift-/Stabilitaets-Checks (115/022/023/092/136)
 
