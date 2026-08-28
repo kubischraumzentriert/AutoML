@@ -92,13 +92,38 @@ Arbeitshypothese fuer kuenftige Sessions:
   Software-Paper oder angewandtes AutoML-Workflow-Paper - hierfuer liegt
   der Reifegrad bereits vor (breite modulweise systematische Evaluation
   abgeschlossen, siehe Punkt 3 unten, plus Evidence Registry, Provenienz,
-  Tests/CI). Fuer ein staerkeres Forschungs-Paper fehlt NICHT primaer eine
-  neue Methode, sondern eine ausreichend BREITE Full-Workflow Outer
-  Evaluation (Stand 2026-08-27: nur 1 Datensatz/3 Outer Folds als
-  Prototyp, siehe `BACKLOG.md`/P1.1-Status - naechste Stufe waere 5-8
-  bewusst diverse Datensaetze mit identischem Vergleichsprotokoll,
-  Vorschlag dazu ebenfalls in `BACKLOG.md` unter "Naechste Bewertung
-  2026-08-28").
+  Tests/CI).
+
+**Aktualisierte Paper-Story nach Phase C (2026-08-28, siehe
+`BACKLOG.md`/Phase C, `BENCHMARK_PROTOCOL.md`,
+`ABLATION_STUDIES_PLAN.md`)**: die Full-Workflow Outer Evaluation ist
+nicht mehr nur ein 1-Datensatz-Prototyp, sondern lief auf 7 bewusst
+diversen Datensaetzen/Kategorien (binaer ausgeglichen/unausgeglichen,
+multiclass, klein/gross, Covariate Shift, Group-/Time-Struktur) nach
+einem eingefrorenen Protokoll (`BENCHMARK_PROTOCOL.md`, Version 1). Die
+Kernaussage der Story hat sich dadurch PRAEZISIERT, nicht abgeschwaecht:
+
+> Der dokumentierte AutoML-Workflow generalisiert nicht pauschal - er
+> generalisiert MIT einer zur Zielmetrik passenden Korrekturkette
+> (Klassengewichtung + Multiplier-/Schwellenwert-Tuning), NICHT mit
+> Klassengewichtung allein. Bei allen 4 BAcc-primaeren Aufgaben gewinnt
+> oder haelt der volle Workflow mindestens mit den Baselines mit; bei den
+> 2 Accuracy-/F-beta-primaeren Aufgaben OHNE begleitenden Korrektur-
+> schritt faellt er DEUTLICH ab (bis zu -28.7 Punkte F-beta).
+
+Das ist die staerkere, ehrlichere Version der urspruenglichen "der
+Workflow generalisiert"-Behauptung - eine Grenzbedingung, die mit nur
+einem Datensatz unsichtbar geblieben waere, und genau der Beleg, den ein
+Forschungs-Paper braucht (nicht nur "es funktioniert", sondern "es
+funktioniert UNTER WELCHEN BEDINGUNGEN, und warum nicht sonst"). Fuer
+ein staerkeres Forschungs-Paper fehlen jetzt nicht mehr primaer weitere
+Datensaetze, sondern: (a) die in `ABLATION_STUDIES_PLAN.md` definierten
+Ablationsstudien tatsaechlich zu einem Abschnitt auszuarbeiten (die
+meisten Antworten liegen laut Plan bereits vor, muessen nur noch
+zusammengestellt werden), und (b) ggf. eine gezielte Nachpruefung, ob ein
+nachgeruesteter Multiplier-/Threshold-Schritt bei `CreditScoringChallenge`/
+`PumpItUp` den beobachteten Abfall tatsaechlich behebt (siehe
+`BACKLOG.md`/Phase-C-Status, "Naechster moeglicher Schritt").
 
 Naechste Schritte, die bei neuen Arbeiten mitgedacht werden sollen:
 

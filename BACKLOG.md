@@ -1075,6 +1075,51 @@ naechste Schritt auf dem Weg zu "Doppelpflege beenden", aber ein
 eigener, bewusst zu planender Arbeitsschritt, kein Nebeneffekt dieser
 Aufgabe.
 
+### Phase E - Status (2026-08-28): Publikationsvorbereitung
+
+**Ziel laut Bewertungsdokument (Punkte 16-18)**: Benchmark-Protokoll
+einfrieren, Ablationsstudien DEFINIEREN (nicht durchfuehren), Paper-Story
+aus den Ergebnissen ableiten.
+
+**Umgesetzt**:
+1. ~~Benchmark-Protokoll einfrieren~~ **ERLEDIGT** - neue Datei
+   `BENCHMARK_PROTOCOL.md`, "Version 1": fixiert exakt, was Phase C
+   gemacht hat (3 Outer Folds, 3 Vergleichs-Arme, generisches
+   `msr()`-Scoring, die bedingte Multiplier-Tuning-Regel, erlaubte
+   Abweichungen fuer aeltere Projekte) als verbindliche Referenz fuer
+   jeden weiteren Datensatz. Jede zusaetzliche Abweichung braucht eine
+   explizite Version 2 statt stiller Drift.
+2. ~~Ablationsstudien definieren~~ **ERLEDIGT** - neue Datei
+   `ABLATION_STUDIES_PLAN.md`, 4 Ablationen (A1 Gewichtung+Multiplier,
+   A2 Leak-Audit, A3 Drift-/Stabilitaets-Checks, A4 Ensemble Selection),
+   jeweils nach dem `MODEL_HYPOTHESIS_CRITERIA.md`-Schema
+   (Hypothese/Datensatztyp/Baseline/Metrik/Budget/Abbruchkriterium) PLUS
+   einer Rollen-Zuordnung (Score/Trust/Fehlervermeidung, wie vom
+   Bewertungsdokument gefordert). **Wichtiger Befund beim Definieren**:
+   2 von 4 Ablationen (A1, A4) sind durch bereits vorhandene Ergebnisse
+   DE FACTO BEREITS BEANTWORTET (Phase C bzw. bestehende Ensemble-
+   Selection-Historie) - keine neuen Laeufe noetig, nur Zusammenstellung.
+   Die anderen beiden (A2, A3) sind ueberwiegend dokumentarische
+   Nacharbeit. **Keine der 4 Ablationen wurde ausgefuehrt/zusammengestellt**
+   - nur definiert, wie vom Plan verlangt.
+3. ~~Paper-Story aus Ergebnissen ableiten~~ **ERLEDIGT** - `AGENTS.md`s
+   bestehender "Mittelfristiges Ziel"-Abschnitt um eine "Aktualisierte
+   Paper-Story nach Phase C" ergaenzt: die urspruengliche "der Workflow
+   generalisiert"-Behauptung wird zur praeziseren, staerkeren Aussage
+   "generalisiert MIT einer zur Zielmetrik passenden Korrekturkette,
+   nicht mit Gewichtung allein" - explizit als STAERKERE, nicht
+   schwaechere Story eingeordnet (eine Grenzbedingung mit Erklaerung ist
+   fuer ein Forschungs-Paper wertvoller als eine unqualifizierte
+   "funktioniert immer"-Behauptung).
+
+**Damit ist die komplette Roadmap des 2026-08-28-Bewertungsdokuments
+(Phasen A-E) abgeschlossen.** Verbleibt: die tatsaechliche AUSFUEHRUNG der
+4 definierten Ablationen (ueberwiegend Dokumentations-Zusammenstellung,
+kein grosses Rechenbudget mehr noetig) und die in Phase-C-Status
+vorgeschlagene gezielte Nachpruefung (Multiplier-Korrektur bei
+`CreditScoringChallenge`/`PumpItUp` nachruesten) - beides bewusst NICHT
+automatisch angestossen, nur dokumentiert als naechstmoegliche Schritte.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
