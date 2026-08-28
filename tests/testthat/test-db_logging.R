@@ -157,12 +157,40 @@ test_that("db_create_run()/db_finish_run() setzen run_finished_at korrekt", {
   expect_equal(after$run_git_commit[1], "abc123")
 })
 
+test_that("db_create_run() loggt standardmaessig Basis-Provenienz (R-Version/Paketversionen) fuer den neuen Run (P1.3/Phase B)", {
+  db <- make_test_db()
+  on.exit({ dbDisconnect(db$con); unlink(db$path) })
+  proj_id <- db_get_or_create_project(db$con, "p")
+  wf_id <- db_get_or_create_workflow(db$con, proj_id, "script", "s.R")
+  run_id <- db_create_run(db$con, wf_id) # Default: log_baseline_provenance = TRUE
+
+  rows <- dbGetQuery(db$con, "SELECT rconf_key, rconf_value FROM run_config WHERE rconf_run_id = ?", params = list(run_id))
+  expect_true("provenance.r_version" %in% rows$rconf_key)
+  expect_true("provenance.packages" %in% rows$rconf_key)
+  expect_equal(rows$rconf_value[rows$rconf_key == "provenance.r_version"], R.version.string)
+})
+
+test_that("db_create_run(log_baseline_provenance = FALSE) schaltet die automatische Provenienz-Erfassung ab", {
+  db <- make_test_db()
+  on.exit({ dbDisconnect(db$con); unlink(db$path) })
+  proj_id <- db_get_or_create_project(db$con, "p")
+  wf_id <- db_get_or_create_workflow(db$con, proj_id, "script", "s.R")
+  run_id <- db_create_run(db$con, wf_id, log_baseline_provenance = FALSE)
+
+  rows <- dbGetQuery(db$con, "SELECT rconf_key FROM run_config WHERE rconf_run_id = ?", params = list(run_id))
+  expect_equal(nrow(rows), 0)
+})
+
 test_that("db_log_run_config() loggt jeden Eintrag als eigene Zeile", {
   db <- make_test_db()
   on.exit({ dbDisconnect(db$con); unlink(db$path) })
   proj_id <- db_get_or_create_project(db$con, "p")
   wf_id <- db_get_or_create_workflow(db$con, proj_id, "script", "s.R")
-  run_id <- db_create_run(db$con, wf_id)
+  # log_baseline_provenance = FALSE: dieser Test prueft einen exakten
+  # Zeilensatz - die automatische Basis-Provenienz (P1.3/Phase B) wuerde
+  # sonst zusaetzliche `provenance.*`-Zeilen fuer denselben run_id
+  # einstreuen, siehe eigener Test dafuer weiter unten.
+  run_id <- db_create_run(db$con, wf_id, log_baseline_provenance = FALSE)
 
   db_log_run_config(db$con, run_id, list(cv_folds = 5, seed = 42))
   rows <- dbGetQuery(db$con, "SELECT rconf_key, rconf_value FROM run_config WHERE rconf_run_id = ? ORDER BY rconf_key",

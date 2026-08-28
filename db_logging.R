@@ -198,13 +198,43 @@ db_get_or_create_workflow <- function(con, proj_id, type, name) {
   wf_id
 }
 
-db_create_run <- function(con, wf_id, seed = NA_integer_, git_commit = get_git_commit(), notes = NA_character_) {
+# P1.3/Hebel-2B (siehe BACKLOG.md "Naechste Bewertung 2026-08-28", Phase
+# B): `capture_run_provenance()` (provenance.R) soll standardmaessig fuer
+# NEUE Runs greifen, ohne dass jedes der ~30 aufrufenden Skripte einzeln
+# angepasst werden muss - genau EIN zentraler Aufrufpunkt
+# (`db_create_run()`, von JEDEM Skript bereits verwendet) statt eines
+# Big-Bang-Refactorings ueber alle Skripte hinweg. Bewusst nur die immer
+# verfuegbaren, kostenlosen Provenienz-Felder (R-Version, Paketversionen)
+# - Trainings-/Testdaten-Pfade, Config-Environment, Resampling-Objekt und
+# Feature-Set sind zum Zeitpunkt von `db_create_run()` (meist der ERSTE
+# Aufruf in einem Skript) noch gar nicht bekannt und muessten weiterhin
+# vom aufrufenden Skript explizit per `capture_run_provenance(...)` +
+# `db_log_run_config()` nachgereicht werden, falls gewuenscht - das bleibt
+# opt-in. `log_baseline_provenance = FALSE` erlaubt ein bewusstes
+# Abschalten (z.B. in Tests, die einen exakten `run_config`-Zeilensatz
+# erwarten). Ein Fehler beim Erfassen (z.B. `digest` fehlt) darf den
+# eigentlichen Skriptlauf NICHT zum Absturz bringen - deshalb `tryCatch`
+# mit Warnung statt hartem Fehler.
+db_create_run <- function(con, wf_id, seed = NA_integer_, git_commit = get_git_commit(), notes = NA_character_,
+                           log_baseline_provenance = TRUE) {
   run_id <- uuid::UUIDgenerate()
   dbExecute(
     con,
     "INSERT INTO run (run_id, run_wf_id, run_seed, run_git_commit, run_notes) VALUES (?, ?, ?, ?, ?)",
     params = list(run_id, wf_id, seed, git_commit, notes)
   )
+  if (isTRUE(log_baseline_provenance)) {
+    prov <- tryCatch({
+      if (!exists("capture_run_provenance", mode = "function")) {
+        source(file.path(get("project_dir", envir = globalenv()), "provenance.R"))
+      }
+      capture_run_provenance()
+    }, error = function(e) {
+      warning("Basis-Provenienz (R-Version/Paketversionen) konnte nicht erfasst werden: ", conditionMessage(e), call. = FALSE)
+      NULL
+    })
+    if (!is.null(prov)) db_log_run_config(con, run_id, prov)
+  }
   run_id
 }
 

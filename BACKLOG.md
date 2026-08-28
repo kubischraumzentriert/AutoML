@@ -844,6 +844,50 @@ Evidence-Registry-Generator (P1.2 Schritt 3); E) Publikationsvorbereitung
    `openml-credit-g`, 3 unvollstaendige Runs, 129 Runs ohne Git Commit, 9
    Backups/153.6 MB) - erwartungsgemaess, da noch kein Merge stattfand.
 
+### Phase B - Status (2026-08-28): Provenienz operationalisieren
+
+5. ~~`capture_run_provenance()` in neue normale Runs integrieren~~
+   **ERLEDIGT** - statt aller ~30 aufrufenden Skripte einzeln anzupassen
+   (Big-Bang-Refactoring, vom Bewertungsdokument selbst als NICHT
+   priorisiert markiert, siehe Abschnitt 10 dort), wurde EIN zentraler
+   Aufrufpunkt geaendert: `db_create_run()` (db_logging.R) - von JEDEM
+   Skript bereits verwendet - loggt jetzt standardmaessig
+   (`log_baseline_provenance = TRUE`, neuer Parameter, Default `TRUE`)
+   die immer verfuegbaren Provenienz-Felder (R-Version,
+   Paketversionen) automatisch via `capture_run_provenance()` +
+   `db_log_run_config()`. Trainings-/Testdaten-Hashes, Config-Hash,
+   Resampling-Hash und Feature-Set bleiben bewusst OPT-IN (muessen vom
+   aufrufenden Skript explizit nachgereicht werden, da sie zum Zeitpunkt
+   von `db_create_run()` - meist der erste DB-Aufruf eines Skripts - noch
+   nicht bekannt sind). `provenance.R` wird bei Bedarf lazily
+   nachgesourced (`source(file.path(project_dir, "provenance.R"))`), ein
+   Fehlschlag (z.B. fehlendes `digest`-Paket oder fehlende Datei, siehe
+   naechster Punkt) fuehrt zu einer WARNUNG, nicht zum Abbruch des
+   aufrufenden Skripts.
+   **Verifiziert**: die CI-Smoke-Test-Fixture (`ci_smoke_test/`) hat
+   BEWUSST kein eigenes `provenance.R` (nicht Teil der kopierten
+   Kernskripte-Liste) - lokal simuliert (Kopie von `db_logging.R`/
+   `db_schema.sql` in den Fixture-Ordner, `db_create_run()` dort
+   aufgerufen): degradiert sauber zu einer Warnung, `run_config` bleibt
+   leer, KEIN Absturz. Das war der wichtigste Verifikationsschritt vor
+   dem Push, um einen CI-Smoke-Test-Ausfall durch diese Aenderung
+   auszuschliessen.
+6. ~~Tests dafuer ergaenzen~~ **ERLEDIGT** - 2 neue Faelle in
+   `test-db_logging.R` (Default-Verhalten loggt `provenance.r_version`/
+   `provenance.packages`; `log_baseline_provenance = FALSE` schaltet es
+   ab). EIN bestehender Test musste angepasst werden (`db_log_run_config()
+   loggt jeden Eintrag als eigene Zeile` erwartete einen EXAKTEN
+   `run_config`-Zeilensatz - explizit `log_baseline_provenance = FALSE`
+   gesetzt, um Vermischung mit den neuen automatischen Provenienz-Zeilen
+   zu vermeiden). Volle Suite weiterhin gruen (15 Testdateien, jetzt mit
+   2 zusaetzlichen Faellen).
+7. CI gruen verifizieren - siehe Commit/Push-Protokoll unten.
+
+**Bewusst NICHT umgesetzt** (ausserhalb des Hebel-2B-Scopes, siehe
+`provenance.R`s Kopfkommentar): rueckwirkendes Nachbessern historischer
+Runs mit Provenienz - explizit vom Bewertungsdokument ausgeschlossen
+("Nicht rueckwirkend historische Runs 'nachbessern'").
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
