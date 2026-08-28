@@ -599,6 +599,42 @@ Schritt). Keine dieser Extraktionen wurde in dieser Session begonnen -
 der Plan verlangt ausdruecklich, erst bei einer KONKRETEN
 Doppelpflege-Situation zu extrahieren, nicht prophylaktisch.
 
+## P2.3 - Status (2026-08-27)
+
+**Ziel laut ChatGPTs korrigiertem Plan**: mindestens einen belastbaren
+Referenzpfad fuer Environment-Reproduzierbarkeit dokumentieren (Beispiel
+im Plan: Ubuntu / R-Version X / `renv::restore()` / Unit Tests /
+synthetic smoke fixture). "Keine erzwungene vollstaendige
+Windows-`renv`-Migration."
+
+**Umgesetzt**: neue, reine Doku-Datei `ENVIRONMENT.md` - **kein Code
+geaendert, keine CI-Konfiguration geaendert.** Der geforderte Referenzpfad
+existiert bereits vollstaendig als `.github/workflows/ci-smoke-test.yml`
+(`unit-tests` + `smoke-test`-Jobs) - diese Session hat ihn nur explizit
+als solchen benannt, mit einem konkreten Nachweis (CI-Lauf `33044016901`,
+beide Jobs `success`, R 4.6.1 auf `ubuntu-24.04`) belegt und begruendet,
+warum er trotz Abweichungen vom Plan-Beispiel gleichwertig ist:
+- `r-version: release` statt einer festen Versionsnummer - bewusste
+  Abwaegung (Synchronitaet mit aktuellen CRAN-Binaries vs. strikte
+  Bit-fuer-Bit-Reproduzierbarkeit), fuer ein AutoML-TEMPLATE (kein
+  zeitlich eingefrorenes Produktionsartefakt) der sinnvollere Kompromiss.
+- `DESCRIPTION`+`r-lib/actions/setup-r-dependencies`(`pak`) statt
+  `renv::restore()` - funktional aequivalent (deklarative Installation aus
+  einem versionierten Manifest), `renv::restore()` war im Plan nur
+  Beispiel, keine Vorgabe.
+
+**Bewusst ausgelassen**: keine Windows-`renv`-Migration fuer die lokale
+Entwicklungsumgebung (Rscript.exe unter `C:\Users\HP\Programme\R\...`) -
+exakt wie vom Plan verlangt. Der Windows-Arbeitsplatz bleibt bewusst
+ausserhalb dieses Referenzpfads.
+
+**Damit ist P2 aus ChatGPTs korrigiertem Plan vollstaendig abgeschlossen**
+(P2.1 `db_housekeeping_check()`, P2.2 Shared-Core-Analyse, P2.3
+Environment-Referenzpfad-Dokumentation). Nur P3 (Versionierung/Releases,
+Publikationsbenchmark, hypothesengetriebene Modellpruefung) bleibt aus dem
+gesamten Plan unangetastet - nur nach expliziter Nutzeranfrage
+weiterzuverfolgen.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
