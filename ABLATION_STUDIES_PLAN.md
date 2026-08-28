@@ -42,7 +42,21 @@ faellt.
 - **Rolle**: Score (gemischt, metrik-abhaengig) + Fehlervermeidung
   (verhindert falsches Vertrauen in "Gewichtung hilft immer").
 - **Status**: **de facto bereits durchgefuehrt** (Phase C liefert die
-  Antwort ohne einen eigenen Ablations-Lauf).
+  Antwort ohne einen eigenen Ablations-Lauf). **Erweitert (2026-08-28,
+  Nachpruefung auf Nutzeranfrage)**: zusaetzlicher 4. Arm
+  `workflow_ranger_multiplier` fuer die beiden negativen Phase-C-Faelle
+  (`CreditScoringChallenge`, `PumpItUp`), Multiplier-Korrektur gegen die
+  ECHTE Primaermetrik (F-beta/Accuracy) statt BAcc optimiert. Ergebnis:
+  Multiplier-Korrektur hilft in BEIDEN Faellen deutlich, aber
+  unterschiedlich stark - `PumpItUp` (~7% Minderheit) erholt sich fast
+  vollstaendig (0.7428 -> 0.8047, nahe an den Baselines 0.8039/0.8111),
+  `CreditScoringChallenge` (~1.8%, extremer) nur teilweise (0.1088 ->
+  0.2832, weiterhin klar unter 0.3628/0.3953). Praezisiert den
+  Kernbefund: die Korrekturkette FUNKTIONIERT, ihre Wirksamkeit haengt
+  aber selbst vom Grad der Klassenschieflage ab. Details/Skripte:
+  `ML_Learning/CreditScoringChallenge/multiplier_correction_check.R`,
+  `ML_Learning/PumpItUp/multiplier_correction_check.R`, Ergebnisse in
+  `BACKLOG.md`/Phase-C-Status.
 
 ### A2: Full Workflow vs. ohne Leak-Audit (015)
 

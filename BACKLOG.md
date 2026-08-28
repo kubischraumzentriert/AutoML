@@ -1024,6 +1024,38 @@ eigener, gezielter Test (P3-Hypothesenkriterien anwenden:
 Hypothese/Baseline/Metrik/Abbruchkriterium vorab definieren), nicht
 automatisch Teil von Phase C.
 
+**Nachpruefung durchgefuehrt (2026-08-28, auf Nutzeranfrage "machen wir
+die Nachprüfung")**: neues `multiplier_correction_check.R` in beiden
+Projekten (`ML_Learning`, lokale Commits) - 4. Arm
+`workflow_ranger_multiplier`, identische Outer-Folds/Seed wie Phase C,
+Multiplier-Korrektur diesmal gegen die ECHTE Primaermetrik optimiert
+(F-beta/Accuracy statt BAcc, `class_multiplier_tuning.R` aus
+`MLR3_Classifikation` in beide Projekte kopiert, da dort urspruenglich
+nicht vorhanden). Nach dem P3-Hypothesenschema definiert (Hypothese/
+Baseline/Metrik/Abbruchkriterium vorab, siehe
+`ML_Learning/<projekt>/multiplier_correction_check.R`-Kopfkommentar).
+
+**Ergebnis - unterschiedlich starke Erholung**:
+
+| Projekt | ohne Multiplier | mit Multiplier | Baselines | Erholung |
+|---|---|---|---|---|
+| `CreditScoringChallenge` (F-beta, ~1.8% positiv) | 0.1088 | **0.2832** | 0.3628 / 0.3953 | Teilweise (+0.174, fast verdreifacht, aber weiterhin klar unter beiden Baselines) |
+| `PumpItUp` (Accuracy, ~7% Minderheit) | 0.7428 | **0.8047** | 0.8111 / 0.8039 | Fast vollstaendig (+0.062, praktisch gleichauf mit lightgbm_default) |
+
+**Interpretation**: die Multiplier-Korrektur hilft in BEIDEN Faellen
+deutlich - bestaetigt den Mechanismus (die Multiplikatoren fuer die
+Minderheitsklasse(n) sinken auf 0.06-0.17, nehmen die urspruengliche
+Uebergewichtung fast vollstaendig zurueck). Der GRAD der Erholung haengt
+aber sichtbar von der Extremitaet der Klassenschieflage ab - bei
+`PumpItUp` (~7% Minderheit) nahezu vollstaendige Korrektur, bei
+`CreditScoringChallenge` (~1.8%, deutlich extremer) nur teilweise. Das
+ist eine WEITERE Praezisierung, keine Umkehr des Phase-C-Kernbefunds:
+"der Workflow generalisiert MIT einer zur Zielmetrik passenden
+Korrekturkette" stimmt nach wie vor - die Korrekturkette funktioniert,
+ihre Wirksamkeit ist aber selbst wieder von der Datensatz-Charakteristik
+abhaengig (Grad der Klassenschieflage), nicht binaer "behoben/nicht
+behoben". Beide Befunde in die Evidence Registry geloggt.
+
 ### Phase D - Status (2026-08-28): Evidence Registry als Quelle fuer die Ergebnistabelle
 
 **Ziel laut Bewertungsdokument (Punkte 13-15)**: `SYSTEMATIC_EVALUATION.md`
