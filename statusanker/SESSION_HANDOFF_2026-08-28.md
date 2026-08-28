@@ -1,31 +1,47 @@
-# Session Handoff (Stand 2026-08-28) - Statusanker
+# Session Handoff (Stand 2026-08-28, 2. Aktualisierung) - Statusanker
 
 Vorheriger Anker: `statusanker/SESSION_HANDOFF_2026-08-26.md` (3.
 Aktualisierung, deckte den BACKLOG.md-Refactor-Plan-Start bis P1.1-
-Prototyp ab). Dieser Anker deckt alles ab, was SEIT dem 26.08.-Handoff
-passiert ist: P1.2-P1.3 (Rest von P1), das komplette P2 (P2.1-P2.3), der
-spezifizierte Teil von P3, eine neue Git-Tag-Konvention fuer
-"Versionierung/Releases", und - als letzter Schritt, auf explizite
-Nutzeranfrage - die Migration der Historie aus `SYSTEMATIC_EVALUATION.md`
-in die neue Evidence Registry.
+Prototyp ab). Dieselbe Sitzung lief ueber den Tag weiter - dieser Anker
+(2. Aktualisierung) deckt ZUSAETZLICH zur 1. Fassung (Abschnitte 1-8
+unten: P1.2-P1.3, komplettes P2, spezifizierter P3-Teil, Git-Tag-
+Konvention, `backlog-item-workflow`-Skill) einen KOMPLETT NEUEN Strang
+ab: der Nutzer brachte ein neues externes Bewertungsdokument
+(`AutoML_Aktuelle_Bewertung_und_Naechste_Schritte_fuer_Claude_2026-08-28.md`,
+`~/Downloads`) mit einer 5-Phasen-Roadmap (A-E) ein - alle 5 Phasen
+wurden abgearbeitet, plus zwei vom Nutzer explizit angeforderte
+Folgeschritte (Multiplier-Korrektur-Nachpruefung, Ablationen A2+A3).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `6f9eeef` "P1.2 step 2: migrate historical
-  findings from SYSTEMATIC_EVALUATION.md into the evidence registry" -
-  gepusht, CI Smoke Test gruen (Lauf `33167619522`).
-- `MLR3_Regression`/`ML_Learning`: in dieser Session nicht angefasst
-  (unveraendert seit dem 26.08.-Handoff).
-- **8 neue annotierte Git-Tags** gesetzt und gepusht (siehe Abschnitt
-  "Git-Tag-Konvention" unten): `backlog-p0`, `backlog-p1.1`,
-  `backlog-p1.2`, `backlog-p1.3`, `backlog-p2.1`, `backlog-p2.2`,
-  `backlog-p2.3`, `backlog-p3-hypothesis-criteria`,
-  `backlog-p1.2-step2` (9 insgesamt).
-- Zentrale `experiments.db` wurde NICHT ueber `merge_project_experiments.R`
-  aktualisiert (der P2.1-Check zeigte offene Merges - siehe "Offene
-  Punkte" unten) - aber die PROJEKTEIGENE `health_condition`-DB waechst:
-  2 P1.1/P1.2-Demo-Eintraege + 56 neu migrierte historische Eintraege in
-  der `evidence`-Tabelle.
+- `MLR3_Classifikation` @ `e9af720` "Ablation A3: drift/stability checks
+  vs. full workflow, write-up from existing evidence" - gepusht. Die
+  letzten reinen Code-Pushes (Phase A/B/C/D) hatten je einen gruenen
+  CI-Lauf (zuletzt `33180497695` fuer Phase D); alles danach (Phase E,
+  Multiplier-Nachpruefung, Ablation A2/A3) war reine Markdown-
+  Dokumentation ohne Code-Aenderung - kein neuer CI-Lauf ausgeloest
+  (Workflow-Trigger nur bei `**.R`/`DESCRIPTION`/`.Rprofile`).
+- `ML_Learning` (rein lokal, kein Remote): mehrere neue lokale Commits -
+  6x `outer_workflow_evaluation.R` (Phase C, je ein Datensatz), 2x
+  `multiplier_correction_check.R` + `class_multiplier_tuning.R`-Kopien
+  (`CreditScoringChallenge`, `PumpItUp`, Nachpruefung).
+- `MLR3_Regression`: weiterhin unangetastet.
+- **12 neue annotierte Git-Tags** seit der 1. Fassung dieses Anchors
+  (Namensschema `backlog-<punkt>`, siehe `BACKLOG.md` fuer die volle
+  Liste): `backlog-phaseA-docs-and-db-domain-split`,
+  `backlog-phaseB-provenance-operationalized`,
+  `backlog-phaseC-outer-evaluation-7-datasets`,
+  `backlog-phaseD-evidence-registry-generator`,
+  `backlog-phaseE-publication-prep`,
+  `backlog-multiplier-correction-followup`,
+  `backlog-ablation-a2-leak-audit`, `backlog-ablation-a3-drift-stability`
+  (8 explizit benannte + einige aus der 1. Fassung nachtraeglich
+  gezaehlt - insgesamt jetzt 17 Tags im Repo).
+- Zentrale `experiments.db` (`health_condition`-Projekt-DB) waechst
+  weiter: Phase-C-Ergebnisse (7 Datensaetze + 1 Cross-Projekt-Meta-Fund)
+  und die 2 Multiplier-Nachpruefungs-Funde kamen als neue `evidence`-
+  Zeilen dazu. Der zentrale MERGE (`merge_project_experiments.R`) ist
+  weiterhin NICHT durchgefuehrt (siehe "Offene Punkte").
 
 ## Was in dieser Session passiert ist (Fortsetzung nach dem 26.08.-Anker)
 
@@ -151,28 +167,152 @@ selbst wurde diese Session bereits mehrfach implizit "gelebt" (P1.3 bis
 P1.2-Schritt-2 folgten exakt diesem Muster), auch ohne dass er bei jedem
 einzelnen Schritt explizit aufgerufen wurde.
 
+## Was NACH der 1. Fassung dieses Anchors passiert ist: die neue Bewertung 2026-08-28 (Phase A-E)
+
+**9. Neues externes Bewertungsdokument eingebracht** (kein
+`AskUserQuestion`-Vorlauf noetig - Nutzer nannte nur den Downloads-Pfad,
+Inhalt wurde gelesen und in `BACKLOG.md` unter "Naechste Bewertung
+2026-08-28" dauerhaft festgehalten, da die Quelldatei selbst nicht Teil
+des Repos ist). Gesamtnote 9.6/10 als persoenliches System, 9.3/10
+Workshop-/Software-Paper-Reife, 8.1/10 staerkeres Forschungspaper (fehlt:
+keine neue Methode, sondern eine breite Full-Workflow Outer Evaluation).
+3 Hebel, 5 Phasen (A-E). Nutzerentscheidung: "Phase A zuerst", danach
+jede weitere Phase per "mach weiter mit Phase X" einzeln freigegeben -
+alle 5 Phasen inzwischen abgeschlossen.
+
+**10. Phase A (Doku-Korrektur + DB-Domain-Trennung)**: `README.md`
+erwaehnt jetzt auch die `testthat`-Suite (vorher nur der Smoke-Test);
+`AGENTS.md`s veralteter Satz "breite systematische Evaluation fehlt"
+korrigiert (die MODULWEISE Evaluation ist laengst fertig, es fehlt eine
+BREITE Full-Workflow Outer Evaluation). Neue `detect_problem_type()`/
+`discover_source_db_paths_by_type()` in `db_housekeeping.R` - erkennt
+den Aufgabentyp (classification/regression) aus bereits geloggten
+Metrik-Praefixen (`classif.*`/`regr.*`), keine neue Config noetig,
+funktioniert rueckwirkend. `merge_project_experiments.R` filtert jetzt
+darauf. **Bug beim ersten Testlauf gefunden+gefixt**: eine anfaengliche
+"unknown -> ausschliessen"-Regel haette echte Multi-Label-Projekte
+dauerhaft aus jedem Merge geworfen (nur ein fachfremder Sanity-Wert in
+`metric_result`, kein `classif.*`) - korrigiert: nur bei POSITIVEM
+Gegentyp-Nachweis ausschliessen, "unknown" wird inkludiert + markiert.
+
+**11. Phase B (Provenienz operationalisieren)**: `db_create_run()`
+(db_logging.R) loggt jetzt standardmaessig Basis-Provenienz (R-Version/
+Paketversionen) fuer JEDEN neuen Run - EIN zentraler Aenderungspunkt
+statt ~30 Skripte einzeln anzufassen (`log_baseline_provenance = TRUE`
+als neuer Default-Parameter). Vor dem Push lokal simuliert, dass die
+CI-Smoke-Test-Fixture (kein eigenes `provenance.R`) sauber zu einer
+Warnung statt eines Absturzes degradiert - das war der entscheidende
+Check.
+
+**12. Phase C (Full-Workflow Outer Evaluation auf 7 Datensaetzen) - der
+teuerste und wichtigste Schritt.** `health_condition` (P1.1) wiederverwendet
+als Kategorie C (multiclass), 6 NEUE Laeufe auf bereits erkundeten
+`ML_Learning`-Projekten (kein neues Setup-Risiko): `openml-credit-g` (A,
+binaer moderat unausgeglichen), `CreditScoringChallenge` (B, binaer
+EXTREM unausgeglichen ~1.8%), `wdbc-plateau-test` (D, klein), `PumpItUp`
+(E, groesser, ~59k Zeilen), `geoai-aquaculture...` (F, Covariate Shift),
+`openml-eeg-eye-state-timeseries` (G, Group-/Time-Struktur). Neues
+generalisiertes `outer_workflow_evaluation_template.R` (generisches
+`msr()`-Scoring statt hartkodiertem BAcc, `lightgbm_tuned`-Arm
+weggelassen - war in P1.1 bereits negativ). **Zwei aeltere Projekte
+brauchten Fallbacks** (fest kodierter Task-Pfad statt
+`task_train_small_path`, fehlendes `class_weight_power`) - im jeweiligen
+Skript nachgereicht, Projekte selbst unveraendert.
+
+**Kernbefund (wichtigster Fund der gesamten Session)**: der
+klassengewichtete `workflow_ranger`-Arm gewinnt/haelt mindestens mit bei
+ALLEN 4 BAcc-primaeren Aufgaben (health_condition +8.5, openml-credit-g
++4.9, wdbc-plateau-test +0.5 Punkte; eeg-eye-state minimal dahinter, aber
+vor Default-Ranger) - faellt aber DRASTISCH ab bei den 2 Accuracy-/
+F-beta-primaeren Aufgaben OHNE begleitenden Multiplier-Korrekturschritt
+(PumpItUp -6.8, CreditScoringChallenge -28.7 Punkte). Erklaerung: BAcc
+belohnt Pro-Klasse-Balance (das Ziel der Gewichtung), Accuracy/F-beta
+belohnen Mehrheits-/Positiv-Klassen-Performance (das Gegenteil). Die
+urspruengliche P1.1-Aussage "der Workflow generalisiert" wird dadurch
+PRAEZISIERT (staerkere, nicht schwaechere Story): er generalisiert MIT
+einer zur Zielmetrik passenden Korrekturkette, nicht mit Gewichtung
+allein - eine Grenzbedingung, die mit nur 1 Datensatz unsichtbar
+geblieben waere.
+
+**13. Phase D (Evidence Registry -> generierte Ergebnistabelle, P1.2
+Schritt 3)**: neue `generate_systematic_evaluation.R` erzeugt
+`SYSTEMATIC_EVALUATION_GENERATED.md` AUS der `evidence`-Tabelle -
+reproduziert die bestehende Tabelle korrekt UND zeigt bereits neue
+Inhalte (Phase-C-Spalte), die die manuelle Datei noch nicht kennt.
+**Bewusst additiv**: ersetzt `SYSTEMATIC_EVALUATION.md` NICHT (dessen
+redaktionelles Material - Fussnoten, Korrekturvermerke, Diskussion -
+waere sonst unwiederbringlich verloren gegangen) - nur ein Verweis am
+Kopf der manuellen Datei ergaenzt.
+
+**14. Phase E (Publikationsvorbereitung)**: `BENCHMARK_PROTOCOL.md`
+friert Phase C als "Version 1" ein (verbindlich fuer jeden weiteren
+Datensatz). `ABLATION_STUDIES_PLAN.md` definiert 4 Ablationen (A1
+Gewichtung+Multiplier, A2 Leak-Audit, A3 Drift-/Stabilitaets-Checks, A4
+Ensemble Selection) nach dem `MODEL_HYPOTHESIS_CRITERIA.md`-Schema - dabei
+erkannt: A1 und A4 sind durch bestehende Ergebnisse bereits de facto
+beantwortet. `AGENTS.md`s Paper-Story aktualisiert (die Phase-C-
+Praezisierung explizit als STAERKERE Story eingeordnet).
+
+**15. Nachpruefung auf explizite Nutzeranfrage ("machen wir die
+Nachprüfung"): hilft ein Multiplier-Korrekturschritt bei den 2 negativen
+Phase-C-Faellen?** Neuer 4. Arm, Multiplier-Tuning gegen die ECHTE
+Primaermetrik (F-beta/Accuracy statt BAcc) optimiert. **Ergebnis:
+unterschiedlich starke Erholung** - `PumpItUp` (~7% Minderheit) fast
+vollstaendig (0.7428 -> 0.8047, nahe an beiden Baselines), `CreditScoring
+Challenge` (~1.8%, extremer) nur teilweise (0.1088 -> 0.2832, weiterhin
+klar unter beiden Baselines). Praezisiert den Kernbefund weiter: die
+Korrekturkette FUNKTIONIERT, ihre Wirksamkeit haengt aber selbst vom Grad
+der Klassenschieflage ab.
+
+**16. Ablationen A2+A3 auf explizite Nutzeranfrage ausgefuehrt**
+(ueberwiegend Dokumentations-Zusammenstellung bereits vorhandener
+Befunde, wie im Plan vorgesehen, kein neues Modelltraining):
+- **A2 (`ABLATION_A2_LEAK_AUDIT.md`)**: 1 echter Volltreffer
+  (`CreditScoringChallenge`, F1 0.88->0.41, extern via Zindi-Leaderboard
+  0.4191 bestaetigt), 7x korrekt still, 1x Graubereich korrekt NICHT
+  entfernt, UND - ehrlich mitdokumentiert statt nur Erfolgsfaelle
+  gezeigt - 1 bekannter blinder Fleck (`Lending Club`, BAcc 0.998->0.53
+  honest, Standard-Guard komplett still bei einem extrem diffusen Leak
+  ueber 10 Features) mit Gegenbeispiel (`synth-redundant-leak-test`,
+  moderatere Redundanz, Guard-Verbesserung greift korrekt).
+- **A3 (`ABLATION_A3_DRIFT_STABILITY_CHECKS.md`)**: staerkster Fund -
+  `openml-credit-g`s Learning-Curve-Modul hatte urspruenglich eine EIGENE
+  falsche Messung (faelschlich "PLATEAU" durch einen Ausreisser bei
+  n=20), spaeter selbst via IQR-Fix korrigiert - zeigt, das Template
+  findet nicht nur externe Probleme, sondern auch eigene
+  Kalibrierungsfehler. Dazu `geoai-aquaculture`s Covariate-Shift-Fund
+  (aenderte die Methodenwahl) und eine kontrollierte "Winner's Curse"-
+  Validierung des Generalisierungsluecke-Mechanismus (z=-3.12 korrekt
+  erkannt vs. z=+2.30 korrekt nicht).
+
+**Damit sind alle 4 in `ABLATION_STUDIES_PLAN.md` definierten Ablationen
+bearbeitet, und die komplette Phase-A-E-Roadmap ist abgeschlossen.**
+
 ## Offene Punkte fuer die naechste Session
 
-**Aus ChatGPTs korrigiertem Plan bleibt nur noch:**
-- **P1.2 Schritt 3** (automatische Generierung von
-  `SYSTEMATIC_EVALUATION.md` AUS der Evidence Registry) - bewusst
-  vertagt, der Plan selbst verlangt "nicht sofort alles migrieren".
-- **P3 "Publikationsbenchmark standardisieren"** - weiterhin
-  UNSPEZIFIZIERT, der Nutzer wurde einmal per `AskUserQuestion` gefragt,
-  hat noch nicht geantwortet. Beim naechsten Andocken ggf. erneut
-  ansprechen oder auf Initiative des Nutzers warten.
+**Aus der 2026-08-28-Bewertung/Roadmap ist NICHTS mehr offen** - Phase
+A-E komplett, beide Follow-ups (Multiplier-Nachpruefung, Ablationen
+A2/A3) auf Nutzeranfrage erledigt.
 
-**Ausserhalb des Plans, aus P2.1s Diagnose entstanden (nicht bearbeitet,
-nur dokumentiert)**:
-- Ein echter Merge (`merge_project_experiments.R`) ist ueberfaellig - 12
-  lokale Projekte nie gemergt, 10 neue Runs bei `openml-credit-g`. Vor
-  dem naechsten Merge pruefen, ob die "fehlenden" Regressions-Projekte
-  wirklich in die Klassifikations-DB gehoeren (siehe P2.2-Nebenbefund).
-- 9 Backup-Dateien (153.6 MB) unter `_artifacts/` - manuelles Aufraeumen
-  erwaegen (kein automatisches Loeschen implementiert).
+**Was uebrig bleibt, ist bewusst NICHT automatisch angestossen**:
+- Die tatsaechliche Zusammenfuehrung von `SYSTEMATIC_EVALUATION.md` und
+  `SYSTEMATIC_EVALUATION_GENERATED.md` (redaktionelles Material manuell
+  in die Registry uebertragen, dann die generierte Version zur alleinigen
+  Quelle machen) - "Doppelpflege beenden" bleibt LANGFRISTIGES Ziel,
+  bewusst nicht in Phase D erzwungen.
+- Ein echter Merge (`merge_project_experiments.R`) ist weiterhin
+  ueberfaellig (Stand P2.1: 12 nie gemergte lokale Projekte, seither noch
+  mehr neue Runs durch Phase C dazugekommen). Die DB-Domain-Trennung aus
+  Phase A macht einen sicheren Merge nur fuer echte Classification-
+  Projekte jetzt moeglich - vor dem naechsten Merge trotzdem kurz
+  gegenpruefen (`db_housekeeping_check()` erneut laufen lassen).
+- 9+ Backup-Dateien (153.6+ MB) unter `_artifacts/` - manuelles
+  Aufraeumen erwaegen.
+- Eigentliche Publikations-Ausarbeitung (Paper-Text schreiben, aus den
+  jetzt vollstaendigen Ablationen/Phase-C-Ergebnissen) - alle Bausteine
+  liegen bereit, aber das Schreiben selbst ist nicht angestossen.
 
-**Keine dringenden Blocker.** Alles, was das Plan-Dokument konkret
-spezifiziert hat, ist umgesetzt.
+**Keine dringenden Blocker.**
 
 ## Wichtige Konventionen (Ergaenzungen seit dem 26.08.-Anker)
 
@@ -197,17 +337,56 @@ spezifiziert hat, ist umgesetzt.
 - Ein rein lesender Diagnose-Helfer (P2.1) sollte read-only auf
   DB-EBENE erzwungen werden (`flags = RSQLite::SQLITE_RO`), nicht nur per
   Konvention "wir rufen halt kein `dbExecute()` auf".
-- Vollstaendiger Kontext: `BACKLOG.md` (jetzt mit P0-P3-Status-Abschnitten
-  UND der Git-Tag-Konvention), `SHARED_CORE_ANALYSIS.md`,
-  `ENVIRONMENT.md`, `MODEL_HYPOTHESIS_CRITERIA.md` (alle neu diese
-  Session), sowie weiterhin `TARGETS.md`/`NEURAL_DEPLOY.md`/das
-  persistente Gedaechtnis.
+- **NEU (Phase A)**: den Aufgabentyp eines fremden Projekts (Classification
+  vs. Regression) aus bereits geloggten Metrik-Praefixen ableiten
+  (`classif.*`/`regr.*`) statt ein neues Config-Feld zu verlangen -
+  funktioniert rueckwirkend fuer historische Projekte. Bei einer
+  Ja/Nein-Klassifikationsregel IMMER pruefen, ob "unbekannt" wirklich
+  wie der Negativfall behandelt werden darf (hier fast ein Bug: echte
+  Projekte waeren verloren gegangen) - lieber "unbekannt -> inkludieren +
+  markieren" als "unbekannt -> ausschliessen", wenn ein falsch-negativer
+  Ausschluss teurer ist als ein zu vorsichtiger Einschluss.
+- **NEU (Phase B)**: eine "fuer neue Runs automatisch"-Anforderung nicht
+  durch Aenderung aller Aufrufer loesen, sondern durch Aenderung EINES
+  gemeinsamen, bereits von allen genutzten Einstiegspunkts
+  (`db_create_run()`) - mit einem Default-Parameter, der sich abschalten
+  laesst, und einem `tryCatch`, der bei fehlenden Voraussetzungen (hier:
+  `provenance.R` fehlt in der CI-Fixture) zu einer Warnung statt einem
+  Absturz degradiert. VOR dem Push explizit gegen die CI-Fixture
+  simulieren, nicht nur lokal im vollen Projektkontext testen.
+- **NEU (Phase C, wichtigster methodischer Punkt)**: eine "der Workflow
+  generalisiert"-Aussage aus EINEM Datensatz ist fragil - eine Ausweitung
+  auf mehrere, bewusst diverse Datensaetze/Kategorien deckt
+  Grenzbedingungen auf, die sonst unsichtbar blieben (hier: Score-Metrik-
+  Typ entscheidet, ob Klassengewichtung hilft oder schadet). Das ist der
+  eigentliche Wert einer breiten Outer Evaluation, nicht nur "mehr
+  Datenpunkte".
+- **NEU (Phase D)**: bei "generiere X aus einer strukturierten Quelle,
+  X existiert bereits manuell gepflegt" NICHT die manuelle Datei
+  ueberschreiben, wenn sie redaktionellen Mehrwert hat, den die Quelle
+  nicht abbildet (hier: Fussnoten/Diskussion) - additiv (neue Datei +
+  Verweis) statt destruktiv vorgehen, "Doppelpflege beenden" bleibt
+  langfristiges statt sofortiges Ziel.
+- **NEU (Ablationen A2/A3)**: bei einer Trust-/Fehlervermeidungs-
+  Ablation (kein Score-Effekt erwartet) NICHT nur Erfolgsfaelle zeigen -
+  ein dokumentierter blinder Fleck (Lending Club) macht die Story
+  glaubwuerdiger, nicht schwaecher.
+- Vollstaendiger Kontext: `BACKLOG.md` (jetzt mit P0-P3- UND Phase-A-E-
+  Status-Abschnitten sowie der Git-Tag-Konvention),
+  `SHARED_CORE_ANALYSIS.md`, `ENVIRONMENT.md`,
+  `MODEL_HYPOTHESIS_CRITERIA.md`, `BENCHMARK_PROTOCOL.md`,
+  `ABLATION_STUDIES_PLAN.md` + die 2 ausgearbeiteten Ablations-Dokumente
+  (`ABLATION_A2_LEAK_AUDIT.md`, `ABLATION_A3_DRIFT_STABILITY_CHECKS.md`),
+  `SYSTEMATIC_EVALUATION_GENERATED.md`, sowie weiterhin
+  `TARGETS.md`/`NEURAL_DEPLOY.md`/das persistente Gedaechtnis.
 
 ## Empfohlener erster Schritt der naechsten Session
 
-Kein zwingender Einstiegspunkt. Falls der Nutzer nichts Konkretes
-mitbringt: entweder "Publikationsbenchmark standardisieren"
-konkretisieren (die letzte offene P3-Frage), oder eine neue
-Literatur-/Ideenrunde anstossen (das Muster vom 24.08.), oder den
-ueberfaelligen `merge_project_experiments.R`-Lauf nachholen (nach Klaerung
-der Regressions-Projekt-Frage aus P2.2).
+Kein zwingender Einstiegspunkt - sowohl ChatGPTs urspruenglicher Plan als
+auch die 2026-08-28-Bewertungs-Roadmap sind komplett abgearbeitet. Falls
+der Nutzer nichts Konkretes mitbringt: entweder die tatsaechliche
+Publikations-Ausarbeitung anstossen (alle Bausteine - Phase C, beide
+Ablationen, das eingefrorene Protokoll - liegen bereit), oder den
+ueberfaelligen `merge_project_experiments.R`-Lauf nachholen (jetzt mit
+DB-Domain-Trennung sicherer moeglich), oder eine neue Literatur-/
+Ideenrunde anstossen (das Muster vom 24.08.).
