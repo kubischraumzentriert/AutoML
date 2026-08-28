@@ -1024,6 +1024,57 @@ eigener, gezielter Test (P3-Hypothesenkriterien anwenden:
 Hypothese/Baseline/Metrik/Abbruchkriterium vorab definieren), nicht
 automatisch Teil von Phase C.
 
+### Phase D - Status (2026-08-28): Evidence Registry als Quelle fuer die Ergebnistabelle
+
+**Ziel laut Bewertungsdokument (Punkte 13-15)**: `SYSTEMATIC_EVALUATION.md`
+aus der Evidence Registry generieren, manuelle Doppelpflege beenden,
+Publikations-Tabellen aus der Registry erzeugen (P1.2 Schritt 3, bislang
+bewusst vertagt).
+
+**Umgesetzt**: neue Datei `generate_systematic_evaluation.R` mit
+`build_systematic_evaluation_pivot(con)` (Projekt x Modul, breites
+Format, mehrere Eintraege je Zelle werden mit "; " zusammengefasst statt
+einander zu ueberschreiben), `render_systematic_evaluation_markdown(con)`
+(Markdown-Tabelle, bekannte 9 Original-Module zuerst, alles Weitere
+alphabetisch danach) und `generate_systematic_evaluation_file(con,
+out_path)`. Ausgabe: neue Datei
+[`SYSTEMATIC_EVALUATION_GENERATED.md`](SYSTEMATIC_EVALUATION_GENERATED.md).
+
+**Scope-Entscheidung (additiv, NICHT die bestehende Datei ersetzt)**: die
+generierte Tabelle ERSETZT `SYSTEMATIC_EVALUATION.md` NICHT - die
+handgepflegte Datei enthaelt redaktionelles Material (Fussnoten,
+Korrekturvermerke wie die IQR-Nenner-Korrektur, einen ganzen
+Diskussionsabschnitt "Was diese erste Fassung zeigt"), das eine reine
+DB-Pivot-Tabelle strukturell nicht abbilden kann. Ein einmaliges
+Ueberschreiben in diesem Schritt haette dieses Material unwiederbringlich
+verloren. Stattdessen: ein Hinweis am Kopf von `SYSTEMATIC_EVALUATION.md`
+verweist auf die generierte Version. "Manuelle Doppelpflege beenden" ist
+damit als LANGFRISTIGES Ziel dokumentiert, nicht in diesem Schritt
+erzwungen - konsistent mit dem bereits bei P1.2 Schritt 1 etablierten
+Muster ("nicht sofort alles migrieren").
+
+**Konkreter, ueberpruefbarer Beleg, dass der Generator funktioniert**:
+gegen die ECHTE `health_condition`-Registry ausgefuehrt - die erzeugte
+Tabelle reproduziert alle bislang manuell gepflegten Zellen korrekt UND
+zeigt bereits Inhalte, die `SYSTEMATIC_EVALUATION.md` noch nicht kennt
+(die neue Spalte `outer_workflow_evaluation` aus Phase C, inkl. des
+Cross-Projekt-Meta-Befunds) - ein direkter, praktischer Beleg fuer den
+Wert der Registry ggue. der rein manuellen Pflege.
+
+**Testabdeckung**: neue `tests/testthat/test-generate_systematic_evaluation.R`,
+6 Faelle (leere Registry, korrekte Pivotierung + Legenden-Symbol-Mapping,
+Zusammenfassen mehrerer Eintraege pro Zelle statt Ueberschreiben,
+Spaltenreihenfolge bekannt-zuerst, Hinweistext bei leerer Registry,
+Datei-Schreiben). Volle Suite weiterhin gruen (jetzt 16 Testdateien).
+
+**Bewusst NICHT umgesetzt**: das tatsaechliche Zusammenfuehren beider
+Dokumente (redaktionelles Material aus `SYSTEMATIC_EVALUATION.md`
+manuell als `evid_notes`/Fussnoten in die Registry uebertragen, danach
+die generierte Version zur einzigen Quelle machen) - das ist der
+naechste Schritt auf dem Weg zu "Doppelpflege beenden", aber ein
+eigener, bewusst zu planender Arbeitsschritt, kein Nebeneffekt dieser
+Aufgabe.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

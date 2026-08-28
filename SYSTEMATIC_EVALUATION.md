@@ -1,5 +1,17 @@
 # Systematische Evaluation: Workflow-Komponenten über Projekte
 
+**Hinweis (2026-08-28, P1.2 Schritt 3/Phase D)**: seit dieser Woche gibt
+es eine maschinenlesbare Evidence Registry (`evidence_registry.R`), aus
+der `generate_systematic_evaluation.R` eine **automatisch erzeugte**
+Version dieser Tabelle bauen kann - siehe
+[`SYSTEMATIC_EVALUATION_GENERATED.md`](SYSTEMATIC_EVALUATION_GENERATED.md).
+Diese handgepflegte Datei hier bleibt vorerst die MASSGEBLICHE Quelle
+(sie enthält redaktionelles Material - Fußnoten, Korrekturvermerke,
+Diskussion -, das die generierte Version nicht hat), aber die generierte
+Version ist bereits AKTUELLER in Teilen (z.B. Phase-C-Funde), die hier
+noch nicht manuell nachgetragen wurden. Siehe `BACKLOG.md` "Nächste
+Bewertung 2026-08-28"/Phase D für den vollen Kontext.
+
 Konsolidierte Ergebnistabelle für das mittelfristige Publikationsziel
 (siehe `AGENTS.md`, "Mittelfristiges Ziel"). Beantwortet: welche
 Workflow-Komponente wurde auf welchem Projekt bestätigt, war neutral/
