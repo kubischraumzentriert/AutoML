@@ -89,9 +89,16 @@ Arbeitshypothese fuer kuenftige Sessions:
   (Backport erst nach >=2-Projekt-Bestaetigung oder No-op-Beleg), um
   Template-Overfitting zu vermeiden.
 - Wahrscheinlich passender Publikationstyp: Workshop-/Experience-Paper,
-  Software-Paper oder angewandtes AutoML-Workflow-Paper. Fuer ein starkes
-  Forschungs-Paper fehlt Stand jetzt noch eine breite systematische
-  Evaluation und algorithmische Neuheit.
+  Software-Paper oder angewandtes AutoML-Workflow-Paper - hierfuer liegt
+  der Reifegrad bereits vor (breite modulweise systematische Evaluation
+  abgeschlossen, siehe Punkt 3 unten, plus Evidence Registry, Provenienz,
+  Tests/CI). Fuer ein staerkeres Forschungs-Paper fehlt NICHT primaer eine
+  neue Methode, sondern eine ausreichend BREITE Full-Workflow Outer
+  Evaluation (Stand 2026-08-27: nur 1 Datensatz/3 Outer Folds als
+  Prototyp, siehe `BACKLOG.md`/P1.1-Status - naechste Stufe waere 5-8
+  bewusst diverse Datensaetze mit identischem Vergleichsprotokoll,
+  Vorschlag dazu ebenfalls in `BACKLOG.md` unter "Naechste Bewertung
+  2026-08-28").
 
 Naechste Schritte, die bei neuen Arbeiten mitgedacht werden sollen:
 

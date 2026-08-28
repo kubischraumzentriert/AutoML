@@ -48,10 +48,29 @@ suppressPackageStartupMessages({
 # nur an einer Stelle definiert statt dupliziert.
 source("db_housekeeping.R")
 
-source_db_paths <- discover_source_db_paths(project_roots, exclude_dirs, target_db_path)
-cat("Gefundene Quell-DBs (", length(source_db_paths), "):\n", sep = "")
+# Auf "classification" gefiltert (DB-Domain-Trennung, siehe
+# db_housekeeping.R/detect_problem_type() und BACKLOG.md "Naechste
+# Bewertung 2026-08-28") - Akzeptanzkriterium: "ein Classification-Merge
+# kann kein Regression-Projekt aufnehmen". Der Aufgabentyp wird aus den
+# bereits geloggten Metrik-Praefixen (`classif.`/`regr.`) der jeweiligen
+# Projekt-DB abgeleitet, kein neues Feld noetig.
+source_db_paths <- discover_source_db_paths_by_type(project_roots, exclude_dirs, target_db_path, expected_type = "classification")
+cat("Gefundene Classification-Quell-DBs (", length(source_db_paths), "):\n", sep = "")
 for (nm in names(source_db_paths)) cat("  -", nm, "->", source_db_paths[[nm]], "\n")
 cat("\n")
+
+excluded <- attr(source_db_paths, "excluded")
+if (!is.null(excluded) && nrow(excluded) > 0) {
+  cat("Ausgeschlossen (Regression-Aufgabentyp erkannt, NICHT gemergt):\n")
+  print(excluded)
+  cat("\n")
+}
+needs_review <- attr(source_db_paths, "needs_review")
+if (!is.null(needs_review) && nrow(needs_review) > 0) {
+  cat("Hinweis - unklarer Aufgabentyp, TROTZDEM gemergt (manuell pruefen):\n")
+  print(needs_review)
+  cat("\n")
+}
 
 # Tabellen in Fremdschluessel-Abhaengigkeitsreihenfolge (Eltern vor Kindern),
 # mit ihrer jeweiligen UUID-Text-Schluesselspalte (NICHT die lokale

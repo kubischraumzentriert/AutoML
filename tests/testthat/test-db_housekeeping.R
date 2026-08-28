@@ -121,3 +121,70 @@ test_that("db_housekeeping_check() schreibt NIE in die Ziel-DB (read-only erzwun
   n_projects_after <- dbGetQuery(target$con, "SELECT COUNT(*) AS n FROM project")$n
   expect_equal(n_projects_before, n_projects_after)
 })
+
+# --- detect_problem_type()/discover_source_db_paths_by_type() (DB-Domain-
+# Trennung, siehe BACKLOG.md "Naechste Bewertung 2026-08-28") -------------
+
+seed_metric <- function(con, proj_name, measure_name) {
+  ids <- seed_project(con, proj_name)
+  mconf_id <- db_create_model_config(con, ids$run_id, task_type = "classif", algorithm = "ranger")
+  rsmp_id <- db_create_resampling(con, ids$run_id, strategy = "holdout", ratio = 0.8, seed = 1)
+  db_log_metric_result(con, mconf_id, rsmp_id, measure_name, 0.8)
+  ids
+}
+
+test_that("detect_problem_type() erkennt classification/regression/mixed/unknown korrekt", {
+  db_classif <- make_schema_db(); on.exit(dbDisconnect(db_classif$con), add = TRUE)
+  seed_metric(db_classif$con, "p", "classif.bacc")
+  expect_equal(detect_problem_type(db_classif$path), "classification")
+
+  db_regr <- make_schema_db(); on.exit(dbDisconnect(db_regr$con), add = TRUE)
+  seed_metric(db_regr$con, "p", "regr.rmse")
+  expect_equal(detect_problem_type(db_regr$path), "regression")
+
+  db_mixed <- make_schema_db(); on.exit(dbDisconnect(db_mixed$con), add = TRUE)
+  ids <- seed_project(db_mixed$con, "p")
+  mconf_id <- db_create_model_config(db_mixed$con, ids$run_id, task_type = "classif", algorithm = "ranger")
+  rsmp_id <- db_create_resampling(db_mixed$con, ids$run_id, strategy = "holdout", ratio = 0.8, seed = 1)
+  db_log_metric_result(db_mixed$con, mconf_id, rsmp_id, "classif.bacc", 0.8)
+  db_log_metric_result(db_mixed$con, mconf_id, rsmp_id, "regr.rmse", 1.2)
+  expect_equal(detect_problem_type(db_mixed$path), "mixed")
+
+  db_unknown <- make_schema_db(); on.exit(dbDisconnect(db_unknown$con), add = TRUE)
+  # Analog zum realen Fund bei openml-yeast-multilabel: nur ein fachfremder
+  # Sanity-Probe-Wert geloggt, keine classif.*/regr.*-Zeile.
+  seed_metric(db_unknown$con, "p", "weather_balloon_relative_slope")
+  expect_equal(detect_problem_type(db_unknown$path), "unknown")
+
+  expect_true(is.na(detect_problem_type(tempfile())))
+})
+
+test_that("discover_source_db_paths_by_type() schliesst NUR positiv erkannte Gegentypen aus, nicht 'unknown'", {
+  # Realer Anlass fuer diesen Test (siehe BACKLOG.md): ein erster
+  # Testlauf schloss echte Multi-Label-Classification-Projekte
+  # faelschlich als 'unknown' aus, weil deren metric_result-Tabelle nur
+  # einen fachfremden Sanity-Wert enthielt - ein falsch-negativer
+  # Ausschluss (echtes Projekt verloren) ist schlimmer als ein zu
+  # vorsichtiger Einschluss.
+  root <- tempfile()
+  target <- file.path(root, "MLR3_Classifikation", "_artifacts", "experiments.db")
+  dir.create(dirname(target), recursive = TRUE)
+  target_con <- db_connect(target)
+  dbDisconnect(target_con)
+
+  make_project_db <- function(name, measure_name) {
+    dir.create(file.path(root, name, "_artifacts"), recursive = TRUE)
+    path <- file.path(root, name, "_artifacts", "experiments.db")
+    con <- db_connect(path)
+    if (!is.na(measure_name)) seed_metric(con, name, measure_name)
+    dbDisconnect(con)
+  }
+  make_project_db("proj-classif", "classif.bacc")
+  make_project_db("proj-regr", "regr.rmse")
+  make_project_db("proj-unknown", "weather_balloon_relative_slope")
+
+  res <- discover_source_db_paths_by_type(root, exclude = "MLR3_Classifikation", target = target, expected_type = "classification")
+  expect_setequal(names(res), c("proj-classif", "proj-unknown"))
+  expect_equal(attr(res, "excluded")$project, "proj-regr")
+  expect_equal(attr(res, "needs_review")$project, "proj-unknown")
+})

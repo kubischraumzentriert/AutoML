@@ -764,6 +764,86 @@ Skript kopiert Befunde IN die Registry, ersetzt die Markdown-Tabelle
 nicht (das waere Schritt 3, automatische Generierung, weiterhin nicht
 umgesetzt).
 
+## Naechste Bewertung 2026-08-28 (extern, neue Roadmap Phase A-E)
+
+Neues externes Bewertungsdokument vom Nutzer eingebracht:
+`AutoML_Aktuelle_Bewertung_und_Naechste_Schritte_fuer_Claude_2026-08-28.md`
+(`~/Downloads`, nicht Teil dieses Repos - dieser Abschnitt haelt die
+relevanten Punkte dauerhaft im Repo fest). Gesamtnote 9.6/10 als
+persoenliches ML-System, 9.3/10 Workshop-/Software-Paper-Reife, 8.1/10
+staerkeres Research-Paper (fehlt: keine neue Methode, sondern eine breite
+Full-Workflow Outer Evaluation).
+
+**3 groesste Hebel** (Prioritaet laut Dokument):
+1. **Full-Workflow Outer Evaluation verbreitern** (P0 wissenschaftlich) -
+   P1.1-Prototyp (1 Datensatz, 3 Outer Folds) auf 5-8 bewusst diverse
+   Datensaetze uebertragen (binaer ausgeglichen/unausgeglichen,
+   multiclass, klein/gross, Drift, Group-/Time-Struktur). Fester
+   Metrik-Satz je Datensatz (Primaermetrik, Outer-Score Mittel/SD/
+   schlechtester Fold, Baselines, Laufzeit, gewaehltes Modell,
+   Trust-Findings, manuelle Entscheidungen).
+2. **DB-Domain-Grenzen + Provenienz schliessen** (P0 technisch) - vor dem
+   naechsten zentralen Merge klaeren, welche Projekt-DB zu Classification
+   vs. Regression gehoert (deckt sich mit dem P2.2-Nebenbefund); zusaetzlich
+   `capture_run_provenance()` standardmaessig in neue echte Runs einbinden
+   (NICHT rueckwirkend historische Runs nachbessern).
+3. **Evidence Registry zur Source of Truth machen** (P1) - P1.2 Schritt 3:
+   `SYSTEMATIC_EVALUATION.md` aus der Registry generieren statt manuell
+   pflegen.
+
+**Vorgeschlagene Reihenfolge (Phasen A-E)**: A) Dokumentation korrigieren +
+DB-Domain-Trennung (guenstig, zuerst); B) Provenienz operationalisieren;
+C) wissenschaftlicher Hauptblock (5-8-Datensatz-Outer-Evaluation); D)
+Evidence-Registry-Generator (P1.2 Schritt 3); E) Publikationsvorbereitung
+(Benchmark-Protokoll einfrieren, Ablationsstudien).
+
+**Nutzerentscheidung (2026-08-28)**: Start mit **Phase A**.
+
+### Phase A - Status (2026-08-28)
+
+1. ~~README-Testbeschreibung aktualisieren~~ **ERLEDIGT** - `README.md`
+   erwaehnte bislang nur den CI-Smoke-Test, nicht die inzwischen
+   umfangreiche `testthat`-Suite (15+ Testdateien). Ergaenzt.
+2. ~~AGENTS-Publikationsstatus korrigieren~~ **ERLEDIGT** - `AGENTS.md`
+   sagte faelschlich, es fehle "eine breite systematische Evaluation"
+   (die MODULWEISE Evaluation ist laengst abgeschlossen, siehe
+   `SYSTEMATIC_EVALUATION.md`). Korrigiert: fehlt ist stattdessen eine
+   BREITE Full-Workflow Outer Evaluation (Hebel 1 oben).
+3. ~~Classification-/Regression-DB-Discovery sauber trennen~~
+   **ERLEDIGT** - neue Funktionen `detect_problem_type(db_path)` und
+   `discover_source_db_paths_by_type(..., expected_type)` in
+   `db_housekeeping.R`. Aufgabentyp wird aus den BEREITS geloggten
+   Metrik-Praefixen (`classif.*` vs. `regr.*` in `metric_result`)
+   abgeleitet - rein lesend, kein neues Feld noetig, funktioniert
+   rueckwirkend fuer alle historischen Projekt-DBs.
+   **Akzeptanzkriterium erfuellt**: `merge_project_experiments.R` nutzt
+   jetzt `discover_source_db_paths_by_type(..., expected_type =
+   "classification")` statt der ungefilterten Variante - ein
+   Classification-Merge kann kein als Regression erkanntes Projekt mehr
+   aufnehmen.
+   **Bug beim ersten Testlauf gefunden+gefixt**: eine anfaengliche
+   "unknown -> ausschliessen"-Regel haette mehrere ECHTE Multi-Label-
+   Classification-Projekte (`openml-yeast-multilabel` u.a.) dauerhaft aus
+   jedem Merge geworfen, weil deren `metric_result`-Tabelle nur einen
+   fachfremden `weather_balloon_check.R`-Sanity-Wert enthaelt, keine
+   `classif.*`-Zeile. Korrigiert: ausgeschlossen wird NUR bei einem
+   POSITIVEN Nachweis des JEWEILS ANDEREN Typs; "unknown"/"mixed" werden
+   inkludiert, aber ueber ein `needs_review`-Attribut fuer manuelle
+   Pruefung markiert (falsch-negativer Ausschluss eines echten Projekts
+   waere schlimmer als ein zu vorsichtiger Einschluss).
+   **Live-Ergebnis gegen die echten Projekt-DBs** (rein lesend): von 27
+   gefundenen Quell-DBs wurden 23 als `classification` behalten, 4 korrekt
+   als `regression` ausgeschlossen (`openml-diamonds-regression`,
+   `openml-house-prices-regression`, `playground-series-s5e9`, `tweet` -
+   deckt sich mit dem P2.2-Nebenbefund), `WineQualityDataset` als
+   `unknown`/`needs_review` markiert (nicht automatisch entschieden).
+   6 neue Testfaelle in `test-db_housekeeping.R` (u.a. eine direkte
+   Nachbildung des gefundenen Multi-Label-Bugs als Regressionstest).
+4. ~~DB-Housekeeping-Check erneut laufen lassen~~ **ERLEDIGT** - unveraendert
+   ggue. dem P2.1-Stand (12 nie gemergte Projekte, 10 neue Runs bei
+   `openml-credit-g`, 3 unvollstaendige Runs, 129 Runs ohne Git Commit, 9
+   Backups/153.6 MB) - erwartungsgemaess, da noch kein Merge stattfand.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

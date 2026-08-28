@@ -22,9 +22,12 @@ Entscheidungen zustande kommen, und macht sie nachprüfbar:
   nicht hält, was sie verspricht (z.B. ein getestetes Ensemble, das keinen
   Zusatznutzen brachte, oder eine verworfene Korrelations-Abkürzung), steht
   das genauso im Protokoll wie ein Erfolg — siehe [`TARGETS.md`](TARGETS.md).
-- **Automatisiert geprüft, nicht nur behauptet.** Ein CI-Smoke-Test
-  (Badge oben) lässt die Kernpipeline bei jedem Push gegen eine
-  synthetische Fixture laufen.
+- **Automatisiert geprüft, nicht nur behauptet.** Zwei unabhängige
+  CI-Jobs laufen bei jedem Push (Badge oben): eine `testthat`-Suite mit
+  echten Korrektheitstests für die einzelnen Helper-Funktionen (inzwischen
+  15+ Testdateien, z.B. Ensemble Selection, Config Validation, DB
+  Logging, Provenienz, Evidence Registry), und ein Smoke-Test, der die
+  Kernpipeline end-to-end gegen eine synthetische Fixture laufen lässt.
 
 ## Ein paar bestätigte Ergebnisse
 

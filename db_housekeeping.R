@@ -44,6 +44,72 @@ discover_source_db_paths <- function(roots, exclude, target) {
   setNames(found, project_dir_name)
 }
 
+# --- Aufgabentyp-Erkennung (DB-Domain-Trennung, siehe BACKLOG.md
+# "Naechste Bewertung 2026-08-28", Hebel 2A) ----------------------------
+# Verhindert, dass ein Classification-Merge versehentlich ein Regression-
+# Projekt aufnimmt (oder umgekehrt) - der Discovery-Mechanismus selbst
+# (Ordnername unter denselben Wurzelverzeichnissen) kann das NICHT
+# unterscheiden. Statt eines neuen, manuell zu pflegenden Feldes (das
+# historische Projekte nicht rueckwirkend haetten) wird der Aufgabentyp
+# aus bereits vorhandenen Daten abgeleitet: JEDE geloggte Metrik traegt
+# schon ein `classif.`- oder `regr.`-Praefix (mlr3-Konvention, siehe
+# `baseline_measure_ids` in beiden Templates' `000_config.R`) - eine rein
+# lesende DB-Abfrage reicht, keine Aenderung an bestehenden Projekt-DBs
+# noetig.
+detect_problem_type <- function(db_path) {
+  if (!file.exists(db_path)) return(NA_character_)
+  con <- dbConnect(RSQLite::SQLite(), db_path, flags = RSQLite::SQLITE_RO)
+  on.exit(dbDisconnect(con))
+  measures <- tryCatch(
+    dbGetQuery(con, "SELECT DISTINCT mres_measure_name FROM metric_result")$mres_measure_name,
+    error = function(e) character(0)
+  )
+  if (length(measures) == 0) return("unknown")
+  n_classif <- sum(grepl("^classif\\.", measures))
+  n_regr <- sum(grepl("^regr\\.", measures))
+  if (n_classif > 0 && n_regr == 0) "classification"
+  else if (n_regr > 0 && n_classif == 0) "regression"
+  else if (n_classif > 0 && n_regr > 0) "mixed"
+  else "unknown"
+}
+
+#' Wie `discover_source_db_paths()`, aber zusaetzlich gefiltert auf einen
+#' erwarteten Aufgabentyp (per `detect_problem_type()`) - das eigentliche
+#' Akzeptanzkriterium der DB-Domain-Trennung: "ein Classification-Merge
+#' kann kein Regression-Projekt aufnehmen".
+#'
+#' Ausgeschlossen wird NUR bei einem POSITIVEN Nachweis des JEWEILS
+#' ANDEREN Typs (z.B. `regr.*`-Metriken bei `expected_type =
+#' "classification"`) - "unknown" (keine oder nur fachfremde Metriken in
+#' `metric_result` geloggt, z.B. ein reiner Sanity-Probe-Wert) wird NICHT
+#' automatisch ausgeschlossen. Grund: ein erster Testlauf gegen die echten
+#' Projekt-DBs zeigte, dass mehrere echte Multi-Label-Classification-
+#' Projekte (`openml-yeast-multilabel` u.a.) in `metric_result` NUR einen
+#' `weather_balloon_check.R`-Sanity-Wert stehen haben, keine
+#' `classif.*`-Zeile - waeren mit einer harten "unknown -> ausschliessen"-
+#' Regel dauerhaft aus jedem Merge gefallen, obwohl sie eindeutig
+#' Classification-Projekte sind. Ein falsch-negativer Ausschluss (echtes
+#' Classification-Projekt verloren) waere schlimmer als ein zu
+#' vorsichtiger Einschluss - "mixed"/"unknown" werden deshalb inkludiert,
+#' aber ueber das `excluded`-Attribut als Hinweis fuer manuelle Pruefung
+#' mitgegeben (nur echte `regression`-Treffer landen dort als
+#' AUSGESCHLOSSEN).
+discover_source_db_paths_by_type <- function(roots, exclude, target, expected_type) {
+  found <- discover_source_db_paths(roots, exclude, target)
+  types <- vapply(found, detect_problem_type, character(1))
+  wrong_type <- setdiff(c("classification", "regression"), expected_type)
+  excluded_mask <- types == wrong_type
+  review_mask <- types %in% c("unknown", "mixed")
+  result <- found[!excluded_mask]
+  attr(result, "excluded") <- data.table::data.table(
+    project = names(found)[excluded_mask], detected_type = unname(types[excluded_mask])
+  )
+  attr(result, "needs_review") <- data.table::data.table(
+    project = names(found)[review_mask & !excluded_mask], detected_type = unname(types[review_mask & !excluded_mask])
+  )
+  result
+}
+
 #' Rein lesende Diagnose der zentralen, gemergten Experiment-DB gegen die
 #' aktuell auffindbaren Projekt-DBs - schreibt NIE in eine DB.
 #'
