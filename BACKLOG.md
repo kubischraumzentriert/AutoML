@@ -1170,6 +1170,26 @@ still) mit einem Gegenbeispiel, das zeigt, wo die Guard-Verbesserung
 (Korrelations-Cluster-Zerlegung) noch greift (`synth-redundant-leak-test`,
 moderatere Redundanz). Abbruchkriterium mehrfach uebererfuellt.
 
+## Ablation A3 (Drift-/Stabilitaets-Checks) - Status (2026-08-28)
+
+Auf Nutzeranfrage ausgefuehrt: die in `ABLATION_STUDIES_PLAN.md`
+definierte Ablation A3 (Full Workflow vs. ohne Adversarial Validation/
+Split-Size-Sensitivity/Learning-Curve/Seed-Stabilitaet/Generalisierungs-
+luecke) ist abgeschlossen - siehe
+[`ABLATION_A3_DRIFT_STABILITY_CHECKS.md`](ABLATION_A3_DRIFT_STABILITY_CHECKS.md).
+Wie geplant Dokumentations-Zusammenstellung, kein neues Modelltraining.
+Kernbefunde: `geoai-aquaculture` (extremer Covariate Shift, aenderte die
+Methodenwahl weg von Reweighting hin zu Invarianz), `openml-credit-g`
+(eine urspruenglich FALSCHE eigene Learning-Curve-Messung wurde spaeter
+selbst korrigiert - zeigt, dass das Template auch eigene Kalibrierungs-
+fehler findet, nicht nur externe Probleme), eine kontrollierte
+Generalisierungsluecke-Validierung ("Winner's Curse", z=-3.12 korrekt
+erkannt), sowie durchgaengige "korrekt still"-Bestaetigungen ohne falsche
+Alarme. Damit sind alle 4 in `ABLATION_STUDIES_PLAN.md` definierten
+Ablationen (A1-A4) bearbeitet - A1/A4 waren bereits durch bestehende
+Ergebnisse beantwortet, A2/A3 wurden jetzt als eigene Dokumente
+ausgearbeitet.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

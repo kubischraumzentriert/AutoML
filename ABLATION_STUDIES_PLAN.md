@@ -112,6 +112,20 @@ faellt.
   Diagnose-Modul-Gruppe dokumentiert.
 - **Rolle**: Vertrauen (Trust-Gate) - explizit KEIN Score-Effekt
   erwartet, das ist Teil der Aussage selbst.
+- **Status**: **AUSGEFUEHRT (2026-08-28)** - siehe
+  [`ABLATION_A3_DRIFT_STABILITY_CHECKS.md`](ABLATION_A3_DRIFT_STABILITY_CHECKS.md).
+  Abbruchkriterium uebererfuellt: 4 echte/kontrollierte Befund-Faelle
+  ueber 3 der 5 Module (115 `geoai-aquaculture` extremer Shift -> aendert
+  Methodenwahl; 023 `credit-g`-Selbstkorrektur einer urspruenglich
+  falschen "PLATEAU"-Messung + `wdbc-plateau-test` echter Plateau-Fund;
+  136 kontrollierte "Winner's Curse"-Validierung z=-3.12 vs. z=+2.30),
+  plus durchgaengige "korrekt still"-Bestaetigungen ueber alle 5 Module,
+  plus ein Nuance-/Kalibrierungs-Fall (092 `eeg-eye-state-timeseries`,
+  hoechste bisherige z-Werte, korrekt weiterhin unauffaellig). Zusaetzliche
+  Erkenntnis: die `credit-g`-Learning-Curve-Episode zeigt, dass das
+  Template nachweislich EIGENE Kalibrierungsfehler korrigiert, nicht nur
+  externe Probleme (Leaks, Shift) findet - ein zusaetzliches
+  Trust-Argument fuer die Paper-Story.
 
 ### A4: Full Workflow vs. ohne Ensemble Selection (148/149)
 
