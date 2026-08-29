@@ -7,16 +7,19 @@ Nachpruefung, Ablationen A2+A3). Dieser Anker deckt alles ab, was SEIT
 diesem Handoff passiert ist: der ueberfaellige zentrale Merge (inkl. 2
 gefundener/gefixter Bugs), Backup-Aufraeumen, und die komplette
 Bearbeitung von P0-P3 aus einem NEUEN, dritten externen
-Bewertungsdokument (2026-08-29). **5. Aktualisierung dieses Ankers:**
-ergaenzt P3 2. Teil (erster Paper-Rohentwurf, `PAPER_DRAFT.md`) - damit
-ist die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
-vollstaendig abgearbeitet.
+Bewertungsdokument (2026-08-29). Die GESAMTE P0-P3-Roadmap des dritten
+Bewertungsdokuments ist vollstaendig abgearbeitet. **6. Aktualisierung
+dieses Ankers:** ergaenzt die erste Literaturrecherche fuer
+`PAPER_DRAFT.md`s Section 3 (Related Work) - einer der beiden im Draft
+selbst als offen benannten Folgepunkte (der andere: Ziel-Venue
+festlegen, weiterhin offen).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `5abc1e7` "P3 (2. Teil): erster
-  Paper-Rohentwurf" - gepusht. Nur `.md`-Aenderung, CI Smoke Test
-  triggert dafuer erwartungsgemaess nicht (Path-Filter greift nur bei
+- `MLR3_Classifikation` @ `eab2cfe` "PAPER_DRAFT.md: erste
+  Literaturrecherche fuer Section 3 (Related Work)" - gepusht. Nur
+  `.md`-Aenderungen seit `086243c`, CI Smoke Test triggert dafuer
+  erwartungsgemaess nicht (Path-Filter greift nur bei
   `**.R`/`DESCRIPTION`/`.Rprofile`) - letzter tatsaechlicher CI-Lauf
   gruen fuer `086243c` (Lauf `33256552839`).
 - `ML_Learning` (rein lokal, kein Remote): 12 neue Projektordner
@@ -216,16 +219,40 @@ gepruesften Repo-Dokumenten - keine neue Recherche, kein neuer Lauf,
 reine Synthese. Per `SendUserFile` an den Nutzer ausgeliefert. Getaggt:
 `backlog-2026-08-29-roadmap-complete`.
 
+**12. `PAPER_DRAFT.md` Section 3 (Related Work) - Literaturrecherche
+ERLEDIGT** (Nutzeranfrage "literaturrecherche fuer Section 3
+anfangen"). 14 per Websuche lokalisierte und inhaltlich geprueft Quellen
+(keine Erinnerungs-Zitate), 6 thematische Bloecke: AutoML-Systeme
+(Auto-sklearn/Feurer 2015, AutoGluon-Tabular/Erickson 2020, das
+AutoML-Buch/Hutter-Kotthoff-Vanschoren 2019), Benchmark-Methodik
+(OpenML-CC18/Bischl 2021, "An Open Source AutoML Benchmark"/Gijsbers
+2019 - direkt relevant fuer die eigene `BENCHMARK_PROTOCOL.md`-Disziplin),
+Daten-Leakage/Dataset-Shift (Kaufman/Rosset/Perlich 2011,
+Quinonero-Candela et al. 2009 - direkt relevant fuer Section 7.1/7.2),
+Reproduzierbarkeit/Testing (Pineau et al. 2021, Gundersen/Kjensmo 2018,
+Breck et al. "ML Test Score" 2017, Zhang/Harman/Ma/Liu 2020),
+Klassen-Imbalance (He/Garcia 2009), sowie die verwendete Software selbst
+(mlr3/Lang 2019, Caruana et al. 2004 Ensemble Selection). Jede Quelle
+explizit zu einer konkreten eigenen Aussage in Bezug gesetzt statt nur
+aufgelistet - inkl. einer bewusst benannten Spannung (AutoGluons
+Multi-Layer-Stacking-Ergebnis vs. der eigene Level-2-Negativbefund).
+**Bewusste Ehrlichkeitsentscheidung**: Adversarial Validation bekommt
+KEINE akademische Zitation (Kaggle-/Praktiker-Technik, kein erfundenes
+Zitat). Neuer `References`-Abschnitt mit allen 14 Quellen + URLs.
+Bewusst NICHT erledigt (im Draft selbst benannt): Zitate noch nicht auf
+BibTeX normalisiert, Abdeckung bewusst eng auf das Paper-Thema begrenzt.
+
 ## Offene Punkte fuer die naechste Session
 
 **Die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
 (2026-08-29) ist vollstaendig abgearbeitet.** Nur noch optionale
 Folgeschritte offen, keiner dringend:
-- `PAPER_DRAFT.md` weiterentwickeln: echte Literaturrecherche (Section 3
-  ist bislang nur ein Platzhalter), Ziel-Venue festlegen, Abbildungen/
-  Tabellen ergaenzen, Autorenliste/Anonymisierung klaeren - alles
-  explizit im Dokument selbst als offen benannt ("How to use this
-  draft").
+- `PAPER_DRAFT.md` weiterentwickeln: Ziel-Venue festlegen (steuert
+  Seitenlimit/Zitierstil/Kompressionsgrad), Zitate auf BibTeX
+  normalisieren, die offene Adversarial-Validation-Zitations-
+  Entscheidung treffen, Abbildungen/Tabellen ergaenzen, Autorenliste/
+  Anonymisierung klaeren - alles explizit im Dokument selbst als offen
+  benannt ("How to use this draft").
 - Optional: pruefen, ob ein groesseres Tuning-Budget fuer Level 2
   (aktuell 10 Evals/Arm) das gemischte P2-Ergebnis veraendert - bislang
   nicht getestet.
@@ -284,9 +311,10 @@ Folgeschritte offen, keiner dringend:
 
 Kein zwingender Einstiegspunkt. Die komplette P0-P3-Roadmap des dritten
 Bewertungsdokuments (2026-08-29) ist umgesetzt, inklusive eines ersten
-Paper-Rohentwurfs (`PAPER_DRAFT.md`). Falls der Nutzer nichts Konkretes
-mitbringt: `PAPER_DRAFT.md` weiterentwickeln (echte Literaturrecherche
-fuer Section 3, Ziel-Venue festlegen, Abbildungen/Tabellen ergaenzen -
-siehe dortiger "How to use this draft"-Abschnitt), oder einer der beiden
-verbleibenden optionalen Punkte (groesseres Level-2-Tuning-Budget
-testen, `finalize_run_provenance()` auf weitere Skripte ausrollen).
+Paper-Rohentwurfs (`PAPER_DRAFT.md`) mit erster Literaturrecherche fuer
+Section 3. Falls der Nutzer nichts Konkretes mitbringt:
+`PAPER_DRAFT.md` weiterentwickeln (Ziel-Venue festlegen, Zitate auf
+BibTeX normalisieren, Abbildungen/Tabellen ergaenzen - siehe dortiger
+"How to use this draft"-Abschnitt), oder einer der beiden verbleibenden
+optionalen Punkte (groesseres Level-2-Tuning-Budget testen,
+`finalize_run_provenance()` auf weitere Skripte ausrollen).
