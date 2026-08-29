@@ -16,9 +16,11 @@ by the user on 2026-08-29 (see `BACKLOG.md`, P3 status).
 
 ## Before this can actually be submitted
 
-1. **Fill in the placeholders in `paper.md`**: author name(s),
-   affiliation(s), ORCID(s) — deliberately left as `TODO` rather than
-   guessed.
+1. ~~Fill in author name/affiliation/ORCID in `paper.md`~~ **DONE
+   (2026-08-29)**: Andre Endress, Independent Researcher, no ORCID —
+   confirmed by the author, no longer placeholders. The
+   Acknowledgements section is still an open `TODO` (deliberately —
+   nothing was inferred).
 2. **Repository readiness**, per JOSS's own review checklist (not yet
    verified against this repo specifically): a clear installation
    procedure, example usage, community guidelines (contributing/support/
@@ -32,5 +34,4 @@ by the user on 2026-08-29 (see `BACKLOG.md`, P3 status).
 4. Submit via https://joss.theoj.org/papers/new (a GitHub repository URL
    plus this `paper.md` path).
 
-None of the above was done as part of this pass — this is a first draft
-of the submission *text*, not a completed submission.
+Steps 2-4 were not done as part of this pass.

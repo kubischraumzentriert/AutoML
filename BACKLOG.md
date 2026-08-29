@@ -1751,6 +1751,18 @@ der Einreichungs-TEXTE, keine fertige Einreichung.
 Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
 vorsichtshalber verifiziert (weiterhin 322/322 gruen).
 
+**Nachtrag (2026-08-29): Autoren/Affiliation ausgefuellt.**
+Nutzeranfrage "autoren und affiliation in joss/paper.md ausfuellen" -
+per `AskUserQuestion` bestaetigt: Name "Andre Endress" (aus dem
+oeffentlichen GitHub-Profil `kubischraumzentriert` uebernommen, vom
+Nutzer bestaetigt statt automatisch verwendet), Affiliation
+"Independent Researcher" (kein Institut/Firma im Profil hinterlegt),
+keine ORCID (Feld aus dem YAML-Header entfernt statt als leerer
+Platzhalter stehen zu bleiben). `joss/README.md`s Vorbereitungsliste
+entsprechend aktualisiert (Punkt 1 jetzt "DONE"). Die
+Acknowledgements-Sektion bleibt bewusst ein offener `TODO` - nichts
+wurde hineingeraten.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

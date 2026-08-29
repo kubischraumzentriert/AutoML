@@ -8,24 +8,21 @@ tags:
   - reproducibility
   - data leakage
 authors:
-  - name: TODO Author Name
-    orcid: 0000-0000-0000-0000
+  - name: Andre Endress
     affiliation: 1
 affiliations:
-  - name: TODO Affiliation
+  - name: Independent Researcher
     index: 1
 date: 29 August 2026
 bibliography: paper.bib
 ---
 
 <!--
-STATUS (2026-08-29): DRAFT, first JOSS-format pass. Author name,
-affiliation, and ORCID above are placeholders — fill in before
-submission, this was deliberately left for a human decision (see
-`PAPER_DRAFT.md`'s "How to use this draft" for the same point applied to
-the longer report). Word count target for JOSS is 750-1750 words; this
-draft currently sits within that range but has not been trimmed by an
-editor pass yet.
+STATUS (2026-08-29): DRAFT, first JOSS-format pass. Author name (Andre
+Endress) and affiliation (Independent Researcher, no ORCID) confirmed by
+the author on 2026-08-29 — no longer placeholders. Word count target for
+JOSS is 750-1750 words; this draft currently sits within that range but
+has not been trimmed by an editor pass yet.
 -->
 
 # Summary
