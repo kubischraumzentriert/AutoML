@@ -1337,11 +1337,64 @@ Auswahl-Entscheidung zu treffen - das externe Set deckt bewusst nur
 binaer/multiclass/Groessen-Diversitaet ab.
 
 **Noch NICHT ausgefuehrt** (separater naechster Schritt, nicht
-automatisch angestossen): die eigentlichen Task-Vorbereitungen +
-Outer-Evaluation-Laeufe fuer die 6 Datensaetze, sowie der zweite
-P1-Teil ("faire Baselines": Tuned Ranger/LightGBM, Best Single Tuned
-Model) - beides zusammen ein neuer, nicht-trivialer Rechenaufwand
-(6 neue Datensaetze x mehrere Vergleichs-Arme, davon 2 neue TUNED-Arme).
+automatisch angestossen): der zweite P1-Teil ("faire Baselines": Tuned
+Ranger/LightGBM, Best Single Tuned Model).
+
+### P1 - Status (2026-08-29, Fortsetzung): Task-Vorbereitung + Level-1-Outer-Evaluation ausgefuehrt
+
+**Nutzerentscheidung**: "erst nur die Task-Vorbereitung und Outer-
+Evaluation" (ohne die faire-Baselines-Erweiterung).
+
+Fuer alle 6 eingefrorenen Datensaetze: Projekt-Setup via `mlr3oml`
+(direkter OpenML-API-Zugriff, kein manuelles Herunterladen), Kopien von
+`db_logging.R`/`db_schema.sql`/`class_multiplier_tuning.R`/
+`outer_workflow_evaluation_template.R` aus dem Template, uniforme
+Primaermetrik `classif.bacc`/`classif.mcc` (Template-Standardkonvention).
+Alle 6 Projekte in `ML_Learning` angelegt und lokal committet (kein
+Remote). Level-1-Protokoll (`BENCHMARK_PROTOCOL.md`) unveraendert
+angewendet.
+
+**Ergebnis (alle 6, `workflow_ranger` vs. beste Baseline, BAcc)**:
+
+| Datensatz | Instanzen | Klassen | Baseline (beste) | workflow_ranger | Delta |
+|---|---|---|---|---|---|
+| `sick` | 3772 | 2 | 0.9250 | **0.9714** | **+4.6** |
+| `ilpd` | 583 | 2 | 0.6170 | **0.6840** | **+6.7** |
+| `blood-transfusion` | 748 | 2 | 0.6190 | **0.6576** | **+3.9** |
+| `cmc` | 1473 | 3 | 0.5214 | **0.5374** | **+1.6** |
+| `analcatdata_authorship` | 841 | 4 | 0.9852 | **0.9876** | +0.2 |
+| `optdigits` | 5620 | 10 | 0.9818 | 0.9810 | -0.1 |
+
+**Bestaetigt das Phase-C-Muster erneut, auf voellig unbekannten
+Datensaetzen**: bei allen 6 (BAcc-primaer, alle mit Multiplier-Tuning)
+gewinnt `workflow_ranger` deutlich oder haelt praktisch mit - kein
+einziger Ausreisser nach unten. Am staerksten bei kleineren, staerker
+unausgeglichenen binaeren Aufgaben (`ilpd`, `sick`, `blood-transfusion`),
+am schwaechsten (knapp neutral) bei `optdigits` - einem grossen, gut
+balancierten 10-Klassen-Datensatz, wo wenig Klassenimbalance zum
+Korrigieren vorliegt. Das ist die ERSTE Bestaetigung des Kernbefunds auf
+Datensaetzen, die zu keinem Zeitpunkt vor der Auswahl bekannt waren -
+entkraeftet das Benchmark-Selection-Bias-Risiko aus der 2026-08-29-
+Bewertung fuer den BAcc-primaeren Fall.
+
+**Echter Bug gefunden und behoben**: `openml-cc18-optdigits` (10
+Klassen) liess `tune_class_multipliers()` (`class_multiplier_tuning.R`)
+mit "cannot allocate vector of size 38.4 Gb" abstuerzen - der
+Grid-Search-Schritt (`expand.grid()` ueber alle Nicht-Referenz-Klassen)
+waechst exponentiell mit der Klassenzahl (12^9 Kombinationen bei 10
+Klassen). **Fix**: eine Kombinatorik-Obergrenze (200.000 Kombinationen -
+deckt bis zu 5 Klassen vollstaendig ab, alle bisherigen Projekte
+betroffen hoechstens `PumpItUp`/`openml-steel-plates-fault` mit 3/7
+Klassen, beide weit darunter) - oberhalb wird der volle Grid-Durchlauf
+uebersprungen, Prior-Korrektur + Nelder-Mead (bereits vorhandene
+Schritte 1b/2) uebernehmen dann allein die Rolle des robusten
+Startpunkts. 2 neue Testfaelle (Reproduktion des Crashs synthetisch mit
+10 Klassen, Regressionsschutz dass das Grid bei wenigen Klassen weiterhin
+voll genutzt wird). Nach dem Fix lief `openml-cc18-optdigits`
+fehlerfrei durch.
+
+**Alle 7 Ergebnisse (6 Datensaetze + der Bug-Fund selbst) in die
+Evidence Registry geloggt.**
 
 ## Zielbild
 

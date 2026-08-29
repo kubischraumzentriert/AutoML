@@ -83,12 +83,26 @@ tune_class_multipliers <- function(probs, truth, classes = colnames(probs),
   others <- setdiff(classes, ref)
   base1 <- setNames(rep(1, length(classes)), classes)
 
-  # 1) Grid als robuster Startpunkt.
-  combos <- as.matrix(expand.grid(replicate(length(others), grid, simplify = FALSE)))
+  # 1) Grid als robuster Startpunkt - NUR wenn die Kombinatorik praktikabel
+  # bleibt. `length(grid)^length(others)` waechst exponentiell mit der
+  # Klassenzahl (Klasse-1-Referenz -> `others` = Klassen-1 freie
+  # Dimensionen): bei 3 Klassen (2 Dimensionen) harmlose 144 Kombinationen,
+  # bei 10 Klassen (9 Dimensionen, echter Fund 2026-08-29,
+  # `openml-cc18-optdigits`) bereits 12^9 ≈ 5.2 Mrd. Zeilen -> OOM-Absturz
+  # ("cannot allocate vector of size 38.4 Gb"). Oberhalb der Schwelle wird
+  # der volle Grid-Durchlauf uebersprungen (grid_best/grid_bacc bleiben die
+  # Identitaet als harmloser Platzhalter) - Schritt 1b (Prior-Korrektur)
+  # und Schritt 2 (Nelder-Mead, dimensionsunabhaengig in der Rechenzeit)
+  # uebernehmen dann allein die Rolle des robusten Startpunkts.
+  max_grid_combos <- 200000
+  grid_combo_count <- length(grid)^length(others)
   grid_best <- base1; grid_bacc <- score(base1)
-  for (i in seq_len(nrow(combos))) {
-    m <- base1; m[others] <- as.numeric(combos[i, ])
-    b <- score(m); if (b > grid_bacc) { grid_bacc <- b; grid_best <- m }
+  if (grid_combo_count <= max_grid_combos) {
+    combos <- as.matrix(expand.grid(replicate(length(others), grid, simplify = FALSE)))
+    for (i in seq_len(nrow(combos))) {
+      m <- base1; m[others] <- as.numeric(combos[i, ])
+      b <- score(m); if (b > grid_bacc) { grid_bacc <- b; grid_best <- m }
+    }
   }
 
   # 1b) Prior-Korrektur (1/prior) als prinzipieller, tuning-freier Startpunkt -

@@ -50,3 +50,47 @@ test_that("tune_class_multipliers() verbessert BAcc mindestens auf das Grid-/Pri
   expect_gte(res$bacc, raw_bacc)
   expect_equal(unname(res$multipliers[res$reference_class]), 1)
 })
+
+test_that("tune_class_multipliers() explodiert bei vielen Klassen nicht kombinatorisch (P1-Fund, openml-cc18-optdigits)", {
+  # 10 Klassen -> 9 freie Multiplikator-Dimensionen. Vor dem Fix versuchte
+  # `expand.grid(replicate(9, grid, ...))` mit dem Default-Grid (12 Werte)
+  # eine 12^9 ~ 5.2-Mrd.-Zeilen-Matrix zu allozieren ("cannot allocate
+  # vector of size 38.4 Gb") - realer Absturz beim P1-Lauf gegen
+  # `openml-cc18-optdigits` (2026-08-29). Dieser Test reproduziert die
+  # Dimensionalitaet synthetisch und muss ohne OOM/Haenger durchlaufen.
+  set.seed(1)
+  n <- 200
+  k <- 10
+  classes <- LETTERS[1:k]
+  truth <- factor(sample(classes, n, replace = TRUE), levels = classes)
+  probs <- matrix(runif(n * k), nrow = n, ncol = k, dimnames = list(NULL, classes))
+  probs <- probs / rowSums(probs)
+
+  expect_error(
+    res <- tune_class_multipliers(probs, truth, grid = seq(0.5, 6, by = 0.5)),
+    NA # kein Fehler/Absturz erwartet
+  )
+  expect_equal(length(res$multipliers), k)
+  expect_true(is.finite(res$bacc))
+  expect_equal(unname(res$multipliers[res$reference_class]), 1)
+})
+
+test_that("tune_class_multipliers() nutzt das Grid weiterhin voll aus, wenn die Kombinatorik klein bleibt (Regressionsschutz)", {
+  # Bei wenigen Klassen (hier 3, wie im bereits bestehenden Test oben)
+  # darf der Fix aus dem vorigen Test NICHT dazu fuehren, dass der
+  # Grid-Schritt uebersprungen wird - `grid_bacc` muss weiterhin besser
+  # als der triviale Identitaets-Score sein koennen.
+  set.seed(42)
+  n <- 300
+  truth <- factor(sample(c("A", "B", "C"), n, replace = TRUE, prob = c(0.8, 0.15, 0.05)),
+                  levels = c("A", "B", "C"))
+  probs <- matrix(0, nrow = n, ncol = 3, dimnames = list(NULL, c("A", "B", "C")))
+  for (i in seq_len(n)) {
+    base <- c(A = 0.6, B = 0.25, C = 0.15)
+    base[as.character(truth[i])] <- base[as.character(truth[i])] + 0.15
+    probs[i, ] <- base / sum(base)
+  }
+  res <- tune_class_multipliers(probs, truth, grid = seq(0.5, 4, by = 0.5))
+  identity_bacc <- mlr3measures::bacc(truth, factor(colnames(probs)[max.col(probs, ties.method = "first")], levels = levels(truth)))
+  expect_gt(res$grid_bacc, identity_bacc) # das Grid muss tatsaechlich etwas gefunden haben, nicht nur die Identitaet
+})
