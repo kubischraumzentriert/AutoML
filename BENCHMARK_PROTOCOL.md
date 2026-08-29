@@ -1,8 +1,17 @@
 # Benchmark-Protokoll (eingefroren, Stand 2026-08-28)
 
+**Praezisierung (2026-08-29, siehe [`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md))**:
+dieses Protokoll deckt ausschliesslich **Level 1 (Component Workflow)**
+ab - gewichtetes Training + ggf. Multiplier-/Threshold-Korrektur, NICHT
+den vollstaendigen AutoML-Entscheidungsprozess (Modellwahl, Tuning,
+Ensemble Selection etc. laufen NICHT innerhalb der Outer-CV-Schleife
+selbst). Fruehere Formulierungen wie "Full-Workflow Outer Evaluation"
+meinten immer schon genau das, sind aber sprachlich unpraezise - siehe
+`EVALUATION_LEVELS.md` fuer die vollstaendige Einordnung und Level 2/3.
+
 Phase E, Punkt 16 aus dem 2026-08-28-Bewertungsdokument: "Benchmark-
 Protokoll einfrieren". Dieses Dokument fixiert EXAKT, was Phase C
-(`BACKLOG.md`, "Naechste Bewertung 2026-08-28"/Phase C) als Full-Workflow
+(`BACKLOG.md`, "Naechste Bewertung 2026-08-28"/Phase C) als Level-1-
 Outer Evaluation gemacht hat, als **Version 1** dieses Protokolls -
 verbindlich fuer jeden weiteren Datensatz, der dazukommt, sofern nicht
 explizit als Abweichung dokumentiert.

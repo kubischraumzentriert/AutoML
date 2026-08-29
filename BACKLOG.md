@@ -890,6 +890,18 @@ Runs mit Provenienz - explizit vom Bewertungsdokument ausgeschlossen
 
 ### Phase C - Status (2026-08-28): Outer Evaluation auf 7 Datensaetze/Kategorien
 
+**Sprachliche Praezisierung (2026-08-29, siehe
+[`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md))**: alles unten
+Beschriebene ist **Level 1 (Component Workflow)** - gewichtetes Training
++ ggf. Multiplier-Korrektur. "Full-Workflow"/"der Workflow generalisiert"
+in den urspruenglichen Formulierungen unten meinte immer schon genau
+das, war aber sprachlich unpraezise (klang nach dem kompletten AutoML-
+Entscheidungsprozess). Nicht Teil dieser Evaluation: Leak-Audit, Feature
+Engineering, vollstaendige Modellwahl, Ranger-/LightGBM-Tuning, Ensemble
+Selection - all das laeuft im echten Projekt-Workflow, aber NICHT
+innerhalb der Outer-CV-Schleife selbst. Level 2/3 sind eigene, noch
+offene Roadmap-Punkte.
+
 **Punkte 8+9 (Datensaetze definieren + Auswahl begruenden)**: statt neuer
 Datensaetze werden bewusst BEREITS ERKUNDETE Projekte aus diesem Templates
 eigener Historie wiederverwendet (kein neues Setup-Risiko, Balance/Groesse/
@@ -1248,6 +1260,58 @@ Merge-Backup vom 2026-08-29, 19.8 MB) - per erneutem
 `db_housekeeping_check()` verifiziert ("BACKUPS: 1 Datei(en)", keine
 ">3 Backups"-Warnung mehr). Damit ist auch dieser letzte, wiederholt
 dokumentierte offene Punkt erledigt.
+
+## Naechste Bewertung 2026-08-29 (extern, neue Roadmap P0-P3)
+
+Neues externes Bewertungsdokument vom Nutzer eingebracht:
+`AutoML_Bewertung_und_Verbesserungsvorschlaege_2026-08-29.md`
+(`~/Downloads`, dieser Abschnitt haelt die relevanten Punkte dauerhaft im
+Repo fest). Gesamtnote 9.7/10. **Wichtigster neuer Kritikpunkt**: die
+bisherige "Full-Workflow Outer Evaluation" (Phase C) ist NICHT der
+komplette AutoML-Entscheidungsprozess, sondern nur ein Baustein davon
+(gewichtetes Training + Korrektur) - Modellwahl/Tuning/Ensemble Selection
+laufen nicht innerhalb der Outer-CV-Schleife. Vorschlag: 3 Evaluations-
+Ebenen definieren (Level 1 Component Workflow, Level 2 Model-Selection
+Workflow, Level 3 Full Trust-centered AutoML Decision Process). **Zweiter
+Kritikpunkt**: die 7 Phase-C-Datensaetze stammen aus bereits bekannten
+Projekten - Risiko von Benchmark Selection Bias fuer ein staerkeres
+Research-Paper (Vorschlag: vorab festgelegtes externes Benchmark-Set).
+**Dritter Kritikpunkt**: die bisherigen Baselines (Default Ranger/
+LightGBM) sind fuer ein Research-Paper zu schwach (Vorschlag: Tuned
+Ranger/LightGBM, Best Single Tuned Model ergaenzen).
+
+**Neue Roadmap**: P0 (Begriffe/Ebenen trennen, Doku anpassen - guenstig),
+P1 (externes Benchmark-Set + faire Baselines - moderater Aufwand), P2
+(Level-2-Outer-Evaluation prototypisieren + Evidence Registry
+finalisieren - teuer), P3 (`finalize_run_provenance()`, Paper-
+Rohentwurf).
+
+**Nutzerentscheidung (2026-08-29)**: Start mit **P0**.
+
+### P0 - Status (2026-08-29)
+
+1. ~~Begriffe `workflow_ranger`/`model-selection workflow`/`full AutoML
+   process` klar trennen~~ **ERLEDIGT** - neue Datei
+   [`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md) definiert die 3 Ebenen
+   praezise und legt fest: alles bisher Gemessene (P1.1, Phase C,
+   Multiplier-Nachpruefung) ist Level 1, ueber Level 2/3 liegt keine
+   Evidenz vor.
+2. ~~aktuelle Dokumentation entsprechend anpassen~~ **ERLEDIGT** -
+   `BENCHMARK_PROTOCOL.md` (Kopf-Hinweis "Level 1"), `AGENTS.md`
+   (Paper-Story-Zitat um die Level-1-Einschraenkung ergaenzt, explizit
+   "ueber Level 2/3 liegt keine Evidenz vor" statt es zu verschweigen),
+   `BACKLOG.md` (dieser Abschnitt + Praezisierung am Kopf des
+   Phase-C-Status).
+3. ~~Claims im Paper-/AGENTS-Kontext auf die tatsaechlich evaluierte
+   Ebene begrenzen~~ **ERLEDIGT** - siehe Punkt 2, `AGENTS.md`s
+   Paper-Story-Zitat wurde umformuliert, nicht nur ergaenzt (kein
+   unqualifiziertes "der Workflow generalisiert" mehr im Fliesstext).
+
+**Bewusst NICHT geaendert**: `ABLATION_STUDIES_PLAN.md`/die 2
+ausgearbeiteten Ablations-Dokumente (A2/A3) - die behandeln einzelne
+Diagnose-Module (Leak-Audit, Drift-/Stabilitaets-Checks), nicht die
+"Workflow generalisiert"-Aussage, die Level-Frage betrifft sie nicht
+direkt (siehe `EVALUATION_LEVELS.md`s eigene Begruendung dafuer).
 
 ## Zielbild
 

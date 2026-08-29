@@ -96,34 +96,42 @@ Arbeitshypothese fuer kuenftige Sessions:
 
 **Aktualisierte Paper-Story nach Phase C (2026-08-28, siehe
 `BACKLOG.md`/Phase C, `BENCHMARK_PROTOCOL.md`,
-`ABLATION_STUDIES_PLAN.md`)**: die Full-Workflow Outer Evaluation ist
-nicht mehr nur ein 1-Datensatz-Prototyp, sondern lief auf 7 bewusst
-diversen Datensaetzen/Kategorien (binaer ausgeglichen/unausgeglichen,
-multiclass, klein/gross, Covariate Shift, Group-/Time-Struktur) nach
-einem eingefrorenen Protokoll (`BENCHMARK_PROTOCOL.md`, Version 1). Die
-Kernaussage der Story hat sich dadurch PRAEZISIERT, nicht abgeschwaecht:
+`ABLATION_STUDIES_PLAN.md`), sprachlich praezisiert (2026-08-29, siehe
+[`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md))**: die bisherige Outer
+Evaluation ist nicht mehr nur ein 1-Datensatz-Prototyp, sondern lief auf
+7 bewusst diversen Datensaetzen/Kategorien (binaer ausgeglichen/
+unausgeglichen, multiclass, klein/gross, Covariate Shift, Group-/Time-
+Struktur) nach einem eingefrorenen Protokoll (`BENCHMARK_PROTOCOL.md`,
+Version 1). **Wichtige Praezisierung**: gemessen wurde bislang
+ausschliesslich **Level 1 (Component Workflow)** - gewichtetes Training +
+ggf. Multiplier-Korrektur - NICHT der vollstaendige AutoML-
+Entscheidungsprozess (Modellwahl/Tuning/Ensemble Selection liefen nicht
+innerhalb der Outer-CV-Schleife). Die Kernaussage der Story bleibt
+dieselbe Erkenntnis, aber mit der korrekten sprachlichen Reichweite:
 
-> Der dokumentierte AutoML-Workflow generalisiert nicht pauschal - er
-> generalisiert MIT einer zur Zielmetrik passenden Korrekturkette
-> (Klassengewichtung + Multiplier-/Schwellenwert-Tuning), NICHT mit
-> Klassengewichtung allein. Bei allen 4 BAcc-primaeren Aufgaben gewinnt
-> oder haelt der volle Workflow mindestens mit den Baselines mit; bei den
-> 2 Accuracy-/F-beta-primaeren Aufgaben OHNE begleitenden Korrektur-
-> schritt faellt er DEUTLICH ab (bis zu -28.7 Punkte F-beta).
+> Der Level-1-Component-Workflow (gewichtetes Training + ggf.
+> Multiplier-Korrektur) generalisiert nicht pauschal - er generalisiert
+> MIT einer zur Zielmetrik passenden Korrekturkette (Klassengewichtung +
+> Multiplier-/Schwellenwert-Tuning), NICHT mit Klassengewichtung allein.
+> Bei allen 4 BAcc-primaeren Aufgaben gewinnt oder haelt dieser Baustein
+> mindestens mit den Baselines mit; bei den 2 Accuracy-/F-beta-primaeren
+> Aufgaben OHNE begleitenden Korrekturschritt faellt er DEUTLICH ab (bis
+> zu -28.7 Punkte F-beta). **Ueber Level 2 (Modellwahl+Tuning innerhalb
+> Outer-Train) und Level 3 (kompletter Trust-Prozess innerhalb
+> Outer-Train) liegt bislang KEINE Evidenz vor - weder positiv noch
+> negativ, schlicht noch nicht getestet.**
 
 Das ist die staerkere, ehrlichere Version der urspruenglichen "der
 Workflow generalisiert"-Behauptung - eine Grenzbedingung, die mit nur
 einem Datensatz unsichtbar geblieben waere, und genau der Beleg, den ein
 Forschungs-Paper braucht (nicht nur "es funktioniert", sondern "es
 funktioniert UNTER WELCHEN BEDINGUNGEN, und warum nicht sonst"). Fuer
-ein staerkeres Forschungs-Paper fehlen jetzt nicht mehr primaer weitere
-Datensaetze, sondern: (a) die in `ABLATION_STUDIES_PLAN.md` definierten
-Ablationsstudien tatsaechlich zu einem Abschnitt auszuarbeiten (die
-meisten Antworten liegen laut Plan bereits vor, muessen nur noch
-zusammengestellt werden), und (b) ggf. eine gezielte Nachpruefung, ob ein
-nachgeruesteter Multiplier-/Threshold-Schritt bei `CreditScoringChallenge`/
-`PumpItUp` den beobachteten Abfall tatsaechlich behebt (siehe
-`BACKLOG.md`/Phase-C-Status, "Naechster moeglicher Schritt").
+ein staerkeres Forschungs-Paper fehlen laut der 2026-08-29-Bewertung vor
+allem: (1) ein VORAB festgelegtes externes Benchmark-Set (Risiko von
+Benchmark Selection Bias bei den bisherigen, bereits bekannten
+Projekten), (2) staerkere/budgetgleiche Baselines (Tuned Ranger/
+LightGBM, Best Single Tuned Model - bisher nur Default-Baselines), (3)
+ggf. eine echte Level-2-Outer-Evaluation.
 
 Naechste Schritte, die bei neuen Arbeiten mitgedacht werden sollen:
 
