@@ -1527,6 +1527,48 @@ Status `core_finding`).
 groesseres Tuning-Budget fuer Level 2 (aktuell nur 10 Evals/Arm) koennte
 das Bild veraendern, ist aber nicht getestet.
 
+### P2 - Status (2026-08-29, 2. Haelfte): Evidence Registry finalisieren
+
+**Nutzeranfrage**: "mach weiter mit P2 zweite Haelfte".
+
+**Schritt 1 (Regenerieren)**: die 20 P1/P2-Evidence-Eintraege dieser
+Session (externes Benchmark-Set, faire Baselines, Level-2-Rollout - alle
+direkt in die zentrale `experiments.db` geloggt, nicht in
+Projekt-lokale DBs, siehe `evidence_registry_summary()`-Check) waren noch
+nicht in [`SYSTEMATIC_EVALUATION_GENERATED.md`](SYSTEMATIC_EVALUATION_GENERATED.md)
+enthalten (zuletzt generiert 2026-08-28, vor P1/P2). `generate_
+systematic_evaluation_file()` erneut ausgefuehrt - die Datei enthaelt
+jetzt alle 6 externen CC18-Projekte mit ihren `outer_workflow_evaluation`-
+Zellen (v1/v2/v3 zusammengefasst, da dieselbe Modul-Spalte).
+
+**Schritt 2 (Entscheidung "manuelle Tabelle abschaffen?")**: geprueft,
+ob `SYSTEMATIC_EVALUATION.md` (770 Zeilen, handgepflegte 9-Modul-Tabelle
++ dichte redaktionelle Diskussion je Spalte, Korrekturvermerke,
+Fussnoten) durch die generierte Version ersetzt werden kann.
+**Entscheidung: NEIN, nicht jetzt** - die redaktionelle Dichte des
+manuellen Dokuments (z.B. die vollstaendige Herleitung jeder
+Spaltenaufloesung vom 2026-08-15, mit Fallzahlen/Ausschlussgruenden) ist
+so hoch, dass eine verlustfreie Migration in `evid_notes`-Freitextfelder
+entweder unpraktikabel waere (viel zu lange Zellen fuer eine Pivot-
+Tabelle) oder den redaktionellen Mehrwert kappen wuerde - das widerspraeche
+der Session-Konvention "additive/verlustfreie Aenderungen vor
+destruktiven Umbauten". Stattdessen: **klare Arbeitsteilung
+formalisiert** (siehe aktualisierter Hinweis-Absatz oben in
+`SYSTEMATIC_EVALUATION.md`) - die manuelle Tabelle bleibt massgeblich fuer
+die urspruenglichen 9 Trust-/Diagnose-Module, waehrend ALLES rund um
+`outer_workflow_evaluation` (Phase C, P1, P2) nur noch ueber die
+generierte Datei gepflegt wird und dort NICHT mehr manuell nachgezogen
+werden muss. Das ist der pragmatische Mittelweg zwischen "sofort
+abschaffen" (haette redaktionelles Material vernichtet) und "weiter
+doppelt pflegen" (unnoetiger Mehraufwand fuer die neuen, schnell
+wachsenden Outer-Evaluation-Ergebnisse).
+
+**Ergebnis**: kein Code-Aenderungsbedarf (die Infrastruktur aus Phase D/
+P1.2 Schritt 3 war bereits vollstaendig und funktioniert wie gedacht) -
+nur eine Regenerierung + eine explizite, dokumentierte
+Arbeitsteilungs-Entscheidung. Damit ist P2 (beide Haelften) vollstaendig
+abgeschlossen.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

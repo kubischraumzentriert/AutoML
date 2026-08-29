@@ -1,16 +1,24 @@
 # Systematische Evaluation: Workflow-Komponenten über Projekte
 
-**Hinweis (2026-08-28, P1.2 Schritt 3/Phase D)**: seit dieser Woche gibt
-es eine maschinenlesbare Evidence Registry (`evidence_registry.R`), aus
-der `generate_systematic_evaluation.R` eine **automatisch erzeugte**
-Version dieser Tabelle bauen kann - siehe
+**Hinweis (2026-08-28, P1.2 Schritt 3/Phase D; aktualisiert 2026-08-29,
+P2 2. Hälfte)**: seit dieser Woche gibt es eine maschinenlesbare Evidence
+Registry (`evidence_registry.R`), aus der `generate_systematic_evaluation.R`
+eine **automatisch erzeugte** Version dieser Tabelle bauen kann - siehe
 [`SYSTEMATIC_EVALUATION_GENERATED.md`](SYSTEMATIC_EVALUATION_GENERATED.md).
-Diese handgepflegte Datei hier bleibt vorerst die MASSGEBLICHE Quelle
-(sie enthält redaktionelles Material - Fußnoten, Korrekturvermerke,
-Diskussion -, das die generierte Version nicht hat), aber die generierte
-Version ist bereits AKTUELLER in Teilen (z.B. Phase-C-Funde), die hier
-noch nicht manuell nachgetragen wurden. Siehe `BACKLOG.md` "Nächste
-Bewertung 2026-08-28"/Phase D für den vollen Kontext.
+Diese handgepflegte Datei hier bleibt vorerst die MASSGEBLICHE Quelle für
+die 9 ursprünglichen Trust-/Diagnose-Module (sie enthält redaktionelles
+Material - Fußnoten, Korrekturvermerke, eine dichte Diskussion je Spalte
+-, das die generierte Version nicht hat und dessen Migration in
+Registry-`evid_notes`-Felder verlustbehaftet wäre). Für ALLES rund um
+`outer_workflow_evaluation` (Phase C, externes P1-Benchmark-Set, faire
+v2-Baselines, Level-2-Prototyp v3) ist die generierte Datei dagegen die
+AKTUELLERE und vollständigere Quelle - dieser Abschnitt hier wird für
+diese Spalte bewusst NICHT mehr manuell nachgepflegt (siehe `BACKLOG.md`
+"P2 - Status (2026-08-29, 2. Hälfte)" für die explizite Entscheidung).
+Praktische Faustregel: fehlt eine Frage nach der 9-Modul-Trust-Schicht ->
+hier nachsehen; geht es um Outer-Evaluation/Workflow-Vergleiche -> die
+generierte Datei nach jedem neuen `db_log_evidence()`-Aufruf per
+`generate_systematic_evaluation_file()` neu erzeugen und dort nachsehen.
 
 Konsolidierte Ergebnistabelle für das mittelfristige Publikationsziel
 (siehe `AGENTS.md`, "Mittelfristiges Ziel"). Beantwortet: welche
