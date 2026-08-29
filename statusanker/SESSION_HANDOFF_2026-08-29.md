@@ -7,17 +7,18 @@ Nachpruefung, Ablationen A2+A3). Dieser Anker deckt alles ab, was SEIT
 diesem Handoff passiert ist: der ueberfaellige zentrale Merge (inkl. 2
 gefundener/gefixter Bugs), Backup-Aufraeumen, und die komplette
 Bearbeitung von P0-P3 aus einem NEUEN, dritten externen
-Bewertungsdokument (2026-08-29). **4. Aktualisierung dieses Ankers:**
-ergaenzt P2 2. Haelfte (Evidence-Registry-Arbeitsteilung dokumentiert)
-und P3 1. Teil (`finalize_run_provenance()`) - damit ist die
-GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments abgearbeitet bis
-auf den optionalen Paper-Rohentwurf.
+Bewertungsdokument (2026-08-29). **5. Aktualisierung dieses Ankers:**
+ergaenzt P3 2. Teil (erster Paper-Rohentwurf, `PAPER_DRAFT.md`) - damit
+ist die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
+vollstaendig abgearbeitet.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `086243c` "P3: finalize_run_provenance() -
-  Abschluss-Provenienz am Ende eines Runs" - gepusht, CI Smoke Test
-  gruen (Lauf `33256552839`).
+- `MLR3_Classifikation` @ `5abc1e7` "P3 (2. Teil): erster
+  Paper-Rohentwurf" - gepusht. Nur `.md`-Aenderung, CI Smoke Test
+  triggert dafuer erwartungsgemaess nicht (Path-Filter greift nur bei
+  `**.R`/`DESCRIPTION`/`.Rprofile`) - letzter tatsaechlicher CI-Lauf
+  gruen fuer `086243c` (Lauf `33256552839`).
 - `ML_Learning` (rein lokal, kein Remote): 12 neue Projektordner
   (`openml-cc18-cmc`, `-optdigits`, `-sick`,
   `-analcatdata-authorship`, `-blood-transfusion`, `-ilpd` - je mit
@@ -31,15 +32,22 @@ auf den optionalen Paper-Rohentwurf.
   (nur die letzte, aktuelle blieb); alle P1/P2-Evidence-Eintraege dieser
   Session (20 neue Zeilen) liegen direkt in dieser zentralen DB (der
   Logging-Helfer verbindet sich zentral, nicht projekt-lokal).
-- **9 neue annotierte Git-Tags**: `backlog-central-merge-completed`,
+- **10 neue annotierte Git-Tags**: `backlog-central-merge-completed`,
   `backlog-2026-08-29-p0-evaluation-levels`,
   `backlog-p1-external-benchmark-frozen`,
   `backlog-p1-external-benchmark-executed`,
   `backlog-p1-fair-baselines-complete`, `backlog-p2-level2-prototype`,
-  `backlog-p2-level2-full-rollout`, `backlog-p2-complete` (8 explizit
-  benannte - insgesamt jetzt 25+ Tags im Repo). Fuer P3 wurde bewusst
-  KEIN eigener Tag gesetzt (kleiner, additiver Schritt ohne eigenen
-  "Meilenstein"-Charakter wie P0-P2 - siehe Konvention unten).
+  `backlog-p2-level2-full-rollout`, `backlog-p2-complete`,
+  `backlog-2026-08-29-roadmap-complete` (9 explizit benannte - insgesamt
+  jetzt 26+ Tags im Repo). Der letzte Tag markiert den Abschluss der
+  GESAMTEN P0-P3-Roadmap. Fuer P3s 1. Teil (`finalize_run_provenance()`)
+  wurde bewusst KEIN eigener Zwischentag gesetzt (kleiner, additiver
+  Schritt ohne eigenen "Meilenstein"-Charakter).
+- **Neue Datei `PAPER_DRAFT.md`**: erster vollstaendiger Rohentwurf eines
+  Workshop-/Experience-/Software-Papers ("A Reproducible, Trust-Centered
+  AutoML Workflow for Tabular Classification in R/mlr3"), auf Englisch,
+  explizit als DRAFT markiert. Per `SendUserFile` an den Nutzer
+  ausgeliefert.
 
 ## Was in dieser Session passiert ist
 
@@ -187,22 +195,45 @@ CI-Fixture verifiziert (degradiert korrekt zu Warnung bei fehlendem
 **Bewusst nicht** auf alle ~30 Skripte ausgerollt - `030_baseline.R`
 dient als Muster fuer kuenftige Skripte, kein Big-Bang-Refactoring.
 
+**11. P3, 2. Teil "erster Paper-Rohentwurf" - ERLEDIGT** (Nutzeranfrage
+"mach weiter mit dem Paper-Rohentwurf"). Neue Datei `PAPER_DRAFT.md` -
+erster vollstaendiger Durchgang, EXPLIZIT als DRAFT markiert, auf
+Englisch (Standard fuer die anvisierten Venues), obwohl das Repo selbst
+deutsch dokumentiert ist. Struktur: Abstract, Introduction, System
+Description, Related Work (**bewusst nur Platzhalter** - keine echte
+Literaturrecherche gemacht, das steht explizit im Dokument), die 3
+Evaluations-Ebenen, Level-1-Ergebnis (Phase C + externes Benchmark-Set +
+faire Baselines), Level-2-Prototyp als offen kommuniziertes NEGATIVES
+Ergebnis, zwei Trust-Layer-Ablationen (inkl. dem dokumentierten
+Leak-Audit-blinden-Fleck, nicht nur den Erfolgsfaellen), Limitations
+(inkl. der wichtigsten Klarstellung: der Titel-Anspruch "trust-centered"
+gilt informell fuer Level 3/die gelebte Praxis, waehrend die
+QUANTITATIVEN Befunde nur Level 1/2 abdecken), Conclusion, sowie ein
+"How to use this draft"-Abschnitt mit den noch offenen menschlichen
+Entscheidungen (Ziel-Venue, echte Literaturrecherche, Autorenliste,
+Abbildungen/Tabellen). Jede Zahl darin stammt direkt aus bereits
+gepruesften Repo-Dokumenten - keine neue Recherche, kein neuer Lauf,
+reine Synthese. Per `SendUserFile` an den Nutzer ausgeliefert. Getaggt:
+`backlog-2026-08-29-roadmap-complete`.
+
 ## Offene Punkte fuer die naechste Session
 
-**Aus der 2026-08-29-Bewertung/Roadmap ist NUR NOCH der optionale
-zweite Teil von P3 offen:**
-- **P3, 2. Teil**: erster Paper-Rohentwurf - deutlich groesserer,
-  eigenstaendiger Arbeitsschritt, bewusst nicht ungefragt begonnen.
-- Optional, nicht dringend: pruefen, ob ein groesseres Tuning-Budget fuer
-  Level 2 (aktuell 10 Evals/Arm) das gemischte P2-Ergebnis veraendert -
-  bislang nicht getestet.
-- Optional, nicht dringend: `finalize_run_provenance()` auf weitere
-  aktive Skripte ausrollen (`030_baseline.R` ist bislang die einzige
+**Die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
+(2026-08-29) ist vollstaendig abgearbeitet.** Nur noch optionale
+Folgeschritte offen, keiner dringend:
+- `PAPER_DRAFT.md` weiterentwickeln: echte Literaturrecherche (Section 3
+  ist bislang nur ein Platzhalter), Ziel-Venue festlegen, Abbildungen/
+  Tabellen ergaenzen, Autorenliste/Anonymisierung klaeren - alles
+  explizit im Dokument selbst als offen benannt ("How to use this
+  draft").
+- Optional: pruefen, ob ein groesseres Tuning-Budget fuer Level 2
+  (aktuell 10 Evals/Arm) das gemischte P2-Ergebnis veraendert - bislang
+  nicht getestet.
+- Optional: `finalize_run_provenance()` auf weitere aktive Skripte
+  ausrollen (`030_baseline.R` ist bislang die einzige
   Referenzimplementierung).
 
-**Keine dringenden Blocker.** Die GESAMTE P0-P3-Roadmap des dritten
-Bewertungsdokuments ist umgesetzt bis auf den optionalen Paper-
-Rohentwurf.
+**Keine dringenden Blocker.**
 
 ## Wichtige Konventionen (Ergaenzungen seit dem 28.08.-Anker)
 
@@ -252,11 +283,10 @@ Rohentwurf.
 ## Empfohlener erster Schritt der naechsten Session
 
 Kein zwingender Einstiegspunkt. Die komplette P0-P3-Roadmap des dritten
-Bewertungsdokuments (2026-08-29) ist umgesetzt. Falls der Nutzer nichts
-Konkretes mitbringt: die tatsaechliche Publikations-Ausarbeitung
-anstossen (alle Bausteine - Phase C, externes Benchmark-Set, faire
-Baselines, Level-2-Prototyp (gemischtes/negatives Ergebnis), beide
-Ablationen, das eingefrorene Protokoll, Provenienz - liegen jetzt
-bereit), oder eines der beiden verbleibenden optionalen Punkte (groesseres
-Level-2-Tuning-Budget testen, `finalize_run_provenance()` auf weitere
-Skripte ausrollen).
+Bewertungsdokuments (2026-08-29) ist umgesetzt, inklusive eines ersten
+Paper-Rohentwurfs (`PAPER_DRAFT.md`). Falls der Nutzer nichts Konkretes
+mitbringt: `PAPER_DRAFT.md` weiterentwickeln (echte Literaturrecherche
+fuer Section 3, Ziel-Venue festlegen, Abbildungen/Tabellen ergaenzen -
+siehe dortiger "How to use this draft"-Abschnitt), oder einer der beiden
+verbleibenden optionalen Punkte (groesseres Level-2-Tuning-Budget
+testen, `finalize_run_provenance()` auf weitere Skripte ausrollen).
