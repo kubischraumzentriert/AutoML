@@ -1313,6 +1313,36 @@ Diagnose-Module (Leak-Audit, Drift-/Stabilitaets-Checks), nicht die
 "Workflow generalisiert"-Aussage, die Level-Frage betrifft sie nicht
 direkt (siehe `EVALUATION_LEVELS.md`s eigene Begruendung dafuer).
 
+### P1 - Status (2026-08-29): externer Benchmark (Auswahl)
+
+**Nutzerentscheidung**: "mach weiter mit P1".
+
+~~Einschlusskriterien definieren~~/~~Dataset-Liste vorab einfrieren~~/
+~~keine Auswahl anhand bereits bekannter Modellperformance~~ **ERLEDIGT**
+- siehe [`EXTERNAL_BENCHMARK_SET.md`](EXTERNAL_BENCHMARK_SET.md). Quelle:
+[OpenML-CC18](https://www.openml.org/search?type=study&study_type=task&id=99)
+(72 extern kuratierte Klassifikations-Datensaetze, per OpenML-API
+abgerufen). Kriterien (500-20.000 Instanzen, <=100 Features, 2-10
+Klassen, nicht bereits in diesem Template verwendet) VOR jeder Auswahl
+festgelegt -> 43 zulaessige Kandidaten -> per `set.seed(20260829)`
+deterministisch 3 binaere + 3 multiclass gezogen, OHNE jemals eine
+Performance-Kennzahl einzusehen. **Eingefroren**: `cmc`, `optdigits`,
+`sick`, `analcatdata_authorship`, `blood-transfusion-service-center`,
+`ilpd`.
+
+**Bewusste Einschraenkung dokumentiert**: die Phase-C-Kategorien F
+(Covariate Shift)/G (Group-/Time-Struktur) lassen sich mit einer
+generischen i.i.d.-Suite nicht reproduzieren, ohne selbst wieder eine
+Auswahl-Entscheidung zu treffen - das externe Set deckt bewusst nur
+binaer/multiclass/Groessen-Diversitaet ab.
+
+**Noch NICHT ausgefuehrt** (separater naechster Schritt, nicht
+automatisch angestossen): die eigentlichen Task-Vorbereitungen +
+Outer-Evaluation-Laeufe fuer die 6 Datensaetze, sowie der zweite
+P1-Teil ("faire Baselines": Tuned Ranger/LightGBM, Best Single Tuned
+Model) - beides zusammen ein neuer, nicht-trivialer Rechenaufwand
+(6 neue Datensaetze x mehrere Vergleichs-Arme, davon 2 neue TUNED-Arme).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
