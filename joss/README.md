@@ -43,11 +43,15 @@ by the user on 2026-08-29 (see `BACKLOG.md`, P3 status).
    are all mandatory (verified directly against JOSS's docs, not
    assumed). All 6 are now present; word count 1342 (within the
    750-1750 limit).
-4. **Compile locally to verify formatting** before submitting — JOSS
-   provides a Docker-based `whedon`/`inara` preview tool and a GitHub
-   Action; neither has been run against this draft yet.
+4. ~~Set up a way to compile the draft to verify formatting~~ **DONE
+   (2026-08-29)**: [`.github/workflows/draft-pdf.yml`](../.github/workflows/draft-pdf.yml)
+   builds a draft PDF via `openjournals/openjournals-draft-action`
+   (same `inara` tool JOSS itself uses) on every change to `paper.md`/
+   `paper.bib`, uploaded as a GitHub Actions artifact — check the
+   Actions tab after a push for the `paper` artifact. This is a
+   formatting/citation check only, **not** a submission.
 5. Submit via https://joss.theoj.org/papers/new (a GitHub repository URL
    plus this `paper.md` path).
 
-Steps 4-5 were not done as part of this pass — everything else on the
-"before submission" list is now done.
+Step 5 (the actual submission) is the only remaining item — a
+deliberate decision, not done as part of this pass.

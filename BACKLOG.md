@@ -1842,6 +1842,19 @@ Einreichung selbst - beides bewusst nicht Teil dieser Sitzung.
 Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
 vorsichtshalber verifiziert (weiterhin 322/322 gruen).
 
+**Nachtrag (2026-08-29): JOSS-Vorschau-GitHub-Action eingerichtet.**
+Nutzerfrage "JOSS Vorschau tooling was ist das?" beantwortet (Whedon-
+Web-Vorschau, GitHub Action, lokal via Docker/`inara` - alle 3 nutzen
+dasselbe Tool wie JOSS selbst fuer den echten Review), danach
+Nutzeranfrage "ja, GitHub Action einrichten". Neue Datei
+[`.github/workflows/draft-pdf.yml`](.github/workflows/draft-pdf.yml):
+baut bei jeder Aenderung an `joss/paper.md`/`joss/paper.bib`
+(Path-Filter, analog zum bestehenden CI-Smoke-Test-Workflow) via
+`openjournals/openjournals-draft-action` eine unverbindliche Vorschau-
+PDF und laedt sie als Actions-Artifact hoch - reine Formatierungs-/
+Zitations-Pruefung, KEINE Einreichung. `joss/README.md`/`BACKLOG.md`
+entsprechend ergaenzt.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
