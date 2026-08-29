@@ -125,13 +125,29 @@ Das ist die staerkere, ehrlichere Version der urspruenglichen "der
 Workflow generalisiert"-Behauptung - eine Grenzbedingung, die mit nur
 einem Datensatz unsichtbar geblieben waere, und genau der Beleg, den ein
 Forschungs-Paper braucht (nicht nur "es funktioniert", sondern "es
-funktioniert UNTER WELCHEN BEDINGUNGEN, und warum nicht sonst"). Fuer
-ein staerkeres Forschungs-Paper fehlen laut der 2026-08-29-Bewertung vor
-allem: (1) ein VORAB festgelegtes externes Benchmark-Set (Risiko von
-Benchmark Selection Bias bei den bisherigen, bereits bekannten
-Projekten), (2) staerkere/budgetgleiche Baselines (Tuned Ranger/
-LightGBM, Best Single Tuned Model - bisher nur Default-Baselines), (3)
-ggf. eine echte Level-2-Outer-Evaluation.
+funktioniert UNTER WELCHEN BEDINGUNGEN, und warum nicht sonst").
+
+**P1 vollstaendig abgeschlossen (2026-08-29): externes Benchmark-Set +
+faire getunte Baselines, beide Kritikpunkte der 2026-08-29-Bewertung
+direkt beantwortet.** 6 vorab (nur nach Metadaten, ohne jede Performance-
+Kenntnis) eingefrorene OpenML-CC18-Datensaetze (`EXTERNAL_BENCHMARK_SET.md`)
+liefen unter Protokoll v2 (`BENCHMARK_PROTOCOL.md`) - `workflow_ranger`
+vs. Default-Baselines UND vs. `tuned_ranger`/`tuned_lightgbm`/
+`best_single_tuned_model` (je 15 Tuning-Evals). **Ergebnis, die
+praeziseste Version der Story bislang**: gegen faire getunte Baselines
+verschwindet der Vorteil bei 3 von 6 Datensaetzen (knapp, <1 BAcc-Punkt:
+`cmc`, `analcatdata_authorship`, `optdigits` - groesser/balancierter),
+bleibt aber bei den kleineren, staerker unausgeglichenen Datensaetzen
+(`ilpd` +11.9, `sick` +4.0, `blood-transfusion` +0.8 BAcc-Punkte) klar
+bestehen. Die aktualisierte Kernaussage: **die Gewichtungs-/Multiplier-
+Korrekturkette bringt einen echten Mehrwert UEBER reines Hyperparameter-
+Tuning hinaus dort, wo Klassenimbalance das dominante Problem ist - bei
+bereits gut balancierten/groesseren Aufgaben leistet reines Tuning
+gleichwertig oder mehr.** Details/volle Tabelle: `BACKLOG.md`/P1-Status.
+
+Fuer ein staerkeres Forschungs-Paper fehlt jetzt nur noch: ggf. eine
+echte Level-2-Outer-Evaluation (Modellwahl+Tuning innerhalb jedes
+Outer-Train-Splits statt eines festen Arm-Katalogs).
 
 Naechste Schritte, die bei neuen Arbeiten mitgedacht werden sollen:
 

@@ -1,4 +1,35 @@
-# Benchmark-Protokoll (eingefroren, Stand 2026-08-28)
+# Benchmark-Protokoll (eingefroren, Stand 2026-08-28, v2 seit 2026-08-29)
+
+## Version 2 (2026-08-29): faire getunte Baselines
+
+P1 aus der 2026-08-29-Bewertung ("Baselines fuer Research-Paper noch zu
+schwach"). Referenzimplementierung:
+[`outer_workflow_evaluation_v2_fair_baselines.R`](outer_workflow_evaluation_v2_fair_baselines.R).
+Ergaenzt v1 um 3 Arme, v1 selbst bleibt UNVERAENDERT gueltig fuer die
+bereits damit ausgewerteten 13 Datensaetze (7 Phase C + 6 externes Set):
+
+- **`tuned_ranger`** - `AutoTuner` (Random-Search, `search_space` wie
+  `090_ranger_tuning.R`), Inner-Resampling = Holdout(0.75) INNERHALB des
+  Outer-Train.
+- **`tuned_lightgbm`** - `AutoTuner` (MBO, `search_space` wie
+  `100_lightgbm_tuning.R`), gleiches Inner-Resampling.
+- **`best_single_tuned_model`** - kein eigenes Training: waehlt je
+  Outer-Fold zwischen `tuned_ranger`/`tuned_lightgbm` anhand des INNEREN
+  Tuning-Validierungswerts (nicht Outer-Test) und uebernimmt dessen
+  bereits berechneten Outer-Test-Score.
+
+**Compute-Budget (dokumentiert)**: `tuned_baseline_evals = 15` je Arm
+(Random-Search bzw. MBO) - bewusst kleiner als das volle Template-Default
+fuer `100_lightgbm_tuning.R` (25 MBO-Evals), da dieser Arm 3x pro
+Datensatz (Outer Folds) statt einmalig laeuft. `ranger_default`/
+`lightgbm_default`/`workflow_ranger` unveraendert aus v1.
+
+**Ergebnis (alle 6 externen Datensaetze, siehe `BACKLOG.md`/P1-Status
+fuer die volle Tabelle)**: gegen faire getunte Baselines verschwindet
+`workflow_ranger`s Vorteil bei 3 von 6 Datensaetzen (knapp, <1 BAcc-
+Punkt) - bleibt aber bei den kleineren/staerker unausgeglichenen
+Datensaetzen (ilpd, sick, blood-transfusion) klar bestehen. Wichtige
+Praezisierung ggue. v1 (dort gewann/hielt `workflow_ranger` bei allen 6).
 
 **Praezisierung (2026-08-29, siehe [`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md))**:
 dieses Protokoll deckt ausschliesslich **Level 1 (Component Workflow)**

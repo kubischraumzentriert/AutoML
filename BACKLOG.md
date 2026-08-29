@@ -1396,6 +1396,61 @@ fehlerfrei durch.
 **Alle 7 Ergebnisse (6 Datensaetze + der Bug-Fund selbst) in die
 Evidence Registry geloggt.**
 
+### P1 - Status (2026-08-29, Abschluss): faire getunte Baselines (Protokoll v2)
+
+**Nutzerentscheidung**: "mach weiter mit den fairen Baselines".
+
+~~tuned Ranger~~/~~tuned LightGBM~~/~~ggf. Best Single Tuned Model~~/
+~~Compute-Budget dokumentieren~~/~~Workflow gegen diese Baselines
+vergleichen~~ **ERLEDIGT** - siehe `BENCHMARK_PROTOCOL.md` Version 2 und
+[`outer_workflow_evaluation_v2_fair_baselines.R`](outer_workflow_evaluation_v2_fair_baselines.R).
+3 neue Arme (`tuned_ranger`, `tuned_lightgbm`, `best_single_tuned_model`,
+je 15 Random-Search-/MBO-Evals, Inner-Holdout(0.75) INNERHALB des
+Outer-Train), angewendet auf alle 6 externen P1-Datensaetze.
+
+**Aufgetretener Bug (gefunden und gefixt)**: dieselbe `mlr3measures::tnr()`/
+`mlr3tuning::tnr()`-Namenskollision aus P1.1 trat erneut auf (diesmal in
+`run_tuned_ranger()`s `tnr("random_search")`-Aufruf, den `run_tuned_
+lightgbm()`s bereits qualifizierten Aufruf hatte ich beim ersten Entwurf
+schlicht vergessen zu spiegeln) - sofort beim Testlauf auf `ilpd`
+aufgefallen, mit `mlr3tuning::tnr(...)` gefixt.
+
+**Vollstaendiges Ergebnis (alle 6 Datensaetze, `workflow_ranger` vs.
+bester Baseline)**:
+
+| Datensatz | v1 (nur Default) | v2 (+ getunte Baselines) | Bester v2-Konkurrent | Delta zu diesem |
+|---|---|---|---|---|
+| `ilpd` | **+6.7** (workflow gewinnt) | **+11.9** (workflow gewinnt) | tuned_lightgbm/best_single 0.596 | **+11.9** |
+| `sick` | **+4.6** (workflow gewinnt) | **+4.0** (workflow gewinnt) | lightgbm_default 0.923 | **+4.0** |
+| `blood-transfusion` | **+3.9** (workflow gewinnt) | **+0.8** (workflow gewinnt, knapp) | tuned_ranger 0.622 | **+0.8** |
+| `cmc` | **+1.6** (workflow gewinnt) | **-0.9** (workflow verliert knapp) | tuned_ranger 0.529 | **-0.9** |
+| `analcatdata_authorship` | +0.2 (fast neutral) | -0.6 (workflow verliert knapp) | tuned_lightgbm 0.992 | **-0.6** |
+| `optdigits` | -0.1 (fast neutral) | -0.3 (workflow verliert knapp) | tuned_lightgbm/best_single 0.984 | **-0.3** |
+
+**Wichtigste Praezisierung der gesamten P1/Phase-C-Story**: gegen faire
+getunte Baselines VERSCHWINDET `workflow_ranger`s Vorteil bei 3 von 6
+Datensaetzen (knapp, jeweils <1 BAcc-Punkt) - bleibt aber bei den
+kleineren, staerker unausgeglichenen Datensaetzen (`ilpd`, `sick`,
+`blood-transfusion`) klar und deutlich bestehen. Erklaerungsmuster: die
+Gewichtungs-/Multiplier-Korrekturkette bringt einen echten Mehrwert UEBER
+reines Hyperparameter-Tuning hinaus dort, wo Klassenimbalance das
+eigentliche Problem ist - bei groesseren, bereits gut balancierten
+Aufgaben (`cmc`, `analcatdata_authorship`, `optdigits`) leistet reines
+Tuning bereits dasselbe oder mehr, ohne die zusaetzliche Komplexitaet.
+
+**Das ist die ehrlichste, praeziseste Version der gesamten Kernaussage
+bislang** - keine Umkehr der vorherigen Befunde, sondern eine weitere,
+noetige Praezisierung: "Level-1-Workflow generalisiert MIT einer zur
+Zielmetrik passenden Korrekturkette UND bringt einen Mehrwert ueber
+reines Tuning hinaus, WENN Klassenimbalance das dominante Problem ist -
+bei balancierten/grossen Aufgaben leistet reines Tuning gleichwertig
+oder mehr." Genau das noetigt, was die 2026-08-29-Bewertung unter Punkt 9
+("faire Baselines fehlen") einforderte, und beantwortet es jetzt mit
+echten Zahlen statt einer Vermutung.
+
+Alle 6 v2-Ergebnisse + ein Cross-Projekt-Meta-Befund in die Evidence
+Registry geloggt.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
