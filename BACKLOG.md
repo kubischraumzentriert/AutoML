@@ -1763,6 +1763,59 @@ entsprechend aktualisiert (Punkt 1 jetzt "DONE"). Die
 Acknowledgements-Sektion bleibt bewusst ein offener `TODO` - nichts
 wurde hineingeraten.
 
+### PAPER_DRAFT.md/joss/ - JOSS-Repo-Checkliste geprueft + Lizenz ergaenzt (2026-08-29)
+
+**Nutzeranfrage**: "JOSS-Repo-Checkliste pruefen", dann "welche Lizenz
+empfiehlst Du", dann "ja, MIT eintragen".
+
+**Wichtiger struktureller Fund, per Doppel-Websuche gegen JOSS' aktuelle
+Docs verifiziert (nicht aus dem Gedaechtnis angenommen)**: `paper.md`
+braucht inzwischen 6 statt 4 Pflichtabschnitte - zusaetzlich zu Summary/
+Statement of Need/State of the Field/Acknowledgements/References
+zwingend auch **Software Design**, **Research Impact Statement** und
+**AI Usage Disclosure**. `joss/paper.md` entsprechend erweitert:
+- Software Design: die 4 zentralen Architektur-Trade-offs erklaert
+  (flaches Skript-Template statt R-Paket, lokale Projekt-DB statt
+  geteilter Live-DB, R-only-Policy mit Python nur als Export, die
+  >=2-Projekt-Backport-Regel)
+- Research Impact Statement: EHRLICH und KONKRET statt aspirational
+  (JOSS verlangt explizit "compelling and specific, not aspirational") -
+  3 extern nachpruefbare Ergebnisse (CreditScoringChallenge-Leak extern
+  fast exakt bestaetigt, Ensemble-Selection-Leaderboard-Verbesserung bei
+  einer laufenden Kaggle-Competition, BAcc 0.9482 auf health_condition),
+  plus das externe OpenML-CC18-Benchmark-Ergebnis - UND explizit
+  ehrlich benannt, dass das Template bislang NICHT von anderen Teams
+  uebernommen wurde (keine Uebertreibung).
+- AI Usage Disclosure: transparent offengelegt, dass ein erheblicher
+  Teil von Code/Doku/diesem Paper in Sessions mit Claude (Anthropic)
+  entstand, unter durchgehender menschlicher Steuerung/Pruefung, mit
+  Verweis auf die eigene Verifikationsdisziplin (Tests/CI/>=2-Projekt-
+  Regel) und die Co-Authored-By-Vermerke in der Commit-Historie.
+
+Neue Wortzahl: 1342 (weiterhin innerhalb 750-1750).
+
+**Repo-Checkliste gegen die restlichen JOSS-Kriterien** (Source-Repo,
+Lizenz, Community-Guidelines, Installation, Beispielnutzung, API-Doku,
+Tests): 5 von 7 bereits erfuellt. **Lizenz fehlte** (`"license": null`
+via GitHub-API bestaetigt) - dafuer wurde der Nutzer per
+`AskUserQuestion` gefragt (Optionen: MIT/Apache-2.0/GPL-3.0/andere),
+die Frage zunaechst weggeklickt ("nicht fortfahren"). Auf explizite
+Nachfrage "welche Lizenz empfiehlst Du" MIT empfohlen (Standard fuer
+JOSS/R-Pakete, passt zum "kopier's dir"-Zweck des Templates, kein
+Copyleft-Zwang wie GPL). Nutzer bestaetigte MIT explizit ("ja, MIT
+eintragen").
+
+**Neue Datei [`LICENSE`](LICENSE)** (Repo-Root): MIT, Copyright (c) 2026
+Andre Endress. `joss/README.md`s Checkliste entsprechend aktualisiert
+(Tabelle mit allen 7 Kriterien, Lizenz jetzt "DONE").
+
+**Verbleibende Luecke, unveraendert offen**: Community-/Contribution-
+Guidelines (`CONTRIBUTING.md`/Issue-Templates fehlen weiterhin) - noch
+nicht adressiert, auf explizite Nutzeranweisung.
+
+Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
+vorsichtshalber verifiziert (weiterhin 322/322 gruen).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

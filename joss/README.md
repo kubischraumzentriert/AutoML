@@ -21,17 +21,33 @@ by the user on 2026-08-29 (see `BACKLOG.md`, P3 status).
    confirmed by the author, no longer placeholders. The
    Acknowledgements section is still an open `TODO` (deliberately —
    nothing was inferred).
-2. **Repository readiness**, per JOSS's own review checklist (not yet
-   verified against this repo specifically): a clear installation
-   procedure, example usage, community guidelines (contributing/support/
-   how to report issues), an OSI-approved license file, and a version
-   number/release process. `README.md`/`README_DETAILS.md` cover usage;
-   license and contribution-guideline files have not been checked
-   against JOSS's checklist yet as part of this pass.
-3. **Compile locally to verify formatting** before submitting — JOSS
+2. **Repository readiness, checked against JOSS's actual review
+   checklist (2026-08-29, verified via joss.readthedocs.io and the
+   openjournals/joss repo docs)**:
+
+   | Item | Status |
+   |---|---|
+   | Source repository publicly reachable | ✅ done |
+   | ~~LICENSE file (OSI-approved)~~ | ✅ **DONE (2026-08-29)**: MIT, `../LICENSE` |
+   | Community guidelines (contributing/issues/support) | ❌ still missing — no `CONTRIBUTING.md`, no issue templates |
+   | Installation instructions | ✅ done (`README.md`/`README_DETAILS.md`) |
+   | Example usage | ✅ done |
+   | Functionality/API documentation | ✅ done (85+ scripts documented) |
+   | Automated tests | ✅ done (`testthat` + CI smoke test) |
+
+   Only remaining gap: community/contribution guidelines.
+3. ~~`paper.md` structure~~ **UPDATED (2026-08-29)**: JOSS's paper
+   format now requires 6 sections, not the 4 this draft originally had
+   — Summary, Statement of need, State of the field, **Software
+   design**, **Research impact statement**, and **AI usage disclosure**
+   are all mandatory (verified directly against JOSS's docs, not
+   assumed). All 6 are now present; word count 1342 (within the
+   750-1750 limit).
+4. **Compile locally to verify formatting** before submitting — JOSS
    provides a Docker-based `whedon`/`inara` preview tool and a GitHub
    Action; neither has been run against this draft yet.
-4. Submit via https://joss.theoj.org/papers/new (a GitHub repository URL
+5. Submit via https://joss.theoj.org/papers/new (a GitHub repository URL
    plus this `paper.md` path).
 
-Steps 2-4 were not done as part of this pass.
+Steps 2 (community guidelines only) and 4-5 were not done as part of
+this pass.
