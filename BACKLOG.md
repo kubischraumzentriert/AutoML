@@ -1190,6 +1190,52 @@ Ablationen (A1-A4) bearbeitet - A1/A4 waren bereits durch bestehende
 Ergebnisse beantwortet, A2/A3 wurden jetzt als eigene Dokumente
 ausgearbeitet.
 
+## Zentraler Merge durchgefuehrt (2026-08-29)
+
+Auf Nutzeranfrage ("mach weiter mit dem Merge") den seit P2.1
+ueberfaelligen `merge_project_experiments.R`-Lauf nachgeholt - jetzt mit
+DB-Domain-Trennung (Phase A) sicherer moeglich. Dabei **2 echte Bugs
+gefunden und behoben**:
+
+**Bug 1 (Regression aus P1.2, schwerwiegend)**: die `evidence`-Tabelle
+(P1.2, 2026-08-27) existiert in den meisten lokalen Projekt-DBs NICHT
+(deren `db_schema.sql` wurde seither nicht neu ausgefuehrt). Da der
+Merge-Loop alle Tabellen einer Quelle in EINER Transaktion verarbeitet,
+liess der fehlgeschlagene `evidence`-Merge die GESAMTE Transaktion
+zurueckrollen - **inklusive der bereits erfolgreich eingefuegten Zeilen
+aller anderen Tabellen**. Beim ersten Lauf zeigten deshalb 22 von 23
+Quellen "+0 Zeilen" ueberall, obwohl darunter echte neue Daten waren.
+**Fix**: `merge_project_experiments.R` prueft jetzt vor jedem
+Tabellen-Merge, ob die Tabelle in der QUELLE ueberhaupt existiert
+(`sqlite_master`-Abfrage auf `src`), und ueberspringt sie sonst mit einer
+Meldung statt die Transaktion abzubrechen.
+
+**Bug 2 (vorbestehendes Datenproblem, nicht durch diese Session
+verursacht)**: `openml-credit-g`s lokale `project`-Zeile hatte eine
+ANDERE `proj_id` als die bereits in der Ziel-DB gemergte Zeile (gleicher
+`proj_name`, UNIQUE-Constraint-Verletzung) - vermutlich wurde die lokale
+DB zwischenzeitlich neu aufgebaut und bekam dabei eine frische UUID.
+**Fix (in der LOKALEN `openml-credit-g`-DB, nicht im Template-Code)**:
+`project.proj_id` und `workflow.wf_proj_id` per gezieltem `UPDATE` auf
+die bereits etablierte Ziel-ID umgeschrieben (Backup der lokalen DB
+vorher angelegt, FK-Integritaet nach dem Update verifiziert - keine
+verwaisten Referenzen).
+
+**Ergebnis nach beiden Fixes**: alle 23 gefundenen Classification-Quell-
+DBs erfolgreich verarbeitet (22 bereits vollstaendig aktuell bestaetigt,
+`openml-credit-g` mit den erwarteten 10 neuen Runs gemergt: +8 workflow,
++10 run, +33 run_config, +90 model_config, +11 resampling, +318
+hyperparam, +193 metric_result). Erneuter `db_housekeeping_check()`
+bestaetigt: "Keine neuen Runs - alle lokal auffindbaren Runs sind
+bereits gemergt." Backup der Ziel-DB wie immer automatisch vor dem
+Schreiben angelegt.
+
+**Bewusst NICHT geaendert**: die 4 als `regression` erkannten Projekte
+bleiben ausgeschlossen (Phase A), die 4 als `unknown` markierten
+(`WineQualityDataset`, die 3 Multi-Label-Projekte) wurden inkludiert,
+aber nicht weiter untersucht - wie in Phase A dokumentiert, absichtlich
+konservativ (Einschluss statt Ausschluss bei Unsicherheit).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

@@ -130,6 +130,24 @@ for (project_label in names(source_db_paths)) {
     any_new <- FALSE
     for (tbl in names(merge_tables)) {
       id_col <- merge_tables[[tbl]]
+
+      # Tabelle in der QUELLE ueberspringen, wenn sie dort (noch) nicht
+      # existiert - z.B. `evidence` (P1.2, 2026-08-27) ist neuer als die
+      # meisten lokalen Projekt-DBs, deren db_schema.sql seit ihrem
+      # letzten Lauf nicht neu ausgefuehrt wurde. Ohne diesen Check bricht
+      # die fehlende Tabelle die GESAMTE Transaktion fuer die Quelle ab -
+      # inklusive der bereits erfolgreich eingefuegten Zeilen anderer
+      # Tabellen (echter Regressionsfund, 2026-08-29: 22 von 23 Quellen
+      # zeigten "+0 Zeilen" ueberall, weil der `evidence`-Fehler ALLES
+      # zurueckrollte).
+      src_tbl_exists <- dbGetQuery(con, sprintf(
+        "SELECT name FROM src.sqlite_master WHERE type = 'table' AND name = '%s'", tbl
+      ))
+      if (nrow(src_tbl_exists) == 0) {
+        cat(sprintf("  %-14s (Tabelle nicht in der Quelle vorhanden, uebersprungen)\n", tbl))
+        next
+      }
+
       # Spaltenliste dynamisch aus PRAGMA table_info ermitteln (pk=1
       # markiert die auszuschliessende lokale INTEGER-<praefix>_seq-Spalte,
       # SQLite-rowid-Alias, NICHT mitkopieren - kollidiert sonst mit
