@@ -1474,38 +1474,58 @@ Der Gewinner wird mit den besten Hyperparametern final auf dem GESAMTEN
 Outer-Train refittet und genau einmal auf dem Outer-Test bewertet (kein
 Data Leakage: Outer-Test bleibt bis zum Schluss ungesehen).
 
-Getestet auf 2 der 6 externen P1-Datensaetze (kleinster + einer der
-groessten, damit beide Enden des Spektrums abgedeckt sind):
+**Update (2026-08-29, Rollout auf alle 6 Datensaetze)**: nach den ersten
+2 Datensaetzen (`ilpd`, `optdigits`) wurde eine Arbeitshypothese notiert
+("Level 2 hilft bei grossen/balancierten, schadet bei kleinen/
+unausgeglichenen Datensaetzen"). Nach Rollout auf die verbleibenden 4
+Datensaetze **haelt diese Hypothese NICHT** - `blood-transfusion` (klein,
+n=498, unausgeglichen) gewinnt deutlich mit Level 2, waehrend `cmc`
+(n=981) und `analcatdata-authorship` (n=559, nahe an der Saettigungsgrenze)
+verlieren. Das ist ein wichtiges Ergebnis der Nachpruefung selbst: die
+anfaengliche 2-Datensatz-Hypothese war zu einfach.
 
-| Datensatz | v1 `workflow_ranger` | v2 bester Konkurrent | v3 `level2_workflow` | Level 2 vs. bisher beste Version |
+**Vollstaendiges Ergebnis (alle 6 Datensaetze)**:
+
+| Datensatz | v1 `workflow_ranger` | bisher bester Wert (v1/v2) | v3 `level2_workflow` | Level 2 gewinnt/verliert |
 |---|---|---|---|---|
-| `ilpd` (n=583, klein, stark unausgeglichen) | 0.6840 | tuned_lightgbm/best_single 0.5960 | **0.6473** | **schlechter** als v1 (-3.7), aber besser als Baselines |
-| `optdigits` (n=5620, gross, balanciert) | 0.9810 | tuned_lightgbm/best_single 0.9840 | **0.9859** | **besser** als beide bisherigen Bestwerte (+0.2/+0.5) |
+| `ilpd` (n=388) | 0.6840 | 0.6840 (v1) | 0.6473 | **verliert** (-3.7) |
+| `sick` (n=2514) | 0.9714 | 0.9714 (v1) | 0.9723 | **gewinnt knapp** (+0.1) |
+| `blood-transfusion` (n=498) | 0.6576 | 0.6576 (v1) | 0.6878 | **gewinnt deutlich** (+3.0) |
+| `cmc` (n=981) | 0.5374 | 0.5374 (v1) | 0.5113 | **verliert** (-2.6) |
+| `analcatdata-authorship` (n=559) | 0.9876 | 0.9921 (v2, tuned_lightgbm) | 0.9731 | **verliert** (-1.9) |
+| `optdigits` (n=3743) | 0.9810 | 0.9840 (v2, tuned_lightgbm) | 0.9859 | **gewinnt** (+0.2) |
 
-**Bemerkenswerter, gegenlaeufiger Befund**: auf `ilpd` UNTERBIETET der
-komplexere Level-2-Prozess den einfacheren Level-1-`workflow_ranger` -
-vermutlich weil der Inner-Train-Split (75% von ohnehin nur n=388
-Outer-Train) fuer eine stabile Modellwahl/Tuning bei diesem kleinen,
-stark unausgeglichenen Datensatz zu wenig Daten liefert (sd_score=0.051,
-deutlich hoeher als bei den anderen Armen). Auf `optdigits` dagegen zahlt
-sich dieselbe zusaetzliche Komplexitaet aus und liefert das bisher beste
-Ergebnis ueberhaupt fuer diesen Datensatz.
+3 von 6 Siege, 3 von 6 Niederlagen, mittlerer Delta ggue. dem bisher
+besten Wert ueber alle 6 Datensaetze ≈ **-0.7 BAcc-Punkte** (leicht
+negativ im Mittel, hohe Streuung). **Weder Datensatzgroesse noch
+Klassenimbalance erklaeren das Muster sauber**: `blood-transfusion`
+(klein, unausgeglichen) gewinnt, `ilpd` (klein, unausgeglichen) verliert;
+`sick`/`optdigits` (gross) gewinnen, `cmc` (mittelgross) verliert. Ein
+moeglicher Sonderfall: `analcatdata-authorship` ist bereits nahe an der
+Saettigungsgrenze (Inner-Tune-Scores = 1.0000 in 2 von 3 Outer-Folds fuer
+ALLE drei Level-2-Kandidaten) - dort waehlt die Modellwahl effektiv
+zufaellig zwischen gleichwertigen Kandidaten, was die zusaetzliche
+Komplexitaet in einen reinen Kostenfaktor ohne Nutzen verwandelt.
 
-Das ist fast das Spiegelbild des P1-Fair-Baselines-Befunds: dort halfen
-weniger komplexe Korrekturen bei kleinen/unausgeglichenen und mehr
-Tuning bei grossen/balancierten Daten - hier zeigt sich zusaetzlich, dass
-noch MEHR Komplexitaet (Level 2) bei kleinen/unausgeglichenen Daten sogar
-schaden kann (zu wenig Daten fuer eine robuste Inner-Modellwahl), waehrend
-sie bei grossen/balancierten Daten den bisher besten Wert liefert.
-Vorlaeufige Arbeitshypothese, noch nicht auf allen 6 Datensaetzen
-geprueft.
+**Ehrliche, unaufgeloeste Kernaussage**: der Level-2-Prozess
+(Modellwahl+Tuning+Ensemble innerhalb des Outer-Train-Splits) bringt
+KEINEN verlaesslichen, systematischen Mehrwert gegenueber dem einfacheren
+Level-1-Workflow oder den fairen getunten v2-Baselines - das Ergebnis ist
+datensatzabhaengig und (bislang) nicht durch eine einfache
+Datensatz-Eigenschaft (Groesse, Imbalance) vorhersagbar. Das ist selbst
+ein wertvoller, negativer Befund fuer die Paper-Story: mehr
+Prozess-Komplexitaet ist NICHT automatisch besser, und die zusaetzlichen
+Rechenkosten (Level 2 laeuft 5-30x langsamer als v1/v2, siehe
+`mean_runtime_sec` in den Ergebnis-CSVs) sind bei diesem Prototyp-Budget
+(10 Tuning-Evals/Arm) nicht durchgehend gerechtfertigt.
 
-Beide Ergebnisse in die Evidence Registry geloggt (Rolle `score_lever`,
+Alle 6 Ergebnisse in die Evidence Registry geloggt (Rolle `score_lever`,
 Status `core_finding`).
 
-**Offen**: Rollout auf die verbleibenden 4 Datensaetze, sowie P2s zweite
-Haelfte ("Evidence Registry finalisieren" / `SYSTEMATIC_EVALUATION.md`-
-Struktur) - beides auf explizite Nutzeranweisung.
+**Offen**: P2s zweite Haelfte ("Evidence Registry finalisieren" /
+`SYSTEMATIC_EVALUATION.md`-Struktur) - auf explizite Nutzeranweisung. Ein
+groesseres Tuning-Budget fuer Level 2 (aktuell nur 10 Evals/Arm) koennte
+das Bild veraendern, ist aber nicht getestet.
 
 ## Zielbild
 

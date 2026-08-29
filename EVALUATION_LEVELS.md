@@ -41,19 +41,24 @@ Modellwahl UND Hyperparameter-Tuning selbst werden innerhalb jedes
 Outer-Train-Splits neu durchgefuehrt (nicht nur ein einzelner
 vorentschiedener Lernalgorithmus).
 
-**Prototyp durchgefuehrt (2026-08-29, P2, 2 von 6 externen Datensaetzen)**:
+**Prototyp durchgefuehrt und auf alle 6 externen Datensaetze ausgerollt
+(2026-08-29, P2)**:
 [`outer_workflow_evaluation_v3_level2.R`](outer_workflow_evaluation_v3_level2.R)
-(Protokoll v3) - Ergebnis GEGENLAEUFIG je nach Datensatzgroesse/-balance:
-auf `ilpd` (klein, stark unausgeglichen) unterbietet Level 2 (0.6473) den
-einfacheren Level-1-`workflow_ranger` (0.6840) klar; auf `optdigits`
-(gross, balanciert) liefert Level 2 (0.9859) das bislang beste Ergebnis
-ueberhaupt fuer diesen Datensatz (vor v1 workflow_ranger 0.9810 und v2
-tuned_lightgbm 0.9840). Arbeitshypothese: bei kleinen Datensaetzen ist der
-zusaetzliche Inner-Train/Inner-Tune-Split fuer eine stabile Modellwahl zu
-datenarm (hohe Streuung, sd_score=0.051 bei ilpd), waehrend bei
-groesseren Datensaetzen genug Daten fuer eine robuste Inner-Modellwahl
-vorhanden sind und die zusaetzliche Komplexitaet sich auszahlt. Noch
-NICHT auf allen 6 Datensaetzen geprueft, siehe `BACKLOG.md`.
+(Protokoll v3) - Ergebnis GEMISCHT, 3 von 6 Siegen (`sick`,
+`blood-transfusion`, `optdigits`), 3 von 6 Niederlagen (`ilpd`, `cmc`,
+`analcatdata-authorship`) gegenueber dem jeweils bisher besten Wert.
+
+Eine erste Arbeitshypothese nach nur 2 Datensaetzen ("Level 2 hilft bei
+grossen/balancierten, schadet bei kleinen/unausgeglichenen Datensaetzen")
+**hielt nach dem vollstaendigen Rollout NICHT**: `blood-transfusion`
+(klein, unausgeglichen) gewinnt deutlich, `ilpd` (ebenfalls klein,
+unausgeglichen) verliert. Weder Datensatzgroesse noch Klassenimbalance
+allein erklaeren das Ergebnis sauber. **Ehrlicher Befund**: Level 2
+bringt gegenueber Level 1 / den fairen v2-Baselines KEINEN verlaesslichen
+systematischen Mehrwert bei diesem Tuning-Budget (10 Evals/Arm) - das
+Ergebnis ist datensatzabhaengig, mittlerer Delta ueber alle 6 Datensaetze
+leicht negativ, bei deutlich hoeheren Rechenkosten (5-30x langsamer).
+Volle Tabelle in `BACKLOG.md`/P2-Status.
 
 ### Level 3 - Full Trust-centered AutoML Decision Process
 

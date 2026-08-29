@@ -16,10 +16,14 @@ bis zum Schluss ungesehen, kein Leakage). Siehe
 [`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md) fuer die Level-1-vs-2-
 Abgrenzung.
 
-**Bisher getestet**: 2 von 6 externen P1-Datensaetzen (`ilpd`,
-`optdigits`), Ergebnis gegenlaeufig je nach Datensatzgroesse/-balance -
-siehe `BACKLOG.md`/P2-Status fuer die volle Tabelle und Diskussion. Noch
-KEIN Rollout auf die restlichen 4 Datensaetze.
+**Auf allen 6 externen P1-Datensaetzen getestet (2026-08-29)**: 3 Siege
+(`sick`, `blood-transfusion`, `optdigits`), 3 Niederlagen (`ilpd`, `cmc`,
+`analcatdata-authorship`) gegenueber dem jeweils bisher besten Wert.
+KEIN verlaesslicher, durch Datensatzgroesse oder Klassenimbalance
+erklaerbarer Vorteil bei diesem Tuning-Budget (10 Evals/Arm) - mittlerer
+Delta leicht negativ, bei 5-30x hoeheren Rechenkosten. Siehe
+`BACKLOG.md`/P2-Status und `EVALUATION_LEVELS.md` fuer die volle Tabelle
+und Diskussion.
 
 ## Version 2 (2026-08-29): faire getunte Baselines
 
