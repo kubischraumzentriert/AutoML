@@ -1668,6 +1668,48 @@ zwingend erforderlich, aus Vorsicht trotzdem verifiziert (weiterhin
 Damit ist die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
 (2026-08-29) abgearbeitet.
 
+### PAPER_DRAFT.md - Literaturrecherche fuer Section 3 (2026-08-29)
+
+**Nutzeranfrage**: "literaturrecherche fuer Section 3 anfangen" - einer
+der beiden im Draft selbst als offen benannten Punkte (der andere:
+Ziel-Venue festlegen).
+
+Section 3 ("Related Work") war zuvor ein reiner Platzhalter. Jetzt: 14
+per Websuche lokalisierte und inhaltlich geprueft Quellen (keine
+Erinnerungs-Zitate), gegliedert in 6 thematische Abschnitte -
+AutoML-Systeme (Auto-sklearn/Feurer 2015, AutoGluon-Tabular/Erickson
+2020, das AutoML-Buch/Hutter/Kotthoff/Vanschoren 2019), Benchmark-
+Methodik (OpenML-CC18/Bischl 2021, "An Open Source AutoML Benchmark"/
+Gijsbers 2019 - direkt relevant fuer die eigene `BENCHMARK_PROTOCOL.md`-
+Disziplin), Daten-Leakage/Dataset-Shift (Kaufman/Rosset/Perlich 2011,
+Quinonero-Candela et al. 2009 - direkt relevant fuer Section 7.1/7.2),
+Reproduzierbarkeit/Testing (Pineau et al. 2021, Gundersen/Kjensmo 2018,
+Breck et al. 2017 "ML Test Score", Zhang/Harman/Ma/Liu 2020), Klassen-
+Imbalance (He/Garcia 2009), sowie die bereits verwendete Software selbst
+(mlr3/Lang 2019, Caruana et al. 2004 Ensemble Selection).
+
+Jede Quelle wird explizit zu einer konkreten eigenen Aussage in Bezug
+gesetzt (nicht nur aufgelistet) - z.B. AutoGluons Multi-Layer-Stacking-
+Ergebnis wird bewusst als IN SPANNUNG zum eigenen Level-2-Negativbefund
+stehend benannt, statt die Spannung zu verschweigen. **Eine bewusste
+Ehrlichkeitsentscheidung**: Adversarial Validation selbst bekommt KEINE
+akademische Zitation - die Technik ist in ihrer heute verbreiteten Form
+am ehesten als Kaggle-/Praktiker-Technik dokumentiert, nicht als
+Ergebnis eines einzelnen peer-reviewten Ursprungspapers; ein erfundenes
+Zitat waere schlechter als die ehrliche Luecke. Ein `References`-
+Abschnitt mit allen 14 Quellen (inkl. URLs) wurde ergaenzt.
+
+**Bewusst nicht erledigt** (im Draft selbst so benannt): Zitate sind
+NICHT auf ein Referenzmanager-/BibTeX-Format normalisiert; die Abdeckung
+ist bewusst eng auf das begrenzt, was dieses Paper tatsaechlich beruehrt,
+keine erschoepfende AutoML-Uebersicht. "How to use this draft" im
+Dokument entsprechend aktualisiert (Punkt 2 war "Section 3 ist ein
+Platzhalter", jetzt der aktuelle Stand + die offene Adversarial-
+Validation-Zitations-Entscheidung).
+
+Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
+vorsichtshalber verifiziert (weiterhin 322/322 gruen).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

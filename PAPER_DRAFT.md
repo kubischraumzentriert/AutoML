@@ -1,10 +1,11 @@
 # A Reproducible, Trust-Centered AutoML Workflow for Tabular Classification in R/mlr3
 
-**Status: DRAFT (2026-08-29), first full pass. Not submitted anywhere.
-Written in English (standard for the target venues below), even though
-the underlying repository is documented in German — see "How to use this
-draft" at the end for what still needs human decision-making before this
-is submission-ready.**
+**Status: DRAFT (2026-08-29, first full pass; Related Work/Section 3
+updated 2026-08-29 with a first literature pass). Not submitted
+anywhere. Written in English (standard for the target venues below),
+even though the underlying repository is documented in German — see
+"How to use this draft" at the end for what still needs human
+decision-making before this is submission-ready.**
 
 ## Abstract
 
@@ -157,17 +158,116 @@ automation / documentation —, status, and free-text notes) in an
 "evidence registry" that can regenerate a project × module results table
 on demand, rather than relying solely on hand-maintained prose.
 
-## 3. Related Work *(placeholder — needs a proper literature pass before submission)*
+## 3. Related Work
 
-The ensemble-selection component follows Caruana, Niculescu-Mizil, Crew,
-and Ksikes (2004), *"Ensemble Selection from Libraries of Models,"* ICML
-— the same greedy-selection-from-a-model-library approach later adopted
-in Auto-sklearn. We have not yet done a systematic literature review
-against the broader AutoML-trustworthiness and benchmark-methodology
-literature (e.g., work on AutoML benchmarking suites, leakage detection,
-and reproducibility in ML competitions); this section is a placeholder
-flagging that gap rather than a real related-work section, and should
-not be treated as complete.
+**Status note (2026-08-29): first literature pass, no longer a bare
+placeholder** — sources below were located and their claims checked via
+web search rather than recalled from memory, but citation details
+(page numbers, exact venue formatting) are not yet normalized to a
+reference manager/BibTeX, and coverage is deliberately scoped to the
+handful of areas this paper actually touches, not a exhaustive AutoML
+survey. Treat this as "good enough to argue the paper's positioning
+against," not as submission-ready related work.
+
+**AutoML systems.** Auto-sklearn (Feurer et al., 2015, *"Efficient and
+Robust Automated Machine Learning,"* NeurIPS) combines Bayesian
+hyperparameter optimization with meta-learning warm-starting and
+post-hoc ensemble construction over a fixed pipeline search space —
+methodologically the closest prior system to our Level-2 prototype
+(Section 6), which performs a much smaller-scale version of the same
+idea (tune a small set of learners, then pick/ensemble by inner score)
+inside each outer-CV fold rather than once globally. AutoGluon-Tabular
+(Erickson et al., 2020, arXiv:2003.06505) instead argues that
+*multi-layer stacked ensembling* of many models, rather than searching
+for a single best model/hyperparameter configuration, is a better use of
+a fixed compute budget on tabular data — a claim in tension with our
+Level-2 finding that adding model selection and tuning *inside* the
+outer loop did not reliably pay for itself; reconciling the two (e.g., is
+AutoGluon's advantage specific to its multi-layer stacking depth, which
+our single-layer probability-average ensemble does not attempt?) is a
+concrete question for future work rather than one this paper resolves.
+The broader field is surveyed in Hutter, Kotthoff, and Vanschoren (eds.,
+2019), *Automated Machine Learning: Methods, Systems, Challenges*
+(Springer) — our system does not compete on the same axis as the
+systems that book catalogs (hyperparameter optimization, neural
+architecture search, meta-learning); its contribution is closer to
+process/trust engineering *around* a much simpler search space.
+
+**Benchmarking methodology.** Our external-benchmark-set design
+(Section 5.3) follows the spirit of Bischl et al. (2021), *"OpenML
+Benchmarking Suites,"* NeurIPS Datasets and Benchmarks Track, which
+argues for standardized, curated, reusable benchmark suites (of which
+OpenML-CC18, the 72-dataset suite we drew our 6 external datasets from,
+is one instance) specifically to prevent the kind of ad hoc,
+after-the-fact dataset selection that makes AutoML claims hard to trust
+across papers. Gijsbers et al. (2019), *"An Open Source AutoML
+Benchmark,"* (6th ICML AutoML Workshop) make a closely related point
+about comparing AutoML *systems* rather than datasets: that
+apples-to-apples AutoML comparisons are "hard and often done
+incorrectly," and propose an open, versioned benchmark framework for
+exactly that reason. Our own frozen `BENCHMARK_PROTOCOL.md` (fixed arms,
+fixed outer-fold seed, versioned rather than silently changed) is a
+much smaller-scale, single-team instance of the same underlying concern.
+
+**Data leakage and dataset shift.** Kaufman, Rosset, and Perlich (2011),
+*"Leakage in Data Mining: Formulation, Detection, and Avoidance,"* KDD —
+later published in *ACM TKDD* (2012) — frame leakage as "one of the top
+ten data-mining mistakes" and formalize it as illegitimate information
+about the target entering the model, including subtler cases where the
+i.i.d. assumption itself is violated; our leak-audit module (Section
+2.2, evaluated in Section 7.1) is a lightweight, automated, always-on
+instance of exactly the detection problem they formalize, including its
+documented incompleteness (our correlation-spread blind spot in Section
+7.1 is a concrete instance of the harder, non-i.i.d.-adjacent cases they
+discuss). The dataset-shift problem our adversarial-validation check
+targets is treated formally by Quiñonero-Candela, Sugiyama,
+Schwaighofer, and Lawrence (eds., 2009), *Dataset Shift in Machine
+Learning* (MIT Press), which distinguishes covariate shift (only the
+input distribution changes) from the more general dataset-shift case; the
+specific *adversarial validation* technique itself (train a classifier
+to distinguish train from test rows) is best documented as a
+practitioner technique that spread through Kaggle competitions (e.g., an
+early public application in the Santander Customer Satisfaction
+competition) rather than a single peer-reviewed origin paper — we flag
+this honestly rather than inventing an academic citation for what is, in
+its current widespread form, community/blog-documented practice.
+
+**Reproducibility and testing of ML systems.** Pineau et al. (2021),
+*"Improving Reproducibility in Machine Learning Research,"* JMLR (a
+report from the NeurIPS 2019 Reproducibility Program), and Gundersen and
+Kjensmo (2018), *"State of the Art: Reproducibility in Artificial
+Intelligence,"* AAAI, both document — from different angles (a
+community intervention program vs. a survey of top-conference papers) —
+that reproducibility in empirical ML research is the exception rather
+than the norm; our per-run experiment database and provenance-capture
+mechanism (Section 2.1, 2.4) are a practitioner-side, single-repository
+response to the same underlying problem, at a far smaller scale than
+either paper's scope. On the software-engineering side, Breck et al.
+(2017), *"The ML Test Score: A Rubric for ML Production Readiness and
+Technical Debt Reduction,"* (Google, IEEE Big Data) and Zhang, Harman,
+Ma, and Liu (2020), *"Machine Learning Testing: Survey, Landscapes and
+Horizons,"* IEEE TSE, both argue that ML systems need testing
+disciplines beyond a single held-out score — our CI-verified `testthat`
+suite plus the trust-layer's diagnostic modules (Section 2.2, 2.4) are
+one concrete instantiation of that argument for a tabular-classification
+AutoML template specifically, rather than ML systems in general.
+
+**Class imbalance.** He and García (2009), *"Learning from Imbalanced
+Data,"* IEEE TKDE, survey the broader problem our class-weighting-plus-
+multiplier-correction chain (Section 5) is one specific, metric-
+conditional instance of; we do not attempt a comparison against the
+resampling-based techniques (e.g., SMOTE-family methods) that dominate
+that literature, since our approach operates entirely at the
+loss-weighting/post-hoc-threshold level rather than the data level — a
+scoping choice worth stating explicitly rather than leaving implicit.
+
+**Software this work builds on.** The workflow itself is implemented on
+top of `mlr3` (Lang et al., 2019, *"mlr3: A Modern Object-Oriented
+Machine Learning Framework in R,"* Journal of Open Source Software), and
+the ensemble-selection component follows Caruana, Niculescu-Mizil, Crew,
+and Ksikes (2004), *"Ensemble Selection from Libraries of Models,"*
+ICML — the same greedy-selection-from-a-model-library approach later
+adopted in Auto-sklearn.
 
 ## 4. What Does "The Workflow" Mean? Three Evaluation Levels
 
@@ -358,8 +458,10 @@ the process catches its own mistakes, not only the data's.
   *quantitative* generalization evidence in Sections 5-6 covers only
   Levels 1-2. We consider conflating these two senses the single most
   important thing this paper must not do.
-- **No related-work section yet** (Section 3) — a genuine gap, not a
-  stylistic placeholder.
+- **Related work (Section 3) has a first pass now**, but citation
+  details are not normalized to a reference manager/BibTeX, and coverage
+  is scoped narrowly to the areas this paper touches rather than an
+  exhaustive AutoML survey — see the status note at the top of Section 3.
 
 ## 9. Conclusion
 
@@ -378,9 +480,67 @@ and externally-tested performance claim, and openly published negative
 results — is a stronger and more honest contribution than a higher,
 less-scrutinized leaderboard number would have been, and is sufficient
 for a workshop/experience/software-paper submission; a stronger
-research-track claim would additionally need the related-work pass
-(Section 3), a Level-3 evaluation, and ideally a second, independent
-implementation team.
+research-track claim would additionally need a Level-3 evaluation and
+ideally a second, independent implementation team.
+
+## References *(not yet normalized to a citation style/BibTeX)*
+
+- Breck, E., Cai, S., Nielsen, E., Salib, M., & Sculley, D. (2017). The
+  ML test score: A rubric for ML production readiness and technical debt
+  reduction. *IEEE Big Data*. https://research.google/pubs/the-ml-test-score-a-rubric-for-ml-production-readiness-and-technical-debt-reduction/
+- Caruana, R., Niculescu-Mizil, A., Crew, G., & Ksikes, A. (2004).
+  Ensemble selection from libraries of models. *ICML*.
+- Erickson, N., Mueller, J., Shirkov, A., Zhang, H., Larroy, P., Li, M.,
+  & Smola, A. (2020). AutoGluon-Tabular: Robust and accurate AutoML for
+  structured data. arXiv:2003.06505. https://arxiv.org/abs/2003.06505
+- Feurer, M., Klein, A., Eggensperger, K., Springenberg, J., Blum, M., &
+  Hutter, F. (2015). Efficient and robust automated machine learning.
+  *NeurIPS 28*. https://papers.neurips.cc/paper/5872-efficient-and-robust-automated-machine-learning.pdf
+- Gijsbers, P., LeDell, E., Thomas, J., Poirier, S., Bischl, B., &
+  Vanschoren, J. (2019). An open source AutoML benchmark. *6th ICML
+  Workshop on Automated Machine Learning*. arXiv:1907.00909.
+  https://arxiv.org/abs/1907.00909
+- Gundersen, O. E., & Kjensmo, S. (2018). State of the art:
+  Reproducibility in artificial intelligence. *AAAI*.
+  https://ojs.aaai.org/index.php/AAAI/article/view/11503
+- He, H., & García, E. A. (2009). Learning from imbalanced data. *IEEE
+  Transactions on Knowledge and Data Engineering*, 21(9), 1263-1284.
+- Hutter, F., Kotthoff, L., & Vanschoren, J. (Eds.). (2019). *Automated
+  Machine Learning: Methods, Systems, Challenges*. Springer.
+  https://www.automl.org/book/
+- Kaufman, S., Rosset, S., & Perlich, C. (2011). Leakage in data mining:
+  Formulation, detection, and avoidance. *KDD 2011*; extended version in
+  *ACM Transactions on Knowledge Discovery from Data*, 6(4), 2012.
+- Lang, M., Binder, M., Richter, J., Schratz, P., Pfisterer, F., Coors,
+  S., Au, Q., Casalicchio, G., Kotthoff, L., & Bischl, B. (2019). mlr3:
+  A modern object-oriented machine learning framework in R. *Journal of
+  Open Source Software*, 4(44), 1903. https://joss.theoj.org/papers/10.21105/joss.01903
+- Pineau, J., Vincent-Lamarre, P., Sinha, K., Larivière, V.,
+  Beygelzimer, A., d'Alché-Buc, F., Fox, E., & Larochelle, H. (2021).
+  Improving reproducibility in machine learning research (a report from
+  the NeurIPS 2019 reproducibility program). *JMLR*, 22.
+  https://jmlr.org/papers/volume22/20-303/20-303.pdf
+- Quiñonero-Candela, J., Sugiyama, M., Schwaighofer, A., & Lawrence, N.
+  D. (Eds.). (2009). *Dataset Shift in Machine Learning*. MIT Press.
+- Bischl, B., Casalicchio, G., Feurer, M., Gijsbers, P., Hutter, F.,
+  Lang, M., et al. (2021). OpenML benchmarking suites. *NeurIPS Datasets
+  and Benchmarks Track*.
+- Zhang, J. M., Harman, M., Ma, L., & Liu, Y. (2020). Machine learning
+  testing: Survey, landscapes and horizons. *IEEE Transactions on
+  Software Engineering*, 48(1). arXiv:1906.10742.
+  https://arxiv.org/abs/1906.10742
+
+*Adversarial validation itself (the specific train-vs-test classifier
+technique used in Section 2.2/7.2) is deliberately NOT given an academic
+citation above — in its current widely-used form it is best documented
+as a practitioner technique that spread through Kaggle competitions
+(e.g., an early public write-up in the context of the Santander Customer
+Satisfaction competition) rather than a single peer-reviewed origin. If
+a stronger academic anchor is wanted for a submission, the closest
+adjacent peer-reviewed treatments are Bickel, Brückner, & Scheffer's
+work on covariate shift via discriminative reweighting (in the
+Quiñonero-Candela et al. volume above) — this still needs a deliberate
+decision, not an automatic substitution.*
 
 ---
 
@@ -395,10 +555,20 @@ writing:
    documentation already carries — see `AGENTS.md`, "Mittelfristiges
    Ziel"). A specific venue will dictate the page limit, citation style,
    and how much of Sections 2/7/8 to compress or expand.
-2. **Section 3 (Related Work) is a placeholder**, not a real section — it
-   needs an actual literature search against the AutoML-benchmarking and
-   ML-trustworthiness literature before this draft can be shown to
-   anyone outside this project.
+2. **Section 3 (Related Work) now has a first real literature pass**
+   (2026-08-29, 14 sources located and their claims checked via web
+   search) covering AutoML systems, benchmarking methodology, leakage/
+   dataset shift, ML reproducibility/testing, and class imbalance — but
+   citations are not yet normalized to a reference manager/BibTeX, page
+   numbers/venue formatting are informal, and coverage is deliberately
+   scoped to what this paper touches rather than exhaustive. One
+   deliberate open decision is flagged inline: adversarial validation
+   (Section 2.2/7.2) has no clean academic origin citation and is
+   currently described as a practitioner/Kaggle technique rather than
+   given a possibly-inaccurate formal citation — decide before
+   submission whether that is acceptable or whether the adjacent
+   Bickel/Brückner/Scheffer covariate-shift-reweighting work should
+   anchor it instead.
 3. **Author list / acknowledgments / anonymization** are untouched —
    deliberately, since that is a decision for you, not something to
    infer.
@@ -412,4 +582,6 @@ writing:
    `BACKLOG.md`, `AGENTS.md`, `EVALUATION_LEVELS.md`,
    `BENCHMARK_PROTOCOL.md`, `EXTERNAL_BENCHMARK_SET.md`, and the two
    ablation documents — if any of those get corrected or extended later,
-   this draft needs a matching pass, it will not update itself.
+   this draft needs a matching pass, it will not update itself. The same
+   applies to Section 3/References: they reflect one search pass on
+   2026-08-29, not an ongoing literature watch.
