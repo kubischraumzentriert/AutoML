@@ -8,19 +8,26 @@ diesem Handoff passiert ist: der ueberfaellige zentrale Merge (inkl. 2
 gefundener/gefixter Bugs), Backup-Aufraeumen, und die komplette
 Bearbeitung von P0-P3 aus einem NEUEN, dritten externen
 Bewertungsdokument (2026-08-29). Die GESAMTE P0-P3-Roadmap des dritten
-Bewertungsdokuments ist vollstaendig abgearbeitet. **8. Aktualisierung
-dieses Ankers:** ergaenzt das Ausfuellen von Autoren/Affiliation in
-`joss/paper.md` - der letzte offene TODO-Platzhalter aus der
-JOSS-Einreichung ist damit erledigt (nur die Acknowledgements-Sektion
-bleibt bewusst offen).
+Bewertungsdokuments ist vollstaendig abgearbeitet. **9. Aktualisierung
+dieses Ankers:** JOSS-Repo-Checkliste vollstaendig geprueft und
+geschlossen - LICENSE (MIT), CONTRIBUTING.md + Issue-Templates,
+`joss/paper.md` auf 6 JOSS-Pflichtabschnitte erweitert, und eine
+GitHub Action fuer eine automatische Vorschau-PDF eingerichtet und
+tatsaechlich verifiziert (echtes 4-Seiten-PDF heruntergeladen und
+geprueft, nicht nur "Workflow gruen" vertraut). Von der urspruenglichen
+JOSS-Vorbereitungsliste ist jetzt NUR NOCH die tatsaechliche Einreichung
+selbst offen.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `3a4b69e` "joss/paper.md: Autoren/Affiliation
-  ausgefuellt" - gepusht. Nur `.md`-Aenderungen seit `086243c`, CI Smoke
-  Test triggert dafuer erwartungsgemaess nicht (Path-Filter greift nur
-  bei `**.R`/`DESCRIPTION`/`.Rprofile`) - letzter tatsaechlicher CI-Lauf
-  gruen fuer `086243c` (Lauf `33256552839`).
+- `MLR3_Classifikation` @ `040d955` "JOSS-Draft-PDF-GitHub-Action
+  einrichten" - gepusht. Eigener neuer Workflow `Draft JOSS PDF`
+  (Path-Filter auf `joss/paper.md`/`joss/paper.bib`) lief bereits einmal
+  erfolgreich (Lauf `33271527454`) - Artifact heruntergeladen, echtes
+  valides 4-Seiten-PDF bestaetigt. CI Smoke Test (der Haupt-Workflow)
+  triggert fuer diesen Commit NICHT (kein `.R`-Code geaendert) - letzter
+  tatsaechlicher CI-Smoke-Test-Lauf weiterhin gruen fuer `086243c`
+  (Lauf `33256552839`).
 - `ML_Learning` (rein lokal, kein Remote): 12 neue Projektordner
   (`openml-cc18-cmc`, `-optdigits`, `-sick`,
   `-analcatdata-authorship`, `-blood-transfusion`, `-ilpd` - je mit
@@ -51,15 +58,20 @@ bleibt bewusst offen).
   explizit als DRAFT markiert. Per `SendUserFile` an den Nutzer
   ausgeliefert. Dient inzwischen als "extended technical report" (siehe
   unten).
-- **Neuer Ordner `joss/`**: die tatsaechliche Ziel-Venue-Einreichung.
-  `paper.md` (787 Woerter, JOSS-Format: Summary/Statement of Need/
-  Comparison to existing software/Acknowledgements, YAML-Header).
-  Autor **Andre Endress** (Independent Researcher, keine ORCID) -
-  vom Nutzer per `AskUserQuestion` bestaetigt, nicht geraten. Nur die
-  Acknowledgements-Sektion bleibt bewusst ein offener `TODO`.
-  `paper.bib` (6 BibTeX-Eintraege), `README.md` (Rollenteilung +
-  offene Vorbereitungsschritte, Punkt 1 "Autoren ausfuellen" jetzt
-  erledigt). Per `SendUserFile` ausgeliefert.
+- **Ordner `joss/`**: die tatsaechliche Ziel-Venue-Einreichung, jetzt
+  vollstaendig. `paper.md` (1342 Woerter, alle 6 JOSS-Pflichtabschnitte:
+  Summary/Statement of Need/State of the Field/**Software Design**/
+  **Research Impact Statement**/**AI Usage Disclosure**/Acknowledgements/
+  References). Autor **Andre Endress** (Independent Researcher, keine
+  ORCID) - vom Nutzer per `AskUserQuestion` bestaetigt, nicht geraten.
+  Nur die Acknowledgements-Sektion bleibt bewusst ein offener `TODO`.
+  `paper.bib` (6 BibTeX-Eintraege), `README.md` (Rollenteilung, jetzt
+  mit vollstaendiger 7-Punkte-JOSS-Checkliste, alle Punkte erledigt bis
+  auf die eigentliche Einreichung). Neue Root-Dateien `LICENSE` (MIT)
+  und `CONTRIBUTING.md` + `.github/ISSUE_TEMPLATE/` (Bug-Report/
+  Feature-Request), neuer Workflow `.github/workflows/draft-pdf.yml`
+  (automatische Vorschau-PDF, verifiziert erfolgreich gelaufen). Per
+  `SendUserFile` ausgeliefert (Draft-Texte + das erste erzeugte PDF).
 
 ## Was in dieser Session passiert ist
 
@@ -277,17 +289,55 @@ Autoren-Frage war nicht danach gefragt, nichts hineingeraten.
 `joss/README.md`s Vorbereitungsliste aktualisiert (Punkt 1 jetzt
 "DONE").
 
+**15. JOSS-Repo-Checkliste vollstaendig geprueft und geschlossen -
+ERLEDIGT** (Nutzeranfrage "JOSS-Repo-Checkliste pruefen", dann "welche
+Lizenz empfiehlst Du", dann "ja, MIT eintragen", dann "ja,
+Contribution-Guidelines ergaenzen", dann "JOSS Vorschau tooling was ist
+das?", dann "ja, GitHub Action einrichten"). Mehrteilige Kette:
+- **Struktureller Fund** (per Doppel-Websuche gegen JOSS' aktuelle Docs
+  verifiziert, nicht angenommen): `paper.md` braucht 6 statt 4
+  Pflichtabschnitte - Software Design/Research Impact Statement/AI
+  Usage Disclosure ergaenzt. AI Usage Disclosure legt transparent offen,
+  dass ein erheblicher Teil von Code/Doku/Paper in Claude-Sessions
+  entstand, unter durchgehender menschlicher Steuerung. Neue Wortzahl:
+  1342.
+- **Lizenz**: Repo hatte KEINE (`"license": null` via GitHub-API
+  bestaetigt) - erste `AskUserQuestion` dazu wurde weggeklickt, auf
+  explizite Nachfrage MIT empfohlen (Standard fuer JOSS/R-Pakete, kein
+  Copyleft-Zwang) und vom Nutzer bestaetigt. Neue Datei `LICENSE`
+  (Repo-Root, MIT, Copyright (c) 2026 Andre Endress) - GitHub erkennt
+  sie inzwischen korrekt (API-Check nach Push bestaetigt).
+- **Community-Guidelines**: neue `CONTRIBUTING.md` (beschreibt die
+  TATSAECHLICHE Praxis - Einzelbetreuer, GitHub Issues als einziger
+  Kanal, die >=2-Projekt-Backport-Regel aus `adr/003` als zentraler
+  Vorbehalt bei neuen Modul-PRs, Dokumentations-PRs ausgenommen) +
+  `.github/ISSUE_TEMPLATE/bug_report.md`/`feature_request.md`.
+- **Vorschau-Tooling erklaert und eingerichtet**: neuer Workflow
+  `.github/workflows/draft-pdf.yml` (via `openjournals/
+  openjournals-draft-action`/`inara`, dasselbe Tool wie JOSS selbst) -
+  baut bei jeder Aenderung an `joss/paper.md`/`paper.bib` eine
+  unverbindliche Vorschau-PDF als Actions-Artifact. **Tatsaechlich
+  verifiziert, nicht nur "Workflow gruen" vertraut**: Artifact
+  heruntergeladen, echtes valides 4-Seiten-PDF bestaetigt (`file`-Check
+  + PDF-Header), per `SendUserFile` ausgeliefert.
+
+**Ergebnis: alle 7 JOSS-Repo-Checkliste-Kriterien erfuellt, alle 6
+Pflichtabschnitte in `paper.md` vorhanden.** Von der urspruenglichen
+Vorbereitungsliste (`joss/README.md`) ist NUR NOCH die tatsaechliche
+Einreichung selbst offen - eine bewusste, eigene Entscheidung des
+Nutzers, nicht ungefragt angestossen.
+
 ## Offene Punkte fuer die naechste Session
 
 **Die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
-(2026-08-29) ist vollstaendig abgearbeitet, ebenso beide im Paper-Draft
-selbst benannten Folgepunkte (Literaturrecherche, Ziel-Venue) UND die
-Autoren-/Affiliation-Frage.** Nur noch optionale Folgeschritte offen,
-keiner dringend:
-- `joss/paper.md`: Acknowledgements-Sektion (bewusst offener `TODO`),
-  JOSS-Repo-Checkliste pruefen (Lizenzdatei/Contributing-Guidelines noch
-  nicht verifiziert), lokal kompilieren, tatsaechlich einreichen - siehe
-  `joss/README.md` fuer die volle Liste.
+(2026-08-29) ist vollstaendig abgearbeitet, ebenso alle im Paper-Draft/
+`joss/`-Ordner selbst benannten Vorbereitungsschritte bis auf einen.**
+Nur noch optionale Folgeschritte offen, keiner dringend:
+- **Die tatsaechliche JOSS-Einreichung** (https://joss.theoj.org/papers/new,
+  GitHub-Repo-URL + `joss/paper.md`-Pfad) - der letzte verbleibende
+  Schritt, bewusst nicht ungefragt angestossen.
+- Optional: die Acknowledgements-Sektion in `joss/paper.md` ausfuellen,
+  falls gewuenscht (bleibt sonst als expliziter `TODO` stehen).
 - Optional: pruefen, ob ein groesseres Tuning-Budget fuer Level 2
   (aktuell 10 Evals/Arm) das gemischte P2-Ergebnis veraendert - bislang
   nicht getestet.
@@ -345,14 +395,12 @@ keiner dringend:
 ## Empfohlener erster Schritt der naechsten Session
 
 Kein zwingender Einstiegspunkt. Die komplette P0-P3-Roadmap des dritten
-Bewertungsdokuments (2026-08-29) ist umgesetzt, inklusive eines ersten
-Paper-Rohentwurfs mit Literaturrecherche (`PAPER_DRAFT.md`) UND einer
-konkreten, autorenmaessig vollstaendigen Ziel-Venue-Einreichung
-(`joss/paper.md`, JOSS - Andre Endress, Independent Researcher). Falls
-der Nutzer nichts Konkretes mitbringt: `joss/paper.md` vollends
-einreichungsfertig machen (JOSS-Repo-Checkliste pruefen -
-Lizenzdatei/Contributing-Guidelines -, lokal kompilieren,
-Acknowledgements ausfuellen falls gewuenscht - siehe
-`joss/README.md`), oder einer der beiden verbleibenden optionalen
-Punkte (groesseres Level-2-Tuning-Budget testen,
-`finalize_run_provenance()` auf weitere Skripte ausrollen).
+Bewertungsdokuments (2026-08-29) ist umgesetzt, inklusive eines
+vollstaendig vorbereiteten JOSS-Einreichungspakets (`joss/paper.md` mit
+allen 6 Pflichtabschnitten, Lizenz, Contributing-Guidelines, verifizierte
+Vorschau-PDF-Action - siehe `joss/README.md` fuer den Gesamtstatus).
+Falls der Nutzer nichts Konkretes mitbringt: die tatsaechliche
+JOSS-Einreichung anstossen (https://joss.theoj.org/papers/new), die
+optionale Acknowledgements-Sektion ausfuellen, oder einer der beiden
+verbleibenden optionalen Punkte (groesseres Level-2-Tuning-Budget
+testen, `finalize_run_provenance()` auf weitere Skripte ausrollen).
