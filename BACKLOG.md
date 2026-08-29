@@ -1710,6 +1710,47 @@ Validation-Zitations-Entscheidung).
 Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
 vorsichtshalber verifiziert (weiterhin 322/322 gruen).
 
+### PAPER_DRAFT.md - Ziel-Venue festgelegt: JOSS (2026-08-29)
+
+**Nutzeranfrage**: "ziel-venue festlegen", per `AskUserQuestion`
+beantwortet mit "JOSS (Software-Paper, Empfehlung)" (Alternativen waren
+AutoML-Conf Workshop/Applications-Track, "nur als Preprint haerten",
+oder eine frei benannte andere Venue).
+
+**Wichtige Konsequenz, per Websuche verifiziert**: JOSS reviewt die
+SOFTWARE, kein vollstaendiges empirisches Paper - die Einreichung ist
+ein kurzes `paper.md` (750-1750 Woerter: Summary, Statement of Need,
+Comparison to existing software, Acknowledgements) mit YAML-Header
+(Titel/Autoren/Affiliations/Tags) und einer separaten `paper.bib`.
+`PAPER_DRAFT.md` (der bisherige 9-Abschnitte-Volltext) ist damit NICHT
+mehr die Einreichung selbst, sondern dient als der "extended technical
+report", auf den `paper.md` fuer die volle Level-1/2-Auswertung
+verweist - explizit als solcher umdeklariert, keine Loeschung.
+
+Neuer Ordner `joss/`:
+- [`joss/paper.md`](joss/paper.md) - die eigentliche Einreichung (787
+  Woerter, innerhalb des 750-1750-Limits), mit Autoren-/Affiliation-/
+  ORCID-Platzhaltern (bewusst NICHT erfunden, explizit als `TODO`
+  markiert)
+- [`joss/paper.bib`](joss/paper.bib) - 6 BibTeX-Eintraege (Teilmenge der
+  14 Quellen aus `PAPER_DRAFT.md`s Section 3 - JOSS-Papers zitieren
+  sparsam, sind keine Literaturuebersicht)
+- [`joss/README.md`](joss/README.md) - dokumentiert die Rollenteilung
+  und listet explizit, was VOR einer echten Einreichung noch fehlt
+  (Autoren/Affiliation ausfuellen, JOSS-Repo-Checkliste pruefen -
+  Lizenzdatei/Contributing-Guidelines noch nicht gegen JOSS-Kriterien
+  verifiziert -, lokal kompilieren, tatsaechlich einreichen)
+
+`PAPER_DRAFT.md`s Kopf-Status und "How to use this draft" Punkt 1
+entsprechend aktualisiert (Ziel-Venue jetzt "DECIDED", nicht mehr offen).
+
+**Bewusst nicht erledigt**: keiner der in `joss/README.md` gelisteten
+Vorbereitungsschritte wurde ausgefuehrt - dies ist ein erster Entwurf
+der Einreichungs-TEXTE, keine fertige Einreichung.
+
+Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
+vorsichtshalber verifiziert (weiterhin 322/322 gruen).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
