@@ -1236,6 +1236,19 @@ bleiben ausgeschlossen (Phase A), die 4 als `unknown` markierten
 aber nicht weiter untersucht - wie in Phase A dokumentiert, absichtlich
 konservativ (Einschluss statt Ausschluss bei Unsicherheit).
 
+## Backup-Aufraeumen (2026-08-29)
+
+Auf Nutzeranfrage die in P2.1/Phase-A-E mehrfach als offen vermerkten
+`_artifacts`-Backup-Dateien geloescht - vom Nutzer SELBST ausgefuehrt
+(dauerhaftes Datei-Loeschen bleibt aus Sicherheitsgruenden dem Nutzer
+vorbehalten, nicht automatisiert durch Claude). Vorher: 12 Dateien, 213
+MB (aeltester Backup vom 2026-07-15, mehrere aus den heutigen
+Merge-Versuchen). Danach: 1 Datei (der finale, erfolgreiche
+Merge-Backup vom 2026-08-29, 19.8 MB) - per erneutem
+`db_housekeeping_check()` verifiziert ("BACKUPS: 1 Datei(en)", keine
+">3 Backups"-Warnung mehr). Damit ist auch dieser letzte, wiederholt
+dokumentierte offene Punkt erledigt.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
