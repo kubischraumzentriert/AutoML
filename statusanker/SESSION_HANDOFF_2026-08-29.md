@@ -6,17 +6,18 @@ Aktualisierung, deckte die komplette Phase-A-E-Roadmap des
 Nachpruefung, Ablationen A2+A3). Dieser Anker deckt alles ab, was SEIT
 diesem Handoff passiert ist: der ueberfaellige zentrale Merge (inkl. 2
 gefundener/gefixter Bugs), Backup-Aufraeumen, und die komplette
-Bearbeitung von P0+P1+P2 aus einem NEUEN, dritten externen
-Bewertungsdokument (2026-08-29). **3. Aktualisierung dieses Ankers:**
-ergaenzt P2 (Level-2-Outer-Evaluation-Prototyp, vollstaendig auf allen 6
-externen Datensaetzen ausgerollt).
+Bearbeitung von P0-P3 aus einem NEUEN, dritten externen
+Bewertungsdokument (2026-08-29). **4. Aktualisierung dieses Ankers:**
+ergaenzt P2 2. Haelfte (Evidence-Registry-Arbeitsteilung dokumentiert)
+und P3 1. Teil (`finalize_run_provenance()`) - damit ist die
+GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments abgearbeitet bis
+auf den optionalen Paper-Rohentwurf.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `8bd8afc` "P2: Level-2-Prototyp auf alle 6
-  externen Datensaetze ausgerollt" - gepusht, CI Smoke Test lief zuletzt
-  fuer `7710cef` gruen (Lauf `33254940511`); Lauf fuer `8bd8afc` steht
-  zum Zeitpunkt dieses Handoffs noch aus/wird ueberwacht.
+- `MLR3_Classifikation` @ `086243c` "P3: finalize_run_provenance() -
+  Abschluss-Provenienz am Ende eines Runs" - gepusht, CI Smoke Test
+  gruen (Lauf `33256552839`).
 - `ML_Learning` (rein lokal, kein Remote): 12 neue Projektordner
   (`openml-cc18-cmc`, `-optdigits`, `-sick`,
   `-analcatdata-authorship`, `-blood-transfusion`, `-ilpd` - je mit
@@ -27,14 +28,18 @@ externen Datensaetzen ausgerollt).
   angelegt.
 - Zentrale `experiments.db` (`health_condition`-Projekt) vollstaendig
   gemergt (23 Classification-Quell-DBs), 4 Backup-Dateien geloescht
-  (nur die letzte, aktuelle blieb).
-- **8 neue annotierte Git-Tags**: `backlog-central-merge-completed`,
+  (nur die letzte, aktuelle blieb); alle P1/P2-Evidence-Eintraege dieser
+  Session (20 neue Zeilen) liegen direkt in dieser zentralen DB (der
+  Logging-Helfer verbindet sich zentral, nicht projekt-lokal).
+- **9 neue annotierte Git-Tags**: `backlog-central-merge-completed`,
   `backlog-2026-08-29-p0-evaluation-levels`,
   `backlog-p1-external-benchmark-frozen`,
   `backlog-p1-external-benchmark-executed`,
   `backlog-p1-fair-baselines-complete`, `backlog-p2-level2-prototype`,
-  `backlog-p2-level2-full-rollout` (7 explizit benannte - insgesamt
-  jetzt 24+ Tags im Repo).
+  `backlog-p2-level2-full-rollout`, `backlog-p2-complete` (8 explizit
+  benannte - insgesamt jetzt 25+ Tags im Repo). Fuer P3 wurde bewusst
+  KEIN eigener Tag gesetzt (kleiner, additiver Schritt ohne eigenen
+  "Meilenstein"-Charakter wie P0-P2 - siehe Konvention unten).
 
 ## Was in dieser Session passiert ist
 
@@ -153,24 +158,51 @@ Tuning-Budget (10 Evals/Arm) kein systematischer Mehrwert gegenueber
 Level 1/den fairen v2-Baselines, bei 5-30x hoeheren Rechenkosten. Alle 6
 Ergebnisse in die Evidence Registry geloggt.
 
+**9. P2, 2. Haelfte "Evidence Registry finalisieren" - ERLEDIGT**
+(Nutzeranfrage "mach weiter mit P2 zweite Haelfte"). `SYSTEMATIC_
+EVALUATION_GENERATED.md` neu erzeugt (enthielt vorher nur den Stand vom
+28.08., vor P1/P2 - alle 20 P1/P2-Evidence-Eintraege liegen direkt in
+der zentralen `experiments.db`). **Entscheidung explizit dokumentiert**:
+die 770-Zeilen-Handdatei `SYSTEMATIC_EVALUATION.md` wird NICHT
+abgeschafft - ihre redaktionelle Dichte (Spaltenaufloesungs-Historie,
+Korrekturvermerke, Fussnoten) liesse sich nicht verlustfrei in
+Registry-Freitextfelder migrieren. Stattdessen: klare Arbeitsteilung
+formalisiert - die manuelle Tabelle bleibt massgeblich fuer die 9
+urspruenglichen Trust-Module, waehrend `outer_workflow_evaluation`
+(Phase C/P1/P2) nur noch ueber die generierte Datei gepflegt wird.
+
+**10. P3, 1. Teil "`finalize_run_provenance()`" - ERLEDIGT**
+(Nutzeranfrage "mach weiter mit P3"). Neue Funktion in `provenance.R`,
+die am ENDE eines Runs die Provenienzfelder nachtraegt, die bei
+`db_create_run()` (Skriptanfang) meist noch nicht bekannt sind (Daten-/
+Resampling-/Feature-Set-/Modellartefakt-Hashes) - ohne die dort bereits
+geloggte R-Version/Paketliste zu duplizieren. Zentraler Aufrufpunkt:
+`db_finish_run()` (bereits die EINE Stelle, die alle ~30 Skripte im Repo
+nutzen) um optionale, NULL-default Parameter erweitert - rueckwaerts-
+kompatibel fuer alle bestehenden Aufrufstellen. Als Referenz-
+implementierung an `030_baseline.R` (Teil der CI-Smoke-Test-Kette)
+demonstriert (`feature_set`/`resampling` mitgegeben), lokal gegen die
+CI-Fixture verifiziert (degradiert korrekt zu Warnung bei fehlendem
+`provenance.R`, wie designed). 12 neue Tests, Gesamtsuite 322/322 gruen.
+**Bewusst nicht** auf alle ~30 Skripte ausgerollt - `030_baseline.R`
+dient als Muster fuer kuenftige Skripte, kein Big-Bang-Refactoring.
+
 ## Offene Punkte fuer die naechste Session
 
-**Aus der 2026-08-29-Bewertung/Roadmap bleibt nur noch P2 (2. Haelfte)
-und P3 offen:**
-- **P2, 2. Haelfte**: Evidence Registry finalisieren (redaktionelle
-  Altinhalte aus `SYSTEMATIC_EVALUATION.md` strukturieren, langfristig
-  manuelle Ergebnistabelle abschaffen). Der Level-2-Prototyp-Teil von P2
-  ist bereits vollstaendig abgeschlossen (siehe Punkt 8 oben).
-- **P3**: `finalize_run_provenance()` (alle verfuegbaren Hashes am Ende
-  eines Runs automatisch ergaenzen, siehe die 2026-08-29-Bewertung
-  Abschnitt 11), erster Paper-Rohentwurf.
+**Aus der 2026-08-29-Bewertung/Roadmap ist NUR NOCH der optionale
+zweite Teil von P3 offen:**
+- **P3, 2. Teil**: erster Paper-Rohentwurf - deutlich groesserer,
+  eigenstaendiger Arbeitsschritt, bewusst nicht ungefragt begonnen.
 - Optional, nicht dringend: pruefen, ob ein groesseres Tuning-Budget fuer
-  Level 2 (aktuell 10 Evals/Arm) das gemischte Ergebnis veraendert -
+  Level 2 (aktuell 10 Evals/Arm) das gemischte P2-Ergebnis veraendert -
   bislang nicht getestet.
+- Optional, nicht dringend: `finalize_run_provenance()` auf weitere
+  aktive Skripte ausrollen (`030_baseline.R` ist bislang die einzige
+  Referenzimplementierung).
 
-**Keine dringenden Blocker.** Alles, was das 2026-08-29-Bewertungs-
-dokument konkret als P0/P1/P2 (Level-2-Teil) spezifiziert hat, ist
-umgesetzt.
+**Keine dringenden Blocker.** Die GESAMTE P0-P3-Roadmap des dritten
+Bewertungsdokuments ist umgesetzt bis auf den optionalen Paper-
+Rohentwurf.
 
 ## Wichtige Konventionen (Ergaenzungen seit dem 28.08.-Anker)
 
@@ -219,11 +251,12 @@ umgesetzt.
 
 ## Empfohlener erster Schritt der naechsten Session
 
-Kein zwingender Einstiegspunkt. Falls der Nutzer nichts Konkretes
-mitbringt: entweder P2s 2. Haelfte (Evidence-Registry-/
-`SYSTEMATIC_EVALUATION.md`-Finalisierung) oder P3
-(`finalize_run_provenance()`, guenstig) der neuen Roadmap angehen, oder
-die tatsaechliche Publikations-Ausarbeitung anstossen (alle Bausteine -
-Phase C, externes Benchmark-Set, faire Baselines, Level-2-Prototyp
-(gemischtes/negatives Ergebnis), beide Ablationen, das eingefrorene
-Protokoll - liegen jetzt bereit).
+Kein zwingender Einstiegspunkt. Die komplette P0-P3-Roadmap des dritten
+Bewertungsdokuments (2026-08-29) ist umgesetzt. Falls der Nutzer nichts
+Konkretes mitbringt: die tatsaechliche Publikations-Ausarbeitung
+anstossen (alle Bausteine - Phase C, externes Benchmark-Set, faire
+Baselines, Level-2-Prototyp (gemischtes/negatives Ergebnis), beide
+Ablationen, das eingefrorene Protokoll, Provenienz - liegen jetzt
+bereit), oder eines der beiden verbleibenden optionalen Punkte (groesseres
+Level-2-Tuning-Budget testen, `finalize_run_provenance()` auf weitere
+Skripte ausrollen).
