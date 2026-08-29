@@ -1626,6 +1626,48 @@ denselben Mehrwert wollen.
 **Offen (P3, 2. Teil)**: erster Paper-Rohentwurf - auf explizite
 Nutzeranweisung, deutlich groesserer, eigenstaendiger Arbeitsschritt.
 
+### P3 - Status (2026-08-29, 2. Teil): erster Paper-Rohentwurf
+
+**Nutzeranfrage**: "mach weiter mit dem Paper-Rohentwurf".
+
+Neue Datei [`PAPER_DRAFT.md`](PAPER_DRAFT.md) - erster vollstaendiger
+Durchgang, EXPLIZIT als DRAFT markiert. Auf Englisch geschrieben (Standard
+fuer die anvisierten Venues), obwohl das Repo selbst auf Deutsch
+dokumentiert ist - eine bewusste, im Dokument selbst begruendete
+Entscheidung, kein Widerspruch zur sonstigen Repo-Sprache.
+
+**Struktur**: Abstract, Introduction, System Description (Architektur,
+Trust-Layer, ADR-003-Governance, CI/Tests), Related Work (**bewusst nur
+Platzhalter** - eine echte Literaturrecherche wurde NICHT gemacht, das
+Dokument sagt das explizit statt es zu verschleiern), die 3
+Evaluations-Ebenen (Section 4, direkt aus `EVALUATION_LEVELS.md`), Level-1-
+Ergebnis (Section 5, Phase C + externes Benchmark-Set + faire Baselines -
+die praezise, metrik-bedingte Kernaussage), Level-2-Prototyp als
+ausdruecklich NEGATIVES Ergebnis (Section 6), zwei Trust-Layer-Ablationen
+mit sowohl Erfolgsfaellen ALS AUCH dem dokumentierten Leak-Audit-blinden-
+Fleck (Section 7), Limitations (Section 8, inkl. der wichtigsten
+Klarstellung: der Titel-Anspruch "trust-centered" bezieht sich informell
+auf Level 3/die gelebte Praxis, waehrend die QUANTITATIVEN Befunde nur
+Level 1/2 abdecken - explizit als das Wichtigste benannt, das dieses Paper
+NICHT verwischen darf), Conclusion.
+
+**Jede konkrete Zahl im Entwurf stammt direkt aus bereits bestehenden,
+gepruesften Repo-Dokumenten** (`BACKLOG.md`, `AGENTS.md`,
+`EVALUATION_LEVELS.md`, `BENCHMARK_PROTOCOL.md`,
+`EXTERNAL_BENCHMARK_SET.md`, beide Ablationsdokumente) - keine neue
+Recherche, kein neuer Code-Lauf, reine Syntheseleistung. Ein
+"How to use this draft"-Abschnitt am Ende benennt explizit, was noch
+menschliche Entscheidungen braucht (Ziel-Venue, echte Literaturrecherche,
+Autorenliste/Anonymisierung, Abbildungen/Tabellen) statt diese Fragen
+stillschweigend selbst zu beantworten.
+
+**Kein Code geaendert** - reine Dokumentation, kein `testthat`-Lauf
+zwingend erforderlich, aus Vorsicht trotzdem verifiziert (weiterhin
+322/322 gruen).
+
+Damit ist die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
+(2026-08-29) abgearbeitet.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
