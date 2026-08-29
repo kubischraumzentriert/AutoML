@@ -111,6 +111,15 @@ db_log_timed_benchmark(
   resampling_strategy = "holdout", resampling_ratio = validation_ratio, resampling_seed = seed
 )
 
-db_finish_run(db_con, db_run_id)
+# P3 (2026-08-29-Bewertung, Abschnitt 11): Abschluss-Provenienz mitgeben -
+# `resampling`/`task_train_small` sind an dieser Stelle (Ende des Skripts)
+# bereits fertig instanziiert bzw. geladen, anders als noch bei
+# db_create_run() oben. Demonstriert `finalize_run_provenance()` an einem
+# echten, aktiven Skript statt nur isoliert per Unit-Test.
+db_finish_run(
+  db_con, db_run_id,
+  feature_set = colnames(task_train_small$data()),
+  resampling = resampling
+)
 DBI::dbDisconnect(db_con)
 cat("Experiment-DB   :", experiments_db_path, "\n")

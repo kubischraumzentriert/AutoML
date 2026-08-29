@@ -238,7 +238,35 @@ db_create_run <- function(con, wf_id, seed = NA_integer_, git_commit = get_git_c
   run_id
 }
 
-db_finish_run <- function(con, run_id) {
+# P3 (2026-08-29-Bewertung, Abschnitt 11): optionale Abschluss-Provenienz
+# ueber denselben zentralen Aufrufpunkt wie `db_create_run()`s
+# Basis-Provenienz (`log_baseline_provenance`) - alle neuen Parameter sind
+# NULL-default, also fuer die ~30 bestehenden `db_finish_run(con, run_id)`-
+# Aufrufstellen unveraendert rueckwaertskompatibel. Ein aufrufendes Skript,
+# das am Ende des Laufs Trainings-/Testdaten-Pfade, das finale Resampling-
+# Objekt, das Feature-Set oder ein Modellartefakt kennt, kann sie hier
+# einfach mitgeben - siehe `finalize_run_provenance()` (provenance.R).
+db_finish_run <- function(con, run_id, train_data_path = NULL, test_data_path = NULL,
+                           config_env = NULL, resampling = NULL, feature_set = NULL,
+                           model_artifact_path = NULL) {
+  has_finalize_args <- !is.null(train_data_path) || !is.null(test_data_path) ||
+    !is.null(config_env) || !is.null(resampling) || !is.null(feature_set) ||
+    !is.null(model_artifact_path)
+  if (has_finalize_args) {
+    tryCatch({
+      if (!exists("finalize_run_provenance", mode = "function")) {
+        source(file.path(get("project_dir", envir = globalenv()), "provenance.R"))
+      }
+      finalize_run_provenance(
+        con, run_id,
+        train_data_path = train_data_path, test_data_path = test_data_path,
+        config_env = config_env, resampling = resampling,
+        feature_set = feature_set, model_artifact_path = model_artifact_path
+      )
+    }, error = function(e) {
+      warning("Abschluss-Provenienz konnte nicht erfasst werden: ", conditionMessage(e), call. = FALSE)
+    })
+  }
   dbExecute(con, "UPDATE run SET run_finished_at = datetime('now') WHERE run_id = ?", params = list(run_id))
   invisible(NULL)
 }

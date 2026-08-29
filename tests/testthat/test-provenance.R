@@ -90,6 +90,48 @@ test_that("capture_run_provenance() loggt installierte Paketversionen im 'name=v
   expect_match(prov[["provenance.packages"]], "^testthat=[0-9.]+$")
 })
 
+test_that("finalize_run_provenance() loggt Abschlussfelder, aber NIE r_version/packages (P3)", {
+  assign("project_dir", testthat::test_path("..", ".."), envir = globalenv())
+  suppressPackageStartupMessages({ library(DBI); library(RSQLite) })
+  source(testthat::test_path("..", "..", "db_logging.R"))
+
+  path <- tempfile(fileext = ".sqlite")
+  con <- db_connect(path)
+  on.exit(dbDisconnect(con))
+
+  proj_id <- db_get_or_create_project(con, "prov-finalize-test")
+  wf_id <- db_get_or_create_workflow(con, proj_id, "script", "finalize_check")
+  run_id <- db_create_run(con, wf_id, log_baseline_provenance = FALSE)
+
+  ok <- finalize_run_provenance(con, run_id, feature_set = "raw")
+  expect_true(ok)
+
+  rows <- dbGetQuery(con, "SELECT rconf_key, rconf_value FROM run_config WHERE rconf_run_id = ?", params = list(run_id))
+  expect_equal(rows$rconf_value[rows$rconf_key == "provenance.feature_set"], "raw")
+  expect_false("provenance.r_version" %in% rows$rconf_key)
+  expect_false("provenance.packages" %in% rows$rconf_key)
+})
+
+test_that("finalize_run_provenance() ohne jedes Argument loggt nichts und liefert FALSE", {
+  assign("project_dir", testthat::test_path("..", ".."), envir = globalenv())
+  suppressPackageStartupMessages({ library(DBI); library(RSQLite) })
+  source(testthat::test_path("..", "..", "db_logging.R"))
+
+  path <- tempfile(fileext = ".sqlite")
+  con <- db_connect(path)
+  on.exit(dbDisconnect(con))
+
+  proj_id <- db_get_or_create_project(con, "prov-finalize-empty-test")
+  wf_id <- db_get_or_create_workflow(con, proj_id, "script", "finalize_check")
+  run_id <- db_create_run(con, wf_id, log_baseline_provenance = FALSE)
+
+  ok <- finalize_run_provenance(con, run_id)
+  expect_false(ok)
+
+  rows <- dbGetQuery(con, "SELECT rconf_key FROM run_config WHERE rconf_run_id = ?", params = list(run_id))
+  expect_equal(nrow(rows), 0)
+})
+
 test_that("capture_run_provenance() ist mit db_log_run_config() kompatibel (Integrationstest)", {
   assign("project_dir", testthat::test_path("..", ".."), envir = globalenv())
   suppressPackageStartupMessages({ library(DBI); library(RSQLite) })

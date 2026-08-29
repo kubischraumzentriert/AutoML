@@ -1569,6 +1569,63 @@ nur eine Regenerierung + eine explizite, dokumentierte
 Arbeitsteilungs-Entscheidung. Damit ist P2 (beide Haelften) vollstaendig
 abgeschlossen.
 
+### P3 - Status (2026-08-29): `finalize_run_provenance()`
+
+**Nutzeranfrage**: "mach weiter mit P3". Bezug: die 2026-08-29-Bewertung,
+Abschnitt 11 ("Provenienz - naechster kleiner Schritt") - Basis-
+Provenienz (R-Version/Paketversionen) wird bereits automatisch bei
+`db_create_run()` geloggt, aber Trainings-/Testdaten-, Resampling-,
+Feature-Set- und Modellartefakt-Hashes sind zu diesem fruehen Zeitpunkt
+im Skript meist noch nicht bekannt. Vorschlag: eine Funktion, die am ENDE
+eines Runs alle bis dahin verfuegbar gewordenen Felder nachtraegt.
+
+**Umgesetzt**: `finalize_run_provenance(con, run_id, ...)` (neu in
+`provenance.R`) - ruft `capture_run_provenance()` erneut auf, aber MIT
+`packages = character(0)` und entfernt `provenance.r_version`/`.packages`
+explizit aus dem Ergebnis, damit diese beiden Basisfelder (die bereits
+aus `db_create_run()` in `run_config` stehen) nicht ein zweites Mal
+geloggt werden (reines Rauschen in der EAV-Tabelle). Wie bei der
+Basis-Provenienz: ein Fehler beim Erfassen darf den Skriptlauf nicht zum
+Absturz bringen (`tryCatch` + Warnung).
+
+**Zentraler Aufrufpunkt statt Big-Bang-Refactoring**: `db_finish_run()`
+(bereits die EINE Stelle, die alle ~30 Skripte im Repo aufrufen) um
+optionale, NULL-default Parameter (`train_data_path`, `test_data_path`,
+`config_env`, `resampling`, `feature_set`, `model_artifact_path`)
+erweitert - ruft bei Bedarf `finalize_run_provenance()` intern auf.
+**Rueckwaertskompatibel**: alle ~30 bestehenden `db_finish_run(con,
+run_id)`-Aufrufstellen ohne Zusatzargumente verhalten sich exakt wie
+zuvor (kein zusaetzliches Logging, per Test abgesichert).
+
+**Demonstriert an einem echten, aktiven Skript** statt nur isoliert per
+Unit-Test: `030_baseline.R` (Teil der CI-Smoke-Test-Kette) gibt am
+`db_finish_run()`-Aufruf jetzt `feature_set`/`resampling` mit - beide
+Objekte sind an dieser Stelle (Skriptende) bereits fertig instanziiert,
+anders als noch bei `db_create_run()` am Skriptanfang. Lokal gegen die
+CI-Fixture verifiziert: laeuft fehlerfrei durch (Exit 0), degradiert bei
+fehlendem `provenance.R` (wie in der CI-Fixture bewusst nicht kopiert,
+siehe Kommentar in `db_create_run()`) korrekt zu einer Warnung statt
+eines Fehlers - identisches Verhalten wie die bereits bestehende
+Basis-Provenienz.
+
+**Tests**: 12 neue `testthat`-Faelle (4 in `test-provenance.R`/
+`test-db_logging.R` zusammen) decken ab: leeres `finalize_run_provenance()`
+loggt nichts + liefert `FALSE`; mit Argumenten loggt es die erwarteten
+Felder OHNE `r_version`/`packages` zu duplizieren; `db_finish_run()` ohne
+Zusatzargumente bleibt exakt wie zuvor (Regressionsschutz fuer die ~30
+bestehenden Aufrufstellen). testthat-Gesamtsuite: 322 PASS, 0 FAIL (vorher
+310).
+
+**Bewusst NICHT umgesetzt** (ausserhalb des "naechster KLEINER Schritt"-
+Rahmens aus der Bewertung): Rollout auf alle ~30 Skripte mit
+`db_finish_run()`-Aufruf, oder eine automatische Bestimmung der
+Feature-Set-/Resampling-Objekte ohne explizite Skript-Angabe. `030_
+baseline.R` dient als Referenzimplementierung fuer kuenftige Skripte, die
+denselben Mehrwert wollen.
+
+**Offen (P3, 2. Teil)**: erster Paper-Rohentwurf - auf explizite
+Nutzeranweisung, deutlich groesserer, eigenstaendiger Arbeitsschritt.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

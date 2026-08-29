@@ -106,3 +106,53 @@ capture_run_provenance <- function(train_data_path = NULL, test_data_path = NULL
 
   provenance
 }
+
+# P3 (2026-08-29-Bewertung, Abschnitt 11 "Provenienz - naechster kleiner
+# Schritt"): `capture_run_provenance()` wird bislang NUR bei
+# `db_create_run()` aufgerufen - zu diesem Zeitpunkt (meist der ERSTE
+# Aufruf in einem Skript) sind Trainings-/Testdaten-Pfade, das finale
+# Resampling-Objekt, das Feature-Set und ein Modellartefakt haeufig noch
+# gar nicht bekannt (siehe Kommentar oben bei `db_create_run()`). Der
+# vorgeschlagene Mechanismus: eine Funktion, die am ENDE eines Runs alle
+# bis dahin verfuegbar gewordenen Provenienzfelder nachtraegt.
+#
+# Bewusst NICHT dieselben Basisfelder (R-Version/Paketversionen) erneut
+# loggen - die stehen bereits aus `db_create_run()` in `run_config`, ein
+# zweiter identischer Eintrag waere reines Rauschen in der EAV-Tabelle.
+# `finalize_run_provenance()` deckt deshalb NUR die Felder ab, die
+# `capture_run_provenance()` an Erst-Aufrufstelle typischerweise NICHT
+# liefern kann (Daten-/Resampling-/Feature-Set-/Modellartefakt-Hashes).
+# Genau wie bei `db_create_run()`s Basis-Provenienz gilt: ein Fehler beim
+# Erfassen darf den eigentlichen Skriptlauf nicht zum Absturz bringen.
+#
+#' Traegt am Ende eines Runs die bis dahin verfuegbar gewordenen
+#' Provenienzfelder nach (Daten-/Resampling-/Feature-Set-/Modellartefakt-
+#' Hashes) - Ergaenzung zur Basis-Provenienz aus `db_create_run()`.
+#'
+#' @param con Offene DBI-Verbindung.
+#' @param run_id Die Run-ID, deren `run_config`-Zeilen ergaenzt werden.
+#' @param ... Wie bei `capture_run_provenance()` (`train_data_path`,
+#'   `test_data_path`, `config_env`, `resampling`, `feature_set`,
+#'   `model_artifact_path`) - alles optional, `NULL` heisst "hier nicht
+#'   verfuegbar".
+#' @return `TRUE`, wenn mindestens ein Feld geloggt wurde, sonst `FALSE`
+#'   (unsichtbar) - z.B. wenn kein einziges `...`-Argument gesetzt war.
+finalize_run_provenance <- function(con, run_id, ...) {
+  prov <- tryCatch(
+    capture_run_provenance(..., packages = character(0)),
+    error = function(e) {
+      warning("Abschluss-Provenienz konnte nicht erfasst werden: ", conditionMessage(e), call. = FALSE)
+      NULL
+    }
+  )
+  # capture_run_provenance() liefert IMMER provenance.r_version/.packages
+  # (hier bewusst leer, siehe packages = character(0) oben) - diese beiden
+  # Basisfelder gehoeren NICHT in finalize_run_provenance()'s Ergaenzung.
+  if (!is.null(prov)) {
+    prov[["provenance.r_version"]] <- NULL
+    prov[["provenance.packages"]] <- NULL
+  }
+  if (is.null(prov) || length(prov) == 0) return(invisible(FALSE))
+  db_log_run_config(con, run_id, prov)
+  invisible(TRUE)
+}

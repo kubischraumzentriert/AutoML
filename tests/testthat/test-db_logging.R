@@ -157,6 +157,44 @@ test_that("db_create_run()/db_finish_run() setzen run_finished_at korrekt", {
   expect_equal(after$run_git_commit[1], "abc123")
 })
 
+test_that("db_finish_run() ohne Zusatzargumente loggt KEINE Abschluss-Provenienz (P3, rueckwaertskompatibel)", {
+  db <- make_test_db()
+  on.exit({ dbDisconnect(db$con); unlink(db$path) })
+  proj_id <- db_get_or_create_project(db$con, "p")
+  wf_id <- db_get_or_create_workflow(db$con, proj_id, "script", "s.R")
+  run_id <- db_create_run(db$con, wf_id, log_baseline_provenance = FALSE)
+  db_finish_run(db$con, run_id) # wie alle ~30 bestehenden Aufrufstellen im Repo
+
+  rows <- dbGetQuery(db$con, "SELECT rconf_key FROM run_config WHERE rconf_run_id = ?", params = list(run_id))
+  expect_equal(nrow(rows), 0)
+})
+
+test_that("db_finish_run(feature_set=..., resampling=...) loggt Abschluss-Provenienz, aber NICHT nochmal r_version/packages (P3)", {
+  skip_if_not_installed("mlr3")
+  suppressPackageStartupMessages(library(mlr3))
+  db <- make_test_db()
+  on.exit({ dbDisconnect(db$con); unlink(db$path) })
+  proj_id <- db_get_or_create_project(db$con, "p")
+  wf_id <- db_get_or_create_workflow(db$con, proj_id, "script", "s.R")
+  run_id <- db_create_run(db$con, wf_id) # Default: log_baseline_provenance = TRUE
+
+  task <- tsk("iris")
+  rsmp1 <- rsmp("cv", folds = 3)
+  rsmp1$instantiate(task)
+  db_finish_run(db$con, run_id, feature_set = c("Sepal.Length", "Sepal.Width"), resampling = rsmp1)
+
+  rows <- dbGetQuery(db$con, "SELECT rconf_key, rconf_value FROM run_config WHERE rconf_run_id = ?", params = list(run_id))
+  expect_true("provenance.feature_set_hash" %in% rows$rconf_key)
+  expect_true("provenance.resampling_hash" %in% rows$rconf_key)
+  # r_version/packages kamen bereits aus db_create_run() - finalize darf sie
+  # nicht ein zweites Mal loggen (reines Rauschen in der EAV-Tabelle).
+  expect_equal(sum(rows$rconf_key == "provenance.r_version"), 1)
+  expect_equal(sum(rows$rconf_key == "provenance.packages"), 1)
+
+  after <- dbGetQuery(db$con, "SELECT run_finished_at FROM run WHERE run_id = ?", params = list(run_id))
+  expect_false(is.na(after$run_finished_at[1])) # db_finish_run() selbst laeuft trotzdem weiter durch
+})
+
 test_that("db_create_run() loggt standardmaessig Basis-Provenienz (R-Version/Paketversionen) fuer den neuen Run (P1.3/Phase B)", {
   db <- make_test_db()
   on.exit({ dbDisconnect(db$con); unlink(db$path) })
