@@ -1816,6 +1816,32 @@ nicht adressiert, auf explizite Nutzeranweisung.
 Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
 vorsichtshalber verifiziert (weiterhin 322/322 gruen).
 
+**Nachtrag (2026-08-29): Contribution-Guidelines ergaenzt.**
+Nutzeranfrage "ja, Contribution-Guidelines ergaenzen" - letzte offene
+Luecke der JOSS-Repo-Checkliste geschlossen. Neue Dateien:
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) (Repo-Root, Englisch, passend zum
+  `joss/`-Ordner): beschreibt EHRLICH die tatsaechliche Praxis statt
+  eines generischen Prozesses - Bug-Reports/Support ausschliesslich via
+  GitHub Issues (keine garantierte Reaktionszeit, Einzelbetreuer),
+  UND der zentrale, template-eigene Vorbehalt bei neuen Modulen: ein PR
+  mit einer echten Neuerung wird erst nach Bestaetigung an >=2
+  unabhaengigen Projekten (oder Null-Ergebnis-Beleg) in den geteilten
+  Template-Teil gemergt - Verweis auf `adr/003-backport-after-
+  confirmation.md`. Dokumentations-PRs sind davon ausdruecklich
+  ausgenommen.
+- `.github/ISSUE_TEMPLATE/bug_report.md` und `feature_request.md` -
+  Letzteres verweist explizit auf dieselbe >=2-Projekt-Regel, damit
+  niemand einen sofortigen Merge erwartet.
+- `README.md` um einen Verweis auf `CONTRIBUTING.md` ergaenzt.
+
+`joss/README.md`s Checkliste aktualisiert: **alle 7 JOSS-Kriterien jetzt
+erfuellt.** Verbleibend fuer eine tatsaechliche Einreichung nur noch:
+lokal kompilieren (JOSS-Vorschau-Tooling) und die eigentliche
+Einreichung selbst - beides bewusst nicht Teil dieser Sitzung.
+
+Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
+vorsichtshalber verifiziert (weiterhin 322/322 gruen).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

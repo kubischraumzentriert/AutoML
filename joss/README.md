@@ -29,13 +29,13 @@ by the user on 2026-08-29 (see `BACKLOG.md`, P3 status).
    |---|---|
    | Source repository publicly reachable | ✅ done |
    | ~~LICENSE file (OSI-approved)~~ | ✅ **DONE (2026-08-29)**: MIT, `../LICENSE` |
-   | Community guidelines (contributing/issues/support) | ❌ still missing — no `CONTRIBUTING.md`, no issue templates |
+   | ~~Community guidelines (contributing/issues/support)~~ | ✅ **DONE (2026-08-29)**: `../CONTRIBUTING.md` + `.github/ISSUE_TEMPLATE/` |
    | Installation instructions | ✅ done (`README.md`/`README_DETAILS.md`) |
    | Example usage | ✅ done |
    | Functionality/API documentation | ✅ done (85+ scripts documented) |
    | Automated tests | ✅ done (`testthat` + CI smoke test) |
 
-   Only remaining gap: community/contribution guidelines.
+   All 7 checklist items now satisfied.
 3. ~~`paper.md` structure~~ **UPDATED (2026-08-29)**: JOSS's paper
    format now requires 6 sections, not the 4 this draft originally had
    — Summary, Statement of need, State of the field, **Software
@@ -49,5 +49,5 @@ by the user on 2026-08-29 (see `BACKLOG.md`, P3 status).
 5. Submit via https://joss.theoj.org/papers/new (a GitHub repository URL
    plus this `paper.md` path).
 
-Steps 2 (community guidelines only) and 4-5 were not done as part of
-this pass.
+Steps 4-5 were not done as part of this pass — everything else on the
+"before submission" list is now done.

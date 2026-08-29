@@ -75,5 +75,6 @@ einer aufwendigen Blackbox.
 - [`WorkflowDescription.md`](WorkflowDescription.md) — der komplette Ablauf als Mermaid-Diagramm inkl. aller Entscheidungspunkte; auch ohne KI-Unterstützung nachvollziehbar.
 - [`TARGETS.md`](TARGETS.md) — die `targets`-Pipeline (Caching/Reproduzierbarkeit) und die vollständige Entscheidungshistorie.
 - [`adr/`](adr/) — Architekturentscheidungen (warum lokale Projekt-DBs statt einer geteilten Live-DB, R-only-Policy, die ≥2-Projekt-Backport-Regel).
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — wie Beiträge/Bug-Reports/Support-Anfragen in der Praxis gehandhabt werden.
 
 Schwesterprojekt für Regressionsaufgaben: [`AutoML_Regression`](https://github.com/kubischraumzentriert/AutoML_Regression), gleiche Methodik, geteiltes DB-Schema.
