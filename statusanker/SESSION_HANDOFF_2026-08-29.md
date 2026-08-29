@@ -8,20 +8,19 @@ diesem Handoff passiert ist: der ueberfaellige zentrale Merge (inkl. 2
 gefundener/gefixter Bugs), Backup-Aufraeumen, und die komplette
 Bearbeitung von P0-P3 aus einem NEUEN, dritten externen
 Bewertungsdokument (2026-08-29). Die GESAMTE P0-P3-Roadmap des dritten
-Bewertungsdokuments ist vollstaendig abgearbeitet. **7. Aktualisierung
-dieses Ankers:** ergaenzt die Ziel-Venue-Entscheidung (JOSS) und den
-neuen `joss/`-Ordner (`paper.md`/`paper.bib`/`README.md`) - damit sind
-BEIDE im Paper-Draft selbst als offen benannten Folgepunkte
-(Literaturrecherche, Ziel-Venue) erledigt.
+Bewertungsdokuments ist vollstaendig abgearbeitet. **8. Aktualisierung
+dieses Ankers:** ergaenzt das Ausfuellen von Autoren/Affiliation in
+`joss/paper.md` - der letzte offene TODO-Platzhalter aus der
+JOSS-Einreichung ist damit erledigt (nur die Acknowledgements-Sektion
+bleibt bewusst offen).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `e0e3710` "Ziel-Venue festgelegt: JOSS - neuer
-  joss/paper.md + paper.bib" - gepusht. Nur `.md`/`.bib`-Aenderungen
-  seit `086243c`, CI Smoke Test triggert dafuer erwartungsgemaess nicht
-  (Path-Filter greift nur bei `**.R`/`DESCRIPTION`/`.Rprofile`) -
-  letzter tatsaechlicher CI-Lauf gruen fuer `086243c` (Lauf
-  `33256552839`).
+- `MLR3_Classifikation` @ `3a4b69e` "joss/paper.md: Autoren/Affiliation
+  ausgefuellt" - gepusht. Nur `.md`-Aenderungen seit `086243c`, CI Smoke
+  Test triggert dafuer erwartungsgemaess nicht (Path-Filter greift nur
+  bei `**.R`/`DESCRIPTION`/`.Rprofile`) - letzter tatsaechlicher CI-Lauf
+  gruen fuer `086243c` (Lauf `33256552839`).
 - `ML_Learning` (rein lokal, kein Remote): 12 neue Projektordner
   (`openml-cc18-cmc`, `-optdigits`, `-sick`,
   `-analcatdata-authorship`, `-blood-transfusion`, `-ilpd` - je mit
@@ -54,10 +53,13 @@ BEIDE im Paper-Draft selbst als offen benannten Folgepunkte
   unten).
 - **Neuer Ordner `joss/`**: die tatsaechliche Ziel-Venue-Einreichung.
   `paper.md` (787 Woerter, JOSS-Format: Summary/Statement of Need/
-  Comparison to existing software/Acknowledgements, YAML-Header,
-  Autoren/Affiliation/ORCID als bewusste `TODO`-Platzhalter),
+  Comparison to existing software/Acknowledgements, YAML-Header).
+  Autor **Andre Endress** (Independent Researcher, keine ORCID) -
+  vom Nutzer per `AskUserQuestion` bestaetigt, nicht geraten. Nur die
+  Acknowledgements-Sektion bleibt bewusst ein offener `TODO`.
   `paper.bib` (6 BibTeX-Eintraege), `README.md` (Rollenteilung +
-  offene Vorbereitungsschritte). Per `SendUserFile` ausgeliefert.
+  offene Vorbereitungsschritte, Punkt 1 "Autoren ausfuellen" jetzt
+  erledigt). Per `SendUserFile` ausgeliefert.
 
 ## Was in dieser Session passiert ist
 
@@ -260,19 +262,32 @@ separate `paper.bib`. Neuer Ordner `joss/` (`paper.md` mit 787 Woertern,
 Quellen, `README.md` mit Rollenteilung + offenen Vorbereitungsschritten).
 `PAPER_DRAFT.md` ist damit umdeklariert (nicht geloescht) zum "extended
 technical report", auf den `paper.md` fuer die volle Level-1/2-Auswertung
-verweist. Autoren-/Affiliation-/ORCID-Platzhalter bewusst als `TODO`
-belassen - keine Entscheidung, die geraten werden darf.
+verweist. Autoren-/Affiliation-/ORCID-Platzhalter zunaechst bewusst als
+`TODO` belassen - keine Entscheidung, die geraten werden darf.
+
+**14. `joss/paper.md` Autoren/Affiliation - ERLEDIGT** (Nutzeranfrage
+"autoren und affiliation in joss/paper.md ausfuellen"). Per
+`AskUserQuestion` abgesichert statt geraten: Name "Andre Endress" (aus
+dem oeffentlichen GitHub-Profil `kubischraumzentriert` vorgeschlagen,
+vom Nutzer bestaetigt), Affiliation "Independent Researcher" (kein
+Institut im Profil hinterlegt), keine ORCID (Feld aus dem YAML-Header
+entfernt statt als leerer Platzhalter stehen zu bleiben). Nur die
+Acknowledgements-Sektion bleibt bewusst ein offener `TODO` -
+Autoren-Frage war nicht danach gefragt, nichts hineingeraten.
+`joss/README.md`s Vorbereitungsliste aktualisiert (Punkt 1 jetzt
+"DONE").
 
 ## Offene Punkte fuer die naechste Session
 
 **Die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
 (2026-08-29) ist vollstaendig abgearbeitet, ebenso beide im Paper-Draft
-selbst benannten Folgepunkte (Literaturrecherche, Ziel-Venue).** Nur
-noch optionale Folgeschritte offen, keiner dringend:
-- `joss/paper.md`: Autoren-/Affiliation-/ORCID-Platzhalter ausfuellen
-  (`TODO`-Markierungen), JOSS-Repo-Checkliste pruefen (Lizenzdatei/
-  Contributing-Guidelines noch nicht verifiziert), lokal kompilieren,
-  tatsaechlich einreichen - siehe `joss/README.md` fuer die volle Liste.
+selbst benannten Folgepunkte (Literaturrecherche, Ziel-Venue) UND die
+Autoren-/Affiliation-Frage.** Nur noch optionale Folgeschritte offen,
+keiner dringend:
+- `joss/paper.md`: Acknowledgements-Sektion (bewusst offener `TODO`),
+  JOSS-Repo-Checkliste pruefen (Lizenzdatei/Contributing-Guidelines noch
+  nicht verifiziert), lokal kompilieren, tatsaechlich einreichen - siehe
+  `joss/README.md` fuer die volle Liste.
 - Optional: pruefen, ob ein groesseres Tuning-Budget fuer Level 2
   (aktuell 10 Evals/Arm) das gemischte P2-Ergebnis veraendert - bislang
   nicht getestet.
@@ -332,10 +347,12 @@ noch optionale Folgeschritte offen, keiner dringend:
 Kein zwingender Einstiegspunkt. Die komplette P0-P3-Roadmap des dritten
 Bewertungsdokuments (2026-08-29) ist umgesetzt, inklusive eines ersten
 Paper-Rohentwurfs mit Literaturrecherche (`PAPER_DRAFT.md`) UND einer
-konkreten Ziel-Venue-Einreichung (`joss/paper.md`, JOSS). Falls der
-Nutzer nichts Konkretes mitbringt: `joss/paper.md` konkret
-einreichungsfertig machen (Autoren/Affiliation/ORCID ausfuellen,
-JOSS-Repo-Checkliste pruefen, lokal kompilieren - siehe
+konkreten, autorenmaessig vollstaendigen Ziel-Venue-Einreichung
+(`joss/paper.md`, JOSS - Andre Endress, Independent Researcher). Falls
+der Nutzer nichts Konkretes mitbringt: `joss/paper.md` vollends
+einreichungsfertig machen (JOSS-Repo-Checkliste pruefen -
+Lizenzdatei/Contributing-Guidelines -, lokal kompilieren,
+Acknowledgements ausfuellen falls gewuenscht - siehe
 `joss/README.md`), oder einer der beiden verbleibenden optionalen
 Punkte (groesseres Level-2-Tuning-Budget testen,
 `finalize_run_provenance()` auf weitere Skripte ausrollen).
