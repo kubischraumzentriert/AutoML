@@ -8,20 +8,20 @@ diesem Handoff passiert ist: der ueberfaellige zentrale Merge (inkl. 2
 gefundener/gefixter Bugs), Backup-Aufraeumen, und die komplette
 Bearbeitung von P0-P3 aus einem NEUEN, dritten externen
 Bewertungsdokument (2026-08-29). Die GESAMTE P0-P3-Roadmap des dritten
-Bewertungsdokuments ist vollstaendig abgearbeitet. **6. Aktualisierung
-dieses Ankers:** ergaenzt die erste Literaturrecherche fuer
-`PAPER_DRAFT.md`s Section 3 (Related Work) - einer der beiden im Draft
-selbst als offen benannten Folgepunkte (der andere: Ziel-Venue
-festlegen, weiterhin offen).
+Bewertungsdokuments ist vollstaendig abgearbeitet. **7. Aktualisierung
+dieses Ankers:** ergaenzt die Ziel-Venue-Entscheidung (JOSS) und den
+neuen `joss/`-Ordner (`paper.md`/`paper.bib`/`README.md`) - damit sind
+BEIDE im Paper-Draft selbst als offen benannten Folgepunkte
+(Literaturrecherche, Ziel-Venue) erledigt.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `eab2cfe` "PAPER_DRAFT.md: erste
-  Literaturrecherche fuer Section 3 (Related Work)" - gepusht. Nur
-  `.md`-Aenderungen seit `086243c`, CI Smoke Test triggert dafuer
-  erwartungsgemaess nicht (Path-Filter greift nur bei
-  `**.R`/`DESCRIPTION`/`.Rprofile`) - letzter tatsaechlicher CI-Lauf
-  gruen fuer `086243c` (Lauf `33256552839`).
+- `MLR3_Classifikation` @ `e0e3710` "Ziel-Venue festgelegt: JOSS - neuer
+  joss/paper.md + paper.bib" - gepusht. Nur `.md`/`.bib`-Aenderungen
+  seit `086243c`, CI Smoke Test triggert dafuer erwartungsgemaess nicht
+  (Path-Filter greift nur bei `**.R`/`DESCRIPTION`/`.Rprofile`) -
+  letzter tatsaechlicher CI-Lauf gruen fuer `086243c` (Lauf
+  `33256552839`).
 - `ML_Learning` (rein lokal, kein Remote): 12 neue Projektordner
   (`openml-cc18-cmc`, `-optdigits`, `-sick`,
   `-analcatdata-authorship`, `-blood-transfusion`, `-ilpd` - je mit
@@ -50,7 +50,14 @@ festlegen, weiterhin offen).
   Workshop-/Experience-/Software-Papers ("A Reproducible, Trust-Centered
   AutoML Workflow for Tabular Classification in R/mlr3"), auf Englisch,
   explizit als DRAFT markiert. Per `SendUserFile` an den Nutzer
-  ausgeliefert.
+  ausgeliefert. Dient inzwischen als "extended technical report" (siehe
+  unten).
+- **Neuer Ordner `joss/`**: die tatsaechliche Ziel-Venue-Einreichung.
+  `paper.md` (787 Woerter, JOSS-Format: Summary/Statement of Need/
+  Comparison to existing software/Acknowledgements, YAML-Header,
+  Autoren/Affiliation/ORCID als bewusste `TODO`-Platzhalter),
+  `paper.bib` (6 BibTeX-Eintraege), `README.md` (Rollenteilung +
+  offene Vorbereitungsschritte). Per `SendUserFile` ausgeliefert.
 
 ## Was in dieser Session passiert ist
 
@@ -242,17 +249,30 @@ Zitat). Neuer `References`-Abschnitt mit allen 14 Quellen + URLs.
 Bewusst NICHT erledigt (im Draft selbst benannt): Zitate noch nicht auf
 BibTeX normalisiert, Abdeckung bewusst eng auf das Paper-Thema begrenzt.
 
+**13. Ziel-Venue festgelegt: JOSS - ERLEDIGT** (Nutzeranfrage
+"ziel-venue festlegen", per `AskUserQuestion` beantwortet mit "JOSS").
+Wichtige Konsequenz, per Websuche verifiziert: JOSS reviewt die
+SOFTWARE, kein vollstaendiges empirisches Paper - die Einreichung ist
+ein kurzes `paper.md` (750-1750 Woerter: Summary, Statement of Need,
+Comparison to existing software, Acknowledgements) + YAML-Header +
+separate `paper.bib`. Neuer Ordner `joss/` (`paper.md` mit 787 Woertern,
+`paper.bib` mit 6 BibTeX-Eintraegen als Teilmenge der 14 `PAPER_DRAFT.md`-
+Quellen, `README.md` mit Rollenteilung + offenen Vorbereitungsschritten).
+`PAPER_DRAFT.md` ist damit umdeklariert (nicht geloescht) zum "extended
+technical report", auf den `paper.md` fuer die volle Level-1/2-Auswertung
+verweist. Autoren-/Affiliation-/ORCID-Platzhalter bewusst als `TODO`
+belassen - keine Entscheidung, die geraten werden darf.
+
 ## Offene Punkte fuer die naechste Session
 
 **Die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
-(2026-08-29) ist vollstaendig abgearbeitet.** Nur noch optionale
-Folgeschritte offen, keiner dringend:
-- `PAPER_DRAFT.md` weiterentwickeln: Ziel-Venue festlegen (steuert
-  Seitenlimit/Zitierstil/Kompressionsgrad), Zitate auf BibTeX
-  normalisieren, die offene Adversarial-Validation-Zitations-
-  Entscheidung treffen, Abbildungen/Tabellen ergaenzen, Autorenliste/
-  Anonymisierung klaeren - alles explizit im Dokument selbst als offen
-  benannt ("How to use this draft").
+(2026-08-29) ist vollstaendig abgearbeitet, ebenso beide im Paper-Draft
+selbst benannten Folgepunkte (Literaturrecherche, Ziel-Venue).** Nur
+noch optionale Folgeschritte offen, keiner dringend:
+- `joss/paper.md`: Autoren-/Affiliation-/ORCID-Platzhalter ausfuellen
+  (`TODO`-Markierungen), JOSS-Repo-Checkliste pruefen (Lizenzdatei/
+  Contributing-Guidelines noch nicht verifiziert), lokal kompilieren,
+  tatsaechlich einreichen - siehe `joss/README.md` fuer die volle Liste.
 - Optional: pruefen, ob ein groesseres Tuning-Budget fuer Level 2
   (aktuell 10 Evals/Arm) das gemischte P2-Ergebnis veraendert - bislang
   nicht getestet.
@@ -311,10 +331,11 @@ Folgeschritte offen, keiner dringend:
 
 Kein zwingender Einstiegspunkt. Die komplette P0-P3-Roadmap des dritten
 Bewertungsdokuments (2026-08-29) ist umgesetzt, inklusive eines ersten
-Paper-Rohentwurfs (`PAPER_DRAFT.md`) mit erster Literaturrecherche fuer
-Section 3. Falls der Nutzer nichts Konkretes mitbringt:
-`PAPER_DRAFT.md` weiterentwickeln (Ziel-Venue festlegen, Zitate auf
-BibTeX normalisieren, Abbildungen/Tabellen ergaenzen - siehe dortiger
-"How to use this draft"-Abschnitt), oder einer der beiden verbleibenden
-optionalen Punkte (groesseres Level-2-Tuning-Budget testen,
+Paper-Rohentwurfs mit Literaturrecherche (`PAPER_DRAFT.md`) UND einer
+konkreten Ziel-Venue-Einreichung (`joss/paper.md`, JOSS). Falls der
+Nutzer nichts Konkretes mitbringt: `joss/paper.md` konkret
+einreichungsfertig machen (Autoren/Affiliation/ORCID ausfuellen,
+JOSS-Repo-Checkliste pruefen, lokal kompilieren - siehe
+`joss/README.md`), oder einer der beiden verbleibenden optionalen
+Punkte (groesseres Level-2-Tuning-Budget testen,
 `finalize_run_provenance()` auf weitere Skripte ausrollen).
