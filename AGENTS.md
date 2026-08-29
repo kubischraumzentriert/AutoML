@@ -145,9 +145,28 @@ Tuning hinaus dort, wo Klassenimbalance das dominante Problem ist - bei
 bereits gut balancierten/groesseren Aufgaben leistet reines Tuning
 gleichwertig oder mehr.** Details/volle Tabelle: `BACKLOG.md`/P1-Status.
 
-Fuer ein staerkeres Forschungs-Paper fehlt jetzt nur noch: ggf. eine
-echte Level-2-Outer-Evaluation (Modellwahl+Tuning innerhalb jedes
-Outer-Train-Splits statt eines festen Arm-Katalogs).
+**P2-Prototyp (2026-08-29): Level-2-Outer-Evaluation (Modellwahl+Tuning+
+Ensemble innerhalb jedes Outer-Train-Splits) auf 2 von 6 Datensaetzen
+getestet.** `outer_workflow_evaluation_v3_level2.R` (Protokoll v3,
+`BENCHMARK_PROTOCOL.md`) - Ergebnis GEGENLAEUFIG zum Datensatz-Muster aus
+der v2-Story: auf `ilpd` (klein, stark unausgeglichen) UNTERBIETET der
+komplexere Level-2-Prozess (0.6473) den einfacheren Level-1-`workflow_
+ranger` (0.6840) - vermutlich weil der zusaetzliche Inner-Train/Inner-
+Tune-Split bei nur n=388 Outer-Train fuer eine stabile Modellwahl zu
+datenarm ist (sd_score=0.051, deutlich hoeher als bei den anderen Armen).
+Auf `optdigits` (gross, balanciert) dagegen liefert Level 2 (0.9859) das
+BESTE Ergebnis ueberhaupt fuer diesen Datensatz, besser als v1
+`workflow_ranger` (0.9810) UND v2s bester getunter Baseline (0.9840).
+**Erweiterte Arbeitshypothese**: mehr Prozess-Komplexitaet (Level 2)
+hilft dort, wo genug Daten fuer eine robuste Inner-Modellwahl vorhanden
+sind, kann aber bei kleinen Datensaetzen schaden, wo bereits die
+einfachere Level-1-Korrektur den erreichbaren Gewinn weitgehend
+ausschoepft. Noch NICHT auf allen 6 Datensaetzen bestaetigt - siehe
+`BACKLOG.md`/P2-Status und `EVALUATION_LEVELS.md`.
+
+Fuer ein staerkeres Forschungs-Paper fehlt jetzt: den Level-2-Prototyp
+auf die restlichen 4 Datensaetze auszurollen, um die Groessen-/Balance-
+Hypothese robust zu pruefen, sowie ggf. eine Level-3-Untersuchung.
 
 Naechste Schritte, die bei neuen Arbeiten mitgedacht werden sollen:
 

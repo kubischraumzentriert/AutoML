@@ -1451,6 +1451,62 @@ echten Zahlen statt einer Vermutung.
 Alle 6 v2-Ergebnisse + ein Cross-Projekt-Meta-Befund in die Evidence
 Registry geloggt.
 
+### P2 - Status (2026-08-29): Level-2-Prototyp (Modellwahl+Tuning+Ensemble im Outer-Fold)
+
+**Nutzerentscheidung**: "mach weiter mit P2", dann per `AskUserQuestion`
+"Nur 1-2 Datensaetze zuerst (Empfehlung)" fuer den Umfang.
+
+Neues Konzept-Dokument [`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md)
+praezisiert: Level 1 = Component Workflow (Gewichtung + optionale
+Multiplier-Korrektur - das ist ALLES, was bisher unter "Outer Evaluation"
+lief, inkl. Phase C und P1/v1/v2). Level 2 = Model-Selection Workflow
+(Tuning + Modellwahl + optionales Ensemble, alles INNERHALB jedes
+Outer-Train-Splits). Level 3 = volle Trust-zentrierte AutoML-Entscheidungskette
+(Leak-Audit/Drift als aktive Inloop-Entscheidungen) - noch nicht geplant.
+
+Neues Skript [`outer_workflow_evaluation_v3_level2.R`](outer_workflow_evaluation_v3_level2.R)
+(Protokoll v3): pro Outer-Fold wird der Outer-Train nochmal in
+Inner-Train/Inner-Tune gesplittet (0.75/0.25), darauf `auto_tuner()` fuer
+Ranger (Random-Search) und LightGBM (MBO), je 10 Evals, plus ein
+Mini-Ensemble (Mittel der Wahrscheinlichkeiten) - alle drei Kandidaten
+klassenmultiplier-korrigiert und anhand des Inner-Tune-Scores verglichen.
+Der Gewinner wird mit den besten Hyperparametern final auf dem GESAMTEN
+Outer-Train refittet und genau einmal auf dem Outer-Test bewertet (kein
+Data Leakage: Outer-Test bleibt bis zum Schluss ungesehen).
+
+Getestet auf 2 der 6 externen P1-Datensaetze (kleinster + einer der
+groessten, damit beide Enden des Spektrums abgedeckt sind):
+
+| Datensatz | v1 `workflow_ranger` | v2 bester Konkurrent | v3 `level2_workflow` | Level 2 vs. bisher beste Version |
+|---|---|---|---|---|
+| `ilpd` (n=583, klein, stark unausgeglichen) | 0.6840 | tuned_lightgbm/best_single 0.5960 | **0.6473** | **schlechter** als v1 (-3.7), aber besser als Baselines |
+| `optdigits` (n=5620, gross, balanciert) | 0.9810 | tuned_lightgbm/best_single 0.9840 | **0.9859** | **besser** als beide bisherigen Bestwerte (+0.2/+0.5) |
+
+**Bemerkenswerter, gegenlaeufiger Befund**: auf `ilpd` UNTERBIETET der
+komplexere Level-2-Prozess den einfacheren Level-1-`workflow_ranger` -
+vermutlich weil der Inner-Train-Split (75% von ohnehin nur n=388
+Outer-Train) fuer eine stabile Modellwahl/Tuning bei diesem kleinen,
+stark unausgeglichenen Datensatz zu wenig Daten liefert (sd_score=0.051,
+deutlich hoeher als bei den anderen Armen). Auf `optdigits` dagegen zahlt
+sich dieselbe zusaetzliche Komplexitaet aus und liefert das bisher beste
+Ergebnis ueberhaupt fuer diesen Datensatz.
+
+Das ist fast das Spiegelbild des P1-Fair-Baselines-Befunds: dort halfen
+weniger komplexe Korrekturen bei kleinen/unausgeglichenen und mehr
+Tuning bei grossen/balancierten Daten - hier zeigt sich zusaetzlich, dass
+noch MEHR Komplexitaet (Level 2) bei kleinen/unausgeglichenen Daten sogar
+schaden kann (zu wenig Daten fuer eine robuste Inner-Modellwahl), waehrend
+sie bei grossen/balancierten Daten den bisher besten Wert liefert.
+Vorlaeufige Arbeitshypothese, noch nicht auf allen 6 Datensaetzen
+geprueft.
+
+Beide Ergebnisse in die Evidence Registry geloggt (Rolle `score_lever`,
+Status `core_finding`).
+
+**Offen**: Rollout auf die verbleibenden 4 Datensaetze, sowie P2s zweite
+Haelfte ("Evidence Registry finalisieren" / `SYSTEMATIC_EVALUATION.md`-
+Struktur) - beides auf explizite Nutzeranweisung.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

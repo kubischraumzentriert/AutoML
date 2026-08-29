@@ -1,4 +1,25 @@
-# Benchmark-Protokoll (eingefroren, Stand 2026-08-28, v2 seit 2026-08-29)
+# Benchmark-Protokoll (eingefroren, Stand 2026-08-28, v2/v3 seit 2026-08-29)
+
+## Version 3 (2026-08-29): Level-2-Prototyp (Modellwahl+Tuning+Ensemble im Outer-Fold)
+
+P2 aus der 2026-08-29-Bewertung. Referenzimplementierung:
+[`outer_workflow_evaluation_v3_level2.R`](outer_workflow_evaluation_v3_level2.R).
+Fuegt einen neuen Arm `level2_workflow` hinzu: pro Outer-Fold wird der
+Outer-Train zusaetzlich in Inner-Train/Inner-Tune (0.75/0.25) gesplittet;
+darauf laufen `auto_tuner()` fuer Ranger (Random-Search) und LightGBM
+(MBO), je `tuned_baseline_evals = 10`, sowie ein Mini-Ensemble (Mittel
+der Wahrscheinlichkeiten) - alle drei Kandidaten klassenmultiplier-
+korrigiert und anhand des Inner-Tune-Scores verglichen. Der Gewinner wird
+mit den besten Hyperparametern final auf dem GESAMTEN Outer-Train
+refittet und genau einmal auf dem Outer-Test bewertet (Outer-Test bleibt
+bis zum Schluss ungesehen, kein Leakage). Siehe
+[`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md) fuer die Level-1-vs-2-
+Abgrenzung.
+
+**Bisher getestet**: 2 von 6 externen P1-Datensaetzen (`ilpd`,
+`optdigits`), Ergebnis gegenlaeufig je nach Datensatzgroesse/-balance -
+siehe `BACKLOG.md`/P2-Status fuer die volle Tabelle und Diskussion. Noch
+KEIN Rollout auf die restlichen 4 Datensaetze.
 
 ## Version 2 (2026-08-29): faire getunte Baselines
 

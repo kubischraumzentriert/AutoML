@@ -39,8 +39,21 @@ Ranger, LightGBM, Tuning, Threshold/Multiplier, Model Selection, ggf. Ensemble
 
 Modellwahl UND Hyperparameter-Tuning selbst werden innerhalb jedes
 Outer-Train-Splits neu durchgefuehrt (nicht nur ein einzelner
-vorentschiedener Lernalgorithmus). Bislang NICHT umgesetzt (P2 der neuen
-Roadmap, siehe unten).
+vorentschiedener Lernalgorithmus).
+
+**Prototyp durchgefuehrt (2026-08-29, P2, 2 von 6 externen Datensaetzen)**:
+[`outer_workflow_evaluation_v3_level2.R`](outer_workflow_evaluation_v3_level2.R)
+(Protokoll v3) - Ergebnis GEGENLAEUFIG je nach Datensatzgroesse/-balance:
+auf `ilpd` (klein, stark unausgeglichen) unterbietet Level 2 (0.6473) den
+einfacheren Level-1-`workflow_ranger` (0.6840) klar; auf `optdigits`
+(gross, balanciert) liefert Level 2 (0.9859) das bislang beste Ergebnis
+ueberhaupt fuer diesen Datensatz (vor v1 workflow_ranger 0.9810 und v2
+tuned_lightgbm 0.9840). Arbeitshypothese: bei kleinen Datensaetzen ist der
+zusaetzliche Inner-Train/Inner-Tune-Split fuer eine stabile Modellwahl zu
+datenarm (hohe Streuung, sd_score=0.051 bei ilpd), waehrend bei
+groesseren Datensaetzen genug Daten fuer eine robuste Inner-Modellwahl
+vorhanden sind und die zusaetzliche Komplexitaet sich auszahlt. Noch
+NICHT auf allen 6 Datensaetzen geprueft, siehe `BACKLOG.md`.
 
 ### Level 3 - Full Trust-centered AutoML Decision Process
 
