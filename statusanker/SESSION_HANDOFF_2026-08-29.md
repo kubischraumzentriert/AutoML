@@ -6,31 +6,35 @@ Aktualisierung, deckte die komplette Phase-A-E-Roadmap des
 Nachpruefung, Ablationen A2+A3). Dieser Anker deckt alles ab, was SEIT
 diesem Handoff passiert ist: der ueberfaellige zentrale Merge (inkl. 2
 gefundener/gefixter Bugs), Backup-Aufraeumen, und die komplette
-Bearbeitung von P0+P1 aus einem NEUEN, dritten externen
-Bewertungsdokument (2026-08-29).
+Bearbeitung von P0+P1+P2 aus einem NEUEN, dritten externen
+Bewertungsdokument (2026-08-29). **3. Aktualisierung dieses Ankers:**
+ergaenzt P2 (Level-2-Outer-Evaluation-Prototyp, vollstaendig auf allen 6
+externen Datensaetzen ausgerollt).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `501be7b` "P1 (fair baselines, protocol v2):
-  reusable template + full results" - gepusht, CI Smoke Test gruen
-  (Lauf `33253383429`).
+- `MLR3_Classifikation` @ `8bd8afc` "P2: Level-2-Prototyp auf alle 6
+  externen Datensaetze ausgerollt" - gepusht, CI Smoke Test lief zuletzt
+  fuer `7710cef` gruen (Lauf `33254940511`); Lauf fuer `8bd8afc` steht
+  zum Zeitpunkt dieses Handoffs noch aus/wird ueberwacht.
 - `ML_Learning` (rein lokal, kein Remote): 12 neue Projektordner
   (`openml-cc18-cmc`, `-optdigits`, `-sick`,
   `-analcatdata-authorship`, `-blood-transfusion`, `-ilpd` - je mit
-  `020_task.R` via `mlr3oml` + Protokoll-v1- UND v2-Skripten), mehrere
-  lokale Commits.
+  `020_task.R` via `mlr3oml` + Protokoll-v1-, v2- UND v3-Skripten, v3 in
+  ALLEN 6 Projektordnern), mehrere lokale Commits, zuletzt `9127bb4`.
 - `openml-credit-g` (lokale ML_Learning-DB) hatte ihre `proj_id`
   angeglichen (siehe Merge-Fix unten) - Backup vor der Aenderung
   angelegt.
 - Zentrale `experiments.db` (`health_condition`-Projekt) vollstaendig
   gemergt (23 Classification-Quell-DBs), 4 Backup-Dateien geloescht
   (nur die letzte, aktuelle blieb).
-- **6 neue annotierte Git-Tags**: `backlog-central-merge-completed`,
+- **8 neue annotierte Git-Tags**: `backlog-central-merge-completed`,
   `backlog-2026-08-29-p0-evaluation-levels`,
   `backlog-p1-external-benchmark-frozen`,
   `backlog-p1-external-benchmark-executed`,
-  `backlog-p1-fair-baselines-complete` (5 explizit benannte - insgesamt
-  jetzt 22+ Tags im Repo).
+  `backlog-p1-fair-baselines-complete`, `backlog-p2-level2-prototype`,
+  `backlog-p2-level2-full-rollout` (7 explizit benannte - insgesamt
+  jetzt 24+ Tags im Repo).
 
 ## Was in dieser Session passiert ist
 
@@ -124,22 +128,49 @@ mehr.** Beantwortet den "Default-Baselines zu schwach"-Kritikpunkt der
 Bewertung direkt mit Zahlen statt einer Vermutung. `AGENTS.md`s
 Paper-Story entsprechend aktualisiert.
 
+**8. P2, Teil "Level-2-Outer-Evaluation-Prototyp" (Protokoll v3) -
+ERLEDIGT** (Nutzeranfrage "mach weiter mit P2", per `AskUserQuestion`
+zunaechst auf "1-2 Datensaetze" begrenzt, danach "Level-2-Prototyp auf
+die restlichen 4 Datensaetze ausrollen"). Neues Skript
+`outer_workflow_evaluation_v3_level2.R`: pro Outer-Fold zusaetzlicher
+Inner-Train/Inner-Tune-Split (0.75/0.25), `auto_tuner()` fuer Ranger
+(Random-Search) und LightGBM (MBO, je 10 Evals) + Mini-Ensemble, alle
+klassenmultiplier-korrigiert, Gewinner nach Inner-Tune-Score final auf
+vollem Outer-Train refittet, einmal auf Outer-Test bewertet.
+
+**Ergebnis auf allen 6 externen Datensaetzen: GEMISCHT, kein
+verlaesslicher Vorteil.** 3 Siege (`sick` +0.1, `blood-transfusion`
++3.0, `optdigits` +0.2 BAcc-Punkte ggue. dem bisher besten Wert), 3
+Niederlagen (`ilpd` -3.7, `cmc` -2.6, `analcatdata-authorship` -1.9).
+**Wichtig**: eine erste Arbeitshypothese nach nur 2 Datensaetzen (Level
+2 hilft bei grossen/balancierten, schadet bei kleinen/unausgeglichenen
+Daten) wurde nach dem vollstaendigen Rollout explizit ALS WIDERLEGT
+dokumentiert - `blood-transfusion` (klein, unausgeglichen) gewinnt
+deutlich, `ilpd` (dieselben Eigenschaften) verliert. Weder Groesse noch
+Klassenimbalance erklaeren das Muster sauber. Ehrlicher Gesamtbefund:
+mehr Prozess-Komplexitaet ist NICHT automatisch besser - bei diesem
+Tuning-Budget (10 Evals/Arm) kein systematischer Mehrwert gegenueber
+Level 1/den fairen v2-Baselines, bei 5-30x hoeheren Rechenkosten. Alle 6
+Ergebnisse in die Evidence Registry geloggt.
+
 ## Offene Punkte fuer die naechste Session
 
-**Aus der 2026-08-29-Bewertung/Roadmap bleibt nur noch P2-P3 offen:**
-- **P2**: Level-2-Outer-Evaluation prototypisieren (Modellwahl/Tuning/
-  Threshold/Ensemble INNERHALB jedes Outer-Train-Splits statt eines
-  festen Arm-Katalogs) + Evidence Registry finalisieren (redaktionelle
+**Aus der 2026-08-29-Bewertung/Roadmap bleibt nur noch P2 (2. Haelfte)
+und P3 offen:**
+- **P2, 2. Haelfte**: Evidence Registry finalisieren (redaktionelle
   Altinhalte aus `SYSTEMATIC_EVALUATION.md` strukturieren, langfristig
-  manuelle Ergebnistabelle abschaffen). Deutlich teurer als P1 - jeder
-  Outer-Fold wuerde eine komplette Kopie des Modellwahl-/Tuning-Prozesses
-  durchlaufen.
+  manuelle Ergebnistabelle abschaffen). Der Level-2-Prototyp-Teil von P2
+  ist bereits vollstaendig abgeschlossen (siehe Punkt 8 oben).
 - **P3**: `finalize_run_provenance()` (alle verfuegbaren Hashes am Ende
   eines Runs automatisch ergaenzen, siehe die 2026-08-29-Bewertung
   Abschnitt 11), erster Paper-Rohentwurf.
+- Optional, nicht dringend: pruefen, ob ein groesseres Tuning-Budget fuer
+  Level 2 (aktuell 10 Evals/Arm) das gemischte Ergebnis veraendert -
+  bislang nicht getestet.
 
 **Keine dringenden Blocker.** Alles, was das 2026-08-29-Bewertungs-
-dokument konkret als P0/P1 spezifiziert hat, ist umgesetzt.
+dokument konkret als P0/P1/P2 (Level-2-Teil) spezifiziert hat, ist
+umgesetzt.
 
 ## Wichtige Konventionen (Ergaenzungen seit dem 28.08.-Anker)
 
@@ -172,18 +203,27 @@ dokument konkret als P0/P1 spezifiziert hat, ist umgesetzt.
   faire Bewertung braucht getunte Baselines, sonst bleibt der Befund
   fuer ein Research-Paper angreifbar (diese Session direkt bestaetigt:
   bei 3/6 Datensaetzen verschwand der Vorteil tatsaechlich).
+- **NEU**: eine Arbeitshypothese, die nach NUR 2 Datensaetzen aufgestellt
+  wird (Level-2-Prototyp: "Groesse/Balance erklaeren das Ergebnis"),
+  IMMER als vorlaeufig kennzeichnen und explizit am vollstaendigen
+  Rollout nachpruefen, statt sie stillschweigend zu uebernehmen - hier
+  hielt sie nicht (`blood-transfusion` widersprach ihr direkt). Ein
+  widerlegter Zwischenbefund ist genauso dokumentationswuerdig wie ein
+  bestaetigter.
 - Vollstaendiger Kontext: `BACKLOG.md` (jetzt mit P0-P3-, Phase-A-E- UND
-  der kompletten 2026-08-29-P0/P1-Historie), `EVALUATION_LEVELS.md`,
-  `EXTERNAL_BENCHMARK_SET.md`, `BENCHMARK_PROTOCOL.md` (jetzt v2),
-  `outer_workflow_evaluation_v2_fair_baselines.R`, sowie weiterhin
+  der kompletten 2026-08-29-P0/P1/P2-Historie), `EVALUATION_LEVELS.md`,
+  `EXTERNAL_BENCHMARK_SET.md`, `BENCHMARK_PROTOCOL.md` (jetzt v3),
+  `outer_workflow_evaluation_v2_fair_baselines.R`,
+  `outer_workflow_evaluation_v3_level2.R`, sowie weiterhin
   `TARGETS.md`/`AGENTS.md`/das persistente Gedaechtnis.
 
 ## Empfohlener erster Schritt der naechsten Session
 
 Kein zwingender Einstiegspunkt. Falls der Nutzer nichts Konkretes
-mitbringt: entweder P2 (Level-2-Outer-Evaluation, deutlich teurer -
-Umfang vorher klaeren) oder P3 (`finalize_run_provenance()`, guenstiger)
-der neuen Roadmap angehen, oder die tatsaechliche Publikations-
-Ausarbeitung anstossen (alle Bausteine - Phase C, externes Benchmark-Set,
-faire Baselines, beide Ablationen, das eingefrorene Protokoll - liegen
-jetzt bereit).
+mitbringt: entweder P2s 2. Haelfte (Evidence-Registry-/
+`SYSTEMATIC_EVALUATION.md`-Finalisierung) oder P3
+(`finalize_run_provenance()`, guenstig) der neuen Roadmap angehen, oder
+die tatsaechliche Publikations-Ausarbeitung anstossen (alle Bausteine -
+Phase C, externes Benchmark-Set, faire Baselines, Level-2-Prototyp
+(gemischtes/negatives Ergebnis), beide Ablationen, das eingefrorene
+Protokoll - liegen jetzt bereit).
