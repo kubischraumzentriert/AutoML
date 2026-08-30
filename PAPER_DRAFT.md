@@ -447,6 +447,34 @@ that narrows the explanation space instead of leaving it open. The
 reproducible code for both comparisons is in
 `p2_level2_significance_test.R`.
 
+**We also checked whether simple dataset meta-features explain the
+pattern, and found none that do.** Beyond dataset size and class
+imbalance (already ruled out informally in the original rollout) and
+tuning budget (ruled out above), we tested three further candidates: the
+number of minority-class rows available to the *inner* model-selection
+step specifically (25% of the outer-train split, not the full dataset —
+the actual sample the Level-2 decision is based on), the across-fold
+standard deviation of the Level-2 score itself (a proxy for how noisy/
+unstable that inner decision is), and how close the best prior result is
+to a performance ceiling (a saturation proxy, motivated by the
+near-perfect-tie case observed for `analcatdata-authorship`). None of
+the five candidates (dataset size, class imbalance, inner-tune minority
+count, score-instability proxy, ceiling proximity) shows more than a
+weak Spearman correlation with the win/loss delta (|ρ| ≤ 0.37, p ≥ 0.49
+for all five, n = 6 — reproducible in
+`p2_level2_metafeature_analysis.R`). We read this as a genuine,
+if unsatisfying, conclusion rather than a methodological failure: having
+now ruled out four natural univariate explanations (size, imbalance,
+tuning budget, and three further meta-features), the mixed Level-2
+result on this benchmark set does not appear to be explained by any
+single simple property of the datasets we tested — either the true
+mechanism is a higher-order interaction between these factors that a
+sample of 6 datasets cannot resolve, or the pattern is closer to
+irreducible per-dataset noise than to a systematic effect. Distinguishing
+between those two possibilities would require a substantially larger
+external benchmark set than the 6 datasets used here, which is beyond
+the scope of this paper.
+
 ## 7. Trust-Layer Ablations
 
 Because the trust-layer modules are not score levers (they do not change

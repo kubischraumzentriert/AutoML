@@ -2022,6 +2022,59 @@ neuer Lauf noetig. Noch nicht durchgefuehrt.
 Kein neuer Code-Test noetig (Skriptaenderung war additiv/rueckwaerts-
 kompatibel, bereits im vorherigen Commit mit 322/322 gruen verifiziert).
 
+### Research Aspect, 3. Schritt (2026-08-30): Metafeature-Analyse - ebenfalls KEINE Erklaerung gefunden
+
+**Nutzeranfrage**: "ok mach weiter mit dem nächsten Kandidat".
+
+Reine Nachanalyse bereits vorhandener Zahlen (kein neuer Modell-Lauf).
+Klassenverteilungen direkt aus den gespeicherten `task_train_small.rds`-
+Objekten gelesen (nicht geschaetzt): ilpd 28.6% Minderheitsklasse, sick
+6.1%, blood-transfusion 23.8%, cmc 22.6% (3-Klassen), analcatdata-
+authorship 6.5% (4-Klassen), optdigits 9.9% (10-Klassen, fast perfekt
+balanciert).
+
+**Neues Skript** [`p2_level2_metafeature_analysis.R`](p2_level2_metafeature_analysis.R):
+5 Kandidaten-Metafeatures gegen das Level2@10-vs-bester-Wert-Delta
+getestet (Spearman-Korrelation, n=6): Datensatzgroesse, Klassen-
+imbalance, Minderheitsklassen-Zeilenzahl im Inner-Tune-Split (25% von
+outer_train - die tatsaechliche Stichprobe fuer die innere Modellwahl),
+Score-Streuung des Level2-Arms ueber die Outer-Folds (Instabilitaets-
+Proxy), und "Deckennaehe" (bisher bester Wert als Saettigungs-Proxy,
+motiviert durch die beobachtete Sättigung bei `analcatdata-authorship`).
+
+**Ergebnis: KEINE der 5 Metafeatures zeigt eine nennenswerte
+Korrelation** - alle |Spearman-rho| <= 0.37, alle p >= 0.49 bei n=6.
+
+**Gesamteinordnung des Research Aspect (alle 3 Schritte)**: nach
+Ausschluss von Datensatzgroesse/Klassenimbalance (Schritt 1, informell
+beim Rollout), Tuning-Budget (Schritt 2, formal per Wilcoxon-Test
+ausgeschlossen) UND 5 weiteren Metafeatures (Schritt 3) bleibt P2s
+gemischtes Level-2-Muster OHNE einfache univariate Erklaerung. Zwei
+plausible Deutungen, mit n=6 nicht unterscheidbar: entweder eine
+Interaktion hoeherer Ordnung zwischen mehreren Faktoren, oder das Muster
+ist naeher an irreduzierbarem Datensatz-Rauschen als an einem
+systematischen Effekt. Eine Unterscheidung wuerde ein deutlich groesseres
+externes Benchmark-Set erfordern als die hier verwendeten 6 Datensaetze -
+bewusst als offene Grenze benannt statt eine schwache Korrelation
+ueberzuinterpretieren.
+
+**In `PAPER_DRAFT.md` eingearbeitet**: neuer Absatz am Ende von
+Section 6, der diese ehrliche Schlussfolgerung explizit zieht statt den
+Versuch zu verschweigen.
+
+Ergebnis in die Evidence Registry geloggt (Rolle `score_lever`, Status
+`negative`).
+
+**Damit ist der Research-Aspect-Weg (3 Schritte: formaler
+Signifikanztest, Tuning-Budget-Test, Metafeature-Analyse) fuer diese
+Sitzung abgeschlossen** - alle 3 Schritte liefern zusammen ein deutlich
+praeziseres, ehrlicheres Bild von P2s Level-2-Befund als die
+urspruengliche "3 Siege/3 Niederlagen"-Formulierung, auch wenn keiner
+der Schritte eine positive Erklaerung liefert. Das ist selbst der Kern
+der Paper-Story: eine grundliche, ehrliche Suche nach einer Erklaerung,
+die mehrere plausible Kandidaten sauber ausschliesst, ist wertvoller als
+eine ungeprüfte Vermutung.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
