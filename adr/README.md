@@ -17,6 +17,9 @@ Status-Werte: `Accepted` (gilt), `Proposed` (Vorschlag, noch nicht final),
 | [004](004-db-merge-aggregated-tables-only.md) | DB-Merge deckt nur aggregierte Tabellen ab, nicht Zeilenebene (`prediction`/`prediction_prob`) | Accepted |
 | [005](005-targets-covers-production-path-only.md) | `targets`-Pipeline deckt nur den finalen Produktionspfad ab, nicht die explorativen Skripte | Accepted |
 | [006](006-identical-db-schema-across-templates.md) | Beide Templates halten ihr `experiments.db`-Schema bewusst identisch | Accepted |
+| [007](007-flat-scripts-not-r-package.md) | Flaches Skript-Template statt eines installierbaren R-Pakets | Accepted |
+| [008](008-frozen-versioned-benchmark-protocols.md) | Benchmark-Protokolle werden eingefroren und versioniert, nie in-place veraendert | Accepted |
+| [009](009-evidence-registry-dual-source-split.md) | Evidence Registry und `SYSTEMATIC_EVALUATION.md` bewusst als zwei getrennte Quellen | Accepted |
 
 ## Wann eine implizite Entscheidung zur ADR wird
 

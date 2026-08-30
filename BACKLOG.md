@@ -2285,6 +2285,33 @@ Modul PLUS ein ehrlicher, gegen die eigene Ausgangshypothese laufender
 Befund - genau die Art Ergebnis, die dieses Projekt bewusst offen
 dokumentiert statt zu verschweigen.
 
+### 3 neue ADRs angelegt (2026-08-30)
+
+**Nutzerfrage**: "gibt es eigentlich Kandidaten fuer weitere ADRs?",
+dann "ja, alle 3 als ADRs anlegen". Gegen die beiden Kriterien aus
+`adr/README.md` gepruefte Kandidaten (echte Alternative + Risiko einer
+versehentlichen Umkehrung durch einen kuenftigen Agenten) - alle 3
+angelegt:
+
+- [`adr/007-flat-scripts-not-r-package.md`](adr/007-flat-scripts-not-r-package.md):
+  flaches Skript-Template statt eines installierbaren R-Pakets (bereits
+  in `joss/paper.md`s Software-Design-Abschnitt begruendet, hier als
+  ADR fixiert).
+- [`adr/008-frozen-versioned-benchmark-protocols.md`](adr/008-frozen-versioned-benchmark-protocols.md):
+  Benchmark-Protokolle (v1/v2/v3) werden eingefroren und versioniert,
+  nie in-place veraendert - formalisiert die bereits gelebte Praxis
+  (neue Protokollversion = neue Datei, nie die alte editieren).
+- [`adr/009-evidence-registry-dual-source-split.md`](adr/009-evidence-registry-dual-source-split.md):
+  Evidence Registry und `SYSTEMATIC_EVALUATION.md` bleiben dauerhaft
+  getrennte Quellen mit fester Arbeitsteilung (formalisiert die
+  P2-2.-Haelfte-Entscheidung vom 2026-08-29).
+
+Ein 4. Kandidat (`PAPER_DRAFT.md` vs. `joss/paper.md` als getrennte
+Dokumente) wurde als schwaecher/schmaler im Scope eingeordnet und
+NICHT angelegt, auf Nachfrage aber genannt.
+
+`adr/README.md`s Index-Tabelle aktualisiert (jetzt 9 ADRs).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
