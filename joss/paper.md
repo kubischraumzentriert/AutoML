@@ -34,7 +34,7 @@ within that range but has not been trimmed by an editor pass yet.
 
 Competition code for tabular machine learning — Kaggle, Zindi,
 DrivenData, OpenML — is usually optimized for a single leaderboard score
-and rarely built to be trusted, reused, or audited. This package is a
+and rarely built to be trusted, reused, or audited. This is a
 reusable, `mlr3`-based [@Lang2019] AutoML template for tabular
 classification in R that takes the opposite stance: its central design
 commitment is not a novel learning algorithm but an always-on **trust
@@ -43,10 +43,15 @@ covariate-shift checks, split-size/learning-curve/seed-stability
 diagnostics, a generalization-gap check, and model sanity checks — that
 runs on every new project before any score is trusted. Every diagnostic
 result, training run, hyperparameter, and resampling strategy is logged
-to a per-project SQLite experiment database, and every claim the
-template's documentation makes about "what works" is backed by a
-structured evidence-registry entry rather than by memory or prose alone.
-The template has been hardened across 15+ independent Kaggle/Zindi/
+to a per-project SQLite experiment database. Claims about the original
+nine trust-layer modules are tracked in a curated, hand-maintained
+results table with editorial detail (footnotes, correction history);
+newer claims about the outer-evaluation workflow (Sections 5-6 of the
+extended report) are additionally backed by a structured, queryable
+evidence-registry entry that can regenerate its own results table on
+demand — in both cases traceable to a concrete source rather than
+memory or prose alone. The template has been hardened across 15+
+independent Kaggle/Zindi/
 DrivenData/OpenML projects under a governance rule (backport a new
 module only after confirmation on ≥2 independent projects, or a proven
 no-op) that is designed specifically to prevent the template from
@@ -69,7 +74,7 @@ Auto-sklearn [@Feurer2015] and AutoGluon-Tabular [@Erickson2020] among
 others — are built to search a large space of models/pipelines
 automatically and are evaluated primarily on predictive performance;
 they are not designed around, nor evaluated against, the leakage- and
-shift-detection problem this package targets, and using them does not
+shift-detection problem this template targets, and using them does not
 by itself answer whether a given cross-validation estimate can be
 trusted in the first place. Established leakage-detection methodology
 [@Kaufman2011] and dataset-shift theory exist in the literature, but are
@@ -77,7 +82,7 @@ rarely packaged as an always-on, automated part of a practitioner's
 day-to-day tabular-classification workflow, run identically across many
 independent projects with the same benchmark protocol.
 
-This package fills that gap for R users: it is not a competitor to
+This template fills that gap for R users: it is not a competitor to
 Auto-sklearn or AutoGluon on raw predictive performance, but a
 complementary, lighter-weight process layer that a practitioner can run
 *alongside* any model-fitting approach to catch leakage and shift before
@@ -104,10 +109,10 @@ database.
 
 `mlr3` [@Lang2019] itself provides the underlying machine-learning
 building blocks (tasks, learners, resamplings, measures) but no
-AutoML-level workflow or trust layer on top of them; this package is
+AutoML-level workflow or trust layer on top of them; this template is
 built on `mlr3`, not a replacement for it. Compared to general-purpose
 tabular AutoML systems such as Auto-sklearn [@Feurer2015] and
-AutoGluon-Tabular [@Erickson2020], this package deliberately keeps its
+AutoGluon-Tabular [@Erickson2020], this template deliberately keeps its
 model-search space small and fixed (Ranger and LightGBM, with optional
 tuning) and instead invests its complexity budget in the diagnostic
 trust layer and in an experiment-logging/evidence-registry
@@ -120,12 +125,12 @@ specifically, this fills a gap that neither `mlr3` nor its extension
 packages address directly: none of them ship an always-on leakage/shift
 trust layer, a governed cross-project template-evolution process, or a
 per-project experiment/evidence database as a first-class, reusable
-component, all of which this package provides as its primary
+component, all of which this template provides as its primary
 contribution rather than as an incidental add-on.
 
 # Software design
 
-The package is deliberately a flat collection of numbered R scripts
+This template is deliberately a flat collection of numbered R scripts
 (currently 99), not an R package with a formal API — a trade-off made
 explicitly to keep the barrier to copying and adapting a single script
 for a new, time-pressured competition low, at the cost of the
@@ -157,9 +162,9 @@ honest score (F1 ≈ 0.41) was independently confirmed almost exactly by
 the competition's real leaderboard (0.4191), evidence the internal
 diagnostic was correct rather than merely cautious; (2) on an ongoing
 Kaggle competition (a smartphone-addiction prediction task), the
-package's greedy ensemble-selection component produced a measured
+template's greedy ensemble-selection component produced a measured
 leaderboard improvement, not only a cross-validation improvement; (3) on
-the package's own reference Kaggle dataset, the resulting model reached
+the template's own reference Kaggle dataset, the resulting model reached
 Balanced Accuracy 0.9482 on the full, never-seen test set with a simple,
 explainable random-forest model rather than a black-box ensemble. Beyond
 single-project results, the template's core class-weighting-plus-
@@ -167,7 +172,7 @@ correction claim was independently re-tested on 6 datasets from the
 external OpenML-CC18 suite [@Bischl2021], selected before any
 performance was observed specifically to guard against benchmark
 selection bias — full results in the project's extended technical
-report. The package has not yet been adopted by other teams or cited in
+report. The template has not yet been adopted by other teams or cited in
 third-party publications; its realized impact so far is within the
 author's own competition practice, stated here plainly rather than
 overstated.

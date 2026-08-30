@@ -9,10 +9,15 @@ Leaks/Modellverhalten schon bekannt waren. Dieses Dokument fixiert ein
 Set, das VOR jeder Ergebnisberechnung feststeht, ausschliesslich anhand
 oeffentlicher Metadaten ausgewaehlt.
 
-**Noch NICHT ausgefuehrt** - dieses Dokument deckt nur die Auswahl ab
-(P1, Teil "externer Benchmark"). Die eigentlichen Laeufe (inkl. der
-in P1 ebenfalls geforderten fairen getunten Baselines) sind ein
-separater, noch nicht gestarteter Schritt.
+**Status (aktualisiert 2026-08-30): AUSGEFUEHRT.** Dieses Dokument
+deckt urspruenglich nur die Auswahl ab (P1, Teil "externer Benchmark").
+Die eigentlichen Laeufe sind laengst abgeschlossen: Level-1-Outer-
+Evaluation (Protokoll v1) + faire getunte Baselines (Protokoll v2,
+`BENCHMARK_PROTOCOL.md` Version 2) + Level-2-Prototyp auf allen 6
+Datensaetzen (Protokoll v3, `EVALUATION_LEVELS.md`) + ein 3-schrittiger
+Research-Aspect-Nachtrag (Signifikanztest, Tuning-Budget-Test,
+Metafeature-Analyse). Volle Ergebnisse in `BACKLOG.md`/P1- und
+P2-Status, `PAPER_DRAFT.md` Abschnitt 5-6.
 
 ## Quelle: OpenML-CC18
 
@@ -84,10 +89,10 @@ Erkenntnisse bleiben auf die Phase-C-Datensaetze (`geoai-aquaculture`,
 `openml-eeg-eye-state-timeseries`) beschraenkt, wo sie ehrlich als
 "aus bereits bekannten Projekten" gekennzeichnet sind.
 
-## Naechster Schritt (nicht Teil dieses Dokuments)
+## Ausgefuehrt (nicht mehr Teil dieses Dokuments - siehe dortige Quellen)
 
-Sobald ausgefuehrt: fuer jeden der 6 Datensaetze eine Task-Vorbereitung
-(analog zu bestehenden `openml-*`-Projekten) + Anwendung von
-`BENCHMARK_PROTOCOL.md` (ggf. Version 2, falls die "faire Baselines"-
-Erweiterung aus P1 - Tuned Ranger/LightGBM, Best Single Tuned Model - das
-Protokoll selbst aendert).
+Fuer jeden der 6 Datensaetze wurde eine Task-Vorbereitung angelegt
+(`ML_Learning/openml-cc18-*`, analog zu bestehenden `openml-*`-
+Projekten) + `BENCHMARK_PROTOCOL.md` in den Versionen 1-3 angewendet.
+Volle Ergebnisse: `BACKLOG.md`/P1- und P2-Status,
+`EVALUATION_LEVELS.md`, `PAPER_DRAFT.md`.

@@ -101,11 +101,23 @@ negativ - Level 2/3 wurden schlicht noch nicht getestet).
 
 ## Bezug zur neuen Roadmap (2026-08-29-Bewertung)
 
+**Status (aktualisiert 2026-08-30 im Rahmen eines Dokumentations-
+konsistenz-Passes, siehe `BACKLOG.md`): P0-P3 ALLE ERLEDIGT.**
+
 - **P0** (diese Datei): Begriffe trennen. **ERLEDIGT.**
 - **P1**: externes, vorab festgelegtes Benchmark-Set + faire getunte
   Baselines (Tuned Ranger/LightGBM, Best Single Tuned Model) - bleibt
   Level 1, aber mit staerkeren Baselines und ohne Benchmark-Selection-
-  Bias-Risiko. Noch offen.
-- **P2**: Level-2-Outer-Evaluation prototypisieren. Noch offen, deutlich
-  teurer als P1.
-- **P3**: `finalize_run_provenance()`, Paper-Rohentwurf. Noch offen.
+  Bias-Risiko. **ERLEDIGT** - 6 Datensaetze aus OpenML-CC18, siehe
+  `EXTERNAL_BENCHMARK_SET.md`/`BENCHMARK_PROTOCOL.md` Version 2.
+- **P2**: Level-2-Outer-Evaluation prototypisieren. **ERLEDIGT** - auf
+  allen 6 externen Datensaetzen ausgefuehrt (siehe Level-2-Abschnitt
+  oben), Evidence Registry finalisiert (Arbeitsteilung manuell/
+  generiert dokumentiert), plus ein 3-schrittiger Research-Aspect-
+  Nachtrag (formaler Signifikanztest, Tuning-Budget-Test, Metafeature-
+  Analyse - alle drei schliessen Kandidaten-Erklaerungen fuer das
+  gemischte Ergebnis aus, siehe `BACKLOG.md`).
+- **P3**: `finalize_run_provenance()`, Paper-Rohentwurf. **ERLEDIGT** -
+  `finalize_run_provenance()` in `provenance.R`/`db_logging.R`, erster
+  Paper-Rohentwurf in `PAPER_DRAFT.md` + konkrete JOSS-Einreichung in
+  `joss/` (Einreichung selbst pausiert, siehe dortiger Stand).

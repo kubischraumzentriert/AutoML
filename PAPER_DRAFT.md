@@ -165,7 +165,14 @@ that are not (yet) code-verifiable are logged as structured evidence
 entries (project, module, role — trust-gate / score-lever / workflow-
 automation / documentation —, status, and free-text notes) in an
 "evidence registry" that can regenerate a project × module results table
-on demand, rather than relying solely on hand-maintained prose.
+on demand. This deliberately coexists with, rather than replaces, a
+curated, hand-maintained results table for the original nine trust-layer
+modules (footnotes, correction history, and discussion the generated
+table cannot reproduce); newer outer-evaluation claims (Sections 5-6)
+are tracked exclusively through the generated, evidence-registry-backed
+table instead. Both are traceable to a concrete logged source rather
+than memory or prose alone — see `BACKLOG.md`'s "P2 - Status (2. Haelfte)"
+for the explicit division-of-labor decision.
 
 ## 3. Related Work
 

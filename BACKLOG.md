@@ -2075,6 +2075,78 @@ der Paper-Story: eine grundliche, ehrliche Suche nach einer Erklaerung,
 die mehrere plausible Kandidaten sauber ausschliesst, ist wertvoller als
 eine ungeprüfte Vermutung.
 
+## Naechste Bewertung 2026-08-30 (extern, Dokumentationskonsistenz + JOSS-Technique-Watch)
+
+Neues externes Bewertungsdokument vom Nutzer eingebracht:
+`AutoML_Bewertung_Naechste_Schritte_JOSS_Technique_Watch_2026-08-30.md`
+(`~/Downloads`). Gesamtnote im 9.5-9.9-Bereich je nach Kategorie -
+**Kernaussage**: das Projekt ist technisch weitgehend ausgereift, der
+Engpass liegt nicht mehr in Software-/ML-Funktionalitaet, sondern in
+"wissenschaftlicher Evidenzbreite, externer Nutzung,
+Dokumentationskonsistenz und der Schaerfung der Publikationsstrategie".
+
+**Wichtigster konkreter Kritikpunkt**: Dokumentationsdrift - mehrere
+zentrale Dokumente hinken der tatsaechlichen Software-Entwicklung
+hinterher (konkrete Beispiele: `EVALUATION_LEVELS.md`s Roadmap-Abschnitt
+sagte noch "P1/P2/P3 offen", `EXTERNAL_BENCHMARK_SET.md` sagte noch
+"Noch NICHT ausgefuehrt" - beides laengst ueberholt). Weitere Punkte:
+JOSS-Draft-Sprachgebrauch ("package" vs. "template/software"
+uneinheitlich), Evidence-Registry-Claim zu pauschal formuliert
+(verschweigt die Arbeitsteilung manuell/generiert).
+
+**Vorgeschlagene neue Roadmap**: P0 Dokumentationskonsistenz (guenstig),
+P1 `JOSS_TECHNIQUE_WATCH.md` + optionale Research-Benchmark-Erweiterung
+auf 10-15 Datensaetze (teurer), P2 erster JOSS-inspirierter
+Forschungsprototyp (VeridicalFlow/PCS-Decision-Stability oder
+astartes/schwierige Splits), P3 externe Adoption vorbereiten.
+
+**Nutzerentscheidung**: Start mit **P0**.
+
+### P0 - Status (2026-08-30): Dokumentationskonsistenz-Pass
+
+Alle 3 konkret benannten Faelle behoben:
+
+1. **`EVALUATION_LEVELS.md`**: Roadmap-Abschnitt ("Bezug zur neuen
+   Roadmap") von "P1/P2/P3 Noch offen" auf den tatsaechlichen Stand
+   korrigiert (alle 3 erledigt, mit Verweisen auf die jeweiligen
+   Ergebnisdokumente).
+2. **`EXTERNAL_BENCHMARK_SET.md`**: "Noch NICHT ausgefuehrt"-Hinweis am
+   Kopf und der "Naechster Schritt (nicht Teil dieses Dokuments)"-
+   Abschnitt am Ende beide auf "AUSGEFUEHRT" mit Verweisen auf die
+   tatsaechlichen Ergebnisse (`BACKLOG.md`, `EVALUATION_LEVELS.md`,
+   `PAPER_DRAFT.md`) aktualisiert.
+3. **`joss/paper.md`**: durchgehend "this package"/"the package"/
+   "package's" durch "this template"/"the template"/"template's"
+   ersetzt (10 Stellen) - `mlr3`-Paket-Referenzen und der explizite
+   "nicht ein installierbares R-Paket"-Kontrast in Section "Software
+   Design" bewusst unveraendert gelassen, da dort "package" der
+   korrekte technische Begriff ist. Wortzahl bleibt bei 1382 innerhalb
+   des 750-1750-Limits.
+4. **Evidence-Registry-Claim praezisiert**: sowohl in `joss/paper.md`s
+   Summary als auch in `PAPER_DRAFT.md` Abschnitt 2.4 wurde die
+   pauschale Aussage ("jeder Claim ist per Evidence-Registry-Eintrag
+   belegt") durch die tatsaechliche Arbeitsteilung ersetzt - die 9
+   urspruenglichen Trust-Module bleiben in der handgepflegten
+   `SYSTEMATIC_EVALUATION.md` verankert, NUR die neueren Outer-
+   Evaluation-Befunde (Phase C/P1/P2) laufen ausschliesslich ueber die
+   generierte Evidence-Registry-Tabelle - mit explizitem Verweis auf
+   die Arbeitsteilungs-Entscheidung in `BACKLOG.md`/P2-Status
+   (2. Haelfte).
+
+**Weitere geprueft, kein Fund**: `BENCHMARK_PROTOCOL.md`,
+`BACKLOG.md` selbst (chronologisches Journal - historische "noch nicht
+ausgefuehrt"-Eintraege sind fuer ihren Zeitstempel korrekt und werden
+von spaeteren Eintraegen ueberholt, keine Korrektur noetig), `AGENTS.md`
+(ein aehnlicher Treffer war bereits eine selbst-korrigierende
+historische Anmerkung, keine Drift).
+
+Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
+vorsichtshalber verifiziert.
+
+**Offen**: P1 (`JOSS_TECHNIQUE_WATCH.md` anlegen, optionale Research-
+Benchmark-Erweiterung), P2 (erster JOSS-inspirierter Prototyp), P3
+(externe Adoption) - auf explizite Nutzeranweisung.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
