@@ -37,16 +37,20 @@ Drift-Funde (`EVALUATION_LEVELS.md`, `EXTERNAL_BENCHMARK_SET.md`,
 korrigiert. **13. Aktualisierung:** P1 aus demselben Dokument -
 `JOSS_TECHNIQUE_WATCH.md` angelegt (alle 7 Kandidaten strukturiert
 dokumentiert, jeder DOI/Autor/Jahr einzeln gegen JOSS verifiziert).
+**14. Aktualisierung:** P2 - erster JOSS-inspirierter Prototyp
+(Decision-Stability, VeridicalFlow/PCS) gebaut, synthetisch getestet,
+auf `ilpd` angewendet (`blood-transfusion` lief zum Zeitpunkt dieser
+Zwischenaktualisierung noch, Ergebnis folgt in der naechsten
+Aktualisierung).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `d6f05a1` "P1 (2026-08-30-Bewertung):
-  JOSS_TECHNIQUE_WATCH.md anlegen" - gepusht. `.md`-only, CI Smoke Test
-  (Haupt-Workflow) triggert dafuer nicht - letzter tatsaechlicher
-  CI-Smoke-Test-Lauf weiterhin gruen fuer `d29ea0d` (Lauf
-  `33300592379`). Der `Draft JOSS PDF`-Workflow lief fuer den
-  vorherigen Commit (`3509661`, da `joss/paper.md` geaendert wurde)
-  erfolgreich (Lauf `33307346419`).
+- `MLR3_Classifikation` @ `8d02499` "P2: Decision-Stability-Prototyp
+  (VeridicalFlow/PCS-inspiriert)" - gepusht. CI Smoke Test-Lauf fuer
+  diesen Commit steht zum Zeitpunkt dieser Zwischenaktualisierung noch
+  aus (neue `.R`-Dateien, Trigger sollte greifen) - letzter bekannter
+  gruener Lauf `33300592379` (Commit `d29ea0d`). `testthat` lokal
+  340/340 gruen vor dem Commit verifiziert.
 - **Separates Repo** `C:\Users\HP\Documents\ML01` (Logseq-Lernkarten-
   Graph, GitHub `kubischraumzentriert/LogSeq`): neue Seite `Effective
   Sample Size (ESS).md` (5 Karten) + Verlinkung in `Data Leakage.md`/
@@ -485,6 +489,33 @@ Backport-Regel ("NO BACKPORT bis Evidenz vorhanden") explizit
 verankert. Noch KEINE Implementierung/Prototyp begonnen. `README.md`
 um Verweis ergaenzt.
 
+**22. P2: erster JOSS-inspirierter Prototyp - Decision-Stability
+(VeridicalFlow/PCS)** (Nutzeranfrage "mach weiter mit P2", per
+`AskUserQuestion` "VeridicalFlow / Decision-Stability-Report" gewaehlt
+statt astartes). Pipeline aus `JOSS_TECHNIQUE_WATCH.md` befolgt:
+Problem -> Hypothese -> Komplexitaetskosten -> kleiner Prototyp ->
+synthetischer Test -> 1-2 reale Projekte.
+
+Neues generisches Modul `decision_stability.R`
+(`decision_stability_report()`) - wiederholt eine beliebige kategoriale
+Entscheidungsfunktion unter variierenden Seeds, meldet Verteilung/
+Mehrheitsentscheidung/Stabilitaetsanteil, flaggt bei Mehrheit
+<70%. Klare Abgrenzung zu `seed_stability.R` (dort: kontinuierliche
+Score-Streuung; hier: ob eine KATEGORIALE Entscheidung selbst kippt).
+Synthetischer Test ZUERST: `test-decision_stability.R`, 7 Faelle mit
+kontrolliertem Verhalten - Gesamtsuite 340/340 gruen (+18 neue).
+Angewendet ueber `decision_stability_level2_prototype.R` (neues
+Root-Template) auf die Level-2-Arm-Wahl (ranger/lightgbm/ensemble) bei
+FIXEM Outer-Train (Outer-Fold 1, identisch zum eingefrorenen Protokoll
+v3), nur der Inner-Split-Seed variiert 10x.
+
+**Ergebnis `ilpd`**: `ranger` gewinnt bei 7/10 Wiederholungen (70%) -
+knapp NICHT geflaggt, aber auch keine ueberwaeltigende Stabilitaet.
+**Zweites Projekt (`blood-transfusion`) war zum Ende dieser Session
+noch nicht fertig ausgewertet** - Lauf gestartet, Ergebnis muss in der
+naechsten Session zuerst geprueft und ausgewertet werden, bevor P2 als
+abgeschlossen gilt.
+
 ## Offene Punkte fuer die naechste Session
 
 **Die GESAMTE P0-P3-Roadmap des DRITTEN Bewertungsdokuments
@@ -492,17 +523,30 @@ um Verweis ergaenzt.
 Bewertungsdokuments (2026-08-30, Dokumentationskonsistenz).** Die
 JOSS-Einreichung selbst ist bewusst pausiert.
 
-**Aus dem VIERTEN Bewertungsdokument noch offen (P1 Rest + P2-P3, auf
-explizite Nutzeranweisung)**:
+**SOFORT ALS ERSTES pruefen**: `blood-transfusion` Decision-Stability-
+Lauf abfragen/auswerten (siehe Punkt 22 oben) - war beim Sitzungsende
+noch nicht fertig. Log-Datei:
+`C:\Users\HP\AppData\Local\Temp\claude\C--Git\7ce91711-7349-44e0-b101-38ca9d7db310\scratchpad\decision_stability_bloodtransfusion_log.txt`
+(temporaerer Pfad, ggf. nicht mehr vorhanden - im Zweifel den Lauf
+erneut starten: `cd C:\Users\HP\ML_Learning\openml-cc18-blood-transfusion`
++ `Rscript decision_stability_level2_prototype.R`). Erst NACH diesem
+Ergebnis eine Gesamtaussage zur Decision-Stability des Level-2-Prototyps
+in `BACKLOG.md`/`PAPER_DRAFT.md` ergaenzen und committen.
+
+**Aus dem VIERTEN Bewertungsdokument noch offen (P1 Rest + P2-Fortsetzung
++ P3, auf explizite Nutzeranweisung)**:
 - **P1, Rest**: `JOSS_TECHNIQUE_WATCH.md` selbst ist ERLEDIGT (siehe
   Punkt 21 oben). Nur noch offen: optional Research-Benchmark von n=6
   auf n=10-15 CC18-Datensaetze erweitern (deutlich teurer, nur falls
   der Research-/AutoML-Conf-Pfad weiterverfolgt wird - VORHER
   einfrieren, nicht nach Sicht der Zahlen).
-- **P2**: erster JOSS-inspirierter Forschungsprototyp - Top-Kandidaten
-  laut Bewertung: VeridicalFlow/PCS-Decision-Stability-Report oder
-  astartes/schwierige-Splits-Stresstest. Nur Prototyp, kein Backport
-  ohne Evidenz (ADR-003 bleibt massgeblich).
+- **P2, Fortsetzung**: `decision_stability.R`-Modul + synthetische Tests
+  + `ilpd`-Ergebnis sind ERLEDIGT (siehe Punkt 22 oben). Noch offen:
+  `blood-transfusion`-Ergebnis auswerten (s.o.), dann optional den
+  zweiten Kandidaten (astartes/schwierige-Splits-Stresstest)
+  angehen, oder das Decision-Stability-Modul auf weitere Entscheidungen
+  ausrollen (Backport-Frage gemaess ADR-003 noch offen - erst ab
+  >=2-Projekt-Bestaetigung).
 - **P3**: externe Adoption vorbereiten (Start-here-Anleitung, erstes
   Release, externe Nutzerfeedbacks als Evidenz behandeln).
 - **Ausdrueckliche Warnung aus dem Bewertungsdokument**: KEIN Feature
@@ -577,19 +621,24 @@ Punkt 16/`project_joss_publication_timeline.md`. NICHT einfach "jetzt
 einreichen" vorschlagen, falls der Nutzer das Thema ohne weiteren
 Kontext wieder aufbringt - AutoML-Conf-2027 (Punkt 18) als Alternative
 im Kopf behalten. Der 3-Schritte-Research-Aspect-Weg (Punkt 19) ist fuer
-diese Sitzung ABGESCHLOSSEN. **Ein VIERTES Bewertungsdokument
+diese Sitzung ABGESCHLOSSEN. Ein VIERTES Bewertungsdokument
 (2026-08-30, Punkte 20-21) liegt vor - P0 (Dokumentationskonsistenz)
-UND P1 (`JOSS_TECHNIQUE_WATCH.md`) sind bereits erledigt. Naechster
-naheliegendster Schritt: P2 (erster JOSS-inspirierter Prototyp -
-VeridicalFlow/PCS-Decision-Stability oder astartes/schwierige-Splits
-als Top-Kandidaten laut Bewertungsdokument, siehe
-`JOSS_TECHNIQUE_WATCH.md`) oder P3 (externe Adoption vorbereiten),
-falls der Nutzer nichts Konkretes mitbringt.** Ausdrueckliche Warnung
-aus diesem Dokument im Kopf behalten: kein Feature Creep, jede
-JOSS-Idee braucht erst eine Hypothese/ein bestehendes Problem im
-Template, Default "NO BACKPORT bis Evidenz vorhanden" (ADR-003 bleibt
-massgeblich). Kleinere Alternativen: die optionale Acknowledgements-
-Sektion in `joss/paper.md` ausfuellen, `finalize_run_provenance()` auf
-weitere Skripte ausrollen, oder die optionale Research-Benchmark-
-Erweiterung (n=6->10-15, nur falls der Research-Pfad weiterverfolgt
+UND P1 (`JOSS_TECHNIQUE_WATCH.md`) sind bereits erledigt.
+
+**ZWINGENDER erster Schritt, falls das Thema nicht explizit anders
+gelenkt wird: das `blood-transfusion`-Decision-Stability-Ergebnis
+abfragen/auswerten** (Punkt 22 oben, Lauf war beim Sitzungsende noch
+nicht fertig) - erst danach P2 als abgeschlossen behandeln und die
+BACKLOG.md/PAPER_DRAFT.md-Doku dazu ergaenzen/committen. Danach
+naheliegendster naechster Schritt: astartes/schwierige-Splits als
+2. JOSS-inspirierter Prototyp, oder P3 (externe Adoption vorbereiten),
+falls der Nutzer nichts Konkretes mitbringt. Ausdrueckliche Warnung
+aus dem vierten Bewertungsdokument im Kopf behalten: kein Feature
+Creep, jede JOSS-Idee braucht erst eine Hypothese/ein bestehendes
+Problem im Template, Default "NO BACKPORT bis Evidenz vorhanden"
+(ADR-003 bleibt massgeblich). Kleinere Alternativen: die optionale
+Acknowledgements-Sektion in `joss/paper.md` ausfuellen,
+`finalize_run_provenance()` auf weitere Skripte ausrollen, oder die
+optionale Research-Benchmark-Erweiterung (n=6->10-15, nur falls der
+Research-Pfad weiterverfolgt
 wird).
