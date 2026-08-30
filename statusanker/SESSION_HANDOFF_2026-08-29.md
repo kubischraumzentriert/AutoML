@@ -16,18 +16,33 @@ GitHub Action fuer eine automatische Vorschau-PDF eingerichtet und
 tatsaechlich verifiziert (echtes 4-Seiten-PDF heruntergeladen und
 geprueft, nicht nur "Workflow gruen" vertraut). Von der urspruenglichen
 JOSS-Vorbereitungsliste ist jetzt NUR NOCH die tatsaechliche Einreichung
-selbst offen.
+selbst offen. **10. Aktualisierung (jetzt 2026-08-30, Datum seit dieser
+Aktualisierung uebergelaufen, Session laeuft nahtlos weiter - dieser
+Anker bleibt bewusst unter dem 29.08.-Dateinamen, da es eine
+zusammenhaengende Fortsetzung ist):** JOSS-Einreichung nach 2 echten,
+gegen JOSS' eigene Docs verifizierten Risiken (Alters-Gate,
+Scope-Fit-Frage) bewusst PAUSIERT statt aufgegeben, Wiedervorlage
+~November 2026; ausserdem ein kleiner Abstecher in das separate
+Logseq-Lernkarten-Repo `C:\Users\HP\Documents\ML01` (5 neue ESS-Karten +
+Nutzer-Sammelcommit).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `040d955` "JOSS-Draft-PDF-GitHub-Action
-  einrichten" - gepusht. Eigener neuer Workflow `Draft JOSS PDF`
-  (Path-Filter auf `joss/paper.md`/`joss/paper.bib`) lief bereits einmal
-  erfolgreich (Lauf `33271527454`) - Artifact heruntergeladen, echtes
-  valides 4-Seiten-PDF bestaetigt. CI Smoke Test (der Haupt-Workflow)
-  triggert fuer diesen Commit NICHT (kein `.R`-Code geaendert) - letzter
+- `MLR3_Classifikation` @ `55ef74f` "JOSS-Einreichung pausiert: 2 echte
+  Risiken gefunden (Alters-Gate + Scope-Fit), Wiedervorlage ~Nov 2026" -
+  gepusht. `.md`-only, CI Smoke Test triggert dafuer nicht - letzter
   tatsaechlicher CI-Smoke-Test-Lauf weiterhin gruen fuer `086243c`
-  (Lauf `33256552839`).
+  (Lauf `33256552839`). Der `Draft JOSS PDF`-Workflow (eingerichtet in
+  `040d955`) lief bereits einmal erfolgreich (Lauf `33271527454`) -
+  Artifact heruntergeladen, echtes valides 4-Seiten-PDF bestaetigt.
+- **Separates Repo** `C:\Users\HP\Documents\ML01` (Logseq-Lernkarten-
+  Graph, GitHub `kubischraumzentriert/LogSeq`): neue Seite `Effective
+  Sample Size (ESS).md` (5 Karten) + Verlinkung in `Data Leakage.md`/
+  `contents.md` (Commit `efd5b1a`), danach ein Sammelcommit auf
+  Nutzerwunsch fuer manuelle Umlaut-Korrekturen + SRS-Reviews + Backups
+  (Commit `10ef610`) - beide gepusht. Lokale Git-Identity dieses Repos
+  war unkonfiguriert, per `--local` auf die bereits etablierte
+  Konvention "Codex <codex@local>" gesetzt (nicht global geaendert).
 - `ML_Learning` (rein lokal, kein Remote): 12 neue Projektordner
   (`openml-cc18-cmc`, `-optdigits`, `-sick`,
   `-analcatdata-authorship`, `-blood-transfusion`, `-ilpd` - je mit
@@ -327,20 +342,66 @@ Vorbereitungsliste (`joss/README.md`) ist NUR NOCH die tatsaechliche
 Einreichung selbst offen - eine bewusste, eigene Entscheidung des
 Nutzers, nicht ungefragt angestossen.
 
+**16. JOSS-Einreichung bewusst PAUSIERT (nicht aufgegeben) - 2 echte
+Risiken gefunden** (Nutzerfrage "JOSS einreichen, wie geht das?", dann
+Nutzer-Links zu `joss.readthedocs.io/submitting.html#scope-and-significance`
+und dem JOSS-Blog `2026/01/preparing-joss-for-a-generative-ai-future`,
+beide unabhaengig per WebFetch verifiziert statt aus dem Gedaechtnis
+angenommen):
+1. **Hart, aktuell blockierend**: JOSS verlangt >=6 Monate oeffentliche
+   Repo-Historie. Erster Commit dieses Repos 2026-07-07 (per `git log
+   --reverse` bestaetigt) -> einreichungsfaehig fruehestens ~2027-01-07.
+2. **Weich, loest sich NICHT durch Zeitablauf**: JOSS' "Scope and
+   Significance"-Kriterium definiert "research software" eng
+   (wissenschaftliche Domain-Modellierung, Forschungsinstrumente,
+   Wissensextraktion aus Grossdatensaetzen) und schliesst "pre-trained
+   machine learning models and notebooks" explizit aus - ein
+   Wettbewerbs-Methodik-Template ist kein offensichtlicher Fit.
+
+Nutzerentscheidung: Publikationsziel bleibt JOSS, Wiedervorlage
+~November 2026. Auf Nachfrage "was meinst Du dazu"/"koennten wir einen
+research aspect hinbekommen" empfohlener Weg: P2s bislang UNERKLAERTES
+gemischtes Level-2-Ergebnis (3/3 Siege/Niederlagen, keine saubere
+Groessen-/Imbalance-Erklaerung) tatsaechlich erklaeren - z.B. via
+systematischer Tuning-Budget-Variation und/oder Metafeature-basierter
+Vorhersage (Kandidaten: `n_inner_tune`, Minderheitsklassen-Zeilenzahl,
+Inner-Score-Streuung ueber die Outer-Folds). Festgehalten in
+`BACKLOG.md` UND im persistenten Gedaechtnis
+(`project_joss_publication_timeline.md`), damit eine kuenftige Session
+das nicht neu herleiten muss.
+
+**17. Abstecher: 5 neue ESS-Lernkarten im separaten Logseq-Repo**
+(Nutzeranfrage, ausgeloest durch Rueckfragen im Gespraech "was meinst
+Du mit effektiver Stichprobengroesse"/"was war nochmal ESS" - dabei kam
+heraus, dass der Begriff im JOSS-Kontext locker/uneindeutig verwendet
+wurde, prazisiert als: Zeilenzahl fuer die INNERE Modellwahl im
+Level-2-Prototyp, NICHT dieselbe ESS wie beim Covariate-Shift-
+Reweighting). Neue Seite `Effective Sample Size (ESS).md` in
+`C:\Users\HP\Documents\ML01`: Definition, Formel, Interpretation bei
+niedriger ESS, Bruecke zu Adversarial Validation, Umgang bei
+kollabierter ESS - VORHER geprueft, dass keine Redundanz zu den 4
+bestehenden Adversarial-Validation-Karten in `Data Leakage.md`
+entsteht. Danach auf Nutzerwunsch ("im Grund alles committen") ein
+Sammelcommit fuer bereits vorhandene lokale Aenderungen (manuelle
+Umlaut-Korrekturen, SRS-Reviews, Backups).
+
 ## Offene Punkte fuer die naechste Session
 
 **Die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
 (2026-08-29) ist vollstaendig abgearbeitet, ebenso alle im Paper-Draft/
-`joss/`-Ordner selbst benannten Vorbereitungsschritte bis auf einen.**
-Nur noch optionale Folgeschritte offen, keiner dringend:
-- **Die tatsaechliche JOSS-Einreichung** (https://joss.theoj.org/papers/new,
-  GitHub-Repo-URL + `joss/paper.md`-Pfad) - der letzte verbleibende
-  Schritt, bewusst nicht ungefragt angestossen.
+`joss/`-Ordner selbst benannten Vorbereitungsschritte.** Die
+JOSS-Einreichung selbst ist bewusst pausiert. Nur noch optionale
+Folgeschritte offen, keiner dringend:
+- **Wiedervorlage ~November 2026**: Zwischenbilanz zum vorgeschlagenen
+  "Research Aspect" (P2s Level-2-Ergebnis erklaeren) - siehe Punkt 16
+  oben und `project_joss_publication_timeline.md` im persistenten
+  Gedaechtnis. Die tatsaechliche JOSS-Einreichung selbst ist erst ab
+  ~2027-01-07 ueberhaupt moeglich (6-Monats-Gate).
 - Optional: die Acknowledgements-Sektion in `joss/paper.md` ausfuellen,
   falls gewuenscht (bleibt sonst als expliziter `TODO` stehen).
 - Optional: pruefen, ob ein groesseres Tuning-Budget fuer Level 2
-  (aktuell 10 Evals/Arm) das gemischte P2-Ergebnis veraendert - bislang
-  nicht getestet.
+  (aktuell 10 Evals/Arm) das gemischte P2-Ergebnis veraendert - waere
+  Teil des vorgeschlagenen Research-Aspect-Wegs.
 - Optional: `finalize_run_provenance()` auf weitere aktive Skripte
   ausrollen (`030_baseline.R` ist bislang die einzige
   Referenzimplementierung).
@@ -394,13 +455,14 @@ Nur noch optionale Folgeschritte offen, keiner dringend:
 
 ## Empfohlener erster Schritt der naechsten Session
 
-Kein zwingender Einstiegspunkt. Die komplette P0-P3-Roadmap des dritten
-Bewertungsdokuments (2026-08-29) ist umgesetzt, inklusive eines
-vollstaendig vorbereiteten JOSS-Einreichungspakets (`joss/paper.md` mit
-allen 6 Pflichtabschnitten, Lizenz, Contributing-Guidelines, verifizierte
-Vorschau-PDF-Action - siehe `joss/README.md` fuer den Gesamtstatus).
-Falls der Nutzer nichts Konkretes mitbringt: die tatsaechliche
-JOSS-Einreichung anstossen (https://joss.theoj.org/papers/new), die
-optionale Acknowledgements-Sektion ausfuellen, oder einer der beiden
-verbleibenden optionalen Punkte (groesseres Level-2-Tuning-Budget
-testen, `finalize_run_provenance()` auf weitere Skripte ausrollen).
+Kein zwingender Einstiegspunkt, ABER ein wichtiger Kontext-Hinweis: die
+JOSS-Einreichung selbst ist bewusst PAUSIERT bis ~2027-01-07 (6-Monats-
+Repo-Alter-Gate) UND wegen eines offenen Scope-Fit-Risikos - siehe
+Punkt 16 oben/`project_joss_publication_timeline.md`. NICHT einfach
+"jetzt einreichen" vorschlagen, falls der Nutzer das Thema ohne
+weiteren Kontext wieder aufbringt. Falls der Nutzer nichts Konkretes
+mitbringt: den vorgeschlagenen "Research Aspect" angehen (P2s
+unerklaertes Level-2-Ergebnis systematisch untersuchen - groesseres
+Tuning-Budget, Metafeature-basierte Vorhersage), die optionale
+Acknowledgements-Sektion in `joss/paper.md` ausfuellen, oder
+`finalize_run_provenance()` auf weitere Skripte ausrollen.
