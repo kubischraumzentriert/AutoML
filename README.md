@@ -76,5 +76,6 @@ einer aufwendigen Blackbox.
 - [`TARGETS.md`](TARGETS.md) — die `targets`-Pipeline (Caching/Reproduzierbarkeit) und die vollständige Entscheidungshistorie.
 - [`adr/`](adr/) — Architekturentscheidungen (warum lokale Projekt-DBs statt einer geteilten Live-DB, R-only-Policy, die ≥2-Projekt-Backport-Regel).
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — wie Beiträge/Bug-Reports/Support-Anfragen in der Praxis gehandhabt werden.
+- [`JOSS_TECHNIQUE_WATCH.md`](JOSS_TECHNIQUE_WATCH.md) — gezielte Suche im JOSS-Paper-Korpus nach Trust-/Reproduzierbarkeits-/Evaluationstechniken, mit ADR-003-Backport-Gate statt Feature Creep.
 
 Schwesterprojekt für Regressionsaufgaben: [`AutoML_Regression`](https://github.com/kubischraumzentriert/AutoML_Regression), gleiche Methodik, geteiltes DB-Schema.

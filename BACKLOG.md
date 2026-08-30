@@ -2147,6 +2147,48 @@ vorsichtshalber verifiziert.
 Benchmark-Erweiterung), P2 (erster JOSS-inspirierter Prototyp), P3
 (externe Adoption) - auf explizite Nutzeranweisung.
 
+### P1 - Status (2026-08-30): JOSS_TECHNIQUE_WATCH.md angelegt
+
+**Nutzeranfrage**: "ja, JOSS_TECHNIQUE_WATCH.md anlegen".
+
+Neue Datei [`JOSS_TECHNIQUE_WATCH.md`](JOSS_TECHNIQUE_WATCH.md): alle
+7 im Bewertungsdokument genannten Kandidaten (VeridicalFlow, astartes,
+Autorank, PyExperimenter, ReciPies, ImageMLResearch, mlr3extralearners)
+strukturiert dokumentiert (Titel/Autoren/DOI/Problem/Uebertragbarkeit/
+"haben wir dieses Problem"/Hypothese/Nutzen/Komplexitaetskosten/
+Prototype/Backport-Status), plus ein Erinnerungs-Eintrag fuer mlr3
+selbst (vor neuer Eigeninfrastruktur regelmaessig gegenpruefen).
+
+**Vor dem Uebernehmen verifiziert, nicht blind aus dem
+Bewertungsdokument kopiert**: alle 7 DOIs/Autoren/Jahre einzeln direkt
+gegen `joss.theoj.org/papers/<DOI>` geprueft (Browser) - alle 7 stimmten
+exakt.
+
+**Wichtiger Zwischenfund beim Schreiben**: Autorank ist kein reiner
+Watch-Punkt mehr, sondern **teilweise bereits umgesetzt** - die
+Demsar-(2006)-Wilcoxon-Methodik laeuft bereits produktiv in
+`p2_level2_significance_test.R` (Research-Aspect-Schritt 1, siehe
+oben). Offen bleibt nur eine generische, wiederverwendbare
+`benchmark_statistics_report()`-Funktion fuer kuenftige Mehrfach-
+Datensatz-Vergleiche.
+
+Prioritaeten aus dem Bewertungsdokument uebernommen: VeridicalFlow +
+astartes = hoch, Autorank = hoch sobald n groesser, PyExperimenter/
+ReciPies/mlr3-Check = mittel, ImageMLResearch = niedrig-mittel,
+mlr3extralearners = niedrig. Die verbindliche ADR-003-Backport-Regel
+("NO BACKPORT bis Evidenz vorhanden") explizit im Dokument verankert.
+
+`README.md` um einen Verweis auf `JOSS_TECHNIQUE_WATCH.md` ergaenzt.
+Noch KEINE Implementierung/Prototyp begonnen - reine Recherche-
+Dokumentation, wie vom Bewertungsdokument fuer P1 gefordert.
+
+Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
+vorsichtshalber verifiziert.
+
+**Offen**: optionale Research-Benchmark-Erweiterung (Rest von P1), P2
+(erster JOSS-inspirierter Prototyp - VeridicalFlow oder astartes als
+Top-Kandidaten), P3 (externe Adoption) - auf explizite Nutzeranweisung.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
