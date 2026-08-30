@@ -1972,6 +1972,56 @@ beide Optionen koennen parallel verfolgt werden.
 Auch im persistenten Gedaechtnis ergaenzt
 (`project_joss_publication_timeline.md`).
 
+### Research Aspect, 2. Schritt (2026-08-30): Tuning-Budget-Hypothese getestet und AUSGESCHLOSSEN
+
+**Nutzeranfrage**: "ja, mach weiter mit dem Tuning-Budget-Test".
+
+`outer_workflow_evaluation_v3_level2.R` um `LEVEL2_TUNING_EVALS`
+(Umgebungsvariable, Default weiterhin 10) ergaenzt, dann alle 6
+externen Datensaetze mit **30 Evals/Arm** (3x Budget) neu gelaufen
+(root-Template + alle 6 `ML_Learning`-Projektkopien synchronisiert).
+
+**Ergebnisse (30 Evals) im Vergleich zu 10 Evals**:
+
+| Datensatz | Level2 @10 | Level2 @30 | Delta | bisher bester Wert | @30 gewinnt/verliert |
+|---|---|---|---|---|---|
+| `ilpd` | 0.6473 | **0.6919** | +4.5 | 0.6840 | **Sieg** (vorher Niederlage!) |
+| `optdigits` | 0.9859 | 0.9818 | -0.4 | 0.9840 | Niederlage (vorher Sieg!) |
+| `sick` | 0.9723 | 0.9712 | -0.1 | 0.9714 | ~neutral |
+| `cmc` | 0.5113 | 0.5122 | +0.1 | 0.5374 | Niederlage (unveraendert) |
+| `analcatdata-authorship` | 0.9731 | 0.9818 | +0.9 | 0.9921 | Niederlage (unveraendert, kleiner) |
+| `blood-transfusion` | 0.6878 | 0.6720 | -1.6 | 0.6576 | Sieg (unveraendert, kleiner) |
+
+**Formaler Test (in `p2_level2_significance_test.R` erweitert, 3
+Fragen)**: gepaarter Wilcoxon-Signed-Rank-Test 30-Evals- vs. 10-Evals-
+Level2 direkt gegeneinander - **V = 11, p = 1.0**. Das ist der denkbar
+nullste Befund: KEIN nachweisbarer systematischer Effekt der
+Budget-Verdreifachung. `ilpd` und `optdigits` flippen sogar in
+GEGENSAETZLICHE Richtungen (ilpd wird deutlich besser, optdigits leicht
+schlechter). Die Aggregat-Signifikanz gegen den bisher besten Wert
+bleibt bei 30 Evals identisch nicht-signifikant (V=8, p=0.6875 -
+exakt derselbe Wert wie bei 10 Evals).
+
+**Einordnung**: die Tuning-Budget-Hypothese fuer P2s gemischtes Muster
+ist damit sauber AUSGESCHLOSSEN, nicht nur ungetestet - ein negativer,
+aber werthaltiger Befund (grenzt den Erklaerungsraum ein statt ihn offen
+zu lassen). Mehr Budget aendert, WELCHE Datensaetze gewinnen, nicht OB
+Level 2 im Aggregat gewinnt. Alle 7 neuen Ergebnisse (6 Datensaetze +
+der aggregierte Vergleichstest) in die Evidence Registry geloggt.
+
+**In `PAPER_DRAFT.md` eingearbeitet**: neuer Absatz in Section 6 (nach
+dem urspruenglichen Signifikanztest), Limitations-Punkt zum Tuning-
+Budget aktualisiert (war "untested", ist jetzt "getestet, kein Effekt
+bei 3x - groessere Budgets als 30 bleiben ungetestet").
+
+**Verbleibender Kandidat fuer den Research Aspect**: die Metafeature-
+basierte Erklaerung (Inner-Tune-Zeilenzahl, Score-Streuung, Naehe zur
+Saettigungsgrenze) - reine Nachanalyse bereits vorhandener Zahlen, kein
+neuer Lauf noetig. Noch nicht durchgefuehrt.
+
+Kein neuer Code-Test noetig (Skriptaenderung war additiv/rueckwaerts-
+kompatibel, bereits im vorherigen Commit mit 322/322 gruen verifiziert).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

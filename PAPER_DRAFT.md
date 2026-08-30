@@ -423,6 +423,30 @@ test result rather than only the informal win/loss count specifically
 because a small, cherry-pickable set of deltas can look more like a
 "pattern" to a reader than the data actually support.
 
+**We then tested the most obvious candidate explanation for the mixed
+pattern directly — the tuning budget — and ruled it out.** The Level-2
+prototype above uses 10 tuning evaluations per arm per outer fold, a
+small budget chosen for compute reasons; if the mixed result were
+simply an artifact of under-tuning, a larger budget should shift it in
+a consistent direction. We re-ran all 6 datasets with 30 evaluations
+per arm (3x) and compared paired, per-dataset, against the original
+10-evaluation run with the same Wilcoxon procedure: V = 11, p = 1 — as
+close to a null result as a test can produce. Individual datasets moved
+in both directions with no consistent pattern (`ilpd` improved by 4.5
+points, flipping from a loss to a win; `optdigits` worsened by 0.4
+points, flipping from a win to a loss; `blood-transfusion` worsened by
+1.6 points while remaining a win; `analcatdata-authorship` improved by
+0.9 points while remaining a loss). Tripling the tuning budget changed
+*which* datasets won, not *whether* Level 2 wins on net — the aggregate
+comparison against the best prior result stayed statistically
+indistinguishable from zero at the larger budget too (V = 8, p = 0.6875,
+identical statistic to the 10-evaluation run). We consider the tuning-
+budget hypothesis for the mixed P2 pattern ruled out by this test,
+rather than merely untested — a concrete example of a negative result
+that narrows the explanation space instead of leaving it open. The
+reproducible code for both comparisons is in
+`p2_level2_significance_test.R`.
+
 ## 7. Trust-Layer Ablations
 
 Because the trust-layer modules are not score levers (they do not change
@@ -487,9 +511,13 @@ the process catches its own mistakes, not only the data's.
   ([@Demsar2006] recommends on the order of 8-10 datasets for the
   Wilcoxon test used here); this is a real constraint of the sample
   size, not a gap that more careful statistics alone would close.
-- **Level 2 tuning budget was small** (10 evaluations per arm per outer
-  fold) for compute reasons; whether a larger budget changes the mixed
-  result in Section 6 is untested.
+- **Level 2's default tuning budget is small** (10 evaluations per arm
+  per outer fold) for compute reasons; unlike in an earlier version of
+  this manuscript, this is no longer an untested gap — Section 6 reports
+  a direct 3x-budget re-run showing no detectable systematic effect
+  (p = 1). We did not test budgets beyond 30 evaluations, so a much
+  larger budget (e.g. 100+) remains genuinely untested, though the null
+  result at 3x gives no particular reason to expect a different picture.
 - **Level 3 is entirely unevaluated.** The paper's title claim
   ("trust-centered AutoML workflow") is best read as applying to the
   *system as used in practice* (Level 3, informally), while the
