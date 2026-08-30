@@ -1855,6 +1855,54 @@ PDF und laedt sie als Actions-Artifact hoch - reine Formatierungs-/
 Zitations-Pruefung, KEINE Einreichung. `joss/README.md`/`BACKLOG.md`
 entsprechend ergaenzt.
 
+### JOSS-Einreichung pausiert (2026-08-30): 2 echte Risiken gefunden, Wiedervorlage ~Nov 2026
+
+**Nutzerfrage** "JOSS einreichen, wie geht das?" fuehrte zur Entdeckung
+eines harten Blockers, dann auf explizite Nutzer-Links zwei weiteren,
+unabhaengig verifizierten Funden (nicht aus dem Gedaechtnis, sondern
+gegen `joss.readthedocs.io/submitting.html` und den JOSS-Blog-Post
+`2026/01/preparing-joss-for-a-generative-ai-future` geprueft):
+
+1. **Hart, objektiv, aktuell blockierend**: JOSS verlangt >=6 Monate
+   oeffentliche Repo-Historie mit aktiver Entwicklung vor Einreichung
+   (explizit in beiden Quellen). Erster Commit dieses Repos: 2026-07-07
+   (per `git log --reverse` bestaetigt, 256 Commits seither) -
+   einreichungsfaehig fruehestens ~2027-01-07.
+2. **Weich, inhaltlich, loest sich NICHT einfach durch Zeitablauf**:
+   JOSS' "Scope and Significance"-Kriterium definiert "research
+   software" eng (komplexe Modellierungsprobleme in einem
+   wissenschaftlichen Kontext, Forschungsinstrumente, Wissens-
+   extraktion aus grossen Datensaetzen, mathematische Bibliotheken) und
+   schliesst explizit "pre-trained machine learning models and
+   notebooks" aus. Ein Wettbewerbs-Methodik-Template (Kaggle/Zindi/
+   OpenML) ist seinem Wesen nach eher ein Engineering-Practice-Werkzeug
+   als ein Werkzeug fuer wissenschaftliche Domain-Modellierung - echtes
+   Scope-Fit-Risiko, unabhaengig vom Alters-Gate.
+
+**Nutzerentscheidung**: Publikationsziel bleibt JOSS, Einreichung
+bewusst PAUSIERT (nicht aufgegeben), Wiedervorlage in ~2-3 Monaten
+(~November 2026 - noch VOR dem 6-Monats-Gate, aber sinnvoll fuer eine
+Zwischenbilanz zum "Research Aspect").
+
+**Vorschlag fuer einen echten "Research Aspect" bis dahin** (meine
+Einschaetzung auf explizite Nachfrage): der vielversprechendste Hebel
+ist, P2s bislang UNERKLAERTES gemischtes Level-2-Ergebnis (3 Siege/3
+Niederlagen ueber die 6 externen CC18-Datensaetze, keine saubere
+Groessen-/Imbalance-Erklaerung gefunden) tatsaechlich zu erklaeren -
+z.B. durch systematische Variation des Tuning-Budgets (aktuell nur 10
+Evals/Arm) und/oder Pruefung, ob Datensatz-Metafeatures (effektive
+Stichprobengroesse fuer die innere Modellwahl, Naehe zu einer
+Saettigungsgrenze, Score-Varianz je Fold) vorhersagen, wann Level 2
+hilft vs. schadet. Eine bestaetigte Erklaerungshypothese waere ein
+echter methodischer Beitrag (naeher an tatsaechlicher AutoML-Forschung
+als ein Engineering-Protokoll) - staerkt das Paper unabhaengig davon,
+ob am Ende JOSS oder eine andere Venue (z.B. AutoML-Conf) das Ziel
+bleibt.
+
+Auch im persistenten Gedaechtnis festgehalten (Datei
+`project_joss_publication_timeline.md`), damit eine kuenftige Session
+das nicht neu herleiten muss.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
