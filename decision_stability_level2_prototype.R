@@ -65,14 +65,19 @@ make_imputed_learner <- function(base_learner, id = NULL) {
   learner
 }
 
-# Outer-Fold 1 fixieren - IDENTISCH zum eingefrorenen Protokoll v3
+# Outer-Fold FIXIEREN - IDENTISCH zum eingefrorenen Protokoll v3.
+# Ueberschreibbar per Umgebungsvariable DECISION_STABILITY_OUTER_FOLD
+# (Default 1) - fuer den n-Erhoehungs-Schritt "Weg A" (2026-08-30,
+# siehe BACKLOG.md): dieselben 6 Datensaetze, aber Fold 2/3 statt nur
+# Fold 1, OHNE neue Datensaetze zu brauchen.
+outer_fold <- as.integer(Sys.getenv("DECISION_STABILITY_OUTER_FOLD", "1"))
 outer_resampling <- rsmp("cv", folds = 3)
 outer_resampling$instantiate(task_full)
-outer_train <- task_full$clone(deep = TRUE)$filter(outer_resampling$train_set(1))
+outer_train <- task_full$clone(deep = TRUE)$filter(outer_resampling$train_set(outer_fold))
 weighted_outer_train <- add_balanced_class_weights(outer_train, class_weight_power)
 
-cat(sprintf("Projekt: %s | Outer-Fold 1 (Train n=%d) FIX, nur Inner-Split-Seed variiert | Budget: %d Evals/Arm\n",
-            basename(project_dir), outer_train$nrow, tuned_baseline_evals))
+cat(sprintf("Projekt: %s | Outer-Fold %d (Train n=%d) FIX, nur Inner-Split-Seed variiert | Budget: %d Evals/Arm\n",
+            basename(project_dir), outer_fold, outer_train$nrow, tuned_baseline_evals))
 
 level2_inner_choice <- function(inner_seed) {
   set.seed(inner_seed)
@@ -129,8 +134,9 @@ level2_inner_choice <- function(inner_seed) {
 
 report <- decision_stability_report(
   level2_inner_choice, n_repeats = 10, seed_start = 1,
-  label = sprintf("%s, Level-2-Arm-Wahl, Outer-Fold 1 (Inner-Split-Seed variiert)", basename(project_dir))
+  label = sprintf("%s, Level-2-Arm-Wahl, Outer-Fold %d (Inner-Split-Seed variiert)", basename(project_dir), outer_fold)
 )
 
-saveRDS(report, file.path(artifact_dir, "decision_stability_level2_report.rds"))
-cat("\nGespeichert:", file.path(artifact_dir, "decision_stability_level2_report.rds"), "\n")
+out_path <- file.path(artifact_dir, sprintf("decision_stability_level2_report_fold%d.rds", outer_fold))
+saveRDS(report, out_path)
+cat("\nGespeichert:", out_path, "\n")

@@ -2384,6 +2384,65 @@ Level 2 liefert immer noch keine actionable Handlungsempfehlung
 generische `decision_stability.R`-Modul selbst bleibt im Template
 (bereits getestet/nuetzlich unabhaengig von dieser einen Anwendung).
 
+### P2 - "Weg A": Decision Stability auf alle 3 Outer-Folds statt nur Fold 1 erweitert (2026-08-30)
+
+**Nutzeranfrage**: nach der Klaerung "n=Anzahl Projekte" fragte der
+Nutzer, ob neue ungesehene Projekte (OpenML) noetig sind. Vorschlag:
+"Weg A" (mehr Outer-Folds der bereits eingefrorenen 6 Datensaetze,
+keine neuen Datensaetze noetig) vs. "Weg B" (echte neue externe
+Datensaetze, teurer, eigene Auswahlmethodik). Nutzerentscheidung:
+"erst Weg A".
+
+`decision_stability_level2_prototype.R` um `DECISION_STABILITY_OUTER_
+FOLD` (Env-Var, Default 1) ergaenzt - Fold 2 und 3 aller 6 Datensaetze
+zusaetzlich gelaufen (18 Einzelmessungen statt 6).
+
+**Volles Ergebnis (Stabilitaet je Datensatz x Fold)**:
+
+| Datensatz | Fold 1 | Fold 2 | Fold 3 | Mittel | Level-2-Delta |
+|---|---|---|---|---|---|
+| `ilpd` | 70% | 70% | 50% | 63% | -3.7 |
+| `blood-transfusion` | 60% | 50% | 60% | 57% | +3.0 |
+| `sick` | 60% | 100% | 80% | 80% | +0.1 |
+| `cmc` | 50% | 40% | 50% | 47% | -2.6 |
+| `analcatdata-authorship` | 70% | 80% | 70% | 73% | -1.9 |
+| `optdigits` | 60% | 60% | 60% | 60% | +0.2 |
+
+**Zentraler, ehrlicher Befund - die Erweiterung WIDERLEGT den
+vorherigen suggestiven Zwischenbefund**: die Spearman-Korrelation
+zwischen Stabilitaet und Level-2-Delta betrug bei NUR Fold 1 (n=6)
+rho=-0.28 (p=0.59, nicht signifikant, aber konsistente Richtung ueber
+alle 6). Gemittelt ueber ALLE 3 Folds (robusterer Wert): **rho=-0.086,
+p=0.92 - die Korrelation ist praktisch verschwunden.** Der urspruengliche
+Befund war ein Artefakt der kleinen Stichprobe (nur 1 Fold pro
+Datensatz) - genau der Grund, weshalb "mehr Daten sammeln, bevor man
+einer schwachen Korrelation vertraut" die richtige Reaktion war, statt
+den Fold-1-Befund als bestaetigt zu behandeln.
+
+**Weitere deskriptive Befunde**:
+- Instabilitaet (< 70% Mehrheit) ist mit 11 von 18 Messungen (61%) eher
+  die NORM als die Ausnahme bei diesem Tuning-Budget (10 Evals/Arm) -
+  die Level-2-Arm-Wahl ist insgesamt haeufiger knapp als klar.
+- Innerhalb-Datensatz-Konsistenz ist meist hoch (Spannweite ueber die 3
+  Folds bei 5 von 6 Datensaetzen nur 0.0-0.2), Ausnahme `sick`
+  (Spannweite 0.4 - schwankt zwischen 60% und 100%).
+
+**Aktualisiertes Skript** [`decision_stability_level2_analysis.R`](decision_stability_level2_analysis.R)
+(erweitert um die 3-Fold-Auswertung, beide Versionen - Fold-1-only zum
+Vergleich UND das robustere 3-Fold-Mittel - bewusst nebeneinander
+gezeigt statt den Fold-1-Befund stillschweigend zu ersetzen). Alle 18
+Einzelergebnisse + der neue Korrelationsvergleich in die Evidence
+Registry geloggt.
+
+**Einordnung**: das Decision-Stability-Prototyp-Kapitel schliesst hier
+mit einem doppelt ehrlichen Ergebnis ab - (1) Decision Stability selbst
+korreliert nicht verlaesslich mit der Ergebnisqualitaet (bestaetigt
+jetzt robuster als zuvor), UND (2) ein Nachtrag zu einer eigenen
+vorherigen Session-Aussage: der n=6/Fold-1-Befund war zu vorlaeufig, um
+ihn ungeprueft stehen zu lassen. Weiterhin **kein Backport** (ADR-003).
+Weg B (neue externe Datensaetze) bleibt eine separate, groessere
+Option, falls der Research-Pfad weiterverfolgt wird.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
