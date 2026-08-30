@@ -34,18 +34,19 @@ Bewertungsdokument eingebracht (2026-08-30), dessen P0
 (Dokumentationskonsistenz-Pass) vollstaendig abgearbeitet - 3 konkrete
 Drift-Funde (`EVALUATION_LEVELS.md`, `EXTERNAL_BENCHMARK_SET.md`,
 `joss/paper.md`s "package"-Wortwahl) + der Evidence-Registry-Claim
-korrigiert.
+korrigiert. **13. Aktualisierung:** P1 aus demselben Dokument -
+`JOSS_TECHNIQUE_WATCH.md` angelegt (alle 7 Kandidaten strukturiert
+dokumentiert, jeder DOI/Autor/Jahr einzeln gegen JOSS verifiziert).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `3509661` "P0 (2026-08-30-Bewertung):
-  Dokumentationskonsistenz-Pass" - gepusht. `.md`-only, CI Smoke Test
+- `MLR3_Classifikation` @ `d6f05a1` "P1 (2026-08-30-Bewertung):
+  JOSS_TECHNIQUE_WATCH.md anlegen" - gepusht. `.md`-only, CI Smoke Test
   (Haupt-Workflow) triggert dafuer nicht - letzter tatsaechlicher
   CI-Smoke-Test-Lauf weiterhin gruen fuer `d29ea0d` (Lauf
-  `33300592379`). Der `Draft JOSS PDF`-Workflow lief fuer diesen Commit
-  (da `joss/paper.md` geaendert wurde) erneut erfolgreich (Lauf
-  `33307346419`) - bestaetigt, das aktualisierte Paper kompiliert
-  weiterhin sauber.
+  `33300592379`). Der `Draft JOSS PDF`-Workflow lief fuer den
+  vorherigen Commit (`3509661`, da `joss/paper.md` geaendert wurde)
+  erfolgreich (Lauf `33307346419`).
 - **Separates Repo** `C:\Users\HP\Documents\ML01` (Logseq-Lernkarten-
   Graph, GitHub `kubischraumzentriert/LogSeq`): neue Seite `Effective
   Sample Size (ESS).md` (5 Karten) + Verlinkung in `Data Leakage.md`/
@@ -468,6 +469,22 @@ historische Eintraege sind fuer ihren Zeitstempel korrekt). Draft-PDF-
 Workflow nach der Aenderung erneut erfolgreich verifiziert (Lauf
 `33307346419`).
 
+**21. P1 aus dem vierten Bewertungsdokument: `JOSS_TECHNIQUE_WATCH.md`
+angelegt** (Nutzeranfrage "ja, JOSS_TECHNIQUE_WATCH.md anlegen"). Alle
+7 Kandidaten (VeridicalFlow, astartes, Autorank, PyExperimenter,
+ReciPies, ImageMLResearch, mlr3extralearners) strukturiert dokumentiert
+(Titel/Autoren/DOI/Problem/Uebertragbarkeit/eigenes Problem vorhanden?/
+Hypothese/Nutzen/Komplexitaetskosten/Prototype/Backport-Status), plus
+ein Erinnerungs-Eintrag fuer mlr3 selbst. **Alle 7 DOIs/Autoren/Jahre
+vor der Uebernahme einzeln gegen `joss.theoj.org` verifiziert statt
+blind aus dem Bewertungsdokument kopiert** - stimmten exakt.
+**Bemerkenswerter Zwischenfund**: Autorank ist kein reiner Watch-Punkt
+mehr - die Demsar-(2006)-Wilcoxon-Methodik laeuft bereits produktiv in
+`p2_level2_significance_test.R` (Research-Aspect-Schritt 1). ADR-003-
+Backport-Regel ("NO BACKPORT bis Evidenz vorhanden") explizit
+verankert. Noch KEINE Implementierung/Prototyp begonnen. `README.md`
+um Verweis ergaenzt.
+
 ## Offene Punkte fuer die naechste Session
 
 **Die GESAMTE P0-P3-Roadmap des DRITTEN Bewertungsdokuments
@@ -475,15 +492,13 @@ Workflow nach der Aenderung erneut erfolgreich verifiziert (Lauf
 Bewertungsdokuments (2026-08-30, Dokumentationskonsistenz).** Die
 JOSS-Einreichung selbst ist bewusst pausiert.
 
-**Aus dem VIERTEN Bewertungsdokument noch offen (P1-P3, auf explizite
-Nutzeranweisung)**:
-- **P1**: `JOSS_TECHNIQUE_WATCH.md` anlegen (7 Kandidaten aus dem
-  Bewertungsdokument: VeridicalFlow, astartes, Autorank, PyExperimenter,
-  ReciPies, ImageMLResearch, mlr3extralearners - noch keine
-  Implementierung, nur strukturierte Recherche-Dokumentation) + optional
-  Research-Benchmark von n=6 auf n=10-15 CC18-Datensaetze erweitern
-  (deutlich teurer, nur falls der Research-/AutoML-Conf-Pfad
-  weiterverfolgt wird - VORHER einfrieren, nicht nach Sicht der Zahlen).
+**Aus dem VIERTEN Bewertungsdokument noch offen (P1 Rest + P2-P3, auf
+explizite Nutzeranweisung)**:
+- **P1, Rest**: `JOSS_TECHNIQUE_WATCH.md` selbst ist ERLEDIGT (siehe
+  Punkt 21 oben). Nur noch offen: optional Research-Benchmark von n=6
+  auf n=10-15 CC18-Datensaetze erweitern (deutlich teurer, nur falls
+  der Research-/AutoML-Conf-Pfad weiterverfolgt wird - VORHER
+  einfrieren, nicht nach Sicht der Zahlen).
 - **P2**: erster JOSS-inspirierter Forschungsprototyp - Top-Kandidaten
   laut Bewertung: VeridicalFlow/PCS-Decision-Stability-Report oder
   astartes/schwierige-Splits-Stresstest. Nur Prototyp, kein Backport
@@ -563,14 +578,18 @@ einreichen" vorschlagen, falls der Nutzer das Thema ohne weiteren
 Kontext wieder aufbringt - AutoML-Conf-2027 (Punkt 18) als Alternative
 im Kopf behalten. Der 3-Schritte-Research-Aspect-Weg (Punkt 19) ist fuer
 diese Sitzung ABGESCHLOSSEN. **Ein VIERTES Bewertungsdokument
-(2026-08-30, Punkt 20) liegt vor, dessen P0 (Dokumentationskonsistenz)
-erledigt ist - P1-P3 daraus (JOSS_TECHNIQUE_WATCH.md, Research-
-Benchmark-Erweiterung, erster JOSS-inspirierter Prototyp, externe
-Adoption) sind der naheliegendste naechste Schritt, falls der Nutzer
-nichts Konkretes mitbringt.** Ausdrueckliche Warnung aus diesem
-Dokument im Kopf behalten: kein Feature Creep, jede JOSS-Idee braucht
-erst eine Hypothese/ein bestehendes Problem im Template, Default
-"NO BACKPORT bis Evidenz vorhanden" (ADR-003 bleibt massgeblich).
-Kleinere Alternativen: die optionale Acknowledgements-Sektion in
-`joss/paper.md` ausfuellen, oder `finalize_run_provenance()` auf
-weitere Skripte ausrollen.
+(2026-08-30, Punkte 20-21) liegt vor - P0 (Dokumentationskonsistenz)
+UND P1 (`JOSS_TECHNIQUE_WATCH.md`) sind bereits erledigt. Naechster
+naheliegendster Schritt: P2 (erster JOSS-inspirierter Prototyp -
+VeridicalFlow/PCS-Decision-Stability oder astartes/schwierige-Splits
+als Top-Kandidaten laut Bewertungsdokument, siehe
+`JOSS_TECHNIQUE_WATCH.md`) oder P3 (externe Adoption vorbereiten),
+falls der Nutzer nichts Konkretes mitbringt.** Ausdrueckliche Warnung
+aus diesem Dokument im Kopf behalten: kein Feature Creep, jede
+JOSS-Idee braucht erst eine Hypothese/ein bestehendes Problem im
+Template, Default "NO BACKPORT bis Evidenz vorhanden" (ADR-003 bleibt
+massgeblich). Kleinere Alternativen: die optionale Acknowledgements-
+Sektion in `joss/paper.md` ausfuellen, `finalize_run_provenance()` auf
+weitere Skripte ausrollen, oder die optionale Research-Benchmark-
+Erweiterung (n=6->10-15, nur falls der Research-Pfad weiterverfolgt
+wird).
