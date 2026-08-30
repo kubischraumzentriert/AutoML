@@ -217,6 +217,13 @@ incorrectly," and propose an open, versioned benchmark framework for
 exactly that reason. Our own frozen `BENCHMARK_PROTOCOL.md` (fixed arms,
 fixed outer-fold seed, versioned rather than silently changed) is a
 much smaller-scale, single-team instance of the same underlying concern.
+For the actual statistical comparison *within* such a benchmark set, we
+follow Demšar (2006), *"Statistical Comparisons of Classifiers over
+Multiple Data Sets,"* JMLR — the standard reference for exactly the
+paired-Wilcoxon/Friedman-plus-post-hoc procedure we apply in Section 6,
+also packaged as the Python tool Autorank (Herbold, 2020, JOSS); we
+apply the same underlying test natively in R rather than adopting the
+Python package, consistent with this project's R-only policy.
 
 **Data leakage and dataset shift.** Kaufman, Rosset, and Perlich (2011),
 *"Leakage in Data Mining: Formulation, Detection, and Avoidance,"* KDD —
@@ -399,6 +406,23 @@ itself part of the paper's contribution: an honest evaluation of an
 AutoML workflow should report where added sophistication *fails* to
 help, not only where it succeeds.
 
+**A formal significance check makes this even more precise than the
+"3 wins, 3 losses" framing suggests.** Following the standard procedure
+for comparing two methods across multiple datasets [@Demsar2006] (as
+implemented, for example, in the Autorank package [@Herbold2020]), we
+ran a paired two-sided Wilcoxon signed-rank test on the per-dataset
+Level-2-vs-best-prior deltas (one aggregated score per dataset, not per
+fold, since folds within a dataset are not independent). Result:
+V = 8, p = 0.6875 — nowhere near significance at any conventional
+threshold. This is not surprising on its own (Demšar's own guidance is
+that the Wilcoxon test needs on the order of 8-10 datasets to have
+reasonable power, and we have 6), but it sharpens the honest conclusion:
+we cannot statistically distinguish the observed pattern from a
+zero-effect, mean-preserving mix of wins and losses. We report the exact
+test result rather than only the informal win/loss count specifically
+because a small, cherry-pickable set of deltas can look more like a
+"pattern" to a reader than the data actually support.
+
 ## 7. Trust-Layer Ablations
 
 Because the trust-layer modules are not score levers (they do not change
@@ -454,10 +478,15 @@ the process catches its own mistakes, not only the data's.
   addresses selection-*after*-seeing-results bias, but the inclusion
   criteria (instance/feature/class-count bounds) were still chosen by
   the same team that built the workflow.
-- **No formal significance testing.** Results are reported as point
-  estimates and deltas across a small number of datasets (6-7); no
-  correction for multiple comparisons or formal hypothesis test accompanies
-  the per-dataset deltas.
+- **Formal significance testing is now applied only to the Level 1-vs-2
+  comparison** (Section 6, a paired Wilcoxon signed-rank test following
+  [@Demsar2006]) — the other per-dataset deltas throughout Sections 5
+  and 7 are still reported as point estimates without a matching formal
+  test or a multiple-comparisons correction. With only 6-7 datasets per
+  comparison, any such test would have limited power regardless
+  ([@Demsar2006] recommends on the order of 8-10 datasets for the
+  Wilcoxon test used here); this is a real constraint of the sample
+  size, not a gap that more careful statistics alone would close.
 - **Level 2 tuning budget was small** (10 evaluations per arm per outer
   fold) for compute reasons; whether a larger budget changes the mixed
   result in Section 6 is untested.
@@ -499,6 +528,9 @@ ideally a second, independent implementation team.
   reduction. *IEEE Big Data*. https://research.google/pubs/the-ml-test-score-a-rubric-for-ml-production-readiness-and-technical-debt-reduction/
 - Caruana, R., Niculescu-Mizil, A., Crew, G., & Ksikes, A. (2004).
   Ensemble selection from libraries of models. *ICML*.
+- Demšar, J. (2006). Statistical comparisons of classifiers over
+  multiple data sets. *Journal of Machine Learning Research*, 7,
+  1-30.
 - Erickson, N., Mueller, J., Shirkov, A., Zhang, H., Larroy, P., Li, M.,
   & Smola, A. (2020). AutoGluon-Tabular: Robust and accurate AutoML for
   structured data. arXiv:2003.06505. https://arxiv.org/abs/2003.06505
@@ -514,6 +546,9 @@ ideally a second, independent implementation team.
   https://ojs.aaai.org/index.php/AAAI/article/view/11503
 - He, H., & García, E. A. (2009). Learning from imbalanced data. *IEEE
   Transactions on Knowledge and Data Engineering*, 21(9), 1263-1284.
+- Herbold, S. (2020). Autorank: A Python package for automated ranking
+  of classifiers. *Journal of Open Source Software*, 5(48), 2173.
+  https://doi.org/10.21105/joss.02173
 - Hutter, F., Kotthoff, L., & Vanschoren, J. (Eds.). (2019). *Automated
   Machine Learning: Methods, Systems, Challenges*. Springer.
   https://www.automl.org/book/

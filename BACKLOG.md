@@ -1903,6 +1903,51 @@ Auch im persistenten Gedaechtnis festgehalten (Datei
 `project_joss_publication_timeline.md`), damit eine kuenftige Session
 das nicht neu herleiten muss.
 
+### Research Aspect, 1. Schritt (2026-08-30): formaler Signifikanztest fuer P2 statt informeller "3/3"-Zaehlung
+
+**Nutzeranfrage**: "mach weiter mit dem Research Aspect, auf der Seite
+joss.theoj.org gibt es vielleicht interessante papers ... was meinst
+Du?" - JOSS-Papersuche nach AutoML-/Benchmark-/Ranking-relevanten
+Arbeiten durchgefuehrt (Browser, `joss.theoj.org/papers/search`).
+
+**Fund**: **Autorank** (Herbold 2020, JOSS,
+`10.21105/joss.02173`) implementiert die Standardmethodik von
+**Demsar (2006)**, *"Statistical Comparisons of Classifiers over
+Multiple Data Sets"* (JMLR) - Wilcoxon-Signed-Rank bei 2 Verfahren,
+Friedman+Nemenyi bei mehr, fuer Mehrfach-Datensatz-Vergleiche. Genau die
+Methodik, die unserem bisherigen "3 Siege/3 Niederlagen, Delta ≈ -0.7"-
+Befund aus P2 fehlte. Autorank selbst ist Python - **bewusst NICHT
+uebernommen** (R-only-Policy), stattdessen dieselbe Methodik nativ in R
+angewendet (`stats::wilcox.test`, Basis-R, kein neues Paket noetig).
+
+**Neues Skript** [`p2_level2_significance_test.R`](p2_level2_significance_test.R)
+(Repo-Root): gepaarter, exakter Wilcoxon-Signed-Rank-Test ueber die 6
+Datensaetze (EIN aggregierter Wert pro Datensatz, nicht pro Outer-Fold -
+Folds sind nicht unabhaengig, das wuerde die Stichprobe kuenstlich
+aufblaehen). **Ergebnis: V = 8, p = 0.6875** - bei n = 6 statistisch
+NICHT von einem Nulleffekt unterscheidbar. Demsar selbst empfiehlt fuer
+den Wilcoxon-Test ~8-10 Datensaetze fuer ausreichende Power - eine
+echte Stichprobengroessen-Einschraenkung, kein Kunstfehler.
+
+**In `PAPER_DRAFT.md` eingearbeitet**:
+- Section 6 (Level-2-Negativbefund): der formale Test ergaenzt (nicht
+  ersetzt) die informelle 3/3-Zaehlung, mit der expliziten Begruendung,
+  warum das wichtig ist ("a small, cherry-pickable set of deltas can
+  look more like a 'pattern' ... than the data actually support").
+- Section 8 (Limitations): der bisherige "No formal significance
+  testing"-Punkt praezisiert - gilt jetzt nur noch fuer die UEBRIGEN
+  Vergleiche (Sections 5/7), nicht mehr fuer den Level-1-vs-2-Vergleich.
+- Section 3 (Related Work): Demsar (2006)/Autorank als eigener
+  Methodik-Absatz ergaenzt.
+- References: beide Quellen ergaenzt.
+
+**Einordnung fuer den Research-Aspect insgesamt**: das ist ein erster,
+GUENSTIGER Schritt (reine Nachanalyse bestehender Zahlen, kein neuer
+Lauf) - macht die Ehrlichkeit des Negativbefunds praeziser/belastbarer,
+ERKLAERT aber noch NICHT, warum das Muster existiert (das bleibt der
+naechste, teurere Schritt: Tuning-Budget-Variation und/oder
+Metafeature-Analyse, siehe oben).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
