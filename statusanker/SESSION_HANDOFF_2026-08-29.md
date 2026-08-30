@@ -24,17 +24,21 @@ gegen JOSS' eigene Docs verifizierten Risiken (Alters-Gate,
 Scope-Fit-Frage) bewusst PAUSIERT statt aufgegeben, Wiedervorlage
 ~November 2026; ausserdem ein kleiner Abstecher in das separate
 Logseq-Lernkarten-Repo `C:\Users\HP\Documents\ML01` (5 neue ESS-Karten +
-Nutzer-Sammelcommit).
+Nutzer-Sammelcommit). **11. Aktualisierung:** der komplette
+"Research Aspect"-Weg (3 Schritte: formaler Signifikanztest,
+Tuning-Budget-Test, Metafeature-Analyse) fuer P2s Level-2-Befund
+durchgefuehrt und abgeschlossen, plus AutoML-Conf als parallele
+Alternativ-Venue zu JOSS notiert (2026 nicht mehr erreichbar, 2027
+ABCD-Track vermerkt).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `55ef74f` "JOSS-Einreichung pausiert: 2 echte
-  Risiken gefunden (Alters-Gate + Scope-Fit), Wiedervorlage ~Nov 2026" -
-  gepusht. `.md`-only, CI Smoke Test triggert dafuer nicht - letzter
-  tatsaechlicher CI-Smoke-Test-Lauf weiterhin gruen fuer `086243c`
-  (Lauf `33256552839`). Der `Draft JOSS PDF`-Workflow (eingerichtet in
-  `040d955`) lief bereits einmal erfolgreich (Lauf `33271527454`) -
-  Artifact heruntergeladen, echtes valides 4-Seiten-PDF bestaetigt.
+- `MLR3_Classifikation` @ `d29ea0d` "Research Aspect, 3. Schritt:
+  Metafeature-Analyse - keine univariate Erklaerung gefunden" - gepusht,
+  CI Smoke Test gruen (Lauf `33300592379`).
+- Der `Draft JOSS PDF`-Workflow (eingerichtet in `040d955`) lief bereits
+  einmal erfolgreich (Lauf `33271527454`) - Artifact heruntergeladen,
+  echtes valides 4-Seiten-PDF bestaetigt.
 - **Separates Repo** `C:\Users\HP\Documents\ML01` (Logseq-Lernkarten-
   Graph, GitHub `kubischraumzentriert/LogSeq`): neue Seite `Effective
   Sample Size (ESS).md` (5 Karten) + Verlinkung in `Data Leakage.md`/
@@ -385,23 +389,71 @@ entsteht. Danach auf Nutzerwunsch ("im Grund alles committen") ein
 Sammelcommit fuer bereits vorhandene lokale Aenderungen (manuelle
 Umlaut-Korrekturen, SRS-Reviews, Backups).
 
+**18. Alternative Ziel-Venue notiert: AutoML-Conf** (Nutzerhinweis
+"Wir sollten auch AutoML-Conf-Workshop nicht vergessen"). Per Websuche
+geprueft: AutoML-Conf 2026 nicht mehr erreichbar (Hauptdeadline
+2026-05-14 verstrichen, selbst Late-Breaking-Abstracts schliessen
+2026-08-31). **AutoML-Conf 2027 ist die reale Option** - CFP im Auge
+behalten, der ABCD-Track ("Applications, Benchmarks, Challenges,
+Datasets") passt inhaltlich vermutlich SOGAR BESSER als JOSS zu diesem
+Projekt (kein Scope-Fit-Risiko wie bei JOSS). Kein Konflikt mit dem
+JOSS-Zeitplan - beide Optionen parallel verfolgbar. Auch im
+persistenten Gedaechtnis ergaenzt.
+
+**19. Der komplette "Research Aspect"-Weg fuer P2s Level-2-Befund -
+3 Schritte, alle abgeschlossen** (Nutzeranfragen "mach weiter mit dem
+Research Aspect" -> "ja, mach weiter mit dem Tuning-Budget-Test" ->
+"ok mach weiter mit dem nächsten Kandidat"):
+
+1. **Formaler Signifikanztest statt "3/3"-Zaehlung**: JOSS-Papersuche
+   fand Autorank (Herbold 2020, JOSS) - implementiert Demsar (2006)s
+   Standardmethodik fuer Mehrfach-Datensatz-Vergleiche. Bewusst NICHT
+   als Python-Tool uebernommen (R-only-Policy), sondern nativ in R
+   angewendet (`p2_level2_significance_test.R`). Ergebnis: gepaarter
+   Wilcoxon-Test, V=8, p=0.6875 - bei n=6 statistisch nicht von einem
+   Nulleffekt unterscheidbar.
+2. **Tuning-Budget-Hypothese getestet und AUSGESCHLOSSEN**: alle 6
+   Datensaetze mit 3x Budget (30 statt 10 Evals/Arm, ueber neue
+   `LEVEL2_TUNING_EVALS`-Env-Var) neu gelaufen. Gepaarter Wilcoxon-Test
+   30- vs. 10-Evals direkt: V=11, p=1.0 - der denkbar nullste Befund.
+   `ilpd`/`optdigits` flippen sogar in ENTGEGENGESETZTE Richtungen
+   (ilpd Niederlage->Sieg, optdigits Sieg->Niederlage).
+3. **5 Metafeatures getestet - ebenfalls KEINE Erklaerung gefunden**
+   (`p2_level2_metafeature_analysis.R`): Datensatzgroesse, Klassen-
+   imbalance, Minderheitsklassen-Zeilenzahl im Inner-Tune, Score-
+   Instabilitaet, Deckennaehe - alle |Spearman-rho| <= 0.37, alle
+   p >= 0.49 bei n=6. Klassenverteilungen aus den gespeicherten
+   `task_train_small.rds` gelesen, nicht geschaetzt.
+
+**Ehrliche Gesamtschlussfolgerung, in `PAPER_DRAFT.md` Section 6
+eingearbeitet**: nach Ausschluss von Groesse/Imbalance (informell),
+Tuning-Budget (formal) UND 5 weiteren Metafeatures bleibt P2s
+gemischtes Level-2-Muster OHNE einfache univariate Erklaerung - entweder
+Interaktion hoeherer Ordnung oder irreduzibles Datensatz-Rauschen, mit
+n=6 nicht unterscheidbar. Alle Ergebnisse in die Evidence Registry
+geloggt. Beide neuen Skripte + alle 6 Projekt-Kopien in beiden Repos
+(MLR3_Classifikation, ML_Learning) committed und gepusht, CI durchgehend
+gruen verifiziert (nicht nur angenommen).
+
 ## Offene Punkte fuer die naechste Session
 
 **Die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
 (2026-08-29) ist vollstaendig abgearbeitet, ebenso alle im Paper-Draft/
-`joss/`-Ordner selbst benannten Vorbereitungsschritte.** Die
-JOSS-Einreichung selbst ist bewusst pausiert. Nur noch optionale
-Folgeschritte offen, keiner dringend:
-- **Wiedervorlage ~November 2026**: Zwischenbilanz zum vorgeschlagenen
-  "Research Aspect" (P2s Level-2-Ergebnis erklaeren) - siehe Punkt 16
-  oben und `project_joss_publication_timeline.md` im persistenten
-  Gedaechtnis. Die tatsaechliche JOSS-Einreichung selbst ist erst ab
-  ~2027-01-07 ueberhaupt moeglich (6-Monats-Gate).
+`joss/`-Ordner selbst benannten Vorbereitungsschritte UND der komplette
+3-Schritte-Research-Aspect-Weg.** Die JOSS-Einreichung selbst ist
+bewusst pausiert. Nur noch optionale Folgeschritte offen, keiner
+dringend:
+- **Wiedervorlage ~November 2026**: JOSS-Status pruefen (bleibt bis
+  ~2027-01-07 ohnehin nicht einreichbar) UND AutoML-Conf-2027-CFP im
+  Auge behalten - siehe `project_joss_publication_timeline.md` im
+  persistenten Gedaechtnis.
 - Optional: die Acknowledgements-Sektion in `joss/paper.md` ausfuellen,
   falls gewuenscht (bleibt sonst als expliziter `TODO` stehen).
-- Optional: pruefen, ob ein groesseres Tuning-Budget fuer Level 2
-  (aktuell 10 Evals/Arm) das gemischte P2-Ergebnis veraendert - waere
-  Teil des vorgeschlagenen Research-Aspect-Wegs.
+- Optional: ein NOCH groesseres Tuning-Budget als 30 Evals testen (im
+  Paper explizit als ungetestet benannt), oder eine hoehere-Ordnung-
+  Interaktion zwischen den bereits getesteten Metafeatures untersuchen -
+  beides wuerde vermutlich ein groesseres externes Benchmark-Set als 6
+  Datensaetze erfordern, um ueberhaupt Power zu haben.
 - Optional: `finalize_run_provenance()` auf weitere aktive Skripte
   ausrollen (`030_baseline.R` ist bislang die einzige
   Referenzimplementierung).
@@ -458,11 +510,15 @@ Folgeschritte offen, keiner dringend:
 Kein zwingender Einstiegspunkt, ABER ein wichtiger Kontext-Hinweis: die
 JOSS-Einreichung selbst ist bewusst PAUSIERT bis ~2027-01-07 (6-Monats-
 Repo-Alter-Gate) UND wegen eines offenen Scope-Fit-Risikos - siehe
-Punkt 16 oben/`project_joss_publication_timeline.md`. NICHT einfach
-"jetzt einreichen" vorschlagen, falls der Nutzer das Thema ohne
-weiteren Kontext wieder aufbringt. Falls der Nutzer nichts Konkretes
-mitbringt: den vorgeschlagenen "Research Aspect" angehen (P2s
-unerklaertes Level-2-Ergebnis systematisch untersuchen - groesseres
-Tuning-Budget, Metafeature-basierte Vorhersage), die optionale
-Acknowledgements-Sektion in `joss/paper.md` ausfuellen, oder
-`finalize_run_provenance()` auf weitere Skripte ausrollen.
+Punkt 16/`project_joss_publication_timeline.md`. NICHT einfach "jetzt
+einreichen" vorschlagen, falls der Nutzer das Thema ohne weiteren
+Kontext wieder aufbringt - AutoML-Conf-2027 (Punkt 18) als
+Alternative im Kopf behalten. Der 3-Schritte-Research-Aspect-Weg
+(Punkt 19) ist fuer diese Sitzung ABGESCHLOSSEN - alle 3 Kandidaten
+(Signifikanztest/Tuning-Budget/Metafeatures) getestet, das gemischte
+P2-Muster bleibt ohne einfache Erklaerung. Falls der Nutzer nichts
+Konkretes mitbringt: die optionale Acknowledgements-Sektion in
+`joss/paper.md` ausfuellen, `finalize_run_provenance()` auf weitere
+Skripte ausrollen, oder (deutlich groesserer Schritt, nur auf explizite
+Anfrage) ein noch groesseres externes Benchmark-Set fuer mehr
+statistische Power bei der Research-Aspect-Frage aufbauen.
