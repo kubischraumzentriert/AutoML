@@ -1948,6 +1948,30 @@ ERKLAERT aber noch NICHT, warum das Muster existiert (das bleibt der
 naechste, teurere Schritt: Tuning-Budget-Variation und/oder
 Metafeature-Analyse, siehe oben).
 
+### Alternative Ziel-Venue notiert: AutoML-Conf (2026-08-30)
+
+**Nutzerhinweis**: "Wir sollten auch AutoML-Conf-Workshop nicht
+vergessen - eventuell koennen wir dort ein paper einreichen".
+
+Per Websuche geprueft (`2026.automl.cc/dates/`): **AutoML-Conf 2026
+ist fuer diesen Zyklus nicht mehr erreichbar** - Haupt-/ABCD-Track-
+Deadline war 2026-05-14, selbst Late-Breaking-Abstracts schliessen
+2026-08-31, Workshop-Proposals schlossen bereits 2026-06-30.
+
+**AutoML-Conf 2027 ist die reale Option** - CFP dafuer im Auge behalten
+(vermutlich aehnlicher Rhythmus wie 2026, Hauptdeadline ~April/Mai
+2027). Der **ABCD-Track** ("Applications, Benchmarks, Challenges,
+Datasets") passt inhaltlich vermutlich SOGAR BESSER als JOSS zu diesem
+Projekt - Benchmark-Protokoll, Evaluations-Ebenen-Framework, ehrliche
+Negativbefunde sind genau das, was ABCD sucht, waehrend JOSS' enge
+"research software"-Scope-Definition (siehe oben, "JOSS-Einreichung
+pausiert") ein Wettbewerbs-Methodik-Template nicht sauber abdeckt.
+Kein Konflikt mit dem JOSS-Zeitplan (~2027-01-07 einreichungsfaehig) -
+beide Optionen koennen parallel verfolgt werden.
+
+Auch im persistenten Gedaechtnis ergaenzt
+(`project_joss_publication_timeline.md`).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

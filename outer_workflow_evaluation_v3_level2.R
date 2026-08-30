@@ -85,7 +85,11 @@ class_names <- task_full$class_names
 tuning_measure_id <- baseline_measure_ids[1]
 tuning_measure <- msr(tuning_measure_id)
 lightgbm_default_iterations <- if (exists("lightgbm_tuning_final_iterations")) lightgbm_tuning_final_iterations else 200
-tuned_baseline_evals <- 10 # Compute-Budget, siehe Kopfkommentar
+tuned_baseline_evals <- as.integer(Sys.getenv("LEVEL2_TUNING_EVALS", "10")) # Compute-Budget, siehe Kopfkommentar
+# Ueberschreibbar per Umgebungsvariable LEVEL2_TUNING_EVALS (Default 10,
+# identisch zum eingefrorenen Protokoll v3) - fuer den Research-Aspect
+# 2026-08-30 (Tuning-Budget-Variation, siehe BACKLOG.md), OHNE das
+# frozen Default-Verhalten zu aendern.
 
 metric_fn <- function(truth, response) tuning_measure$score(
   PredictionClassif$new(row_ids = seq_along(truth), truth = truth, response = response)
