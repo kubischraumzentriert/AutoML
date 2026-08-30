@@ -2312,6 +2312,78 @@ NICHT angelegt, auf Nachfrage aber genannt.
 
 `adr/README.md`s Index-Tabelle aktualisiert (jetzt 9 ADRs).
 
+### P2 - Decision-Stability-Prototyp auf alle 6 externen Datensaetze ausgerollt (2026-08-30)
+
+**Nutzeranfrage**: nach Rueckfrage zur Stichprobengroesse ("sollten wir
+n erhoehen ... auf 8?") wurde geklaert, dass "n" die Anzahl getesteter
+PROJEKTE meint (nicht die 10 Wiederholungen/Projekt) - Empfehlung: auf
+alle 6 bereits eingefrorenen externen Datensaetze gehen statt auf 8 mit
+2 methodisch fragwuerdigen Zusatzprojekten (Benchmark-Selection-Bias-
+Risiko). Nutzerentscheidung: "mach mit allen 6 weiter".
+
+**Volles Ergebnis (Outer-Fold 1, identischer Aufbau wie bei ilpd/
+blood-transfusion)**:
+
+| Datensatz | Stabilitaet | Geflaggt? | Level-2-Delta (vs. bisher bester Wert) |
+|---|---|---|---|
+| `ilpd` | 70% | nein | -3.7 |
+| `blood-transfusion` | 60% | ja | +3.0 |
+| `sick` | 60% | ja | +0.1 |
+| `cmc` | 50% | ja | -2.6 |
+| `analcatdata-authorship` | 70% | nein | -1.9 |
+| `optdigits` | 60% | ja | +0.2 |
+
+**Formale Nachanalyse** (neues Skript
+[`decision_stability_level2_analysis.R`](decision_stability_level2_analysis.R)):
+Spearman-Korrelation Stabilitaet vs. Level-2-Delta: **rho = -0.28, p =
+0.59** (n=6, NICHT signifikant - wie beim gesamten Research-Aspect-Weg
+erwartungsgemaess bei dieser Stichprobengroesse). Wilcoxon-Rangsummen-
+test geflaggt vs. nicht geflaggt: W=7, p=0.27 (ebenfalls nicht
+signifikant).
+
+**ABER eine konsistente Richtung ueber alle 6 Datensaetze**: die 4
+GEFLAGGTEN (instabilen) Datensaetze hatten im Mittel einen POSITIVEN
+Level-2-Delta (+0.175 BAcc-Punkte), die 2 NICHT geflaggten (stabilen)
+Datensaetze hatten im Mittel einen deutlich NEGATIVEN Delta (-2.8
+Punkte). Das ist GENAU die Richtung, die schon beim urspruenglichen
+n=2-Befund auffiel (`blood-transfusion` instabil+gut, `ilpd`
+stabil+schlecht) - sie kippt beim Rollout auf alle 6 NICHT um, sondern
+bestaetigt sich richtungsmaessig (wenn auch statistisch nicht
+signifikant).
+
+**Ehrliche Einordnung**: dies ist WEDER ein bewiesener Zusammenhang
+(p-Werte klar ueber jeder ueblichen Signifikanzschwelle bei n=6) NOCH
+ein zufaellig verschwundenes Muster - die Richtung ist bemerkenswert
+konsistent (4/4 geflaggte Datensaetze positiv oder neutral, 2/2 nicht
+geflaggte negativ), aber die Stichprobe ist zu klein fuer eine
+verlaessliche Aussage. Genau die Art von Befund, die eine groessere
+Stichprobe (mehr Datensaetze UND/ODER mehr Outer-Folds pro Datensatz)
+rechtfertigen wuerde, falls der Research-/AutoML-Conf-Pfad
+weiterverfolgt wird.
+
+**Moegliche Erklaerung (Spekulation, nicht getestet)**: eine instabile
+Arm-Wahl bedeutet, dass die 3 Kandidaten (ranger/lightgbm/ensemble)
+im Inner-Tune-Score nah beieinander liegen - das Mini-Ensemble
+"gewinnt" dann oefter oder zumindest ist der gewaehlte Kandidat selten
+weit vom besten entfernt, was den Outer-Test-Schaden einer "falschen"
+Wahl begrenzt. Bei einer stabilen Wahl (ein klarer Inner-Gewinner)
+haengt das Endergebnis dagegen staerker davon ab, ob dieser klare
+Gewinner auch auf Outer-Test wirklich der beste ist - und wenn nicht,
+faellt der Schaden groesser aus. Diese Erklaerung ist NICHT
+verifiziert, nur als plausible Hypothese fuer eine kuenftige,
+groessere Untersuchung festgehalten.
+
+Alle 6 Ergebnisse + der aggregierte Korrelationstest in die Evidence
+Registry geloggt. `decision_stability.R`/`decision_stability_level2_
+prototype.R` bereits in allen 6 `ML_Learning`-Projektordnern
+synchronisiert.
+
+**Kein Backport weiterhin** (ADR-003) - die konkrete Anwendung auf
+Level 2 liefert immer noch keine actionable Handlungsempfehlung
+("wenn instabil, dann X"), auch mit 6 statt 2 Datensaetzen nicht. Das
+generische `decision_stability.R`-Modul selbst bleibt im Template
+(bereits getestet/nuetzlich unabhaengig von dieser einen Anwendung).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
