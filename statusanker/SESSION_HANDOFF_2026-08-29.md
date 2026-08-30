@@ -29,16 +29,23 @@ Nutzer-Sammelcommit). **11. Aktualisierung:** der komplette
 Tuning-Budget-Test, Metafeature-Analyse) fuer P2s Level-2-Befund
 durchgefuehrt und abgeschlossen, plus AutoML-Conf als parallele
 Alternativ-Venue zu JOSS notiert (2026 nicht mehr erreichbar, 2027
-ABCD-Track vermerkt).
+ABCD-Track vermerkt). **12. Aktualisierung:** ein VIERTES externes
+Bewertungsdokument eingebracht (2026-08-30), dessen P0
+(Dokumentationskonsistenz-Pass) vollstaendig abgearbeitet - 3 konkrete
+Drift-Funde (`EVALUATION_LEVELS.md`, `EXTERNAL_BENCHMARK_SET.md`,
+`joss/paper.md`s "package"-Wortwahl) + der Evidence-Registry-Claim
+korrigiert.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `d29ea0d` "Research Aspect, 3. Schritt:
-  Metafeature-Analyse - keine univariate Erklaerung gefunden" - gepusht,
-  CI Smoke Test gruen (Lauf `33300592379`).
-- Der `Draft JOSS PDF`-Workflow (eingerichtet in `040d955`) lief bereits
-  einmal erfolgreich (Lauf `33271527454`) - Artifact heruntergeladen,
-  echtes valides 4-Seiten-PDF bestaetigt.
+- `MLR3_Classifikation` @ `3509661` "P0 (2026-08-30-Bewertung):
+  Dokumentationskonsistenz-Pass" - gepusht. `.md`-only, CI Smoke Test
+  (Haupt-Workflow) triggert dafuer nicht - letzter tatsaechlicher
+  CI-Smoke-Test-Lauf weiterhin gruen fuer `d29ea0d` (Lauf
+  `33300592379`). Der `Draft JOSS PDF`-Workflow lief fuer diesen Commit
+  (da `joss/paper.md` geaendert wurde) erneut erfolgreich (Lauf
+  `33307346419`) - bestaetigt, das aktualisierte Paper kompiliert
+  weiterhin sauber.
 - **Separates Repo** `C:\Users\HP\Documents\ML01` (Logseq-Lernkarten-
   Graph, GitHub `kubischraumzentriert/LogSeq`): neue Seite `Effective
   Sample Size (ESS).md` (5 Karten) + Verlinkung in `Data Leakage.md`/
@@ -435,25 +442,66 @@ geloggt. Beide neuen Skripte + alle 6 Projekt-Kopien in beiden Repos
 (MLR3_Classifikation, ML_Learning) committed und gepusht, CI durchgehend
 gruen verifiziert (nicht nur angenommen).
 
+**20. VIERTES externes Bewertungsdokument (2026-08-30) - P0 abgearbeitet**
+(Nutzer legte `AutoML_Bewertung_Naechste_Schritte_JOSS_Technique_Watch_
+2026-08-30.md` vor, per `AskUserQuestion` "P0 zuerst" gewaehlt).
+Kernaussage des Dokuments: Projekt technisch weitgehend ausgereift
+(9.5-9.9 je Kategorie), Engpass jetzt Dokumentationskonsistenz/externe
+Evidenzbreite/Publikationsstrategie statt Software-Funktionalitaet.
+Neue Roadmap: P0 Dokumentationskonsistenz, P1 `JOSS_TECHNIQUE_WATCH.md`
++ optionale Research-Benchmark-Erweiterung (n=6->10-15), P2 erster
+JOSS-inspirierter Forschungsprototyp (VeridicalFlow/PCS-Decision-
+Stability oder astartes/schwierige Splits als Top-Kandidaten), P3
+externe Adoption.
+
+**P0 vollstaendig erledigt**: `EVALUATION_LEVELS.md`s Roadmap-Abschnitt
+(sagte noch "P1/P2/P3 offen") und `EXTERNAL_BENCHMARK_SET.md` (sagte
+noch "Noch NICHT ausgefuehrt", Kopf + Schlussabschnitt) auf den
+tatsaechlichen Stand korrigiert. `joss/paper.md`s "package"-Wortwahl
+(10 Stellen) durch "template" ersetzt (mlr3-Paket-Referenzen und der
+"kein R-Paket"-Kontrast bewusst unveraendert). Evidence-Registry-Claim
+in `joss/paper.md` UND `PAPER_DRAFT.md` praezisiert (tatsaechliche
+Arbeitsteilung manuell/generiert statt pauschaler Aussage).
+`BENCHMARK_PROTOCOL.md`/`AGENTS.md`/`BACKLOG.md` selbst geprueft, keine
+weitere Drift gefunden (BACKLOG.md ist ein chronologisches Journal,
+historische Eintraege sind fuer ihren Zeitstempel korrekt). Draft-PDF-
+Workflow nach der Aenderung erneut erfolgreich verifiziert (Lauf
+`33307346419`).
+
 ## Offene Punkte fuer die naechste Session
 
-**Die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
-(2026-08-29) ist vollstaendig abgearbeitet, ebenso alle im Paper-Draft/
-`joss/`-Ordner selbst benannten Vorbereitungsschritte UND der komplette
-3-Schritte-Research-Aspect-Weg.** Die JOSS-Einreichung selbst ist
-bewusst pausiert. Nur noch optionale Folgeschritte offen, keiner
-dringend:
+**Die GESAMTE P0-P3-Roadmap des DRITTEN Bewertungsdokuments
+(2026-08-29) ist vollstaendig abgearbeitet, ebenso P0 des VIERTEN
+Bewertungsdokuments (2026-08-30, Dokumentationskonsistenz).** Die
+JOSS-Einreichung selbst ist bewusst pausiert.
+
+**Aus dem VIERTEN Bewertungsdokument noch offen (P1-P3, auf explizite
+Nutzeranweisung)**:
+- **P1**: `JOSS_TECHNIQUE_WATCH.md` anlegen (7 Kandidaten aus dem
+  Bewertungsdokument: VeridicalFlow, astartes, Autorank, PyExperimenter,
+  ReciPies, ImageMLResearch, mlr3extralearners - noch keine
+  Implementierung, nur strukturierte Recherche-Dokumentation) + optional
+  Research-Benchmark von n=6 auf n=10-15 CC18-Datensaetze erweitern
+  (deutlich teurer, nur falls der Research-/AutoML-Conf-Pfad
+  weiterverfolgt wird - VORHER einfrieren, nicht nach Sicht der Zahlen).
+- **P2**: erster JOSS-inspirierter Forschungsprototyp - Top-Kandidaten
+  laut Bewertung: VeridicalFlow/PCS-Decision-Stability-Report oder
+  astartes/schwierige-Splits-Stresstest. Nur Prototyp, kein Backport
+  ohne Evidenz (ADR-003 bleibt massgeblich).
+- **P3**: externe Adoption vorbereiten (Start-here-Anleitung, erstes
+  Release, externe Nutzerfeedbacks als Evidenz behandeln).
+- **Ausdrueckliche Warnung aus dem Bewertungsdokument**: KEIN Feature
+  Creep - jede JOSS-Idee braucht erst eine eigene Hypothese/ein
+  bestehendes Problem im Template, bevor prototypisiert wird. Default:
+  "NO BACKPORT bis Evidenz vorhanden".
+
+**Weiterhin offen, unabhaengig vom vierten Bewertungsdokument**:
 - **Wiedervorlage ~November 2026**: JOSS-Status pruefen (bleibt bis
   ~2027-01-07 ohnehin nicht einreichbar) UND AutoML-Conf-2027-CFP im
   Auge behalten - siehe `project_joss_publication_timeline.md` im
   persistenten Gedaechtnis.
 - Optional: die Acknowledgements-Sektion in `joss/paper.md` ausfuellen,
   falls gewuenscht (bleibt sonst als expliziter `TODO` stehen).
-- Optional: ein NOCH groesseres Tuning-Budget als 30 Evals testen (im
-  Paper explizit als ungetestet benannt), oder eine hoehere-Ordnung-
-  Interaktion zwischen den bereits getesteten Metafeatures untersuchen -
-  beides wuerde vermutlich ein groesseres externes Benchmark-Set als 6
-  Datensaetze erfordern, um ueberhaupt Power zu haben.
 - Optional: `finalize_run_provenance()` auf weitere aktive Skripte
   ausrollen (`030_baseline.R` ist bislang die einzige
   Referenzimplementierung).
@@ -512,13 +560,17 @@ JOSS-Einreichung selbst ist bewusst PAUSIERT bis ~2027-01-07 (6-Monats-
 Repo-Alter-Gate) UND wegen eines offenen Scope-Fit-Risikos - siehe
 Punkt 16/`project_joss_publication_timeline.md`. NICHT einfach "jetzt
 einreichen" vorschlagen, falls der Nutzer das Thema ohne weiteren
-Kontext wieder aufbringt - AutoML-Conf-2027 (Punkt 18) als
-Alternative im Kopf behalten. Der 3-Schritte-Research-Aspect-Weg
-(Punkt 19) ist fuer diese Sitzung ABGESCHLOSSEN - alle 3 Kandidaten
-(Signifikanztest/Tuning-Budget/Metafeatures) getestet, das gemischte
-P2-Muster bleibt ohne einfache Erklaerung. Falls der Nutzer nichts
-Konkretes mitbringt: die optionale Acknowledgements-Sektion in
-`joss/paper.md` ausfuellen, `finalize_run_provenance()` auf weitere
-Skripte ausrollen, oder (deutlich groesserer Schritt, nur auf explizite
-Anfrage) ein noch groesseres externes Benchmark-Set fuer mehr
-statistische Power bei der Research-Aspect-Frage aufbauen.
+Kontext wieder aufbringt - AutoML-Conf-2027 (Punkt 18) als Alternative
+im Kopf behalten. Der 3-Schritte-Research-Aspect-Weg (Punkt 19) ist fuer
+diese Sitzung ABGESCHLOSSEN. **Ein VIERTES Bewertungsdokument
+(2026-08-30, Punkt 20) liegt vor, dessen P0 (Dokumentationskonsistenz)
+erledigt ist - P1-P3 daraus (JOSS_TECHNIQUE_WATCH.md, Research-
+Benchmark-Erweiterung, erster JOSS-inspirierter Prototyp, externe
+Adoption) sind der naheliegendste naechste Schritt, falls der Nutzer
+nichts Konkretes mitbringt.** Ausdrueckliche Warnung aus diesem
+Dokument im Kopf behalten: kein Feature Creep, jede JOSS-Idee braucht
+erst eine Hypothese/ein bestehendes Problem im Template, Default
+"NO BACKPORT bis Evidenz vorhanden" (ADR-003 bleibt massgeblich).
+Kleinere Alternativen: die optionale Acknowledgements-Sektion in
+`joss/paper.md` ausfuellen, oder `finalize_run_provenance()` auf
+weitere Skripte ausrollen.
