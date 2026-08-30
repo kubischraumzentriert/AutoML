@@ -2231,8 +2231,59 @@ unnoetig).
 
 **Ergebnis ilpd**: `ranger` gewinnt bei 7/10 Wiederholungen (70%) -
 knapp NICHT geflaggt (Schwelle ist "<70%"), aber auch keine
-ueberwaeltigende Stabilitaet. Zweites Projekt (`blood-transfusion`)
-laeuft parallel/als naechstes.
+ueberwaeltigende Stabilitaet.
+
+**Ergebnis blood-transfusion (2. reales Projekt, identischer Aufbau)**:
+`ranger` gewinnt nur bei 6/10 Wiederholungen (60%) - **GEFLAGGT
+AUFFAELLIG** (unter der 70%-Schwelle). Verteilung: ranger=6,
+ensemble=2, lightgbm=2.
+
+**Bemerkenswerter, gegen die naive Erwartung laufender Befund**: im
+urspruenglichen Level-2-Rollout (P2, siehe oben) hatte `blood-
+transfusion` den DEUTLICH BESSEREN Outer-Score (level2_workflow +3.0
+BAcc-Punkte gegenueber dem bisher besten Wert - der klarste Level-2-
+Sieg ueberhaupt), waehrend `ilpd` den SCHLECHTEREN hatte (-3.7 Punkte,
+die klarste Level-2-Niederlage). Die Decision-Stability-Messung zeigt
+jetzt das GENAUE GEGENTEIL der naiven Erwartung "instabile Entscheidung
+-> schlechteres Ergebnis": `blood-transfusion`s instabilere
+Arm-Wahl (60%) gehoert zum besseren Endergebnis, `ilpd`s stabilere
+Arm-Wahl (70%) zum schlechteren. Bei n=2 ist das KEIN belastbarer
+statistischer Schluss (dieselbe Vorsicht wie beim gesamten Research-
+Aspect-Weg oben: kleine Stichprobe, keine Ueberinterpretation), aber
+ein bemerkenswerter erster Befund, der zeigt: **Decision Stability (in
+diesem gemessenen Sinn) ist offenbar NICHT einfach ein Proxy fuer
+"gutes Endergebnis"** - eine instabile Modellwahl kann trotzdem (oder
+gerade deswegen, z.B. weil das Mini-Ensemble als robusterer Kompromiss
+oefter mitspielt) zu einem guten Outer-Test-Ergebnis fuehren. Das
+relativiert einen impliziten Teil der VeridicalFlow-Uebertragungs-
+Hypothese ("Stabilitaet = zusaetzliche Trust-Information") - Stabilitaet
+ist ein EIGENSTAENDIGES Signal (verdient als solches Beachtung), aber
+kein verlaesslicher Vorhersager fuer Ergebnisqualitaet, zumindest nicht
+in diesen 2 Faellen.
+
+Beide Ergebnisse in die Evidence Registry geloggt (Rolle `score_lever`,
+`ilpd` Status `confirmed`, `blood-transfusion` Status `core_finding`
+wegen des gegenlaeufigen Befunds).
+
+**Einordnung nach ADR-003**: 2 unabhaengige Projekte sind die formale
+Mindestbestaetigungsschwelle - ABER hier gibt es (noch) keinen
+einheitlichen POSITIVEN Befund zum Bestaetigen, sondern zwei
+unterschiedliche Stabilitaetswerte mit einem gegenlaeufigen Bezug zum
+Endergebnis. **Kein Backport** in dieser Form - das Modul
+(`decision_stability.R`) selbst ist generisch und nuetzlich genug, um
+im Template zu bleiben (bereits per Test abgesichert), aber die
+KONKRETE Anwendung auf die Level-2-Arm-Wahl liefert noch keine klare,
+actionable Handlungsempfehlung ("wenn instabil, dann X tun"). Weitere
+Datenpunkte (mehr Projekte/Outer-Folds) waeren noetig, bevor eine
+Schlussfolgerung wie "instabile Entscheidungen sollten anders behandelt
+werden" gerechtfertigt waere.
+
+**Status P2 (VeridicalFlow-Prototyp)**: ABGESCHLOSSEN im Rahmen des
+vereinbarten Umfangs (kleiner Prototyp + synthetischer Test + 2 reale
+Projekte). Ergebnis: ein funktionierendes, getestetes, wiederverwendbares
+Modul PLUS ein ehrlicher, gegen die eigene Ausgangshypothese laufender
+Befund - genau die Art Ergebnis, die dieses Projekt bewusst offen
+dokumentiert statt zu verschweigen.
 
 ## Zielbild
 
