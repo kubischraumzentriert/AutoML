@@ -2189,6 +2189,51 @@ vorsichtshalber verifiziert.
 (erster JOSS-inspirierter Prototyp - VeridicalFlow oder astartes als
 Top-Kandidaten), P3 (externe Adoption) - auf explizite Nutzeranweisung.
 
+### P2 - Status (2026-08-30): Decision-Stability-Prototyp (VeridicalFlow/PCS-inspiriert)
+
+**Nutzeranfrage**: "mach weiter mit P2", per `AskUserQuestion`
+"VeridicalFlow / Decision-Stability-Report" gewaehlt (Alternativen:
+astartes/schwierige Splits, oder beide erst grob skizzieren).
+
+Pipeline aus `JOSS_TECHNIQUE_WATCH.md` befolgt: Problem identifiziert ->
+Hypothese -> Komplexitaetskosten -> kleiner Prototyp -> synthetischer
+Test -> 1-2 reale Projekte.
+
+**Neues, generisches Modul** [`decision_stability.R`](decision_stability.R):
+`decision_stability_report(decision_fn, n_repeats, seed_start, label,
+flag_threshold)` - wiederholt eine beliebige kategoriale Entscheidungs-
+funktion unter variierenden Seeds, meldet Verteilung/Mehrheitsentscheidung/
+Stabilitaetsanteil, flaggt "AUFFAELLIG" wenn die Mehrheit unter
+`flag_threshold` (Default 0.7) liegt. Bewusst NICHT an Level 2 oder ein
+bestimmtes Skript gekoppelt - wiederverwendbar fuer jede kuenftige
+kategoriale Workflow-Entscheidung. **Klare Abgrenzung zu
+`seed_stability.R`**: jenes misst kontinuierliche SCORE-Streuung bei
+fixen Daten, dieses Modul misst, ob eine KATEGORIALE Entscheidung
+(welches Modell gewinnt) unter denselben Variationen kippt - eine
+Entscheidung kann bei fast identischem Score trotzdem instabil sein.
+
+**Synthetischer Test zuerst**:
+[`tests/testthat/test-decision_stability.R`](tests/testthat/test-decision_stability.R),
+7 Faelle mit bekanntem/kontrolliertem Stabilitaetsverhalten (immer
+stabil, deterministisch alternierend, 3-Optionen-Haeufigkeitstabelle,
+benutzerdefinierter Schwellenwert, Reproduzierbarkeit bei intern
+geseedeter `decision_fn`, Fehlerfall `n_repeats<2`). Gesamtsuite jetzt
+340/340 gruen (vorher 322, +18 neue Einzel-Assertions).
+
+**Angewendet auf 1. reales Projekt**: `openml-cc18-ilpd`, Outer-Fold 1
+(Outer-Train FIX wie im eingefrorenen Protokoll v3, NUR der Inner-
+Split-Seed variiert 10x) - via neues
+[`decision_stability_level2_prototype.R`](decision_stability_level2_prototype.R)
+(root-Template, wiederverwendet die Modellwahl-Logik aus `outer_
+workflow_evaluation_v3_level2.R`, aber nur den inneren Teil - kein
+finales Refit/Outer-Test-Scoring, das waere fuer die Stabilitaetsfrage
+unnoetig).
+
+**Ergebnis ilpd**: `ranger` gewinnt bei 7/10 Wiederholungen (70%) -
+knapp NICHT geflaggt (Schwelle ist "<70%"), aber auch keine
+ueberwaeltigende Stabilitaet. Zweites Projekt (`blood-transfusion`)
+laeuft parallel/als naechstes.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
