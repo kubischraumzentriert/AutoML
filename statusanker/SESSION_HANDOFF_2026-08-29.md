@@ -39,15 +39,27 @@ korrigiert. **13. Aktualisierung:** P1 aus demselben Dokument -
 dokumentiert, jeder DOI/Autor/Jahr einzeln gegen JOSS verifiziert).
 **14. Aktualisierung:** P2 - erster JOSS-inspirierter Prototyp
 (Decision-Stability, VeridicalFlow/PCS) gebaut, synthetisch getestet,
-auf `ilpd` angewendet (`blood-transfusion` lief zum Zeitpunkt dieser
-Zwischenaktualisierung noch, Ergebnis folgt in der naechsten
-Aktualisierung).
+auf `ilpd`+`blood-transfusion` angewendet (2 Datensaetze), dann auf
+alle 6 externen Datensaetze ausgerollt. **15. Aktualisierung:** 3 neue
+ADRs (007-009) angelegt. **16. Aktualisierung:** Decision Stability auf
+alle 3 Outer-Folds erweitert ("Weg A", 18 statt 6 Messungen) - der
+urspruengliche suggestive n=6/Fold-1-Korrelationsbefund haelt der
+Erweiterung NICHT stand (rho -0.28 -> -0.086), ehrlich als widerlegt
+dokumentiert.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `8d02499` "P2: Decision-Stability-Prototyp
+- `MLR3_Classifikation` @ `c699507` "P2 Weg A: Decision Stability auf
+  alle 3 Outer-Folds erweitert - urspruenglicher Fold-1-Befund
+  widerlegt" - gepusht, CI Smoke Test gruen (Lauf `33330260959`).
+- `ML_Learning` @ `91a2f33` "P2 Decision-Stability-Prototyp: Module in
+  allen 6 Projekten (inkl. Fold-Parametrisierung)" - lokal, kein
+  Remote.
+- Fruehere Zwischenstaende dieses Ankers (jetzt ueberholt): Commit
+  `8d02499` "P2: Decision-Stability-Prototyp
   (VeridicalFlow/PCS-inspiriert)" - gepusht. CI Smoke Test-Lauf fuer
-  diesen Commit steht zum Zeitpunkt dieser Zwischenaktualisierung noch
+  diesen Commit stand zum Zeitpunkt der urspruenglichen Zwischen-
+  aktualisierung noch
   aus (neue `.R`-Dateien, Trigger sollte greifen) - letzter bekannter
   gruener Lauf `33300592379` (Commit `d29ea0d`). `testthat` lokal
   340/340 gruen vor dem Commit verifiziert.
@@ -509,12 +521,60 @@ Root-Template) auf die Level-2-Arm-Wahl (ranger/lightgbm/ensemble) bei
 FIXEM Outer-Train (Outer-Fold 1, identisch zum eingefrorenen Protokoll
 v3), nur der Inner-Split-Seed variiert 10x.
 
-**Ergebnis `ilpd`**: `ranger` gewinnt bei 7/10 Wiederholungen (70%) -
-knapp NICHT geflaggt, aber auch keine ueberwaeltigende Stabilitaet.
-**Zweites Projekt (`blood-transfusion`) war zum Ende dieser Session
-noch nicht fertig ausgewertet** - Lauf gestartet, Ergebnis muss in der
-naechsten Session zuerst geprueft und ausgewertet werden, bevor P2 als
-abgeschlossen gilt.
+**Ergebnis `ilpd` (Fold 1)**: `ranger` gewinnt bei 7/10 Wiederholungen
+(70%) - knapp nicht geflaggt.
+
+**23. `blood-transfusion`-Ergebnis + Rollout auf alle 6 Datensaetze
+(Fold 1 only)**: `blood-transfusion` gewinnt nur 6/10 (60%) -
+GEFLAGGT, waehrend es im urspruenglichen Level-2-Rollout den
+DEUTLICH BESSEREN Score hatte (+3.0 Punkte) und `ilpd` (stabiler,
+70%) den SCHLECHTEREN (-3.7 Punkte) - gegen die naive Erwartung
+laufend. Rollout auf alle 6 externen Datensaetze (Fold 1):
+`sick`=60%, `cmc`=50%, `analcatdata-authorship`=70%, `optdigits`=60%.
+Formaler Test: Spearman rho=-0.28 (p=0.59, n=6, NICHT signifikant,
+aber konsistente Richtung: 4 geflaggte Datensaetze im Mittel +0.175,
+2 nicht geflaggte im Mittel -2.8).
+
+**24. n-Erhoehungs-Diskussion**: Nutzerfrage "sollten wir n erhoehen
+... auf 8?" - geklaert, dass "n" die Anzahl Projekte meint (nicht die
+10 Wiederholungen). Zwei Wege vorgeschlagen: "Weg A" (mehr Outer-Folds
+der bestehenden 6 Datensaetze, guenstig, kein Benchmark-Bias-Risiko)
+vs. "Weg B" (echte neue OpenML-Datensaetze, teurer, eigene
+Auswahlmethodik noetig). Nutzerentscheidung: "erst Weg A".
+
+**25. 3 neue ADRs angelegt** (Nutzerfrage "gibt es Kandidaten fuer
+weitere ADRs?", dann "ja, alle 3 anlegen"):
+- `adr/007-flat-scripts-not-r-package.md` (flaches Skript-Template
+  statt R-Paket)
+- `adr/008-frozen-versioned-benchmark-protocols.md` (Benchmark-
+  Protokolle eingefroren/versioniert, nie in-place veraendert)
+- `adr/009-evidence-registry-dual-source-split.md` (Evidence Registry
+  vs. `SYSTEMATIC_EVALUATION.md` dauerhaft getrennte Quellen)
+
+Ein 4. Kandidat (`PAPER_DRAFT.md` vs. `joss/paper.md`) genannt, aber
+als schwaecher eingeordnet und NICHT angelegt.
+
+**26. "Weg A" durchgefuehrt: Decision Stability auf alle 3 Outer-Folds
+erweitert (18 statt 6 Messungen)** -
+`decision_stability_level2_prototype.R` um `DECISION_STABILITY_OUTER_
+FOLD`-Env-Var erweitert (Default 1, rueckwaertskompatibel), Fold 2+3
+aller 6 Datensaetze zusaetzlich gelaufen.
+
+**Zentraler, ehrlicher Befund - widerlegt den vorherigen
+Zwischenbefund**: gemittelt ueber alle 3 Folds sinkt die Korrelation
+von rho=-0.28 (Fold 1 only) auf **rho=-0.086, p=0.92** - praktisch
+verschwunden. Der urspruengliche n=6/Fold-1-Befund war ein Artefakt der
+kleinen Stichprobe. Bonus-Befund: Instabilitaet (<70%) ist mit 11/18
+(61%) eher die Norm als die Ausnahme bei diesem Tuning-Budget.
+Innerhalb-Datensatz-Konsistenz meist hoch (5/6 Datensaetze Spannweite
+<=0.2 ueber 3 Folds, Ausnahme `sick` mit 0.4).
+
+Alle Ergebnisse (18 Einzelmessungen + Korrelationsvergleich) in die
+Evidence Registry geloggt. Weiterhin **kein Backport** (ADR-003) - das
+generische `decision_stability.R`-Modul bleibt, die konkrete Level-2-
+Anwendung liefert keine actionable Handlungsempfehlung. "Weg B" (neue
+externe Datensaetze via OpenML) bleibt eine separate, groessere Option
+fuer spaeter.
 
 ## Offene Punkte fuer die naechste Session
 
@@ -523,30 +583,23 @@ abgeschlossen gilt.
 Bewertungsdokuments (2026-08-30, Dokumentationskonsistenz).** Die
 JOSS-Einreichung selbst ist bewusst pausiert.
 
-**SOFORT ALS ERSTES pruefen**: `blood-transfusion` Decision-Stability-
-Lauf abfragen/auswerten (siehe Punkt 22 oben) - war beim Sitzungsende
-noch nicht fertig. Log-Datei:
-`C:\Users\HP\AppData\Local\Temp\claude\C--Git\7ce91711-7349-44e0-b101-38ca9d7db310\scratchpad\decision_stability_bloodtransfusion_log.txt`
-(temporaerer Pfad, ggf. nicht mehr vorhanden - im Zweifel den Lauf
-erneut starten: `cd C:\Users\HP\ML_Learning\openml-cc18-blood-transfusion`
-+ `Rscript decision_stability_level2_prototype.R`). Erst NACH diesem
-Ergebnis eine Gesamtaussage zur Decision-Stability des Level-2-Prototyps
-in `BACKLOG.md`/`PAPER_DRAFT.md` ergaenzen und committen.
+**P2 (Decision-Stability-Prototyp, VeridicalFlow/PCS) ist jetzt
+VOLLSTAENDIG ABGESCHLOSSEN** - Modul + synthetische Tests + Rollout auf
+alle 6 Datensaetze x alle 3 Outer-Folds (18 Messungen) + formale
+Nachanalyse (siehe Punkte 22-26 oben). Kein Backport (ADR-003) - das
+generische Modul bleibt, die konkrete Anwendung liefert keine
+actionable Handlungsempfehlung.
 
-**Aus dem VIERTEN Bewertungsdokument noch offen (P1 Rest + P2-Fortsetzung
+**Aus dem VIERTEN Bewertungsdokument noch offen (P1 Rest + P2/astartes
 + P3, auf explizite Nutzeranweisung)**:
-- **P1, Rest**: `JOSS_TECHNIQUE_WATCH.md` selbst ist ERLEDIGT (siehe
-  Punkt 21 oben). Nur noch offen: optional Research-Benchmark von n=6
-  auf n=10-15 CC18-Datensaetze erweitern (deutlich teurer, nur falls
-  der Research-/AutoML-Conf-Pfad weiterverfolgt wird - VORHER
+- **P1, Rest**: `JOSS_TECHNIQUE_WATCH.md` selbst ist ERLEDIGT. Nur noch
+  offen: optional Research-Benchmark von n=6 auf n=10-15 CC18-
+  Datensaetze erweitern ("Weg B" aus Punkt 24 - deutlich teurer, nur
+  falls der Research-/AutoML-Conf-Pfad weiterverfolgt wird - VORHER
   einfrieren, nicht nach Sicht der Zahlen).
-- **P2, Fortsetzung**: `decision_stability.R`-Modul + synthetische Tests
-  + `ilpd`-Ergebnis sind ERLEDIGT (siehe Punkt 22 oben). Noch offen:
-  `blood-transfusion`-Ergebnis auswerten (s.o.), dann optional den
-  zweiten Kandidaten (astartes/schwierige-Splits-Stresstest)
-  angehen, oder das Decision-Stability-Modul auf weitere Entscheidungen
-  ausrollen (Backport-Frage gemaess ADR-003 noch offen - erst ab
-  >=2-Projekt-Bestaetigung).
+- **P2, optionaler 2. Kandidat**: astartes/schwierige-Splits-Stresstest
+  - der VeridicalFlow-Prototyp ist fertig, astartes wurde bisher nicht
+  begonnen (war die Alternative bei der urspruenglichen Kandidatenwahl).
 - **P3**: externe Adoption vorbereiten (Start-here-Anleitung, erstes
   Release, externe Nutzerfeedbacks als Evidenz behandeln).
 - **Ausdrueckliche Warnung aus dem Bewertungsdokument**: KEIN Feature
@@ -625,20 +678,21 @@ diese Sitzung ABGESCHLOSSEN. Ein VIERTES Bewertungsdokument
 (2026-08-30, Punkte 20-21) liegt vor - P0 (Dokumentationskonsistenz)
 UND P1 (`JOSS_TECHNIQUE_WATCH.md`) sind bereits erledigt.
 
-**ZWINGENDER erster Schritt, falls das Thema nicht explizit anders
-gelenkt wird: das `blood-transfusion`-Decision-Stability-Ergebnis
-abfragen/auswerten** (Punkt 22 oben, Lauf war beim Sitzungsende noch
-nicht fertig) - erst danach P2 als abgeschlossen behandeln und die
-BACKLOG.md/PAPER_DRAFT.md-Doku dazu ergaenzen/committen. Danach
-naheliegendster naechster Schritt: astartes/schwierige-Splits als
-2. JOSS-inspirierter Prototyp, oder P3 (externe Adoption vorbereiten),
-falls der Nutzer nichts Konkretes mitbringt. Ausdrueckliche Warnung
-aus dem vierten Bewertungsdokument im Kopf behalten: kein Feature
-Creep, jede JOSS-Idee braucht erst eine Hypothese/ein bestehendes
-Problem im Template, Default "NO BACKPORT bis Evidenz vorhanden"
-(ADR-003 bleibt massgeblich). Kleinere Alternativen: die optionale
-Acknowledgements-Sektion in `joss/paper.md` ausfuellen,
-`finalize_run_provenance()` auf weitere Skripte ausrollen, oder die
-optionale Research-Benchmark-Erweiterung (n=6->10-15, nur falls der
-Research-Pfad weiterverfolgt
+**P2 (Decision-Stability-Prototyp) ist VOLLSTAENDIG abgeschlossen** -
+Modul + Tests + Rollout auf alle 6 Datensaetze x 3 Outer-Folds (18
+Messungen) + formale Nachanalyse, die den urspruenglichen Zwischenbefund
+ehrlich widerlegt hat (Punkte 22-26 oben). Kein weiterer Handlungsbedarf
+dort, ausser der Nutzer will explizit tiefer einsteigen (z.B. "Weg B"
+mit echten neuen OpenML-Datensaetzen). Naheliegendster naechster
+Schritt, falls der Nutzer nichts Konkretes mitbringt: astartes/
+schwierige-Splits als 2. JOSS-inspirierter Prototyp, oder P3 (externe
+Adoption vorbereiten). Ausdrueckliche Warnung aus dem vierten
+Bewertungsdokument im Kopf behalten: kein Feature Creep, jede
+JOSS-Idee braucht erst eine Hypothese/ein bestehendes Problem im
+Template, Default "NO BACKPORT bis Evidenz vorhanden" (ADR-003 bleibt
+massgeblich, jetzt auch fuer ADRs 007-009 relevant). Kleinere
+Alternativen: die optionale Acknowledgements-Sektion in
+`joss/paper.md` ausfuellen, `finalize_run_provenance()` auf weitere
+Skripte ausrollen, oder die optionale Research-Benchmark-Erweiterung
+("Weg B", n=6->10-15, nur falls der Research-Pfad weiterverfolgt
 wird).
