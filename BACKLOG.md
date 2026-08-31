@@ -2443,6 +2443,83 @@ ihn ungeprueft stehen zu lassen. Weiterhin **kein Backport** (ADR-003).
 Weg B (neue externe Datensaetze) bleibt eine separate, groessere
 Option, falls der Research-Pfad weiterverfolgt wird.
 
+### P2 - 2. JOSS-inspirierter Prototyp: Hard-Split-Stresstest (astartes-inspiriert, 2026-08-31)
+
+**Nutzeranfrage**: "ein neuer Tag - astartes als zweiten Prototyp
+angehen". Gleiche Pipeline aus `JOSS_TECHNIQUE_WATCH.md`: Problem ->
+Hypothese -> Komplexitaetskosten -> kleiner Prototyp -> synthetischer
+Test -> 1-2 reale Projekte.
+
+**Idee (aus astartes, Burns et al. 2023, JOSS 10.21105/joss.05996)**:
+zufaellige Splits pruefen vor allem Interpolation. Ein strukturell
+schwieriger, DISTANZBASIERTER Split (Train/Test durch Feature-Raum-
+Clusterung statt Zufall getrennt) prueft dagegen Extrapolation - ob ein
+Modell auch auf eine strukturell andere Region des Feature-Raums
+generalisiert, die es nie gesehen hat.
+
+**Neues Modul** [`hard_split_stress_test.R`](hard_split_stress_test.R):
+`cluster_based_hard_split()` (k-means auf numerischen Features,
+kleinstes Cluster = Test-Set) + `hard_split_stress_test()` (Score auf
+dem harten Split vs. Referenzbereich aus 10 zufaelligen Splits gleicher
+Testgroesse, z-Score-Einordnung). Bewusst NICHT die astartes-/Kennard-
+Stone-Implementierung uebernommen (Python, Cheminformatik-fokussiert),
+sondern dieselbe Grundidee nativ in R mit `kmeans()`. Folgt demselben
+Referenzbereich-/z-Score-Muster wie `generalization_gap.R` (|z|>2 =>
+auffaellig, aus Konsistenzgruenden derselbe Schwellenwert).
+
+**Synthetischer Test zuerst**:
+[`tests/testthat/test-hard_split_stress_test.R`](tests/testthat/test-hard_split_stress_test.R),
+konstruierter 2-Cluster-Fall mit einer clusterunabhaengigen
+Zielvariable (x3) - im "Flip"-Fall gilt in Cluster B die UMGEKEHRTE
+Regel (garantiertes Extrapolationsversagen erwartet+bestaetigt), im
+Kontrollfall dieselbe Regel in beiden Clustern (keine Flag erwartet+
+bestaetigt). Ein erster Testentwurf hatte einen Denkfehler
+(cluster-RELATIVE statt absolute Regel taeuschte auch im Kontrollfall
+ein Versagen vor) - beim ersten Testlauf sofort aufgefallen und
+korrigiert, bevor irgendein echter Lauf gemacht wurde. Gesamtsuite
+352/352 gruen (+12 neue).
+
+**Angewendet auf 2 reale Projekte** (ungetunter, klassengewichteter
+Ranger - kein Tuning, reiner Diagnose-Check, daher deutlich guenstiger
+als der Decision-Stability-Prototyp):
+
+- **`ilpd`**: Score auf hartem Split 0.5903 vs. Referenzbereich-Mittel
+  0.5859 (SD=0.0247) - z=0.18, **unauffaellig**.
+- **`optdigits`**: Score auf hartem Split **0.6918** vs.
+  Referenzbereich-Mittel **0.9811** (SD=0.0018) - **z=-157.67, MASSIV
+  AUFFAELLIG**. Ein Standard-CV-Score (BAcc≈0.98) haette dieses
+  Extrapolationsrisiko komplett verdeckt - der harte Cluster-Split
+  deckt einen fast 30-Punkte-BAcc-Einbruch auf.
+
+**Einordnung**: anders als beim Decision-Stability-Prototyp (der auf
+beiden Datensaetzen ein mehrdeutiges, letztlich nicht belastbares
+Signal lieferte) zeigt dieser Check ein GENAU DAS Verhalten, das man
+von einem funktionierenden Trust-/Diagnose-Modul erwartet: still bei
+`ilpd` (kein echtes Problem), aber ein klares, grosses, gut
+interpretierbares Signal bei `optdigits` (ein echtes, durch Standard-
+CV verdecktes Risiko). Das ist strukturell aehnlich zu Ablation A2/A3
+(Leak-Audit/Drift-Checks: die meisten Datensaetze unauffaellig, aber
+mindestens ein klarer echter Fund) - ein Trust-Modul MUSS nicht auf
+jedem Datensatz feuern, um wertvoll zu sein.
+
+**Bewusst noch NICHT weiter diagnostiziert**: warum genau `optdigits`
+so stark abfaellt (z.B. welche Ziffernklassen/Schreibstile das
+Test-Cluster dominieren) - das waere ein natuerlicher, aber separater
+Folgeschritt (offen gelassen statt spekulativ zu erklaeren).
+
+**Backport-Frage (ADR-003)**: 2 unabhaengige Projekte getestet, das
+Modul verhaelt sich in beiden Faellen nachvollziehbar/korrekt (nicht
+"immer positiv", sondern situationsabhaengig richtig). Das erfuellt die
+Bestaetigungs-Schwelle im Sinne eines Trust-Moduls (Mechanismus
+validiert), ABER: bewusst noch NICHT als nummeriertes Pipeline-Skript
+(`0XX_...R`) backported - dafuer waere ein breiterer Rollout (mehr
+Datensaetze) und eine bewusste Entscheidung ueber die Platzierung in
+der Skript-Reihenfolge sinnvoll, beides noch nicht angefragt. Bleibt
+als eigenstaendiges, getestetes Modul im Template verfuegbar.
+
+Beide Ergebnisse in die Evidence Registry geloggt (Rolle `trust_gate` -
+dies ist ein Trust-/Diagnose-Check, kein Score-Hebel).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
