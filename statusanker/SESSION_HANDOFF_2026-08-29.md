@@ -50,14 +50,35 @@ laeuft nahtlos weiter):** 2. JOSS-inspirierter Prototyp - Hard-Split-
 Stresstest (astartes-inspiriert) gebaut, synthetisch getestet, auf 2
 reale Projekte angewendet - deutlich klareres, ueberzeugenderes Signal
 als der 1. Prototyp (optdigits massiv auffaellig, z=-157.67).
+**18. Aktualisierung:** auf Nutzerfrage hin Rollout auf alle 6
+CC18-Datensaetze (4/6 auffaellig, deutlich haeufiger als der n=2-Befund
+vermuten liess), dann Backport ins Template
+(`137_hard_split_stress_test.R`, ADR-003-Schwelle klar erfuellt, 7/7
+Bestaetigungen inkl. Template-eigenem Projekt gepruft), CI-Smoke-Test-
+Fixture entsprechend ergaenzt. Anschliessend eine echte Ursachendiagnose
+fuer den optdigits-Befund: der harte Cluster-Split ist dort (und bei
+`analcatdata-authorship`) fast ein VERDECKTER CLASS-HOLDOUT (Test-Cluster
+zu 95%/80% aus 1-3 Klassen), waehrend `sick`/`cmc` echtes
+Extrapolationsrisiko unabhaengig von der Zielklasse zeigen - ein echter,
+zuvor unbekannter Interpretationsvorbehalt. Auf Nutzerwunsch direkt ins
+Modul zurueckgefuehrt: neue `class_proportion_shift()`-Funktion +
+`class_holdout_suspected`-Flag (Schwellenwert 20 Prozentpunkte, grob an
+den 4 diagnostizierten Faellen kalibriert), 4 neue Tests, Regressions-
+bestaetigung am Template-Projekt (4.9pp - echtes Risiko, kein Artefakt).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `1a02cc8` "P2: 2. JOSS-inspirierter Prototyp -
-  Hard-Split-Stresstest (astartes-inspiriert)" - gepusht, CI Smoke Test
-  gruen (Lauf `33359779042`).
-- `ML_Learning` @ `fae9029` "P2: Hard-Split-Stresstest-Prototyp auf
-  ilpd und optdigits" - lokal, kein Remote.
+- `MLR3_Classifikation` @ `eaa0000` "P2: Hard-Split-Stresstest um
+  Class-Holdout-Verdacht erweitert (class_proportion_shift,
+  Schwellenwert 20pp)" - gepusht, CI Smoke Test gruen (Lauf
+  `33406093180`).
+- `ML_Learning` @ `58a467e` "P2: optdigits-Ursachendiagnose fuer den
+  Hard-Split-Stresstest" - lokal, kein Remote.
+- Zwischenstaende auf dem Weg dorthin (alle gepusht, alle CI gruen):
+  `928cf5f` (Backport `137_hard_split_stress_test.R`, Lauf
+  `33361859447`), `9bd9562` (CI-Fixture um 137 ergaenzt, Lauf
+  `33362023282`), `859b1d0`/`b09c8a6` (Doku: Fixture-Ergaenzung +
+  optdigits-Ursachendiagnose, docs-only, kein CI-Trigger).
 - Fruehere Zwischenstaende dieses Ankers (jetzt ueberholt): Commit
   `8d02499` "P2: Decision-Stability-Prototyp
   (VeridicalFlow/PCS-inspiriert)" - gepusht. CI Smoke Test-Lauf fuer
@@ -636,15 +657,20 @@ actionable Handlungsempfehlung.
   Datensaetze erweitern ("Weg B" aus Punkt 24 - deutlich teurer, nur
   falls der Research-/AutoML-Conf-Pfad weiterverfolgt wird - VORHER
   einfrieren, nicht nach Sicht der Zahlen).
-- **P2, beide JOSS-inspirierten Prototypen jetzt ABGESCHLOSSEN**:
-  VeridicalFlow/Decision-Stability UND astartes/Hard-Split-Stresstest
-  (Punkt 27) sind beide fertig (Modul + synthetische Tests + Anwendung
-  auf reale Projekte). Offen: die konkrete Ursachen-Diagnose des
-  `optdigits`-Befunds (z=-157.67, welche Ziffernklassen/Schreibstile
-  das Test-Cluster dominieren) sowie die ADR-003-Backport-Entscheidung
-  fuer `hard_split_stress_test.R` (bislang: verhaelt sich korrekt,
-  aber noch nicht als nummeriertes Pipeline-Skript rueckportiert -
-  wartet auf weiteren Rollout/explizite Nutzeranweisung).
+- **P2, beide JOSS-inspirierten Prototypen jetzt VOLLSTAENDIG
+  ABGESCHLOSSEN UND BACKPORTED**: VeridicalFlow/Decision-Stability
+  (kein Backport, ADR-003 - liefert keine actionable Handlungs-
+  empfehlung) UND astartes/Hard-Split-Stresstest (Punkt 18 oben) - Modul
+  + synthetische Tests + Rollout auf alle 6 CC18-Datensaetze (4/6
+  auffaellig) + Backport als `137_hard_split_stress_test.R` (ADR-003
+  erfuellt, 7/7 Bestaetigungen) + CI-Fixture-Ergaenzung + eine echte
+  Ursachendiagnose (optdigits/analcatdata-authorship: verdeckter
+  Class-Holdout; sick/cmc: echtes Extrapolationsrisiko) + direkte
+  Modul-Erweiterung um `class_proportion_shift()`/
+  `class_holdout_suspected` als Reaktion darauf. Kein offener Rest mehr
+  bei diesem Thema, ausser der Nutzer will explizit tiefer einsteigen
+  (z.B. Schwellenwert 20pp synthetisch nachschaerfen statt nur grob
+  kalibriert, oder k>2 testen).
 - **P3**: externe Adoption vorbereiten (Start-here-Anleitung, erstes
   Release, externe Nutzerfeedbacks als Evidenz behandeln).
 - **Ausdrueckliche Warnung aus dem Bewertungsdokument**: KEIN Feature
@@ -724,23 +750,32 @@ diese Sitzung ABGESCHLOSSEN. Ein VIERTES Bewertungsdokument
 UND P1 (`JOSS_TECHNIQUE_WATCH.md`) sind bereits erledigt.
 
 **Beide P2-Prototypen (Decision-Stability/VeridicalFlow UND
-Hard-Split-Stresstest/astartes) sind jetzt VOLLSTAENDIG abgeschlossen**
-- je Modul + synthetische Tests + Rollout auf reale Projekte (Punkte
-22-27 oben). Decision-Stability widerlegte ehrlich den eigenen
-Zwischenbefund (rho -0.28 -> -0.086 ueber 3 Folds); der Hard-Split-
-Stresstest fand einen echten, unerwartet dramatischen Treffer bei
-`optdigits` (z=-157.67), dessen Ursache noch nicht diagnostiziert ist.
-Kein weiterer zwingender Handlungsbedarf, ausser der Nutzer will
-explizit tiefer einsteigen. Naheliegendste naechste Schritte, falls der
-Nutzer nichts Konkretes mitbringt: die `optdigits`-Ursachendiagnose,
-die offene ADR-003-Backport-Entscheidung fuer
-`hard_split_stress_test.R`, oder P3 (externe Adoption vorbereiten).
-Ausdrueckliche Warnung aus dem vierten Bewertungsdokument im Kopf
-behalten: kein Feature Creep, jede JOSS-Idee braucht erst eine
-Hypothese/ein bestehendes Problem im Template, Default "NO BACKPORT bis
-Evidenz vorhanden" (ADR-003 bleibt massgeblich, jetzt auch fuer ADRs
-007-009 relevant). Kleinere Alternativen: die optionale
-Acknowledgements-Sektion in `joss/paper.md` ausfuellen,
-`finalize_run_provenance()` auf weitere Skripte ausrollen, oder die
-optionale Research-Benchmark-Erweiterung ("Weg B", n=6->10-15, nur
-falls der Research-Pfad weiterverfolgt wird).
+Hard-Split-Stresstest/astartes) sind jetzt VOLLSTAENDIG abgeschlossen UND
+- soweit sinnvoll - backported** (Punkt 18 oben). Decision-Stability
+widerlegte ehrlich den eigenen Zwischenbefund (rho -0.28 -> -0.086 ueber
+3 Folds, kein Backport). Der Hard-Split-Stresstest fand einen echten,
+unerwartet dramatischen Treffer bei `optdigits` (z=-157.67), wurde auf
+alle 6 CC18-Datensaetze ausgerollt (4/6 auffaellig), als
+`137_hard_split_stress_test.R` ins Template zurueckgefuehrt (ADR-003
+erfuellt, 7/7 Bestaetigungen), UND die anschliessende Ursachendiagnose
+zeigte einen echten Interpretationsvorbehalt (optdigits/analcatdata-
+authorship: verdeckter Class-Holdout statt reiner Extrapolation;
+sick/cmc: echtes Extrapolationsrisiko) - direkt als
+`class_proportion_shift()`/`class_holdout_suspected`-Erweiterung ins
+Modul zurueckgefuehrt. **Kein offener Rest mehr bei diesem Thema.**
+
+Naheliegendste naechste Schritte, falls der Nutzer nichts Konkretes
+mitbringt: P3 (externe Adoption vorbereiten - Start-here-Anleitung,
+erstes Release), oder die optionale Research-Benchmark-Erweiterung
+("Weg B", n=6->10-15 CC18-Datensaetze, nur falls der Research-/AutoML-
+Conf-2027-Pfad weiterverfolgt wird - VORHER einfrieren, nicht nach
+Sicht der Zahlen). Ausdrueckliche Warnung aus dem vierten
+Bewertungsdokument im Kopf behalten: kein Feature Creep, jede
+JOSS-Idee braucht erst eine Hypothese/ein bestehendes Problem im
+Template, Default "NO BACKPORT bis Evidenz vorhanden" (ADR-003 bleibt
+massgeblich, jetzt auch fuer ADRs 007-009 relevant). Kleinere
+Alternativen: die optionale Acknowledgements-Sektion in
+`joss/paper.md` ausfuellen, `finalize_run_provenance()` auf weitere
+Skripte ausrollen, oder der Hard-Split-Stresstest-Schwellenwert (20pp,
+bislang nur grob kalibriert statt synthetisch hergeleitet wie der
+z-Score-Schwellenwert -2) bei Gelegenheit nachschaerfen.
