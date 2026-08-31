@@ -96,3 +96,47 @@ Fuer jeden der 6 Datensaetze wurde eine Task-Vorbereitung angelegt
 Projekten) + `BENCHMARK_PROTOCOL.md` in den Versionen 1-3 angewendet.
 Volle Ergebnisse: `BACKLOG.md`/P1- und P2-Status,
 `EVALUATION_LEVELS.md`, `PAPER_DRAFT.md`.
+
+## "Weg B"-Erweiterung: 4 neue Datensaetze (eingefroren 2026-08-31, VOR jeder Ergebnisberechnung)
+
+Nutzerentscheidung nach dem 3-Outer-Fold-Rollout ("Weg A", siehe
+`BACKLOG.md`): das urspruengliche n=6-Set fuer die Decision-Stability-
+Forschungsfrage um 4 weitere, bisher unbekannte CC18-Datensaetze
+erweitern (Ziel n=10 insgesamt). Selektionsskript:
+[`select_weg_b_extension.R`](select_weg_b_extension.R) - repliziert
+EXAKT dieselben Einschlusskriterien wie oben (500-20000 Instanzen,
+<=100 Features, 2-10 Klassen), zusaetzlich ausgeschlossen: alle bereits
+verwendeten 13 Namen (7 Template-Projekte + die bestehenden 6
+externen Datensaetze). Zulaessiger Pool nach Ausschluss: **37
+Datensaetze** (43 minus die bereits verwendeten 6 - stimmt exakt).
+
+Deterministisch per `set.seed(20260831)` (Datum dieser Ziehung - EIN
+NEUER Seed, nicht der urspruengliche `20260829`: derselbe Seed auf dem
+um 6 Kandidaten reduzierten Pool wuerde NICHT dieselbe Fortsetzung der
+urspruenglichen Ziehung reproduzieren, sondern ein anderes, vom
+reduzierten Pool abhaengiges Ergebnis - ein neuer, klar dokumentierter
+Seed ist ehrlicher als der Anschein einer Fortsetzung). Wieder 2 binaer
++ 2 multiclass (dieselbe leichte Strukturierung wie beim Original,
+diesmal aus einem Pool von 21 binaer/16 multiclass). Metadaten
+ausschliesslich ueber OpenMLs eigene vorberechnete "qualities"
+abgerufen (kein Datendownload, keine Performance-Kennzahl vor der
+Ziehung eingesehen).
+
+| OpenML DID | Name | Instanzen | Features | Klassen | Typ |
+|---|---|---|---|---|---|
+| 4534 | `PhishingWebsites` | 11055 | 30 | 2 | binaer |
+| 1494 | `qsar-biodeg` | 1055 | 41 | 2 | binaer |
+| 16 | `mfeat-karhunen` | 2000 | 64 | 10 | multiclass |
+| 188 | `eucalyptus` | 736 | 19 | 5 | multiclass |
+
+Vollstaendige Metadaten aller 72 CC18-Datensaetze (fuer Nachvollziehbarkeit
+der Poolgroesse):
+[`_artifacts/cc18_full_metadata.csv`](_artifacts/cc18_full_metadata.csv)
+(nicht versioniert, lokal reproduzierbar). Die 4 gezogenen Datensaetze
+selbst: [`_artifacts/weg_b_extension_selection.csv`](_artifacts/weg_b_extension_selection.csv).
+
+**Status: EINGEFROREN, noch NICHT ausgefuehrt.** Naechster Schritt:
+Task-Vorbereitung analog zu den bestehenden 6 (`ML_Learning/openml-cc18-*`),
+dann `BENCHMARK_PROTOCOL.md` v3 (Level-2-Prototyp) + Decision-Stability
+ueber alle 3 Outer-Folds - derselbe Ablauf wie bei den ersten 6, NICHT
+vorher an Performance-Zahlen angepasst.
