@@ -2800,20 +2800,54 @@ nicht nur gegen die, wo der Bug urspruenglich auftrat.
 **Level-2-Prototyp-Ergebnisse** (Protokoll v3, 3 Outer-Folds, Metrik
 BAcc):
 
-| Datensatz | `level2_workflow` (Mittel) | bester Baseline-Arm | Delta |
+| Datensatz | `level2_workflow` (Mittel) | bester Baseline-Arm | Delta (BAcc-Punkte) |
 |---|---|---|---|
 | `PhishingWebsites` | 0.9680 | `lightgbm_default` 0.9687 | -0.07 |
 | `qsar-biodeg` | 0.8517 | `lightgbm_default` 0.8490 | +0.28 |
-| `mfeat-karhunen` | *(nach Bugfix erneut gelaufen, siehe unten)* | | |
-| `eucalyptus` | *(ausstehend)* | | |
+| `mfeat-karhunen` | 0.9555 | `lightgbm_default` 0.9575 | -0.20 |
+| `eucalyptus` | 0.6311 | `lightgbm_default` 0.6277 | +0.35 |
 
-**Decision-Stability (alle 3 Folds)**:
+Konsistent mit dem bisherigen Muster (siehe P2-Rollout der urspruenglichen
+6): kein durchgehender Vorteil des Level-2-Workflows - 2/4 leicht positiv,
+2/4 leicht negativ, alle Deltas klein (<0.4 BAcc-Punkte).
+
+**Decision-Stability (alle 3 Folds, alle 4 neuen Datensaetze)**:
 
 | Datensatz | Fold 1 | Fold 2 | Fold 3 |
 |---|---|---|---|
-| `PhishingWebsites` | ensemble, 70% (nicht geflaggt) | ensemble, 60% (geflaggt) | lightgbm, 60% (geflaggt) |
+| `PhishingWebsites` | ensemble, 70% | ensemble, 60% (geflaggt) | lightgbm, 60% (geflaggt) |
+| `qsar-biodeg` | ranger, 50% (geflaggt) | ensemble, 50% (geflaggt) | ranger, 50% (geflaggt) |
+| `mfeat-karhunen` | lightgbm, 50% (geflaggt) | lightgbm, 40% (geflaggt) | ensemble, 40% (geflaggt) |
+| `eucalyptus` | ensemble, 50% (geflaggt) | ranger, 60% (geflaggt) | ensemble, 60% (geflaggt) |
 
-(weitere Datensaetze folgen)
+**Korrelationsanalyse ueber alle 10 Datensaetze x 3 Folds (30 statt 18
+Messungen)**: [`decision_stability_level2_analysis_weg_b.R`](decision_stability_level2_analysis_weg_b.R)
+- Deskriptiv: 22/30 (73%) der Einzelmessungen liegen unter der
+  70%-Stabilitaetsschwelle (Median 0.6, Mittel 0.593) - Instabilitaet
+  bleibt bei diesem Tuning-Budget eher die Norm als die Ausnahme,
+  konsistent mit dem n=6-Befund (damals 11/18, 61%).
+- **Spearman (n=10, mittlere Stabilitaet vs. Level-2-Delta): rho=-0.134,
+  p=0.712 - WEITERHIN NICHT signifikant.** Bestaetigt den n=6-Befund
+  (rho=-0.086, p=0.919 fuer die urspruenglichen 6 allein) - die
+  Erweiterung um 4 unabhaengige neue Datensaetze aendert die Schlussfolgerung
+  NICHT. Der urspruengliche, suggestive Fold-1-only-Befund (rho=-0.28,
+  n=6) bleibt damit ueber zwei unabhaengige Erweiterungsschritte hinweg
+  (Weg A: mehr Folds: rho->-0.086; Weg B: mehr Datensaetze: rho->-0.134)
+  widerlegt - ein konsistentes, jetzt gut abgesichertes Negativergebnis:
+  Level-2-Arm-Wahl-Instabilitaet erklaert NICHT, ob der Level-2-Workflow
+  gegenueber der besten Baseline gewinnt oder verliert.
+
+Alle 4 neuen Level-2- und 12 neuen Decision-Stability-Ergebnisse in die
+Evidence Registry geloggt (Rolle `score_lever` fuer Level-2, `trust_gate`
+fuer Decision-Stability, analog zu den urspruenglichen 6).
+
+**Fazit Weg B**: die "Weg A"-Schlussfolgerung (kein Zusammenhang zwischen
+Entscheidungsstabilitaet und Level-2-Erfolg) ist jetzt an einer
+unabhaengigen n=4-Erweiterung erneut bestaetigt - kein Hinweis auf ein
+Artefakt der urspruenglichen 6 Datensaetze. Kein Backport (ADR-003
+weiterhin nicht erfuellt - die konkrete Level-2-Anwendung des generischen
+`decision_stability.R`-Moduls liefert weiterhin keine actionable
+Handlungsempfehlung, unabhaengig von der Stichprobengroesse).
 
 ## Zielbild
 
