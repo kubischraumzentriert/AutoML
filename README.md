@@ -7,6 +7,45 @@ Klassifikationsaufgaben (R). Kein Einzelprojekt, sondern eine Methodik, die
 über inzwischen mehr als 15 unabhängige Projekte (Kaggle, Zindi,
 DrivenData, OpenML) hinweg gehärtet wurde.
 
+## Los geht's (Start Here)
+
+Dieses Repository ist selbst kein leeres Template, sondern ein
+**vollständig durchgespieltes Beispielprojekt**: `train.csv`/`test.csv`/
+`sample_submission.csv` sowie `000_config.R` gehören zu einem echten,
+abgeschlossenen Kaggle-Wettbewerb (`health_condition`, Playground Series
+S6E7). Wer das Template kennenlernen will, klont das Repo und probiert es
+zuerst genau **so** aus, bevor er es auf ein eigenes Projekt überträgt:
+
+1. **Umgebung einrichten**: R (aktuelle Release-Version) + Pakete aus
+   `DESCRIPTION` installieren - der exakte, in CI verifizierte Referenzpfad
+   steht in [`ENVIRONMENT.md`](ENVIRONMENT.md) (`r-lib/actions/setup-r-dependencies`
+   liest `DESCRIPTION` automatisch; manuell reicht z.B.
+   `pak::pak(gsub("\n", "", readLines("DESCRIPTION")))` oder einfach jedes
+   fehlende Paket beim ersten Skriptlauf einzeln nachinstallieren).
+2. **Test-Suite laufen lassen**, um die Installation zu prüfen:
+   `Rscript tests/testthat.R` (sollte grün sein - derselbe Befehl läuft
+   auch in CI, siehe Badge oben).
+3. **Einen einzelnen Baustein ausführen**, um das Muster zu sehen, z.B.
+   `Rscript 015_target_leak_audit.R` oder `Rscript 030_baseline.R` -
+   jedes nummerierte Skript ist eigenständig lauffähig und schreibt seine
+   Ergebnisse nach `_artifacts/`.
+4. **Den kompletten Workflow nachvollziehen**: entweder Schritt für
+   Schritt in der R-Konsole (Kochbuch mit erwarteten Ausgaben:
+   [`WorkflowDescription.md`](WorkflowDescription.md)) oder automatisiert
+   über `targets` (`tar_make()`, siehe [`TARGETS.md`](TARGETS.md) für
+   Befehlsübersicht und Caching-Modell).
+5. **Auf ein eigenes Projekt übertragen**: [`TARGETS.md`](TARGETS.md)s
+   Abschnitt "Checkliste: Übertragung auf einen neuen Kaggle-Wettbewerb"
+   (kurz) bzw. [`WorkflowDescription.md`](WorkflowDescription.md) (mit
+   Beispielbefehlen und Entscheidungsregeln pro Schritt) - im Kern: eigene
+   `train.csv`/`test.csv` einsetzen, `000_config.R` neu befüllen
+   (`target_col`, Zielmetrik, Feature-Familien), Rest der Pipeline bleibt
+   strukturell gleich.
+
+Fragen oder Probleme dabei? [`CONTRIBUTING.md`](CONTRIBUTING.md)
+beschreibt, wie Bug-Reports/Support-Anfragen in der Praxis gehandhabt
+werden (GitHub Issues als einziger Kanal).
+
 ## Warum dieses Template anders ist
 
 Die meisten Kaggle-Repos zeigen einen Score. Dieses hier zeigt, **wie**
