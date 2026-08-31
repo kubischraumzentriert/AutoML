@@ -65,13 +65,28 @@ Modul zurueckgefuehrt: neue `class_proportion_shift()`-Funktion +
 `class_holdout_suspected`-Flag (Schwellenwert 20 Prozentpunkte, grob an
 den 4 diagnostizierten Faellen kalibriert), 4 neue Tests, Regressions-
 bestaetigung am Template-Projekt (4.9pp - echtes Risiko, kein Artefakt).
+**19. Aktualisierung:** P3 (externe Adoption) aus dem vierten
+Bewertungsdokument bearbeitet - README um einen "Los geht's"-Abschnitt
+ergaenzt (Umgebung einrichten, Testsuite, ein Skript ausprobieren,
+kompletten Workflow nachvollziehen, auf eigenes Projekt uebertragen; die
+zugrundeliegende Checkliste existierte bereits in `TARGETS.md`/
+`WorkflowDescription.md`, war vom README aus aber nicht auffindbar).
+Beispielprojekt (`health_condition`, bereits im Repo enthalten) explizit
+als solches benannt. Nach Nutzerbestaetigung (bewusst vorher gefragt,
+da oeffentlich sichtbar) ersten GitHub Release `v0.1.0` veroeffentlicht.
+Externe-Feedback-Punkte (4/5) ehrlich als "strukturell vorbereitet, aber
+mangels echter externer Nutzung inhaltlich nicht umsetzbar" dokumentiert,
+nicht simuliert. **Damit ist die GESAMTE P0-P3-Roadmap des vierten
+Bewertungsdokuments (2026-08-30) vollstaendig abgearbeitet.**
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `eaa0000` "P2: Hard-Split-Stresstest um
-  Class-Holdout-Verdacht erweitert (class_proportion_shift,
-  Schwellenwert 20pp)" - gepusht, CI Smoke Test gruen (Lauf
-  `33406093180`).
+- `MLR3_Classifikation` @ `79b451a` "P3: externe Adoption vorbereiten -
+  Start-here-Anleitung, Beispielprojekt benannt, v0.1.0-Release" -
+  gepusht (docs-only, kein CI-Trigger; letzter CI-relevanter Commit
+  `eaa0000`, CI Smoke Test gruen, Lauf `33406093180`). Zusaetzlich Tag +
+  [GitHub Release `v0.1.0`](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
+  veroeffentlicht.
 - `ML_Learning` @ `58a467e` "P2: optdigits-Ursachendiagnose fuer den
   Hard-Split-Stresstest" - lokal, kein Remote.
 - Zwischenstaende auf dem Weg dorthin (alle gepusht, alle CI gruen):
@@ -650,29 +665,34 @@ Nachanalyse (siehe Punkte 22-26 oben). Kein Backport (ADR-003) - das
 generische Modul bleibt, die konkrete Anwendung liefert keine
 actionable Handlungsempfehlung.
 
-**Aus dem VIERTEN Bewertungsdokument noch offen (P1 Rest + P2/astartes
-+ P3, auf explizite Nutzeranweisung)**:
+**Die GESAMTE P0-P3-Roadmap des VIERTEN Bewertungsdokuments (2026-08-30)
+ist jetzt ebenfalls vollstaendig abgearbeitet** (P0 Dokumentationskonsistenz,
+P1 `JOSS_TECHNIQUE_WATCH.md`, P2 beide JOSS-inspirierten Prototypen, P3
+externe Adoption - siehe Punkt 19 oben):
 - **P1, Rest**: `JOSS_TECHNIQUE_WATCH.md` selbst ist ERLEDIGT. Nur noch
   offen: optional Research-Benchmark von n=6 auf n=10-15 CC18-
   Datensaetze erweitern ("Weg B" aus Punkt 24 - deutlich teurer, nur
   falls der Research-/AutoML-Conf-Pfad weiterverfolgt wird - VORHER
   einfrieren, nicht nach Sicht der Zahlen).
-- **P2, beide JOSS-inspirierten Prototypen jetzt VOLLSTAENDIG
-  ABGESCHLOSSEN UND BACKPORTED**: VeridicalFlow/Decision-Stability
-  (kein Backport, ADR-003 - liefert keine actionable Handlungs-
-  empfehlung) UND astartes/Hard-Split-Stresstest (Punkt 18 oben) - Modul
-  + synthetische Tests + Rollout auf alle 6 CC18-Datensaetze (4/6
-  auffaellig) + Backport als `137_hard_split_stress_test.R` (ADR-003
-  erfuellt, 7/7 Bestaetigungen) + CI-Fixture-Ergaenzung + eine echte
-  Ursachendiagnose (optdigits/analcatdata-authorship: verdeckter
-  Class-Holdout; sick/cmc: echtes Extrapolationsrisiko) + direkte
-  Modul-Erweiterung um `class_proportion_shift()`/
-  `class_holdout_suspected` als Reaktion darauf. Kein offener Rest mehr
-  bei diesem Thema, ausser der Nutzer will explizit tiefer einsteigen
-  (z.B. Schwellenwert 20pp synthetisch nachschaerfen statt nur grob
-  kalibriert, oder k>2 testen).
-- **P3**: externe Adoption vorbereiten (Start-here-Anleitung, erstes
-  Release, externe Nutzerfeedbacks als Evidenz behandeln).
+- **P2, beide JOSS-inspirierten Prototypen VOLLSTAENDIG ABGESCHLOSSEN UND
+  BACKPORTED**: VeridicalFlow/Decision-Stability (kein Backport, ADR-003
+  - liefert keine actionable Handlungsempfehlung) UND astartes/
+  Hard-Split-Stresstest (Punkt 18 oben) - Modul + synthetische Tests +
+  Rollout auf alle 6 CC18-Datensaetze (4/6 auffaellig) + Backport als
+  `137_hard_split_stress_test.R` (ADR-003 erfuellt, 7/7 Bestaetigungen)
+  + CI-Fixture-Ergaenzung + eine echte Ursachendiagnose (optdigits/
+  analcatdata-authorship: verdeckter Class-Holdout; sick/cmc: echtes
+  Extrapolationsrisiko) + direkte Modul-Erweiterung um
+  `class_proportion_shift()`/`class_holdout_suspected` als Reaktion
+  darauf. Kein offener Rest mehr bei diesem Thema, ausser der Nutzer
+  will explizit tiefer einsteigen (z.B. Schwellenwert 20pp synthetisch
+  nachschaerfen statt nur grob kalibriert, oder k>2 testen).
+- **P3, ABGESCHLOSSEN** (Punkt 19 oben): README-"Los geht's"-Abschnitt,
+  Beispielprojekt explizit benannt, GitHub Release `v0.1.0`
+  veroeffentlicht. Punkte 4/5 (externe Nutzerfeedbacks/Issues als
+  Evidenz) bleiben strukturell vorbereitet, aber inhaltlich naturgemaess
+  offen, bis echte externe Nutzung stattfindet - kein Handlungsbedarf
+  von unserer Seite, nur abwarten/reagieren, falls Issues eintreffen.
 - **Ausdrueckliche Warnung aus dem Bewertungsdokument**: KEIN Feature
   Creep - jede JOSS-Idee braucht erst eine eigene Hypothese/ein
   bestehendes Problem im Template, bevor prototypisiert wird. Default:
@@ -764,18 +784,36 @@ sick/cmc: echtes Extrapolationsrisiko) - direkt als
 `class_proportion_shift()`/`class_holdout_suspected`-Erweiterung ins
 Modul zurueckgefuehrt. **Kein offener Rest mehr bei diesem Thema.**
 
+**P3 (externe Adoption) ist ebenfalls VOLLSTAENDIG abgeschlossen**
+(Punkt 19 oben): README-"Los geht's"-Abschnitt ergaenzt, das im Repo
+bereits enthaltene Beispielprojekt (`health_condition`) explizit
+benannt, GitHub Release [`v0.1.0`](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
+veroeffentlicht (Nutzer VORHER bewusst gefragt, da oeffentlich sichtbar).
+Die letzten beiden Checklistenpunkte (externe Nutzerfeedbacks/Issues als
+Evidenz) sind strukturell vorbereitet, aber naturgemaess erst mit
+tatsaechlicher externer Nutzung inhaltlich fuellbar - keine Simulation,
+kein weiterer Handlungsbedarf von unserer Seite.
+
+**Damit ist die GESAMTE P0-P3-Roadmap sowohl des dritten (2026-08-29)
+als auch des vierten (2026-08-30) externen Bewertungsdokuments
+vollstaendig abgearbeitet - kein zwingender naechster Schritt mehr aus
+irgendeinem der bisherigen Bewertungsdokumente offen.**
+
 Naheliegendste naechste Schritte, falls der Nutzer nichts Konkretes
-mitbringt: P3 (externe Adoption vorbereiten - Start-here-Anleitung,
-erstes Release), oder die optionale Research-Benchmark-Erweiterung
-("Weg B", n=6->10-15 CC18-Datensaetze, nur falls der Research-/AutoML-
-Conf-2027-Pfad weiterverfolgt wird - VORHER einfrieren, nicht nach
-Sicht der Zahlen). Ausdrueckliche Warnung aus dem vierten
-Bewertungsdokument im Kopf behalten: kein Feature Creep, jede
-JOSS-Idee braucht erst eine Hypothese/ein bestehendes Problem im
-Template, Default "NO BACKPORT bis Evidenz vorhanden" (ADR-003 bleibt
-massgeblich, jetzt auch fuer ADRs 007-009 relevant). Kleinere
-Alternativen: die optionale Acknowledgements-Sektion in
-`joss/paper.md` ausfuellen, `finalize_run_provenance()` auf weitere
-Skripte ausrollen, oder der Hard-Split-Stresstest-Schwellenwert (20pp,
-bislang nur grob kalibriert statt synthetisch hergeleitet wie der
-z-Score-Schwellenwert -2) bei Gelegenheit nachschaerfen.
+mitbringt: die optionale Research-Benchmark-Erweiterung ("Weg B",
+n=6->10-15 CC18-Datensaetze, nur falls der Research-/AutoML-Conf-2027-
+Pfad weiterverfolgt wird - VORHER einfrieren, nicht nach Sicht der
+Zahlen), oder abwarten, ob ein FUENFTES externes Bewertungsdokument
+kommt (Muster dieser Session: der Nutzer hat bislang nach jedem
+abgeschlossenen Roadmap-Zyklus ein neues gebracht). Ausdrueckliche
+Warnung aus dem vierten Bewertungsdokument im Kopf behalten: kein
+Feature Creep, jede JOSS-Idee braucht erst eine Hypothese/ein
+bestehendes Problem im Template, Default "NO BACKPORT bis Evidenz
+vorhanden" (ADR-003 bleibt massgeblich, jetzt auch fuer ADRs 007-009
+relevant). Kleinere Alternativen: die optionale Acknowledgements-
+Sektion in `joss/paper.md` ausfuellen, `finalize_run_provenance()` auf
+weitere Skripte ausrollen, oder der Hard-Split-Stresstest-Schwellenwert
+(20pp, bislang nur grob kalibriert statt synthetisch hergeleitet wie
+der z-Score-Schwellenwert -2) bei Gelegenheit nachschaerfen. Weiterhin
+im Blick behalten: Wiedervorlage JOSS/AutoML-Conf-2027 ~November 2026
+(Punkt 10/`project_joss_publication_timeline.md`).
