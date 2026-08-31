@@ -2520,6 +2520,53 @@ als eigenstaendiges, getestetes Modul im Template verfuegbar.
 Beide Ergebnisse in die Evidence Registry geloggt (Rolle `trust_gate` -
 dies ist ein Trust-/Diagnose-Check, kein Score-Hebel).
 
+### P2 - Hard-Split-Stresstest: Rollout auf alle 6 CC18-Datensaetze (2026-08-31)
+
+**Nutzerfrage**: "sollten wir vielleicht astartes bei noch weiteren
+Datensaetzen versuchen bevor wir backporten?" - bejaht (Empfehlung: da
+kein Tuning noetig ist, deutlich guenstiger als der Decision-Stability-
+Rollout). Modul + Prototyp-Skript auf die restlichen 4 Datensaetze
+(`sick`, `cmc`, `analcatdata-authorship`, `blood-transfusion`) kopiert
+und ausgefuehrt.
+
+**Ergebnisse (alle 6 Datensaetze)**:
+
+| Datensatz | Score hart | Referenz-Mittel (SD) | z | Auffaellig? |
+|---|---|---|---|---|
+| `ilpd` | 0.5903 | 0.5859 (0.0247) | 0.18 | nein |
+| `optdigits` | 0.6918 | 0.9811 (0.0018) | -157.67 | **ja, massiv** |
+| `sick` | 0.5000 | 0.9060 (0.0206) | -19.72 | **ja** |
+| `cmc` | 0.3845 | 0.5171 (0.0070) | -18.94 | **ja** |
+| `analcatdata-authorship` | 0.7158 | 0.9864 (0.0047) | -57.78 | **ja** |
+| `blood-transfusion` | 0.7176 | 0.6247 (0.0377) | +2.46 | nein (Split sogar leicht *besser*) |
+
+**Ehrliche Einordnung**: 4/6 Datensaetze zeigen ein deutliches, teils
+massives Extrapolationsrisiko (|z| von 19 bis 158), das ein normaler
+Zufalls-CV-Score komplett verdeckt haette - das ist HAEUFIGER als
+zunaechst mit n=2 vermutet (damals 1/2). `blood-transfusion` ist ein
+interessanter Gegenfall: der harte Split faellt hier sogar leicht
+BESSER aus als der Referenzbereich (z=+2.46) - ein Hinweis, dass
+"auffaellig" bei diesem Check klar zweiseitig ist und der Check nicht
+einfach "schlechtere Cluster = schlechterer Score" unterstellt.
+
+**Backport-Frage (ADR-003) - jetzt beantwortet**: mit 6/6 Datensaetzen
+und einem konsistent nachvollziehbaren, differenzierten Verhalten
+(2x unauffaellig inkl. 1x sogar positiv, 4x klar auffaellig ueber eine
+grosse Bandbreite an |z|-Werten) ist die Bestaetigungsschwelle jetzt
+deutlich UEBER dem ADR-003-Minimum (≥2 Projekte) erfuellt. Empfehlung:
+Backport als Trust-Gate-Diagnose-Skript vorbereiten (Platzierung in der
+Skript-Reihenfolge und genaues Ausgabeformat noch mit dem Nutzer
+abzustimmen) - noch nicht ausgefuehrt, wartet auf explizite
+Nutzeranweisung.
+
+**Bewusst weiterhin offen**: die Ursachendiagnose fuer die einzelnen
+Faelle (welche Feature-Kombinationen/Ziffernklassen/Cluster-Strukturen
+die jeweiligen Extrapolationsprobleme treiben) - bleibt ein separater
+Folgeschritt, kein Teil dieses Rollouts.
+
+Alle 4 neuen Ergebnisse in die Evidence Registry geloggt (Rolle
+`trust_gate`, `backport_status = "open"`).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
