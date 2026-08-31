@@ -4,7 +4,7 @@ name: CI Smoke Test
 # - unit-tests: echte Korrektheitstests (testthat, tests/testthat/) fuer
 #   einzelne Funktionen mit bekanntem Erwartungswert (2026-08-19, aus
 #   einem externen Review-Hinweis - siehe TARGETS.md).
-# - smoke-test: laeuft die Kernskripte (015-136) end-to-end auf einer
+# - smoke-test: laeuft die Kernskripte (015-137) end-to-end auf einer
 #   kleinen, synthetischen Fixture durch - siehe TARGETS.md fuer
 #   Herkunft/Design. Kein Korrektheitstest (keine Score-Schwellenwerte),
 #   nur "laeuft es noch fehlerfrei durch" - genau das, was diese Session
@@ -65,11 +65,11 @@ jobs:
           cd ci_smoke_test
           for f in db_logging.R db_schema.sql 005_benchmark_runtime.R 006_tuning_diagnostics.R \
                    class_multiplier_tuning.R split_size_sensitivity.R learning_curve.R \
-                   seed_stability.R generalization_gap.R \
+                   seed_stability.R generalization_gap.R hard_split_stress_test.R \
                    015_target_leak_audit.R target_leak_audit_helpers.R 020_task.R 022_split_size_sensitivity.R \
                    023_learning_curve.R 030_baseline.R 080_boosting_benchmark.R \
                    090_ranger_tuning.R 100_lightgbm_tuning.R 092_seed_stability.R \
-                   136_generalization_gap.R; do
+                   136_generalization_gap.R 137_hard_split_stress_test.R; do
             cp "../$f" "./$f"
           done
 
@@ -116,3 +116,7 @@ jobs:
       - name: 136 Generalisierungsluecke
         working-directory: ci_smoke_test
         run: Rscript 136_generalization_gap.R
+
+      - name: 137 Hard-Split-Stresstest
+        working-directory: ci_smoke_test
+        run: Rscript 137_hard_split_stress_test.R

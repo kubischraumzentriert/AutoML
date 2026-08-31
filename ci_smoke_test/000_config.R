@@ -605,6 +605,16 @@ seed_stability_cv_warn_relative <- 0.5
 seed_stability_jitter_relative <- 0.1  # +/-10% Jitter auf mtry.ratio/sample.fraction, +/-20% auf min.node.size
 seed_stability_results_path <- file.path(artifact_dir, "seed_stability_results.csv")
 
+# Hard-Split-Stresstest (137_hard_split_stress_test.R, siehe
+# hard_split_stress_test.R): k-means-Cluster-Split (kleinstes Cluster =
+# Test-Set) als Extrapolations-Stresstest, Referenzbereich aus zufaelligen
+# Holdouts gleicher Testgroesse. An 7 unabhaengigen Projekten verifiziert
+# (2026-08-31, siehe BACKLOG.md).
+hard_split_stress_test_k <- 2L
+hard_split_stress_test_n_repeats <- 3L  # CI-Smoke-Test: nur der Code-Pfad zaehlt
+hard_split_stress_test_flag_threshold_z <- -2
+hard_split_stress_test_results_path <- file.path(artifact_dir, "hard_split_stress_test_results.csv")
+
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "<task_id_prefix>_sleep_weighted_p1.5")
 # ein feature_set-Label fuer model_config ab. Referenziert task_id_prefix
