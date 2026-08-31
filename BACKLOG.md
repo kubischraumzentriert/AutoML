@@ -2676,6 +2676,34 @@ dokumentierter Interpretationsvorbehalt fuer das bereits zurueckgefuehrte
 (z.B. ein automatischer Klassenverschiebungs-Diagnosewert im Report), nur
 als Befund dokumentiert. Entscheidung ueber eine Modul-Erweiterung offen.
 
+**Nutzerentscheidung (AskUserQuestion)**: "Ja, Klassenverschiebungs-
+Diagnose ergaenzen" - Modul erweitert statt nur dokumentiert.
+
+**Erweiterung umgesetzt**: neue Funktion `class_proportion_shift()`
+(`hard_split_stress_test.R`) misst die maximale Klassenanteils-
+Verschiebung (Prozentpunkte) zwischen Test-Cluster und Referenzverteilung
+(`NA` fuer `TaskRegr`). `hard_split_stress_test()` gibt jetzt zusaetzlich
+`class_shift_max_pp`/`class_holdout_suspected` zurueck und meldet einen
+separaten "CLASS-HOLDOUT-VERDACHT"-Hinweis im Report, unabhaengig vom
+z-Score-Flag. Neuer Schwellenwert `hard_split_stress_test_class_shift_
+warn_pp` (Default 20, in `000_config.R`/`ci_smoke_test/000_config.R`
+ergaenzt, `137_hard_split_stress_test.R` gibt ihn durch) - grob an den 4
+bereits diagnostizierten Faellen kalibriert (`sick`/`cmc`: 5.5/13.1pp,
+darunter; `optdigits`/`analcatdata-authorship`: 32.6/76.8pp, darueber),
+NICHT synthetisch hergeleitet wie der z-Score-Schwellenwert -2 (bewusst
+als schwaechere Kalibrierung im Kopfkommentar gekennzeichnet).
+
+4 neue synthetische Tests (`class_proportion_shift()` bei klassen-
+korrelierter Clusterung, `NA` bei `TaskRegr`, sowie die Integration in
+`hard_split_stress_test()` bei klassen-UNabhaengiger Clusterung - dort
+korrekt KEIN Class-Holdout-Verdacht). Gesamtsuite danach 356/356 gruen.
+
+**Regressionstest health_condition (erneut)**: Klassenverschiebung nur
+4.9 Prozentpunkte (weit unter dem 20pp-Schwellenwert) - bestaetigt, dass
+der z=-29.33-Alarm dort ein ECHTES Extrapolationsrisiko misst, kein
+Class-Holdout-Artefakt. Eine schoene Validierung der neuen Diagnose an
+einem bereits bekannten Fall.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

@@ -708,9 +708,22 @@ seed_stability_results_path <- file.path(artifact_dir, "seed_stability_results.c
 # k=2 als Default: haelt den Test-Anteil meist in einer plausiblen
 # Groessenordnung; hoehere k erzeugen tendenziell kleinere, "extremere"
 # Test-Cluster (nicht separat kalibriert, siehe hard_split_stress_test.R).
+#
+# NACHTRAG (2026-08-31, optdigits-Ursachendiagnose): bei Multi-Klassen-
+# Aufgaben mit im Feature-Raum gut trennbaren Klassen kann der Cluster-Split
+# unbeabsichtigt in einen (fast) Class-Holdout-Split entarten - ein
+# AUFFAELLIGER z-Score misst dann eher fehlende Trainingsbeispiele fuer
+# ausgeschlossene Klassen als echte Feature-Raum-Extrapolation.
+# hard_split_stress_test_class_shift_warn_pp meldet das separat vom
+# z-Score (max. Klassenanteils-Verschiebung in Prozentpunkten, Default 20 -
+# grob an `sick`/`cmc` [5.5/13.1pp, darunter] vs. `optdigits`/
+# `analcatdata-authorship` [32.6/76.8pp, darueber] kalibriert, nicht
+# synthetisch hergeleitet). Regressionstest health_condition: 4.9pp -
+# bestaetigt echtes Extrapolationsrisiko, kein Class-Holdout-Artefakt.
 hard_split_stress_test_k <- 2L
 hard_split_stress_test_n_repeats <- 10L
 hard_split_stress_test_flag_threshold_z <- -2
+hard_split_stress_test_class_shift_warn_pp <- 20
 hard_split_stress_test_results_path <- file.path(artifact_dir, "hard_split_stress_test_results.csv")
 
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------

@@ -613,6 +613,7 @@ seed_stability_results_path <- file.path(artifact_dir, "seed_stability_results.c
 hard_split_stress_test_k <- 2L
 hard_split_stress_test_n_repeats <- 3L  # CI-Smoke-Test: nur der Code-Pfad zaehlt
 hard_split_stress_test_flag_threshold_z <- -2
+hard_split_stress_test_class_shift_warn_pp <- 20
 hard_split_stress_test_results_path <- file.path(artifact_dir, "hard_split_stress_test_results.csv")
 
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------

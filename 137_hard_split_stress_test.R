@@ -47,14 +47,16 @@ report <- hard_split_stress_test(
   task_full, make_ranger_ctor(), tuning_measure,
   k = hard_split_stress_test_k, n_repeats = hard_split_stress_test_n_repeats,
   seed = seed, higher_is_better = higher_is_better,
-  flag_threshold_z = hard_split_stress_test_flag_threshold_z, label = project_name
+  flag_threshold_z = hard_split_stress_test_flag_threshold_z,
+  class_shift_warn_pp = hard_split_stress_test_class_shift_warn_pp, label = project_name
 )
 
 results <- data.table(
   project = project_name, metric = tuning_measure_id,
   k = hard_split_stress_test_k, n_test = round(report$test_ratio * task_full$nrow),
   test_ratio = report$test_ratio, hard_score = report$hard_score,
-  ref_mean = report$ref_mean, ref_sd = report$ref_sd, z = report$z, flagged = report$flagged
+  ref_mean = report$ref_mean, ref_sd = report$ref_sd, z = report$z, flagged = report$flagged,
+  class_shift_max_pp = report$class_shift_max_pp, class_holdout_suspected = report$class_holdout_suspected
 )
 fwrite(results, hard_split_stress_test_results_path)
 cat("\nGespeichert:", hard_split_stress_test_results_path, "\n")

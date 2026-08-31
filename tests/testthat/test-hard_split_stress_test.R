@@ -99,3 +99,44 @@ test_that("cluster_based_hard_split() bricht kontrolliert ab, wenn keine numeris
   task <- TaskClassif$new(id = "no_numeric", backend = dt, target = "target")
   expect_error(cluster_based_hard_split(task), "mindestens 1 numerisches Feature")
 })
+
+# --- Class-Holdout-Verdacht (NACHTRAG 2026-08-31, siehe BACKLOG.md
+# "optdigits-Ursachendiagnose") -----------------------------------------
+
+test_that("class_proportion_shift() erkennt eine starke Klassenverschiebung bei klassen-korrelierter Clusterung", {
+  set.seed(1)
+  # Cluster A (n=90) ueberwiegend "pos", Cluster B (n=10) ueberwiegend "neg" -
+  # ein k-means-Split auf x1/x2 sollte deshalb das Test-Cluster (das
+  # kleinere, B) mit einer stark verschobenen Klassenverteilung liefern.
+  x1 <- c(rnorm(90, 0, 1), rnorm(10, 10, 1))
+  x2 <- c(rnorm(90, 0, 1), rnorm(10, 10, 1))
+  y <- c(sample(c("pos", "neg"), 90, replace = TRUE, prob = c(0.9, 0.1)),
+         sample(c("pos", "neg"), 10, replace = TRUE, prob = c(0.05, 0.95)))
+  dt <- data.table::data.table(x1 = x1, x2 = x2, target = factor(y, levels = c("neg", "pos")))
+  task <- TaskClassif$new(id = "class_shift_test", backend = dt, target = "target")
+
+  split <- cluster_based_hard_split(task, k = 2, seed = 1)
+  shift <- class_proportion_shift(task, split$test)
+  expect_gt(shift, 20)
+})
+
+test_that("class_proportion_shift() liefert NA fuer TaskRegr (keine Klassen)", {
+  dt <- data.table::data.table(x1 = rnorm(50), y = rnorm(50))
+  task <- TaskRegr$new(id = "regr_shift_test", backend = dt, target = "y")
+  expect_true(is.na(class_proportion_shift(task, task$row_ids[1:10])))
+})
+
+test_that("hard_split_stress_test() meldet class_shift_max_pp/class_holdout_suspected, keinen Verdacht bei klassen-unabhaengiger Clusterung", {
+  # make_two_cluster_task: das Ziel haengt NUR von x3 (unabhaengig von der
+  # Cluster-Zugehoerigkeit) ab - beide Cluster bleiben deshalb nah an
+  # 50/50 pos/neg, kein Class-Holdout zu erwarten.
+  task <- make_two_cluster_task(flip_relationship = FALSE, seed = 42)
+  learner_ctor <- function() lrn("classif.rpart")
+  measure <- msr("classif.acc")
+
+  out <- capture.output(
+    res <- hard_split_stress_test(task, learner_ctor, measure, k = 2, n_repeats = 10, seed = 1, label = "test-classshift")
+  )
+  expect_false(is.na(res$class_shift_max_pp))
+  expect_false(res$class_holdout_suspected)
+})
