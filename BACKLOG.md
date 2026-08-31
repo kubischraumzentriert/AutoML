@@ -2607,6 +2607,19 @@ auffaelligen Faelle (welche Feature-Kombinationen/Cluster-Strukturen die
 jeweiligen Extrapolationsprobleme treiben) - bleibt ein separater
 Folgeschritt.
 
+**CI-Smoke-Test-Fixture ergaenzt** (separater Commit `9bd9562`, direkt im
+Anschluss): `hard_split_stress_test.R`/`137_hard_split_stress_test.R` in
+die "Kernskripte in die Fixture kopieren"-Liste sowie einen neuen
+`137 Hard-Split-Stresstest`-Schritt in `.github/workflows/ci-smoke-test.yml`
+aufgenommen (Kernskripte jetzt 015-137), plus reduzierte
+`hard_split_stress_test_n_repeats=3` in `ci_smoke_test/000_config.R` (nur
+der Code-Pfad zaehlt, analog zu `seed_stability_n_seeds`/`_n_jitter`).
+Ohne diesen Schritt waere die neue Datei vom Smoke-Test unbemerkt geblieben
+(derselbe Fehlermodus wie beim Merge-Skript-Vorfall dieser Session -
+Konventionen, ROUTINE-MAESSIG pruefen statt anzunehmen). Beide CI-Laeufe
+gruen: `928cf5f` (Backport selbst, CI-Lauf `33361859447`) und `9bd9562`
+(Fixture-Ergaenzung inkl. des neuen 137-Schritts, CI-Lauf `33362023282`).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
