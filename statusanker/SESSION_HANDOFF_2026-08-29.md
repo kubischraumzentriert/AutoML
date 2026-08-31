@@ -45,16 +45,19 @@ ADRs (007-009) angelegt. **16. Aktualisierung:** Decision Stability auf
 alle 3 Outer-Folds erweitert ("Weg A", 18 statt 6 Messungen) - der
 urspruengliche suggestive n=6/Fold-1-Korrelationsbefund haelt der
 Erweiterung NICHT stand (rho -0.28 -> -0.086), ehrlich als widerlegt
-dokumentiert.
+dokumentiert. **17. Aktualisierung (jetzt 2026-08-31, neuer Tag, Session
+laeuft nahtlos weiter):** 2. JOSS-inspirierter Prototyp - Hard-Split-
+Stresstest (astartes-inspiriert) gebaut, synthetisch getestet, auf 2
+reale Projekte angewendet - deutlich klareres, ueberzeugenderes Signal
+als der 1. Prototyp (optdigits massiv auffaellig, z=-157.67).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `c699507` "P2 Weg A: Decision Stability auf
-  alle 3 Outer-Folds erweitert - urspruenglicher Fold-1-Befund
-  widerlegt" - gepusht, CI Smoke Test gruen (Lauf `33330260959`).
-- `ML_Learning` @ `91a2f33` "P2 Decision-Stability-Prototyp: Module in
-  allen 6 Projekten (inkl. Fold-Parametrisierung)" - lokal, kein
-  Remote.
+- `MLR3_Classifikation` @ `1a02cc8` "P2: 2. JOSS-inspirierter Prototyp -
+  Hard-Split-Stresstest (astartes-inspiriert)" - gepusht, CI Smoke Test
+  gruen (Lauf `33359779042`).
+- `ML_Learning` @ `fae9029` "P2: Hard-Split-Stresstest-Prototyp auf
+  ilpd und optdigits" - lokal, kein Remote.
 - Fruehere Zwischenstaende dieses Ankers (jetzt ueberholt): Commit
   `8d02499` "P2: Decision-Stability-Prototyp
   (VeridicalFlow/PCS-inspiriert)" - gepusht. CI Smoke Test-Lauf fuer
@@ -576,6 +579,42 @@ Anwendung liefert keine actionable Handlungsempfehlung. "Weg B" (neue
 externe Datensaetze via OpenML) bleibt eine separate, groessere Option
 fuer spaeter.
 
+**27. Neuer Tag (2026-08-31), astartes als 2. JOSS-inspirierter
+Prototyp** (Nutzeranweisung "astartes als zweiten Prototyp angehen") -
+`hard_split_stress_test.R` (neu): `cluster_based_hard_split()`
+(k-means auf numerischen Features, kleinstes Cluster = Test-Set, ein
+strukturell schwieriger Extrapolations-Split statt eines zufaelligen
+Interpolations-Splits) + `random_split_score_distribution()`
+(Referenzbereich aus zufaelligen Holdouts gleicher Testgroesse) +
+`hard_split_stress_test()` (z-Score-Report, |z|<-2 auffaellig, exakt
+dasselbe Muster wie `generalization_gap.R`). Bewusst NICHT die
+Python-astartes-Implementierung uebernommen, nur die Grundidee nativ in
+R.
+
+Synthetischer Test (`test-hard_split_stress_test.R`, 2-Cluster-Task mit
+"flip"- vs. "no-flip"-Regel) fand einen Designfehler in der ersten
+Fassung: eine CLUSTER-RELATIVE Regel liess selbst den Kontrollfall
+(no-flip) faelschlich durchfallen (z=-74.3), weil absolute
+Baum-Schwellenwerte cluster-relative Regeln nicht uebertragen koennen -
+behoben durch ein cluster-UNABHAENGIGES Feature `x3~N(0,1)`. Danach
+12/12 Tests gruen (Flip-Fall korrekt geflaggt, No-Flip-Fall korrekt
+nicht geflaggt).
+
+Angewendet auf `ilpd` und `optdigits` (ungetunter, klassengewichteter
+Ranger, reiner Diagnose-Check, kein Tuning): `ilpd` z=0.18
+(unauffaellig), `optdigits` z=**-157.67** (massiv auffaellig - Score
+auf hartem Split 0.6918 vs. Referenzmittel 0.9811, SD=0.0018). Die
+Ursache (welche Ziffernklassen/Schreibstile das Test-Cluster
+dominieren) wurde bewusst NICHT weiter diagnostiziert - offener
+Folgepunkt. ADR-003-Backport-Frage bleibt ebenfalls offen: das Modul
+verhaelt sich korrekt (still bei ilpd, schlaegt bei optdigits an), aber
+noch kein expliziter Backport als nummeriertes Pipeline-Skript ohne
+weitere Nutzeranweisung/weiteren Rollout.
+
+Commits: `MLR3_Classifikation` @ `1a02cc8`, CI Smoke Test gruen (Lauf
+`33359779042`); `ML_Learning` @ `fae9029` (lokal, kein Remote, Module +
+Prototyp-Skript in `openml-cc18-ilpd`/`openml-cc18-optdigits`).
+
 ## Offene Punkte fuer die naechste Session
 
 **Die GESAMTE P0-P3-Roadmap des DRITTEN Bewertungsdokuments
@@ -597,9 +636,15 @@ actionable Handlungsempfehlung.
   Datensaetze erweitern ("Weg B" aus Punkt 24 - deutlich teurer, nur
   falls der Research-/AutoML-Conf-Pfad weiterverfolgt wird - VORHER
   einfrieren, nicht nach Sicht der Zahlen).
-- **P2, optionaler 2. Kandidat**: astartes/schwierige-Splits-Stresstest
-  - der VeridicalFlow-Prototyp ist fertig, astartes wurde bisher nicht
-  begonnen (war die Alternative bei der urspruenglichen Kandidatenwahl).
+- **P2, beide JOSS-inspirierten Prototypen jetzt ABGESCHLOSSEN**:
+  VeridicalFlow/Decision-Stability UND astartes/Hard-Split-Stresstest
+  (Punkt 27) sind beide fertig (Modul + synthetische Tests + Anwendung
+  auf reale Projekte). Offen: die konkrete Ursachen-Diagnose des
+  `optdigits`-Befunds (z=-157.67, welche Ziffernklassen/Schreibstile
+  das Test-Cluster dominieren) sowie die ADR-003-Backport-Entscheidung
+  fuer `hard_split_stress_test.R` (bislang: verhaelt sich korrekt,
+  aber noch nicht als nummeriertes Pipeline-Skript rueckportiert -
+  wartet auf weiteren Rollout/explizite Nutzeranweisung).
 - **P3**: externe Adoption vorbereiten (Start-here-Anleitung, erstes
   Release, externe Nutzerfeedbacks als Evidenz behandeln).
 - **Ausdrueckliche Warnung aus dem Bewertungsdokument**: KEIN Feature
@@ -678,21 +723,24 @@ diese Sitzung ABGESCHLOSSEN. Ein VIERTES Bewertungsdokument
 (2026-08-30, Punkte 20-21) liegt vor - P0 (Dokumentationskonsistenz)
 UND P1 (`JOSS_TECHNIQUE_WATCH.md`) sind bereits erledigt.
 
-**P2 (Decision-Stability-Prototyp) ist VOLLSTAENDIG abgeschlossen** -
-Modul + Tests + Rollout auf alle 6 Datensaetze x 3 Outer-Folds (18
-Messungen) + formale Nachanalyse, die den urspruenglichen Zwischenbefund
-ehrlich widerlegt hat (Punkte 22-26 oben). Kein weiterer Handlungsbedarf
-dort, ausser der Nutzer will explizit tiefer einsteigen (z.B. "Weg B"
-mit echten neuen OpenML-Datensaetzen). Naheliegendster naechster
-Schritt, falls der Nutzer nichts Konkretes mitbringt: astartes/
-schwierige-Splits als 2. JOSS-inspirierter Prototyp, oder P3 (externe
-Adoption vorbereiten). Ausdrueckliche Warnung aus dem vierten
-Bewertungsdokument im Kopf behalten: kein Feature Creep, jede
-JOSS-Idee braucht erst eine Hypothese/ein bestehendes Problem im
-Template, Default "NO BACKPORT bis Evidenz vorhanden" (ADR-003 bleibt
-massgeblich, jetzt auch fuer ADRs 007-009 relevant). Kleinere
-Alternativen: die optionale Acknowledgements-Sektion in
-`joss/paper.md` ausfuellen, `finalize_run_provenance()` auf weitere
-Skripte ausrollen, oder die optionale Research-Benchmark-Erweiterung
-("Weg B", n=6->10-15, nur falls der Research-Pfad weiterverfolgt
-wird).
+**Beide P2-Prototypen (Decision-Stability/VeridicalFlow UND
+Hard-Split-Stresstest/astartes) sind jetzt VOLLSTAENDIG abgeschlossen**
+- je Modul + synthetische Tests + Rollout auf reale Projekte (Punkte
+22-27 oben). Decision-Stability widerlegte ehrlich den eigenen
+Zwischenbefund (rho -0.28 -> -0.086 ueber 3 Folds); der Hard-Split-
+Stresstest fand einen echten, unerwartet dramatischen Treffer bei
+`optdigits` (z=-157.67), dessen Ursache noch nicht diagnostiziert ist.
+Kein weiterer zwingender Handlungsbedarf, ausser der Nutzer will
+explizit tiefer einsteigen. Naheliegendste naechste Schritte, falls der
+Nutzer nichts Konkretes mitbringt: die `optdigits`-Ursachendiagnose,
+die offene ADR-003-Backport-Entscheidung fuer
+`hard_split_stress_test.R`, oder P3 (externe Adoption vorbereiten).
+Ausdrueckliche Warnung aus dem vierten Bewertungsdokument im Kopf
+behalten: kein Feature Creep, jede JOSS-Idee braucht erst eine
+Hypothese/ein bestehendes Problem im Template, Default "NO BACKPORT bis
+Evidenz vorhanden" (ADR-003 bleibt massgeblich, jetzt auch fuer ADRs
+007-009 relevant). Kleinere Alternativen: die optionale
+Acknowledgements-Sektion in `joss/paper.md` ausfuellen,
+`finalize_run_provenance()` auf weitere Skripte ausrollen, oder die
+optionale Research-Benchmark-Erweiterung ("Weg B", n=6->10-15, nur
+falls der Research-Pfad weiterverfolgt wird).
