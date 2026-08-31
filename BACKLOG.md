@@ -2704,6 +2704,54 @@ der z=-29.33-Alarm dort ein ECHTES Extrapolationsrisiko misst, kein
 Class-Holdout-Artefakt. Eine schoene Validierung der neuen Diagnose an
 einem bereits bekannten Fall.
 
+### P3 - Externe Adoption vorbereiten (2026-08-31)
+
+**Nutzeranweisung**: "mach weiter mit P3" (viertes Bewertungsdokument,
+2026-08-30, Abschnitt "P3 - externe Adoption", 5 Checklistenpunkte).
+
+**1. "Start here"-Anleitung geprueft**: existierte NICHT im `README.md` -
+das README war reine "warum ist das gut"-Darstellung ohne praktische
+Einstiegsanleitung. Eine ausfuehrliche Checkliste
+("Uebertragung auf einen neuen Kaggle-Wettbewerb") existierte bereits in
+`TARGETS.md`/`WorkflowDescription.md`, war aber vom README aus nicht als
+Einstiegspunkt auffindbar/verlinkt. Neuer Abschnitt "Los geht's (Start
+Here)" im README ergaenzt: Umgebung einrichten (Verweis
+`ENVIRONMENT.md`), Testsuite laufen lassen, ein einzelnes Skript
+ausprobieren, kompletten Workflow nachvollziehen, dann auf ein eigenes
+Projekt uebertragen (Verweis `TARGETS.md`/`WorkflowDescription.md`).
+Beide als Beispiel genannten Skripte (`015_target_leak_audit.R`,
+`030_baseline.R`) verifiziert: beide lesen `train.csv` direkt bzw.
+bootstrappen `020_task.R` automatisch, sind also tatsaechlich
+eigenstaendig lauffaehig wie behauptet.
+
+**2. Extern nachvollziehbares Beispielprojekt**: bereits vorhanden, aber
+nicht explizit als solches kommuniziert - dieses Repo selbst enthaelt ein
+vollstaendig durchgespieltes, echtes Kaggle-Projekt
+(`health_condition`/Playground Series S6E7, `train.csv`/`test.csv`/
+`sample_submission.csv` + befuelltes `000_config.R`). Im neuen
+README-Abschnitt jetzt explizit als solches benannt statt implizit
+vorausgesetzt.
+
+**3. Erste Version/Release**: Nutzerentscheidung (AskUserQuestion) - "Ja,
+v0.1.0 Release veroeffentlichen" (bewusst vorher gefragt, da ein
+GitHub-Release eine sichtbare, oeffentliche Aktion ist, anders als die
+sonst automatisch gesetzten Backlog-Tags). Tag `v0.1.0` + [GitHub
+Release](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
+veroeffentlicht, Release-Notes fassen Faehigkeiten/bestaetigte Ergebnisse
+zusammen und verweisen auf den neuen Start-here-Abschnitt. Bewusst KEIN
+R-Paket-Release (ADR-007 bleibt massgeblich) - reine Snapshot-Markierung
+fuer externe Adoptierende.
+
+**4./5. Externe Nutzerfeedbacks/Issues als Evidenz**: strukturell bereits
+vorbereitet (`CONTRIBUTING.md` beschreibt den Issue-Prozess, ADR-003
+gilt fuer externe PRs genauso wie fuer eigene Aenderungen), aber
+inhaltlich NICHT umsetzbar ohne tatsaechliche externe Nutzung - es gibt
+bislang keine externen Nutzer/Issues. Bewusst nicht simuliert/vorgetaeuscht;
+bleibt offen, bis echte externe Ruckmeldungen eintreffen.
+
+Commit `495ede4` (README-Ergaenzung, docs-only, kein CI-Trigger), Tag
+`v0.1.0`.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
