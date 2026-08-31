@@ -687,6 +687,32 @@ seed_stability_cv_warn_relative <- 0.5
 seed_stability_jitter_relative <- 0.1  # +/-10% Jitter auf mtry.ratio/sample.fraction, +/-20% auf min.node.size
 seed_stability_results_path <- file.path(artifact_dir, "seed_stability_results.csv")
 
+# Hard-Split-Stresstest (137_hard_split_stress_test.R, siehe
+# hard_split_stress_test.R und JOSS_TECHNIQUE_WATCH.md, astartes-inspiriert):
+# prueft EXTRAPOLATION statt Interpolation - ein k-means-Cluster-Split (kleinstes
+# Cluster = Test-Set) ist ein strukturell schwierigerer Train/Test-Split als
+# Zufalls-CV, der einen ganz anderen Rauschkanal misst als generalization_gap.R
+# (dort: CV- vs. Bootstrap-Test-Verteilung bei ZUFAELLIGEM Split) oder
+# split_size_sensitivity.R (dort: Streuung durch Testset-GROESSE). Referenzbereich
+# aus zufaelligen Holdouts gleicher Testgroesse, |z| > 2 => auffaellig (derselbe
+# Schwellenwert wie generalization_gap.R, aus Konsistenzgruenden). Bewusst mit dem
+# ungetunten base_learner_constructors$ranger statt getunten Kandidaten (reiner
+# Diagnose-Check, kein Score-Hebel - deutlich guenstiger als 136/090/100).
+#
+# An 6 unabhaengigen OpenML-CC18-Datensaetzen verifiziert (2026-08-31, siehe
+# BACKLOG.md): 4/6 klar auffaellig (|z| von 19 bis 158 - `sick`, `cmc`,
+# `analcatdata-authorship`, `optdigits`), 2/6 unauffaellig (`ilpd` z=0.18,
+# `blood-transfusion` z=+2.46 - dort sogar minimal BESSER als der
+# Referenzbereich). Deutlich haeufiger auffaellig als der urspruengliche
+# n=2-Befund (1/2) vermuten liess - ADR-003-Bestaetigungsschwelle klar erfuellt.
+# k=2 als Default: haelt den Test-Anteil meist in einer plausiblen
+# Groessenordnung; hoehere k erzeugen tendenziell kleinere, "extremere"
+# Test-Cluster (nicht separat kalibriert, siehe hard_split_stress_test.R).
+hard_split_stress_test_k <- 2L
+hard_split_stress_test_n_repeats <- 10L
+hard_split_stress_test_flag_threshold_z <- -2
+hard_split_stress_test_results_path <- file.path(artifact_dir, "hard_split_stress_test_results.csv")
+
 # --- Helfer fuer das Experiment-Tracking (siehe db_logging.R) ---------------
 # Leitet aus einem mlr3-Task-Id (z.B. "<task_id_prefix>_sleep_weighted_p1.5")
 # ein feature_set-Label fuer model_config ab. Referenziert task_id_prefix

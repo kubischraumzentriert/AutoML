@@ -44,6 +44,7 @@ canonical_scripts <- list(
   "Learning-Curve (023)" = "023_learning_curve.R",
   "Seed-Stabilitaet (092)" = "092_seed_stability.R",
   "Generalisierungsluecke (136)" = "136_generalization_gap.R",
+  "Hard-Split-Stresstest (137)" = "137_hard_split_stress_test.R",
   "Ensemble Selection (148/149)" = c("148_ensemble_candidate_pool.R", "149_ensemble_selection.R"),
   "Threshold-Tuning (130)" = c("130_threshold_tuning.R", "146_threshold_tuning_ranger.R", "class_multiplier_tuning.R"),
   "Multi-Label (021)" = "021_multilabel_workflow.R"

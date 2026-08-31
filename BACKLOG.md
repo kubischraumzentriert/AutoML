@@ -2567,6 +2567,46 @@ Folgeschritt, kein Teil dieses Rollouts.
 Alle 4 neuen Ergebnisse in die Evidence Registry geloggt (Rolle
 `trust_gate`, `backport_status = "open"`).
 
+### P2 - Hard-Split-Stresstest: Backport ins Template (2026-08-31)
+
+**Nutzeranweisung**: "mach weiter mit dem Backport" (nach dem 6/6-Rollout
+oben). Neues nummeriertes Pipeline-Skript
+[`137_hard_split_stress_test.R`](137_hard_split_stress_test.R) - direkt
+nach `136_generalization_gap.R` platziert (beide teilen dasselbe
+Referenzbereich-/z-Score-Muster, unterscheiden sich aber im gemessenen
+Rauschkanal: 136 = Interpolations-Optimismus bei zufaelligem Split, 137 =
+Extrapolationsrisiko bei strukturell schwierigem Cluster-Split). Bewusst
+mit dem UNGETUNTEN `base_learner_constructors$ranger` statt getunter
+090/100-Kandidaten (reiner Diagnose-Check, braucht keine Tuning-Instanzen -
+deutlich guenstiger als 136).
+
+Neue Config-Sektion in `000_config.R`
+(`hard_split_stress_test_k`/`_n_repeats`/`_flag_threshold_z`/
+`_results_path`, k=2/n_repeats=10/z<-2 als Defaults, unveraendert
+gegenueber dem Prototyp). Eintrag in `check_project_script_coverage.R`
+ergaenzt (`"Hard-Split-Stresstest (137)"`).
+
+**Regressionstest gegen das Template-eigene Projekt** (`health_condition`,
+69008 Zeilen, groesster bisher getesteter Datensatz): **ebenfalls
+auffaellig, z=-29.33** (Score hart 0.7913 vs. Referenzbereich-Mittel
+0.8602, SD=0.0024) - ein 7. Bestaetigungsfall, konsistent mit dem
+6/6-CC18-Befund (Extrapolationsrisiko ist eher die Norm als die Ausnahme
+bei diesem Check). Volle Testsuite danach 352/352 gruen (keine neuen
+Tests noetig - das bestehende `test-hard_split_stress_test.R` deckt das
+Modul bereits synthetisch ab, der Backport selbst ist reine
+Verkabelung/Config).
+
+**ADR-003-Status**: Backport jetzt VOLLZOGEN (7 unabhaengige
+Bestaetigungen: 6 CC18-Datensaetze + das Template-eigene Projekt, 5/7
+auffaellig). `hard_split_stress_test.R` bleibt zusaetzlich als
+eigenstaendiges Modul verfuegbar (fuer Adhoc-Diagnosen ausserhalb der
+nummerierten Pipeline-Reihenfolge).
+
+**Weiterhin bewusst offen**: die Ursachendiagnose fuer die einzelnen
+auffaelligen Faelle (welche Feature-Kombinationen/Cluster-Strukturen die
+jeweiligen Extrapolationsprobleme treiben) - bleibt ein separater
+Folgeschritt.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
