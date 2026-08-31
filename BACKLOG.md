@@ -2752,6 +2752,69 @@ bleibt offen, bis echte externe Ruckmeldungen eintreffen.
 Commit `495ede4` (README-Ergaenzung, docs-only, kein CI-Trigger), Tag
 `v0.1.0`.
 
+### "Weg B"-Erweiterung: n=6->10 CC18-Datensaetze fuer die Decision-Stability-Forschungsfrage (2026-08-31)
+
+**Nutzeranweisung**: "mach weiter mit der Weg-B-Erweiterung". Vorab per
+AskUserQuestion geklaert: +4 neue Datensaetze (n=10 insgesamt statt
+n=15), da jeder neue Datensatz denselben teuren Ablauf braucht
+(Task-Setup + Level-2-Prototyp mit Tuning ueber 3 Outer-Folds +
+Decision-Stability mit 10 Wiederholungen je Fold).
+
+**Auswahl eingefroren VOR jeder Ergebnisberechnung**: siehe
+`EXTERNAL_BENCHMARK_SET.md`, Abschnitt "Weg B"-Erweiterung, und
+[`select_weg_b_extension.R`](select_weg_b_extension.R) - repliziert
+exakt dieselbe Methodik wie die urspruengliche 6er-Auswahl (deterministisch,
+2 binaer + 2 multiclass, NEUER Seed `20260831`, da derselbe Seed auf dem
+um 6 Kandidaten reduzierten Pool kein echtes Fortsetzungsergebnis liefern
+wuerde). Gezogen: `PhishingWebsites` (DID 4534, binaer), `qsar-biodeg`
+(DID 1494, binaer), `mfeat-karhunen` (DID 16, 10 Klassen), `eucalyptus`
+(DID 188, 5 Klassen).
+
+**Echter Fund: bekannter OOM-Crash-Bug in 5 von 6 bestehenden lokalen
+Projekt-Kopien nicht gepatcht.** Beim Level-2-Lauf fuer `mfeat-karhunen`
+(10 Klassen): `Fehler: cannot allocate vector of size 38.4 Gb`, exakt
+derselbe Fehlermodus wie der bereits am 2026-08-29 bei `optdigits`
+gefundene und im ZENTRALEN Template (`class_multiplier_tuning.R`,
+`max_grid_combos`-Obergrenze bei 200000 Kombinationen) gefixte Bug
+(`expand.grid()` ueber alle Klassen minus Referenz waechst mit
+`grid_laenge^(Klassenzahl-1)` - bei 10 Klassen `12^9 ≈ 5.2 Mrd.` Zeilen).
+Der Fix wurde damals NUR ins Template UND in `optdigits`s eigene lokale
+Kopie eingespielt - NICHT in die anderen 5 bereits bestehenden
+`openml-cc18-*`-Kopien (`cmc`, `sick`, `analcatdata-authorship`,
+`blood-transfusion`, `ilpd`), die seitdem unbemerkt mit der
+ungepatchten, absturzgefaehrdeten Version liefen (bei diesen 5 bislang
+folgenlos, da alle <=4 Klassen haben und die Kombinatorik dort
+handhabbar bleibt - reines Glueck, kein Beweis der Korrektheit). Beim
+Kopieren von `openml-cc18-cmc`s Dateien als Vorlage fuer die 4 neuen
+Weg-B-Projekte wurde der Bug dadurch unbeabsichtigt reproduziert.
+
+**Fix**: die aktuelle, gepatchte Fassung aus dem zentralen Template in
+ALLE 9 betroffenen `ML_Learning`-Projektordner synchronisiert (4 neue
+Weg-B-Projekte + die 5 bisher ungepatchten Bestandsprojekte). Lehre:
+eine zentrale Bugfix-Korrektur ist NICHT automatisch in bereits
+bestehenden lokalen Projekt-Kopien wirksam (keine Symlinks, echte
+Kopien) - bei einem sicherheits-/stabilitaetsrelevanten Fix im Template
+lohnt sich ein bewusster Abgleich gegen ALLE bestehenden lokalen Kopien,
+nicht nur gegen die, wo der Bug urspruenglich auftrat.
+
+**Level-2-Prototyp-Ergebnisse** (Protokoll v3, 3 Outer-Folds, Metrik
+BAcc):
+
+| Datensatz | `level2_workflow` (Mittel) | bester Baseline-Arm | Delta |
+|---|---|---|---|
+| `PhishingWebsites` | 0.9680 | `lightgbm_default` 0.9687 | -0.07 |
+| `qsar-biodeg` | 0.8517 | `lightgbm_default` 0.8490 | +0.28 |
+| `mfeat-karhunen` | *(nach Bugfix erneut gelaufen, siehe unten)* | | |
+| `eucalyptus` | *(ausstehend)* | | |
+
+**Decision-Stability (alle 3 Folds)**:
+
+| Datensatz | Fold 1 | Fold 2 | Fold 3 |
+|---|---|---|---|
+| `PhishingWebsites` | ensemble, 70% (nicht geflaggt) | ensemble, 60% (geflaggt) | lightgbm, 60% (geflaggt) |
+
+(weitere Datensaetze folgen)
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
