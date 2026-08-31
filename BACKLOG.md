@@ -2620,6 +2620,62 @@ Konventionen, ROUTINE-MAESSIG pruefen statt anzunehmen). Beide CI-Laeufe
 gruen: `928cf5f` (Backport selbst, CI-Lauf `33361859447`) und `9bd9562`
 (Fixture-Ergaenzung inkl. des neuen 137-Schritts, CI-Lauf `33362023282`).
 
+### P2 - Hard-Split-Stresstest: optdigits-Ursachendiagnose (2026-08-31)
+
+**Nutzeranweisung**: "mach weiter mit der optdigits-Ursachendiagnose".
+Denselben k-means-Split (k=2, seed) wie im Prototyp reproduziert
+(`hard_split_diagnosis.R`, ML_Learning-Projekt, nicht ins Template
+zurueckgefuehrt - reines Ad-hoc-Diagnoseskript) und die Klassenverteilung
+je Cluster untersucht.
+
+**Zentraler Befund - der k-means-Split ist bei `optdigits` fast ein
+verdeckter Class-Holdout, kein reiner Feature-Raum-Split**: Test-Cluster
+(n=1702) besteht zu **95.3%** aus den Ziffern {0, 4, 6} (32.4%+30.2%+
+32.7%), waehrend das Train-Cluster diese drei Ziffern fast vollstaendig
+ausschliesst (0.1%/1.4%/0.1% statt der erwarteten ~10% je Ziffer). Die
+Konfusionsmatrix bestaetigt das direkt: das auf dem Train-Cluster
+trainierte Modell erreicht 0% Trefferquote auf Ziffer 0 und 6, 13% auf
+Ziffer 4 - fuer alle anderen (im Training normal vertretenen) Ziffern
+84.6%-100%. Der dramatische Gesamt-Score-Einbruch ist also ueberwiegend
+durch fehlende Trainingsbeispiele fuer 3 von 10 Klassen erklaerbar, nicht
+(nur) durch einen "dieselbe Klasse, aber strukturell andere Region"-
+Extrapolationsfehler im urspruenglich intendierten astartes-Sinn.
+
+**Vergleich mit den anderen 3 auffaelligen Datensaetzen** (gleicher
+Diagnose-Check, Klassenverteilung TRAIN- vs. TEST-Cluster):
+- `analcatdata-authorship` (4 Klassen, z=-57.78): **derselbe Effekt**,
+  fast so extrem - Test-Cluster 79.7% "London" (Referenz: 35.2%),
+  Train-Cluster schliesst "London" fast aus (2.9%). Auch hier
+  ueberwiegend ein verdeckter Class-Holdout.
+- `sick` (2 Klassen, z=-19.72): Klassenverteilung bleibt nah an der
+  Referenz (7.4%->1.9% "sick"-Anteil, moderat) - **KEIN Class-Holdout-
+  Artefakt**, hier misst der Check tatsaechlich ein feature-raum-
+  basiertes Extrapolationsrisiko unabhaengig von der Zielklasse.
+- `cmc` (3 Klassen, z=-18.94): moderate Verschiebung (16.8%->29.9% fuer
+  Klasse 2), deutlich schwaecher als bei optdigits/analcatdata-
+  authorship - vermutlich eine Mischung aus beidem.
+- Beide UNAUFFAELLIGEN Faelle (`ilpd`, `blood-transfusion`) sind binaer
+  mit nur moderater Klassenverschiebung.
+
+**Einordnung/Korrektur**: der Mechanismus des Checks funktioniert wie
+gebaut (k-means auf Feature-Raum, kleinstes Cluster = Test), ABER bei
+Multi-Klassen-Aufgaben mit im Feature-Raum gut trennbaren Klassen (viele
+Klassen, hohe Dimensionalitaet wie bei Pixel-/Autorschafts-Features)
+kann `cluster_based_hard_split()` UNBEABSICHTIGT in einen
+Class-Holdout-Split entarten - ein bereits gut verstandenes, anderes
+Risiko (seltene-Klassen-Handling) als das eigentlich intendierte
+"gleiche Klasse, andere Feature-Region"-Extrapolationsrisiko. Der
+z-Score bleibt technisch korrekt (der Score-Einbruch ist real), aber die
+INTERPRETATION "Extrapolationsrisiko" ist bei stark klassen-verschobenen
+Splits irrefuehrend/unvollstaendig - `sick` bleibt das sauberste Beispiel
+fuer den urspruenglich intendierten Mechanismus.
+
+**Konsequenz fuer das Modul**: dieser Befund ist ein echter, bisher nicht
+dokumentierter Interpretationsvorbehalt fuer das bereits zurueckgefuehrte
+`137_hard_split_stress_test.R` - noch NICHT als Code-Aenderung umgesetzt
+(z.B. ein automatischer Klassenverschiebungs-Diagnosewert im Report), nur
+als Befund dokumentiert. Entscheidung ueber eine Modul-Erweiterung offen.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
