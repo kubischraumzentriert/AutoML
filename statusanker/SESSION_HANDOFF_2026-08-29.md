@@ -137,15 +137,37 @@ Backport (ADR-003). **Aus Kosten-Nutzen-Sicht ein natuerlicher
 Abschlusspunkt fuer diese Forschungsfrage - ein weiterer Ausbau (n=15->20+)
 wuerde nach dieser dritten Bestaetigung voraussichtlich keine neue
 Erkenntnis mehr liefern.**
+**22. Aktualisierung:** P3s letzte 2 Checklistenpunkte (externe
+Nutzerfeedbacks/Issues als Evidenz) tatsaechlich GEPRUEFT statt nur
+angenommen - `gh api repos/.../AutoML`: 0 Stars, 0 Forks, 0 Watchers, 0
+Issues, 0 PRs seit dem `v0.1.0`-Release. Nutzerentscheidung per
+AskUserQuestion: "Abwarten" (keine aktive Sichtbarkeits-Massnahme). Diese
+2 Punkte bleiben strukturell vorbereitet, inhaltlich aber erst mit
+echter externer Nutzung fuellbar - **damit ist P3 in dem Sinne
+abgeschlossen, wie es mit dem aktuellen Repo-Stand abschliessbar ist.**
+
+Auf Nutzerfrage "hast du was gelernt, das wir in Skill uebernehmen
+koennen?": neue Skill-Datei
+[`.claude/skills/extend-benchmark-set/SKILL.md`](.claude/skills/extend-benchmark-set/SKILL.md)
+angelegt - fasst den zweifach identisch durchgefuehrten Weg-B-Ablauf
+(Auswahl einfrieren mit neuem Seed, Projektordner IMMER aus dem
+zentralen Template kopieren statt aus lokalen Kopien, Level-2
+sequenziell, Decision-Stability, Korrelationsanalyse, Evidence-Logging,
+Doku/Commits) als wiederholbare Prozedur zusammen, inkl. der 3
+technischen Stolpersteine dieser Session (Bash-`$`-Escaping bei
+Windows-Pfaden, `powershell -Command`-Bruecke bei `$_`-Referenzen,
+verfruehte Background-Completion-Meldung bei doppeltem `&`).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `cc4cf3e` "n=10->15 abgeschlossen:
-  Korrelationsanalyse bestaetigt den Nullbefund ein drittes Mal
-  (rho=-0.147, p=0.601)" - gepusht (docs/Analyse-only, kein CI-Trigger;
-  letzter CI-relevanter Commit `eaa0000`, CI Smoke Test gruen, Lauf
-  `33406093180`). Tag + [GitHub Release `v0.1.0`](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
+- `MLR3_Classifikation` @ `87ad05b` "Neue Skill: extend-benchmark-set" -
+  gepusht (docs-only, kein CI-Trigger; letzter CI-relevanter Commit
+  `eaa0000`, CI Smoke Test gruen, Lauf `33406093180`). Tag + [GitHub
+  Release `v0.1.0`](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
   weiterhin aktuell.
+- Zwischenstand: `1749b21` "P3: uebrige 2 Checklistenpunkte geprueft"
+  und `cc4cf3e` "n=10->15 abgeschlossen" (beide ebenfalls gepusht,
+  docs/Analyse-only).
 - `ML_Learning` @ `e8f9a12` "n=10->15: 5 neue Projekte (ozone-level-8hr,
   dresses-sales, jm1, mice-protein, mfeat-morphological) fuer die
   Decision-Stability-Forschungsfrage" - lokal, kein Remote.
@@ -752,12 +774,12 @@ externe Adoption - siehe Punkt 19 oben):
   darauf. Kein offener Rest mehr bei diesem Thema, ausser der Nutzer
   will explizit tiefer einsteigen (z.B. Schwellenwert 20pp synthetisch
   nachschaerfen statt nur grob kalibriert, oder k>2 testen).
-- **P3, ABGESCHLOSSEN** (Punkt 19 oben): README-"Los geht's"-Abschnitt,
-  Beispielprojekt explizit benannt, GitHub Release `v0.1.0`
-  veroeffentlicht. Punkte 4/5 (externe Nutzerfeedbacks/Issues als
-  Evidenz) bleiben strukturell vorbereitet, aber inhaltlich naturgemaess
-  offen, bis echte externe Nutzung stattfindet - kein Handlungsbedarf
-  von unserer Seite, nur abwarten/reagieren, falls Issues eintreffen.
+- **P3, VOLLSTAENDIG ABGESCHLOSSEN** (Punkte 19+22 oben):
+  README-"Los geht's"-Abschnitt, Beispielprojekt explizit benannt,
+  GitHub Release `v0.1.0` veroeffentlicht. Punkte 4/5 (externe
+  Nutzerfeedbacks/Issues als Evidenz) TATSAECHLICH GEPRUEFT (0 Stars/
+  Forks/Issues/PRs) - Nutzerentscheidung "Abwarten", kein Handlungsbedarf
+  von unserer Seite, nur reagieren, falls Issues eintreffen.
 - **Ausdrueckliche Warnung aus dem Bewertungsdokument**: KEIN Feature
   Creep - jede JOSS-Idee braucht erst eine eigene Hypothese/ein
   bestehendes Problem im Template, bevor prototypisiert wird. Default:
@@ -885,20 +907,37 @@ als alle bisherigen 10 (+20.1/+9.0 BAcc-Punkte) - plausibel durch
 starke Klassenunbalance erklaerbar, aendert aber nichts an der
 Kernaussage (kein Stabilitaets-Erfolgs-Zusammenhang).
 
+**P3s letzte 2 Checklistenpunkte SIND JETZT GEPRUEFT** (Punkt 22 oben,
+Nutzerfrage "mach weiter mit P3s uebrigen Punkten"): `gh api` bestaetigt
+0 Stars/Forks/Watchers/Issues/PRs seit `v0.1.0` - Nutzerentscheidung
+"Abwarten" statt aktiver Sichtbarkeits-Massnahme. **Damit ist P3
+vollstaendig, in dem Sinne, wie es mit dem aktuellen Repo-Stand
+abschliessbar ist.**
+
+**Neue Skill angelegt** (Punkt 22, Nutzerfrage "hast du was gelernt,
+das wir in Skill uebernehmen koennen?"):
+[`.claude/skills/extend-benchmark-set/SKILL.md`](.claude/skills/extend-benchmark-set/SKILL.md)
+fasst den zweifach durchgefuehrten Weg-B-Ablauf als wiederholbare
+Prozedur zusammen (Auswahl+Freeze, Projektordner IMMER aus dem
+zentralen Template, Level-2 sequenziell, Decision-Stability,
+Korrelationsanalyse, Evidence-Logging, Doku) inkl. 3 technischer
+Stolpersteine dieser Session. Bei einer aehnlichen kuenftigen
+Benchmark-Erweiterung zuerst dort nachschauen, statt den Ablauf neu
+herzuleiten.
+
 **Damit sind jetzt ALLE bisher bekannten Roadmap-Punkte aus allen 4
 externen Bewertungsdokumenten dieser Session (2026-08-27/28/29/30)
 vollstaendig abgearbeitet, inklusive der optionalen Research-Benchmark-
-Erweiterung.** Naheliegendste naechste Schritte, falls der Nutzer nichts
-Konkretes mitbringt: P3s uebrige 2 Punkte abwarten (externe
-Nutzerfeedbacks/Issues), die optionale Acknowledgements-Sektion in
-`joss/paper.md`, der Hard-Split-Stresstest-Schwellenwert (20pp, bislang
-nur grob kalibriert) bei Gelegenheit nachschaerfen, oder schlicht
-abwarten, ob ein FUENFTES externes Bewertungsdokument kommt (bisheriges
-Muster dieser Session: nach jedem abgeschlossenen Roadmap-Zyklus kam
-bisher ein neues). Ausdrueckliche Warnung aus dem vierten
-Bewertungsdokument im Kopf behalten: kein Feature Creep, jede JOSS-Idee
-braucht erst eine Hypothese/ein bestehendes Problem im Template, Default
-"NO BACKPORT bis Evidenz vorhanden" (ADR-003 bleibt massgeblich, jetzt
-auch fuer ADRs 007-009 relevant). Wiedervorlage JOSS/AutoML-Conf-2027
-bleibt ~November 2026 im Blick (Punkt 10/`project_joss_publication_
-timeline.md`).
+Erweiterung UND der letzten P3-Punkte.** Naheliegendste naechste
+Schritte, falls der Nutzer nichts Konkretes mitbringt: die optionale
+Acknowledgements-Sektion in `joss/paper.md`, der Hard-Split-Stresstest-
+Schwellenwert (20pp, bislang nur grob kalibriert) bei Gelegenheit
+nachschaerfen, oder schlicht abwarten, ob ein FUENFTES externes
+Bewertungsdokument kommt (bisheriges Muster dieser Session: nach jedem
+abgeschlossenen Roadmap-Zyklus kam bisher ein neues). Ausdrueckliche
+Warnung aus dem vierten Bewertungsdokument im Kopf behalten: kein
+Feature Creep, jede JOSS-Idee braucht erst eine Hypothese/ein
+bestehendes Problem im Template, Default "NO BACKPORT bis Evidenz
+vorhanden" (ADR-003 bleibt massgeblich, jetzt auch fuer ADRs 007-009
+relevant). Wiedervorlage JOSS/AutoML-Conf-2027 bleibt ~November 2026 im
+Blick (Punkt 10/`project_joss_publication_timeline.md`).
