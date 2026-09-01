@@ -43,7 +43,17 @@ A further prototype ("Level 2": model selection, tuning, and ensembling
 performed *inside* each outer-CV fold) shows a mixed, on-average slightly
 negative result relative to Level 1 across the same 6 external datasets,
 at 5-30x the compute cost — a negative finding we report because it
-bounds, rather than inflates, the workflow's claimed value. We argue this
+bounds, rather than inflates, the workflow's claimed value. Two further
+trust-layer extensions test whether Level 2's inner decisions can be
+trusted at all: a decision-stability check finds that its model-
+selection step is unstable under small seed perturbations in most cases,
+yet this instability does not predict Level-2 success or failure across
+three independent extensions of the external benchmark set (n = 6, 10,
+15) — an initially suggestive small-sample correlation that we explicitly
+retract after re-testing; and a structurally harder, cluster-based
+train/test split flags a real extrapolation risk on a majority of
+datasets, with a documented caveat for multi-class tasks where the split
+can conflate that risk with simple class exclusion. We argue this
 combination of a mature trust layer, an externally-validated but bounded
 performance claim, and openly reported negative results makes the system
 a credible candidate for a workshop/experience/software paper, while
@@ -480,7 +490,10 @@ sample of 6 datasets cannot resolve, or the pattern is closer to
 irreducible per-dataset noise than to a systematic effect. Distinguishing
 between those two possibilities would require a substantially larger
 external benchmark set than the 6 datasets used here, which is beyond
-the scope of this paper.
+the scope of this paper. (A related, differently-scoped question — not
+this metafeature question itself, but whether the Level-2 model-
+selection step's *decision stability* predicts its success — was later
+tested on exactly such an extended set, up to n = 15; see Section 7.3.)
 
 ## 7. Trust-Layer Ablations
 
@@ -526,6 +539,75 @@ line with all other datasets tested. We view a documented, corrected
 methodological artifact in the tool used to build the trust layer as
 evidence *for*, not against, the layer's overall reliability — it shows
 the process catches its own mistakes, not only the data's.
+
+### 7.3 Decision stability of the Level-2 model-selection step
+
+Motivated by the PCS (predictability-computability-stability) framework
+underlying VeridicalFlow [@Duncan2022VeridicalFlow], a further question was
+asked of the Level-2 workflow (Section 6): is its inner model-selection
+decision (which of ranger/lightgbm/ensemble wins on the inner tune
+split) *stable* under small, arbitrary perturbations of that split, or
+would a differently-seeded inner split just as plausibly have picked a
+different winner? For a fixed outer-train fold, the inner split seed was
+varied across 10 repeats and the resulting majority choice and its
+frequency recorded (implementation: `decision_stability.R`, applied via
+`decision_stability_level2_prototype.R`).
+
+Across all outer folds and all datasets available at the time, the
+majority choice held in under 70% of repeats more often than not (71%
+of 45 dataset-fold measurements at n = 15, see below) — decision
+instability at this tuning budget is closer to the norm than the
+exception. The natural follow-up question — does this instability
+*predict* whether the Level-2 workflow wins or loses against the best
+prior baseline (Section 6)? — was tested at three successively larger
+sample sizes as the external benchmark set was extended for this
+purpose: an initial, fold-1-only reading at n = 6 was suggestive
+(Spearman ρ = -0.28), but did **not** survive re-testing on the mean
+stability across all 3 outer folds of the same 6 datasets
+(ρ = -0.086, p = 0.92), nor two independent extensions of the dataset
+sample to n = 10 (ρ = -0.134, p = 0.71) and n = 15 (ρ = -0.147,
+p = 0.60). We report the initial suggestive reading and its retraction
+explicitly, as an example of a small-sample artifact caught by directly
+re-testing rather than treated as a finding: **decision-selection
+instability, at least as measured here, does not predict Level-2
+success or failure.** No corresponding pipeline change was made — a
+generic, reusable stability-reporting module remains available, but the
+specific application to Level-2 model selection yields no actionable
+guidance and was not promoted into the default workflow.
+
+### 7.4 A structurally harder train/test split (extrapolation risk)
+
+Standard cross-validation, and the bootstrap-based generalization-gap
+check in Section 7.2, both test whether a model generalizes within the
+same data distribution it was trained on — interpolation. Motivated by
+astartes' rational, distance-based dataset splitting for chemistry data
+[@Burns2023astartes], a complementary check asks a structurally
+different question: does the model still perform when the test set is a
+*distinct region* of feature space it never saw during training —
+extrapolation? A native, simpler re-implementation of the same idea
+(rather than adopting the chemistry-specific astartes package itself)
+splits a task by k-means clustering on its numeric features, holding out
+the smallest cluster as test data, and compares the resulting score
+against a reference distribution built from ordinary random holdouts of
+the same size (`hard_split_stress_test.R`).
+
+Applied to the 6 external benchmark datasets plus this project's own
+template dataset (7 confirmations total, exceeding the ≥2-project bar
+for backporting a trust module into the numbered pipeline), 5 of 7 were
+flagged (|z| from 19 to 158) — a structurally harder split degrades
+performance far more than ordinary CV variance would suggest, in a
+majority of cases. A follow-up root-cause check on the two most extreme
+cases, however, revealed an important caveat: for multi-class tasks
+whose classes are well separated in feature space (e.g. a 10-class
+handwritten-digit task), the cluster-based split can degenerate into a
+*near class-holdout* — the held-out cluster consists almost entirely of
+1-3 classes rarely seen during training, so the score drop partly
+reflects the already-well-understood problem of missing training
+examples for excluded classes rather than genuine same-class
+extrapolation failure. The module was extended in response with an
+automatic class-proportion-shift diagnostic that flags this distinction
+directly in its output, rather than leaving the two mechanisms
+conflated in a single z-score.
 
 ## 8. Limitations
 
@@ -589,11 +671,19 @@ ideally a second, independent implementation team.
 - Breck, E., Cai, S., Nielsen, E., Salib, M., & Sculley, D. (2017). The
   ML test score: A rubric for ML production readiness and technical debt
   reduction. *IEEE Big Data*. https://research.google/pubs/the-ml-test-score-a-rubric-for-ml-production-readiness-and-technical-debt-reduction/
+- Burns, J. D., Spiekermann, K. A., Bhattacharjee, H., Vlachos, D. G., &
+  Green, W. H. (2023). Machine learning validation via rational dataset
+  sampling with astartes. *Journal of Open Source Software*, 8(91),
+  5996. https://doi.org/10.21105/joss.05996
 - Caruana, R., Niculescu-Mizil, A., Crew, G., & Ksikes, A. (2004).
   Ensemble selection from libraries of models. *ICML*.
 - Demšar, J. (2006). Statistical comparisons of classifiers over
   multiple data sets. *Journal of Machine Learning Research*, 7,
   1-30.
+- Duncan, J., Kapoor, R., Agarwal, A., Singh, C., & Yu, B. (2022).
+  VeridicalFlow: A Python package for building trustworthy data science
+  pipelines with PCS. *Journal of Open Source Software*, 7(69), 3895.
+  https://doi.org/10.21105/joss.03895
 - Erickson, N., Mueller, J., Shirkov, A., Zhang, H., Larroy, P., Li, M.,
   & Smola, A. (2020). AutoGluon-Tabular: Robust and accurate AutoML for
   structured data. arXiv:2003.06505. https://arxiv.org/abs/2003.06505

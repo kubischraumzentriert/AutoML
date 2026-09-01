@@ -149,7 +149,11 @@ change is only merged into the shared template once it is confirmed on
 at least two independent projects (or proven to be a no-op) — a
 governance rule chosen specifically to prevent the template from
 overfitting to the idiosyncrasies of whichever single project motivated
-the change.
+the change. Two modules added under this rule test the model-selection
+step's *decision stability* under seed perturbation and its performance
+under a structurally harder, extrapolation-oriented train/test split,
+respectively — the latter's rollout also surfaced and fixed a
+class-imbalance-related false-positive risk in its own diagnostic.
 
 # Research impact statement
 
