@@ -237,6 +237,73 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
 
 ---
 
+## 8. stacks / negative Stacking-Gewichte (Ensemble-Korrektur)
+
+**Herkunft dieses Kandidaten**: NICHT aus dem urspruenglichen
+Bewertungsdokument, sondern aus einem Kaggle-Write-up (7th-Place-
+Loesung, `playground-series-s6e8`, "Way Too Many Models, One Simple
+Stack") - dort ein Befund berichtet: das Abziehen von 25%/10% eines
+schwaecheren Sub-Blends vom Hauptblend (negative Gewichte) verbesserte
+das OOF-Ergebnis (0.970820 -> 0.970849), weil der schwaechere Blend
+eine vom Hauptblend "ueberbenutzte" Fehlerrichtung repraesentierte.
+Eigene Recherche im JOSS-Korpus danach ergab einen direkt passenden,
+bereits publizierten R-Beleg fuer dieselbe Idee (siehe unten) - der
+Kaggle-Befund ist damit keine Einzelanekdote, sondern deckt sich mit
+einer bewusst eingebauten, dokumentierten Option in einem
+begutachteten R-Paket.
+
+- **Titel**: stacks: Stacked Ensemble Modeling with Tidy Data
+  Principles
+- **Autoren/Jahr**: Couch, Kuhn (2022)
+- **DOI**: [10.21105/joss.04471](https://doi.org/10.21105/joss.04471)
+- **Welches Problem loest es?** Tidy-Data-prinzipientreues Ensemble-
+  Stacking in R: ein regularisierter linearer Meta-Learner (`glmnet`)
+  bestimmt die Gewichte der Ensemble-Mitglieder. Verifiziert (nicht nur
+  aus dem Paper-Abstract, sondern aus der tatsaechlichen Funktions-
+  dokumentation): `blend_predictions()` hat ein `non_negative`-Argument
+  (Default `TRUE` - Gewichte auf `lower.limits = 0` in
+  `glmnet::glmnet()` beschraenkt), das bei `FALSE` explizit `-Inf`
+  erlaubt, also NEGATIVE Stacking-Gewichte zulaesst.
+- **Welcher Teil ist uebertragbar?** NICHT das Paket selbst (wir
+  bleiben bei unserer eigenen Caruana-Greedy-Ensemble-Selection, siehe
+  `REFERENZ_ENSEMBLE_SELECTION.md`), sondern die KONKRETE Idee: unsere
+  `ensemble_selection.R` erlaubt aktuell NUR nicht-negative Gewichte
+  (Greedy-Selection mit Zuruecklegen, klassisches Caruana-Verfahren) -
+  ein zusaetzlicher, alternativer linearer Stacking-Modus mit erlaubten
+  negativen Koeffizienten (analog `non_negative = FALSE`) koennte
+  Faelle abdecken, in denen ein schwaecheres/redundantes Kandidatenmodell
+  eine vom Hauptensemble ueberbenutzte Fehlerrichtung korrigieren
+  koennte.
+- **Haben wir dieses Problem?** Bisher nicht explizit untersucht -
+  unsere Ensemble-Kandidatenpools sind bislang kleiner (typischerweise
+  Ranger/LightGBM/Ensemble, nicht 500+ Streams wie im Kaggle-Beispiel),
+  daher ist unklar, ob die "ueberbenutzte Fehlerrichtung"-Situation bei
+  unserer Pool-Groesse ueberhaupt relevant auftritt.
+- **Hypothese**: bei einem Ensemble-Kandidatenpool mit mehreren
+  aehnlichen/korrelierten Modellen verbessert das Zulassen negativer
+  Stacking-Gewichte (via regularisierter linearer Meta-Learner statt
+  Greedy-Selection) das OOF-Ergebnis gegenueber der aktuellen
+  nicht-negativen Greedy-Selection.
+- **Erwarteter Nutzen**: potenziell ein kleiner, aber echter Score-
+  Hebel bei Projekten mit einem groesseren/redundanteren Kandidatenpool
+  - direkte Analogie zum gemessenen Kaggle-Befund.
+- **Komplexitaetskosten**: mittel - braucht einen ALTERNATIVEN
+  Stacking-Modus (nicht Ersatz fuer die bestehende Greedy-Selection,
+  siehe ADR fuer die Ensemble-Selection-Entscheidung), UND sorgfaeltige
+  OOF-/Nested-CV-Disziplin (dieselbe wie bei
+  `nested_cv_class_multiplier_tuning.R`), da unbeschraenkte/negative
+  Gewichte deutlich anfaelliger fuer Overfitting auf Rauschen sind als
+  nicht-negative Greedy-Selection.
+- **Prototype**: nein (Stand 2026-09-01).
+- **Backport**: nein/offen. Prioritaet: **mittel** - kein Bewertungs-
+  dokument-Ursprung, daher nicht in der urspruenglichen Priorisierungs-
+  tabelle, aber ein konkreter, extern gemessener Befund (nicht nur eine
+  theoretische Idee) macht ihn einen ernsthaften Kandidaten fuer den
+  naechsten JOSS-inspirierten Prototyp, sobald ein Projekt mit
+  ausreichend grossem/redundantem Kandidatenpool vorliegt.
+
+---
+
 ## Zusaetzlicher Hinweis: mlr3 selbst als laufender Check (kein Kandidat, sondern Erinnerung)
 
 - **Titel**: mlr3: A modern object-oriented machine learning framework
@@ -264,6 +331,7 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
 | mlr3 (laufender Check) | Eigenentwicklungen vermeiden | mittel |
 | ImageMLResearch | Experiment-/Report-Organisation | niedrig-mittel |
 | mlr3extralearners | Learner-Integrationsstandard | niedrig |
+| stacks / negative Stacking-Gewichte | evtl. kleiner Score-Hebel bei groesseren Kandidatenpools (Kaggle-Befund + JOSS-Beleg) | mittel |
 
 ## Warnung: kein Feature Creep
 

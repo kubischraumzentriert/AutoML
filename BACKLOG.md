@@ -2948,6 +2948,34 @@ Stand des Repos abschliessbar ist** - die 3 umsetzbaren Punkte (Start-
 here-Anleitung, Beispielprojekt, Release) sind erledigt, die 2 letzten
 haengen an einer externen Bedingung ausserhalb unserer Kontrolle.
 
+### Neuer JOSS-Technique-Watch-Kandidat: negative Stacking-Gewichte (2026-09-01)
+
+**Herkunft**: der Nutzer las das 7th-Place-Write-up der
+`playground-series-s6e8`-Competition ("Way Too Many Models, One Simple
+Stack") - dort verbesserte das Abziehen von 25%/10% eines schwaecheren
+Sub-Blends vom Hauptensemble (negative Gewichte) das OOF-Ergebnis
+(0.970820 -> 0.970849). Nutzeranweisung: "das ist ein Kandidat fuer
+mich - kannst du mal bei JOSS dann schauen?"
+
+JOSS-Suche ergab einen direkt passenden Beleg: `stacks` (Couch & Kuhn
+2022, [10.21105/joss.04471](https://doi.org/10.21105/joss.04471)) - ein
+begutachtetes R-Stacking-Paket mit einem `non_negative`-Argument in
+`blend_predictions()` (Default `TRUE`, bei `FALSE` werden explizit
+negative Gewichte erlaubt) - tatsaechlich anhand der Funktionsdoku
+verifiziert, nicht nur aus dem Paper-Abstract angenommen. Der Kaggle-
+Befund ist damit keine Einzelanekdote, sondern deckt sich mit einer
+bewusst eingebauten Option in einem publizierten Paket.
+
+Als Kandidat #8 in `JOSS_TECHNIQUE_WATCH.md` dokumentiert (Prioritaet
+mittel, Ursprung explizit als "nicht aus dem urspruenglichen
+Bewertungsdokument" gekennzeichnet). Uebertragbarer Teil: NICHT das
+Paket selbst, sondern die konkrete Idee eines alternativen linearen
+Stacking-Modus mit erlaubten negativen Koeffizienten neben der
+bestehenden nicht-negativen Caruana-Greedy-Selection
+(`ensemble_selection.R`). Noch kein Prototyp, kein Backport - wartet
+auf ein Projekt mit ausreichend grossem/redundantem Kandidatenpool, um
+die Hypothese sinnvoll zu testen.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
