@@ -181,15 +181,41 @@ automatische Draft-PDF-CI-Workflow lief danach erfolgreich durch (Lauf
 
 **Damit sind jetzt ALLE 3 Hebel aus dem vierten Bewertungsdokument
 abgeschlossen, zusaetzlich zur bereits vollstaendigen P0-P3-Roadmap.**
+**24. Aktualisierung:** ein kleiner Abstecher ausserhalb der bisherigen
+Bewertungsdokumente - der Nutzer berichtete vom Abschluss des
+`predictingsmartphoneAddiction_s6e8`-Wettbewerbs (Platz 1162, Top 33%)
+und teilte 2 Kaggle-Write-ups (1st Place "Distributed Intelligence"/
+Multi-Agent-Ansatz ohne nachvollziehbare technische Details; 7th Place
+"Way Too Many Models, One Simple Stack" mit vielen konkreten,
+verifizierbaren Techniken - u.a. bestaetigt dessen "nie denselben Fold
+fuer Gewichtsuche UND Bewertung nutzen"-Prinzip exakt unsere eigene
+`nested_cv_class_multiplier_tuning.R`-Methodik).
+
+Aus dem 7th-Place-Write-up griff der Nutzer einen konkreten Punkt auf:
+negative Stacking-Gewichte ("negative residual correctors") verbesserten
+dort das Ensemble messbar. Nutzeranweisung: "das ist ein Kandidat fuer
+mich - kannst du mal bei JOSS dann schauen?" - JOSS-Suche ergab einen
+direkt passenden, verifizierten Beleg: `stacks`-R-Paket (Couch & Kuhn
+2022, [10.21105/joss.04471](https://doi.org/10.21105/joss.04471)) hat
+ein dokumentiertes `non_negative`-Argument in `blend_predictions()`
+(Default `TRUE`, bei `FALSE` explizit negative Gewichte erlaubt) - in
+der tatsaechlichen Funktionsdoku nachgeprueft, nicht nur aus dem
+Paper-Abstract angenommen. Als **Kandidat #8** in
+`JOSS_TECHNIQUE_WATCH.md` dokumentiert (Prioritaet mittel, Ursprung
+explizit als "nicht aus dem urspruenglichen Bewertungsdokument"
+gekennzeichnet - stattdessen aus einem Kaggle-Write-up plus eigener
+JOSS-Recherche). Noch kein Prototyp, kein Backport - wartet auf ein
+Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `7cb59e0` "Paper-Claim-Hygiene (Hebel 3):
-  Decision-Stability- und Hard-Split-Stresstest-Befunde in
-  PAPER_DRAFT.md/joss/paper.md ergaenzt" - gepusht. Loeste den Draft-
-  JOSS-PDF-Workflow aus (Lauf `33548539731`, gruen). Letzter CI-Smoke-
-  Test-relevanter Commit weiterhin `eaa0000` (gruen, Lauf
-  `33406093180`). Tag + [GitHub Release `v0.1.0`](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
+- `MLR3_Classifikation` @ `7e25b7a` "JOSS_TECHNIQUE_WATCH: neuer
+  Kandidat #8 - negative Stacking-Gewichte (stacks-Paket, Couch/Kuhn
+  2022)" - gepusht (docs-only, kein CI-Trigger). Zwischenstand: `7cb59e0`
+  "Paper-Claim-Hygiene (Hebel 3)" (loeste den Draft-JOSS-PDF-Workflow
+  aus, Lauf `33548539731`, gruen). Letzter CI-Smoke-Test-relevanter
+  Commit weiterhin `eaa0000` (gruen, Lauf `33406093180`). Tag + [GitHub
+  Release `v0.1.0`](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
   weiterhin aktuell.
 - Zwischenstaende: `87ad05b` "Neue Skill: extend-benchmark-set",
   `1749b21` "P3: uebrige 2 Checklistenpunkte geprueft", `cc4cf3e`
@@ -829,6 +855,12 @@ externe Adoption - siehe Punkt 19 oben):
 - Optional: `finalize_run_provenance()` auf weitere aktive Skripte
   ausrollen (`030_baseline.R` ist bislang die einzige
   Referenzimplementierung).
+- **NEU (Punkt 24)**: JOSS_TECHNIQUE_WATCH-Kandidat #8 (negative
+  Stacking-Gewichte, `stacks`-Paket) - noch kein Prototyp, wartet auf
+  ein Projekt mit ausreichend grossem/redundantem Ensemble-
+  Kandidatenpool, um die Hypothese sinnvoll zu testen. Nicht von selbst
+  aus anfangen - erst wenn ein passendes Projekt vorliegt oder der
+  Nutzer explizit danach fragt (Feature-Creep-Warnung bleibt gueltig).
 
 **Keine dringenden Blocker.**
 
@@ -984,3 +1016,14 @@ bestehendes Problem im Template, Default "NO BACKPORT bis Evidenz
 vorhanden" (ADR-003 bleibt massgeblich, jetzt auch fuer ADRs 007-009
 relevant). Wiedervorlage JOSS/AutoML-Conf-2027 bleibt ~November 2026 im
 Blick (Punkt 10/`project_joss_publication_timeline.md`).
+
+**Nachtrag (Punkt 24), ausserhalb aller bisherigen Bewertungsdokumente**:
+der `predictingsmartphoneAddiction_s6e8`-Wettbewerb ist beendet (Platz
+1162, Top 33%) - der Nutzer teilte 2 Kaggle-Write-ups, aus dem 7th-
+Place-Write-up griff er die Idee "negative Stacking-Gewichte" auf. JOSS-
+Recherche ergab einen verifizierten Beleg (`stacks`-Paket, Couch/Kuhn
+2022), jetzt als **Kandidat #8** in `JOSS_TECHNIQUE_WATCH.md`
+dokumentiert (Prioritaet mittel). Noch kein Prototyp/Backport - NICHT
+von selbst damit anfangen, wartet auf ein Projekt mit ausreichend
+grossem/redundantem Ensemble-Kandidatenpool oder eine explizite
+Nutzeranweisung.
