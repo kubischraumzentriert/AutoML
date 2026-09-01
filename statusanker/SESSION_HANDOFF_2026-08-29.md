@@ -78,17 +78,52 @@ Externe-Feedback-Punkte (4/5) ehrlich als "strukturell vorbereitet, aber
 mangels echter externer Nutzung inhaltlich nicht umsetzbar" dokumentiert,
 nicht simuliert. **Damit ist die GESAMTE P0-P3-Roadmap des vierten
 Bewertungsdokuments (2026-08-30) vollstaendig abgearbeitet.**
+**20. Aktualisierung (jetzt 2026-09-01, neuer Tag, Session laeuft
+nahtlos weiter):** "Weg B" - das externe Benchmark-Set fuer die
+Decision-Stability-Forschungsfrage von n=6 auf n=10 CC18-Datensaetze
+erweitert (Nutzeranweisung "mach weiter mit der Weg-B-Erweiterung", vorab
+per AskUserQuestion auf +4 statt +9 neue Datensaetze geeinigt). 4 neue
+Datensaetze deterministisch gezogen und VOR jeder Ergebnisberechnung
+eingefroren (`PhishingWebsites`, `qsar-biodeg`, `mfeat-karhunen`,
+`eucalyptus`, neuer Seed `20260831`, siehe `EXTERNAL_BENCHMARK_SET.md`).
+Projektordner angelegt, Level-2-Prototyp + Decision-Stability (je 3
+Outer-Folds) fuer alle 4 durchgefuehrt.
+
+Dabei ein echter Fund: der bereits am 2026-08-29 bei `optdigits`
+gefundene und im Template gefixte OOM-Crash-Bug
+(`class_multiplier_tuning.R`, kombinatorische Grid-Explosion bei 10
+Klassen) war NIE in die 5 anderen bestehenden lokalen Projekt-Kopien
+(`cmc`/`sick`/`analcatdata-authorship`/`blood-transfusion`/`ilpd`)
+nachgezogen worden - beim Kopieren von `cmc` als Vorlage fuer die neuen
+Weg-B-Projekte reproduziert (`mfeat-karhunen`, 10 Klassen, crashte mit
+"cannot allocate vector of size 38.4 Gb"). Fix aus dem Template in alle
+9 betroffenen Ordner synchronisiert - Lehre: ein zentraler Bugfix
+wirkt NICHT automatisch in bereits bestehenden lokalen Kopien (keine
+Symlinks).
+
+**Zentrales Ergebnis**: Level-2-Deltas der 4 neuen Datensaetze klein und
+gemischt (2 leicht positiv, 2 leicht negativ, alle <0.4 BAcc-Punkte),
+konsistent mit dem bisherigen Muster. Die Korrelationsanalyse ueber alle
+10 Datensaetze x 3 Folds (30 statt 18 Messungen) **bestaetigt den
+n=6-Nullbefund erneut**: rho=-0.134, p=0.712 (weiterhin nicht
+signifikant) - der urspruengliche suggestive Fold-1-only-Befund
+(rho=-0.28, n=6) bleibt damit ueber ZWEI unabhaengige
+Erweiterungsschritte hinweg (Weg A: mehr Folds; Weg B: mehr Datensaetze)
+widerlegt, jetzt gut abgesichert. Kein Backport (ADR-003 weiterhin nicht
+erfuellt).
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `79b451a` "P3: externe Adoption vorbereiten -
-  Start-here-Anleitung, Beispielprojekt benannt, v0.1.0-Release" -
-  gepusht (docs-only, kein CI-Trigger; letzter CI-relevanter Commit
-  `eaa0000`, CI Smoke Test gruen, Lauf `33406093180`). Zusaetzlich Tag +
+- `MLR3_Classifikation` @ `2074f37` "Weg B abgeschlossen: n=6->10
+  Datensaetze - Level-2/Decision-Stability-Ergebnisse fuer alle 4 neuen
+  Datensaetze, Korrelationsanalyse bestaetigt den n=6-Nullbefund" -
+  gepusht (docs/Analyse-only, kein CI-Trigger; letzter CI-relevanter
+  Commit `eaa0000`, CI Smoke Test gruen, Lauf `33406093180`). Tag +
   [GitHub Release `v0.1.0`](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
-  veroeffentlicht.
-- `ML_Learning` @ `58a467e` "P2: optdigits-Ursachendiagnose fuer den
-  Hard-Split-Stresstest" - lokal, kein Remote.
+  weiterhin aktuell.
+- `ML_Learning` @ `c7a7adc` "Weg B: 4 neue Projekte (phishing-websites,
+  qsar-biodeg, mfeat-karhunen, eucalyptus) + class_multiplier_tuning.R-
+  Bugfix in 5 bestehenden Projekten nachgezogen" - lokal, kein Remote.
 - Zwischenstaende auf dem Weg dorthin (alle gepusht, alle CI gruen):
   `928cf5f` (Backport `137_hard_split_stress_test.R`, Lauf
   `33361859447`), `9bd9562` (CI-Fixture um 137 ergaenzt, Lauf
@@ -669,11 +704,12 @@ actionable Handlungsempfehlung.
 ist jetzt ebenfalls vollstaendig abgearbeitet** (P0 Dokumentationskonsistenz,
 P1 `JOSS_TECHNIQUE_WATCH.md`, P2 beide JOSS-inspirierten Prototypen, P3
 externe Adoption - siehe Punkt 19 oben):
-- **P1, Rest**: `JOSS_TECHNIQUE_WATCH.md` selbst ist ERLEDIGT. Nur noch
-  offen: optional Research-Benchmark von n=6 auf n=10-15 CC18-
-  Datensaetze erweitern ("Weg B" aus Punkt 24 - deutlich teurer, nur
-  falls der Research-/AutoML-Conf-Pfad weiterverfolgt wird - VORHER
-  einfrieren, nicht nach Sicht der Zahlen).
+- **P1, Rest - ABGESCHLOSSEN** (Punkt 20 oben): "Weg B" (n=6->10
+  CC18-Datensaetze) durchgefuehrt. Korrelationsanalyse bestaetigt den
+  n=6-Nullbefund erneut (rho=-0.134, p=0.712, n=10) - keine Aenderung
+  der Schlussfolgerung. Optional weiterhin offen: n=10->15 (noch nicht
+  angefragt, kein zwingender Grund mehr dafuer, da das Ergebnis bereits
+  zweifach stabil ist).
 - **P2, beide JOSS-inspirierten Prototypen VOLLSTAENDIG ABGESCHLOSSEN UND
   BACKPORTED**: VeridicalFlow/Decision-Stability (kein Backport, ADR-003
   - liefert keine actionable Handlungsempfehlung) UND astartes/
@@ -798,6 +834,29 @@ kein weiterer Handlungsbedarf von unserer Seite.
 als auch des vierten (2026-08-30) externen Bewertungsdokuments
 vollstaendig abgearbeitet - kein zwingender naechster Schritt mehr aus
 irgendeinem der bisherigen Bewertungsdokumente offen.**
+
+**"Weg B" (n=6->10 CC18-Datensaetze fuer die Decision-Stability-
+Forschungsfrage) ist ebenfalls VOLLSTAENDIG abgeschlossen** (Punkt 20
+oben): 4 neue Datensaetze eingefroren, Level-2 + Decision-Stability
+durchgefuehrt, Korrelationsanalyse bestaetigt den n=6-Nullbefund erneut
+(rho=-0.134, p=0.712) - der urspruengliche suggestive Fold-1-only-Befund
+bleibt ueber zwei unabhaengige Erweiterungsschritte hinweg widerlegt.
+Dabei ein echter Nebenfund: der `optdigits`-OOM-Crash-Fix in
+`class_multiplier_tuning.R` war in 5 von 6 bestehenden Projekt-Kopien
+nie nachgezogen worden - jetzt ueberall synchronisiert (Lehre: zentrale
+Bugfixes NICHT automatisch in bestehenden lokalen Kopien wirksam, siehe
+Punkt 20).
+
+**Damit sind jetzt ALLE bisher bekannten Roadmap-Punkte aus allen 4
+externen Bewertungsdokumenten dieser Session (2026-08-27/28/29/30)
+vollstaendig abgearbeitet.** Naheliegendste naechste Schritte, falls der
+Nutzer nichts Konkretes mitbringt: n=10->15 weiter ausbauen (kein
+zwingender Grund mehr, das Ergebnis ist bereits zweifach stabil bestaetigt),
+P3s uebrige 2 Punkte abwarten (externe Nutzerfeedbacks/Issues), die
+optionale Acknowledgements-Sektion in `joss/paper.md`, oder schlicht
+abwarten, ob ein FUENFTES externes Bewertungsdokument kommt (bisheriges
+Muster dieser Session). Wiedervorlage JOSS/AutoML-Conf-2027 bleibt
+~November 2026 im Blick (Punkt 10/`project_joss_publication_timeline.md`).
 
 Naheliegendste naechste Schritte, falls der Nutzer nichts Konkretes
 mitbringt: die optionale Research-Benchmark-Erweiterung ("Weg B",
