@@ -157,17 +157,43 @@ Doku/Commits) als wiederholbare Prozedur zusammen, inkl. der 3
 technischen Stolpersteine dieser Session (Bash-`$`-Escaping bei
 Windows-Pfaden, `powershell -Command`-Bruecke bei `$_`-Referenzen,
 verfruehte Background-Completion-Meldung bei doppeltem `&`).
+**23. Aktualisierung:** auf Nutzeranweisung "mach weiter mit den
+restlichen Bewertungspunkten" gepruefte, ob aus dem vierten
+Bewertungsdokument noch etwas offen war jenseits von P0-P3 - gefunden:
+Abschnitt 12 "Drei groesste Hebel", davon Hebel 1 (Benchmark erweitern)
+und Hebel 2 (externe Nutzung) bereits erledigt/geprueft, aber **Hebel 3
+("Story einfrieren, Paper-Claim-Hygiene") war noch offen**: weder
+`PAPER_DRAFT.md` noch `joss/paper.md` erwaehnten die Decision-Stability-
+oder Hard-Split-Stresstest-Befunde ueberhaupt. Per AskUserQuestion Umfang
+geklaert - Nutzerentscheidung: "nur Text/Doku aktualisieren" (keine
+Wiederholung der Metafeature-Analyse bei n=15).
+
+`PAPER_DRAFT.md` erweitert: Abstract um beide Befunde ergaenzt, 2 neue
+Unterabschnitte 7.3 (Decision Stability, inkl. der expliziten Fold-1-
+Widerlegung ueber n=6/10/15) und 7.4 (Hard-Split-Stresstest, inkl. der
+Class-Holdout-Entdeckung), Referenzen fuer Duncan et al. 2022
+(VeridicalFlow, korrigierter Zitierschluessel - urspruenglich
+faelschlich "Yu2020" statt korrekt "Duncan2022") und Burns et al. 2023
+(astartes) ergaenzt. `joss/paper.md` um einen kurzen Absatz im "Software
+design"-Abschnitt ergaenzt (weiterhin 1565/1750 Woerter, im Limit). Der
+automatische Draft-PDF-CI-Workflow lief danach erfolgreich durch (Lauf
+`33548539731`) - baut auch mit den Ergaenzungen fehlerfrei.
+
+**Damit sind jetzt ALLE 3 Hebel aus dem vierten Bewertungsdokument
+abgeschlossen, zusaetzlich zur bereits vollstaendigen P0-P3-Roadmap.**
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `87ad05b` "Neue Skill: extend-benchmark-set" -
-  gepusht (docs-only, kein CI-Trigger; letzter CI-relevanter Commit
-  `eaa0000`, CI Smoke Test gruen, Lauf `33406093180`). Tag + [GitHub
-  Release `v0.1.0`](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
+- `MLR3_Classifikation` @ `7cb59e0` "Paper-Claim-Hygiene (Hebel 3):
+  Decision-Stability- und Hard-Split-Stresstest-Befunde in
+  PAPER_DRAFT.md/joss/paper.md ergaenzt" - gepusht. Loeste den Draft-
+  JOSS-PDF-Workflow aus (Lauf `33548539731`, gruen). Letzter CI-Smoke-
+  Test-relevanter Commit weiterhin `eaa0000` (gruen, Lauf
+  `33406093180`). Tag + [GitHub Release `v0.1.0`](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
   weiterhin aktuell.
-- Zwischenstand: `1749b21` "P3: uebrige 2 Checklistenpunkte geprueft"
-  und `cc4cf3e` "n=10->15 abgeschlossen" (beide ebenfalls gepusht,
-  docs/Analyse-only).
+- Zwischenstaende: `87ad05b` "Neue Skill: extend-benchmark-set",
+  `1749b21` "P3: uebrige 2 Checklistenpunkte geprueft", `cc4cf3e`
+  "n=10->15 abgeschlossen" (alle ebenfalls gepusht).
 - `ML_Learning` @ `e8f9a12` "n=10->15: 5 neue Projekte (ozone-level-8hr,
   dresses-sales, jm1, mice-protein, mfeat-morphological) fuer die
   Decision-Stability-Forschungsfrage" - lokal, kein Remote.
@@ -784,6 +810,14 @@ externe Adoption - siehe Punkt 19 oben):
   Creep - jede JOSS-Idee braucht erst eine eigene Hypothese/ein
   bestehendes Problem im Template, bevor prototypisiert wird. Default:
   "NO BACKPORT bis Evidenz vorhanden".
+- **Abschnitt 12 "Drei groesste Hebel" - ALLE 3 ABGESCHLOSSEN**
+  (Punkt 23 oben): Hebel 1 (Benchmark n=6->15) und Hebel 2 (externe
+  Nutzung geprueft) waren bereits erledigt; Hebel 3 (Paper-Claim-
+  Hygiene) war der letzte offene Punkt aus diesem Bewertungsdokument -
+  `PAPER_DRAFT.md`/`joss/paper.md` erwaehnten die Decision-Stability-/
+  Hard-Split-Stresstest-Befunde bisher gar nicht, jetzt ergaenzt
+  (Text/Doku-only, Nutzerentscheidung - keine Wiederholung der
+  Metafeature-Analyse bei n=15).
 
 **Weiterhin offen, unabhaengig vom vierten Bewertungsdokument**:
 - **Wiedervorlage ~November 2026**: JOSS-Status pruefen (bleibt bis
@@ -925,10 +959,19 @@ Stolpersteine dieser Session. Bei einer aehnlichen kuenftigen
 Benchmark-Erweiterung zuerst dort nachschauen, statt den Ablauf neu
 herzuleiten.
 
-**Damit sind jetzt ALLE bisher bekannten Roadmap-Punkte aus allen 4
+**Alle 3 "groessten Hebel" aus Abschnitt 12 des vierten
+Bewertungsdokuments sind jetzt ebenfalls abgeschlossen** (Punkt 23
+oben): Hebel 1 (Benchmark n=6->15), Hebel 2 (externe Nutzung geprueft -
+0 Aktivitaet, "Abwarten"), Hebel 3 (Paper-Claim-Hygiene - Decision-
+Stability-/Hard-Split-Stresstest-Befunde in `PAPER_DRAFT.md`/
+`joss/paper.md` ergaenzt, die vorher komplett fehlten). Draft-JOSS-PDF-
+CI-Workflow danach erfolgreich (Lauf `33548539731`).
+
+**Damit sind jetzt WIRKLICH ALLE bisher bekannten Punkte aus allen 4
 externen Bewertungsdokumenten dieser Session (2026-08-27/28/29/30)
-vollstaendig abgearbeitet, inklusive der optionalen Research-Benchmark-
-Erweiterung UND der letzten P3-Punkte.** Naheliegendste naechste
+vollstaendig abgearbeitet** - P0-P3-Roadmaps, die optionale Research-
+Benchmark-Erweiterung, die letzten P3-Punkte, UND jetzt auch die "3
+groessten Hebel" aus dem vierten Dokument. Naheliegendste naechste
 Schritte, falls der Nutzer nichts Konkretes mitbringt: die optionale
 Acknowledgements-Sektion in `joss/paper.md`, der Hard-Split-Stresstest-
 Schwellenwert (20pp, bislang nur grob kalibriert) bei Gelegenheit
