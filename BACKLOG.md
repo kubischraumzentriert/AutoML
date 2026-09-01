@@ -2849,6 +2849,81 @@ weiterhin nicht erfuellt - die konkrete Level-2-Anwendung des generischen
 `decision_stability.R`-Moduls liefert weiterhin keine actionable
 Handlungsempfehlung, unabhaengig von der Stichprobengroesse).
 
+### "Weg B", 2. Tranche: n=10->15 CC18-Datensaetze (2026-09-01)
+
+**Nutzeranweisung**: "n=10 auf n=15 erweitern" - die obere Grenze der
+urspruenglichen Vormerkung ("n=10-15"). Auswahl eingefroren VOR jeder
+Ergebnisberechnung: siehe `EXTERNAL_BENCHMARK_SET.md`, Abschnitt "Weg
+B, 2. Tranche", und [`select_n15_extension.R`](select_n15_extension.R)
+- identische Methodik wie zuvor, neuer Seed `20260901`, 3 binaer + 2
+multiclass aus einem Pool von 33 zulaessigen Datensaetzen (37 minus die
+4 bereits verwendeten Weg-B-Datensaetze). Gezogen: `ozone-level-8hr`
+(DID 1487), `dresses-sales` (DID 23381), `jm1` (DID 1053),
+`MiceProtein` (DID 40966), `mfeat-morphological` (DID 18).
+
+**Level-2-Prototyp-Ergebnisse** (Protokoll v3, 3 Outer-Folds, Metrik
+BAcc):
+
+| Datensatz | `level2_workflow` (Mittel) | bester Baseline-Arm | Delta (BAcc-Punkte) |
+|---|---|---|---|
+| `ozone-level-8hr` | 0.8348 | `lightgbm_default` 0.6337 | **+20.11** |
+| `jm1` | 0.6736 | `lightgbm_default` 0.5832 | **+9.04** |
+| `dresses-sales` | 0.5279 | `ranger_default` 0.5813 | -5.34 |
+| `MiceProtein` | 0.9956 | `lightgbm_default` 0.9899 | +0.56 |
+| `mfeat-morphological` | 0.7170 | `ranger_default` 0.7165 | +0.05 |
+
+**Deutlich groessere Effektstaerken als bei den ersten 10 Datensaetzen**
+(bisher max. |3.7| BAcc-Punkte) - plausibel erklaerbar: `ozone-level-8hr`
+und `jm1` sind bekannte, STARK unbalancierte binaere Aufgaben (seltene
+Minderheitsklasse), wo Klassengewichtung+Tuning gegenueber ungetunten
+Baselines besonders viel bringt. `dresses-sales` ist der kleinste
+Datensatz im gesamten Set (n=500) - dort zeigt sich das Gegenteil: die
+Modellwahl anhand des Inner-Tune-Scores generalisiert schlecht auf den
+Outer-Test (Ranger gewinnt in allen 3 Folds intern, verliert aber gegen
+seine eigene ungetunte Baseline auf dem Outer-Test) - ein plausibles
+Overfitting-auf-den-Inner-Split-Muster bei sehr kleinen Stichproben.
+
+**Decision-Stability (alle 3 Folds, alle 5 neuen Datensaetze)**:
+
+| Datensatz | Fold 1 | Fold 2 | Fold 3 |
+|---|---|---|---|
+| `ozone-level-8hr` | lightgbm, 70% | lightgbm, 60% (geflaggt) | lightgbm, 90% |
+| `jm1` | ensemble, 60% (geflaggt) | ensemble, 50% (geflaggt) | ranger, 50% (geflaggt) |
+| `dresses-sales` | ranger, 60% (geflaggt) | ranger, 80% | ranger, 50% (geflaggt) |
+| `MiceProtein` | lightgbm, 60% (geflaggt) | lightgbm, 70% | lightgbm, 40% (geflaggt) |
+| `mfeat-morphological` | ensemble, 50% (geflaggt) | ranger, 60% (geflaggt) | ranger, 70% |
+
+Bemerkenswerter Einzelfall: `ozone-level-8hr` kombiniert die HOECHSTE
+Stabilitaet des gesamten Sets (Mittel 73%, 2/3 Folds unauffaellig) MIT
+dem groessten Level-2-Vorteil (+20.1 BAcc-Punkte) - genau in die
+Richtung, die man bei einem echten Zusammenhang erwarten wuerde. Ein
+einzelner Datenpunkt reicht aber nicht, um die Gesamtkorrelation zu
+kippen (siehe unten).
+
+**Korrelationsanalyse ueber alle 15 Datensaetze x 3 Folds (45 statt 30
+Messungen)**: [`decision_stability_level2_analysis_n15.R`](decision_stability_level2_analysis_n15.R)
+- Deskriptiv: 32/45 (71%) der Einzelmessungen liegen unter der
+  70%-Stabilitaetsschwelle (Median 0.6, Mittel 0.600) - praktisch
+  identisch zum n=10-Befund (73%).
+- **Spearman (n=15, mittlere Stabilitaet vs. Level-2-Delta): rho=-0.147,
+  p=0.601 - WEITERHIN NICHT signifikant.** Sehr konsistenter Trend ueber
+  alle 3 Stichprobengroessen: n=6 rho=-0.086 -> n=10 rho=-0.134 -> n=15
+  rho=-0.147 - die Korrelation bleibt durchgehend schwach negativ und
+  weit von Signifikanz entfernt, auch nach 2 unabhaengigen Erweiterungen
+  um insgesamt 9 zusaetzliche Datensaetze. Ein robusteres, besser
+  abgesichertes Negativergebnis ist im Rahmen dieses Templates kaum
+  erreichbar.
+
+Alle 5 neuen Level-2- und 15 neuen Decision-Stability-Ergebnisse in die
+Evidence Registry geloggt.
+
+**Fazit n=15**: die Frage ist jetzt beantwortet, mit einer fuer dieses
+Template ungewoehnlich soliden Stichprobenbasis (3 unabhaengige
+Erweiterungsschritte, konsistentes Ergebnis). Kein Backport (ADR-003).
+Ein weiterer Ausbau (n=15->20+) wuerde nach dieser dritten Bestaetigung
+voraussichtlich keine neue Erkenntnis mehr liefern - aus Kosten-Nutzen-
+Sicht hier ein natuerlicher Abschlusspunkt fuer diese Forschungsfrage.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
