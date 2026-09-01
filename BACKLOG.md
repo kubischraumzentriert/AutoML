@@ -2976,6 +2976,40 @@ bestehenden nicht-negativen Caruana-Greedy-Selection
 auf ein Projekt mit ausreichend grossem/redundantem Kandidatenpool, um
 die Hypothese sinnvoll zu testen.
 
+### Vorgeschlagen, zurueckgestellt: Dokumenten-Umstrukturierung (2026-09-01)
+
+**Anlass**: Nutzerfrage, ob die Leak-Audit-Methode dokumentiert ist (ja -
+`README_DETAILS.md`, Abschnitt "Target-Leakage-Audit", nicht im Haupt-
+`README.md` wie ein `000_config.R`-Kommentar leicht ungenau suggeriert),
+gefolgt von der Beobachtung, dass das Repo-Root zunehmend unuebersichtlich
+wird.
+
+**Bestandsaufnahme**: 36 Markdown-Dateien im Repo-Root, davon verweisen
+65 Dateien (R-Skripte + andere .md) per Dateiname aufeinander - eine
+echte Verlinkungs-Verwebung, ein Umzug muesste alle relativen Links
+mitziehen.
+
+**Vorgeschlagene Kategorisierung** (noch NICHT umgesetzt, Nutzer hat
+explizit zurueckgestellt - "machen wir weiter mit Kaggle"):
+- `docs/reference/` (8): alle `REFERENZ_*.md`
+- `docs/ablations/` (3): alle `ABLATION_*.md`
+- `docs/research/` (9): `PAPER_DRAFT.md`, `EVALUATION_LEVELS.md`,
+  `EXTERNAL_BENCHMARK_SET.md`, `BENCHMARK_PROTOCOL.md`,
+  `SYSTEMATIC_EVALUATION*.md` (2), `MODEL_HYPOTHESIS_CRITERIA.md`,
+  `PORTFOLIO_WARMSTART_PREREG_*.md` (3), `JOSS_TECHNIQUE_WATCH.md`
+- Bleibt im Root: `README.md`, `README_DETAILS.md`, `TARGETS.md`,
+  `AGENTS.md`, `BACKLOG.md`, `CONTRIBUTING.md`, `LICENSE`,
+  `ENVIRONMENT.md`, `WorkflowDescription.md`, `EXPERIMENTS_DB.md`,
+  `SHARED_CORE_ANALYSIS.md`, `NEURAL_DEPLOY.md` (Einzelstuecke ohne
+  eigene Kategorie).
+
+**Status**: zurueckgestellt fuer eine ruhigere Session ohne laufende
+Kaggle-Arbeit nebenbei (Nutzerentscheidung). Bei Aufnahme: Kategorisierung
+ggf. nochmal mit dem Nutzer abstimmen (wurde nur vorgeschlagen, nicht
+final bestaetigt), dann alle Links per Skript statt manuell nachziehen
+(65 betroffene Dateien) und danach die volle Testsuite + CI pruefen,
+bevor committet wird.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
