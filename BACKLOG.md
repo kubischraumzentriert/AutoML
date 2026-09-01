@@ -2924,6 +2924,30 @@ Ein weiterer Ausbau (n=15->20+) wuerde nach dieser dritten Bestaetigung
 voraussichtlich keine neue Erkenntnis mehr liefern - aus Kosten-Nutzen-
 Sicht hier ein natuerlicher Abschlusspunkt fuer diese Forschungsfrage.
 
+### P3 - uebrige 2 Checklistenpunkte geprueft, nichts umsetzbar (2026-09-01)
+
+**Nutzeranweisung**: "mach weiter mit P3s uebrigen Punkten" (die beiden
+noch offenen Checklistenpunkte 4/5: externe Nutzerfeedbacks sammeln,
+Bugs/Issues aus externer Nutzung als Evidenz behandeln). GitHub-Repo
+tatsaechlich geprueft statt nur angenommen: `gh api repos/.../AutoML` ->
+**0 Stars, 0 Forks, 0 Watchers, 0 Issues, 0 PRs** seit dem `v0.1.0`-
+Release. Bestaetigt die bisherige Dokumentation - es gibt schlicht keine
+externe Nutzung, an die diese Punkte anknuepfen koennten.
+
+Per AskUserQuestion 3 Optionen vorgelegt (abwarten / Sichtbarkeit aktiv
+erhoehen z.B. via Repo-Topics / Thema wechseln) - Nutzerentscheidung:
+**"Abwarten"**. Keine Aenderung vorgenommen, keine Simulation externer
+Aktivitaet. Diese beiden Punkte bleiben strukturell vorbereitet
+(`CONTRIBUTING.md`, ADR-003 gilt fuer externe PRs) und werden erst mit
+echter externer Nutzung inhaltlich relevant - kein weiterer proaktiver
+Handlungsbedarf von unserer Seite, nur reagieren, falls tatsaechlich
+Issues/PRs eintreffen.
+
+**Damit ist P3 in dem Sinne abgeschlossen, wie es mit dem aktuellen
+Stand des Repos abschliessbar ist** - die 3 umsetzbaren Punkte (Start-
+here-Anleitung, Beispielprojekt, Release) sind erledigt, die 2 letzten
+haengen an einer externen Bedingung ausserhalb unserer Kontrolle.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
