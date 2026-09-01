@@ -3010,6 +3010,28 @@ final bestaetigt), dann alle Links per Skript statt manuell nachziehen
 (65 betroffene Dateien) und danach die volle Testsuite + CI pruefen,
 bevor committet wird.
 
+### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
+
+Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
+Projekt: `Fehler: 'xgb.params' ist kein exportiertes Objekt aus
+'namespace:xgboost'`. Ursache: die lokal installierte `xgboost`-R-
+Paketversion war `1.7.11.1`, obwohl `renv.lock` bereits korrekt
+`xgboost 3.2.1.1` pinnt (mlr3extralearners verlangt `>= 3.2.0.1` fuer
+seinen XGBoost-Learner) - `renv.lock` war also NICHT das Problem, die
+lokale Installation war einfach unabhaengig davon gedriftet. Grund:
+`renv` ist fuer dieses Repo gar nicht aktiv (`.Rprofile` aktiviert es
+nicht, setzt nur CRAN-Repo-Optionen fuer `pak`/CI) - ein bewusster,
+bereits in `ENVIRONMENT.md` dokumentierter Architekturentscheid
+(`DESCRIPTION`+`pak` statt `renv::restore()` als operativer Mechanismus),
+der hier aber bedeutet: die lokale interaktive R-Bibliothek wird von
+NICHTS automatisch mit `renv.lock` synchron gehalten - ein Update-Skript
+kann jederzeit eine aeltere Version installieren/liegen lassen, ohne
+dass irgendetwas warnt. Fix: `install.packages("xgboost")` (CRAN,
+aktuell 3.2.1.1) - danach lief `081_xgboost_benchmark.R` fehlerfrei.
+Betrifft die ganze Maschine, nicht nur dieses Projekt - falls derselbe
+Fehler in einem anderen Projekt wieder auftaucht, ist die Ursache
+bereits bekannt.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
