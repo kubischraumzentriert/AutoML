@@ -111,19 +111,46 @@ signifikant) - der urspruengliche suggestive Fold-1-only-Befund
 Erweiterungsschritte hinweg (Weg A: mehr Folds; Weg B: mehr Datensaetze)
 widerlegt, jetzt gut abgesichert. Kein Backport (ADR-003 weiterhin nicht
 erfuellt).
+**21. Aktualisierung:** auf Nutzeranweisung "n=10 auf n=15 erweitern" -
+die obere Grenze der urspruenglichen Vormerkung. 5 weitere Datensaetze
+deterministisch gezogen und eingefroren (`ozone-level-8hr`,
+`dresses-sales`, `jm1`, `MiceProtein`, `mfeat-morphological`, neuer Seed
+`20260901`). Level-2 + Decision-Stability (je 3 Outer-Folds) fuer alle 5
+durchgefuehrt - diesmal die Kopiervorlage direkt aus dem (bereits
+gepatchten) zentralen Template statt aus einer lokalen Projekt-Kopie
+genommen, um den Drift-Fehler aus Punkt 20 nicht zu wiederholen.
+
+**Zentrales Ergebnis**: die Level-2-Deltas dieser 5 Datensaetze sind
+DEUTLICH groesser als bei den ersten 10 (bisher max. |3.7| BAcc-Punkte) -
+`ozone-level-8hr` +20.11, `jm1` +9.04 (beide stark unbalancierte
+Aufgaben, wo Tuning+Klassengewichtung viel bringt), `dresses-sales`
+-5.34 (kleinster Datensatz im Set, n=500, Overfitting-auf-Inner-Split-
+Muster), `MiceProtein` +0.56, `mfeat-morphological` +0.05. Trotz dieser
+groesseren Einzeldeltas bestaetigt die finale Korrelationsanalyse ueber
+alle 15 Datensaetze x 3 Folds (45 Messungen) den Nullbefund ein DRITTES
+Mal: rho=-0.147, p=0.601 - ein sehr konsistenter Trend ueber n=6
+(rho=-0.086) -> n=10 (rho=-0.134) -> n=15 (rho=-0.147). Bemerkenswerter
+Einzelfall: `ozone-level-8hr` kombiniert die hoechste Stabilitaet des
+gesamten Sets MIT dem groessten Level-2-Vorteil - genau in die erwartete
+Richtung, aendert aber die Gesamtkorrelation nicht signifikant. Kein
+Backport (ADR-003). **Aus Kosten-Nutzen-Sicht ein natuerlicher
+Abschlusspunkt fuer diese Forschungsfrage - ein weiterer Ausbau (n=15->20+)
+wuerde nach dieser dritten Bestaetigung voraussichtlich keine neue
+Erkenntnis mehr liefern.**
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `2074f37` "Weg B abgeschlossen: n=6->10
-  Datensaetze - Level-2/Decision-Stability-Ergebnisse fuer alle 4 neuen
-  Datensaetze, Korrelationsanalyse bestaetigt den n=6-Nullbefund" -
-  gepusht (docs/Analyse-only, kein CI-Trigger; letzter CI-relevanter
-  Commit `eaa0000`, CI Smoke Test gruen, Lauf `33406093180`). Tag +
-  [GitHub Release `v0.1.0`](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
+- `MLR3_Classifikation` @ `cc4cf3e` "n=10->15 abgeschlossen:
+  Korrelationsanalyse bestaetigt den Nullbefund ein drittes Mal
+  (rho=-0.147, p=0.601)" - gepusht (docs/Analyse-only, kein CI-Trigger;
+  letzter CI-relevanter Commit `eaa0000`, CI Smoke Test gruen, Lauf
+  `33406093180`). Tag + [GitHub Release `v0.1.0`](https://github.com/kubischraumzentriert/AutoML/releases/tag/v0.1.0)
   weiterhin aktuell.
-- `ML_Learning` @ `c7a7adc` "Weg B: 4 neue Projekte (phishing-websites,
-  qsar-biodeg, mfeat-karhunen, eucalyptus) + class_multiplier_tuning.R-
-  Bugfix in 5 bestehenden Projekten nachgezogen" - lokal, kein Remote.
+- `ML_Learning` @ `e8f9a12` "n=10->15: 5 neue Projekte (ozone-level-8hr,
+  dresses-sales, jm1, mice-protein, mfeat-morphological) fuer die
+  Decision-Stability-Forschungsfrage" - lokal, kein Remote.
+- Zwischenstand: `2074f37` "Weg B abgeschlossen: n=6->10" (ebenfalls
+  gepusht, docs/Analyse-only).
 - Zwischenstaende auf dem Weg dorthin (alle gepusht, alle CI gruen):
   `928cf5f` (Backport `137_hard_split_stress_test.R`, Lauf
   `33361859447`), `9bd9562` (CI-Fixture um 137 ergaenzt, Lauf
@@ -704,12 +731,14 @@ actionable Handlungsempfehlung.
 ist jetzt ebenfalls vollstaendig abgearbeitet** (P0 Dokumentationskonsistenz,
 P1 `JOSS_TECHNIQUE_WATCH.md`, P2 beide JOSS-inspirierten Prototypen, P3
 externe Adoption - siehe Punkt 19 oben):
-- **P1, Rest - ABGESCHLOSSEN** (Punkt 20 oben): "Weg B" (n=6->10
-  CC18-Datensaetze) durchgefuehrt. Korrelationsanalyse bestaetigt den
-  n=6-Nullbefund erneut (rho=-0.134, p=0.712, n=10) - keine Aenderung
-  der Schlussfolgerung. Optional weiterhin offen: n=10->15 (noch nicht
-  angefragt, kein zwingender Grund mehr dafuer, da das Ergebnis bereits
-  zweifach stabil ist).
+- **P1, Rest - VOLLSTAENDIG ABGESCHLOSSEN** (Punkte 20-21 oben): "Weg B"
+  in 2 Tranchen (n=6->10->15 CC18-Datensaetze) durchgefuehrt. Korrelations-
+  analyse bestaetigt den n=6-Nullbefund DREIFACH (rho=-0.086 -> -0.134 ->
+  -0.147, durchgehend nicht signifikant) - keine Aenderung der
+  Schlussfolgerung ueber 3 unabhaengige Stichprobengroessen hinweg. Ein
+  weiterer Ausbau (n=15->20+) ist aus Kosten-Nutzen-Sicht nicht mehr
+  sinnvoll (kein zwingender Grund mehr, das Ergebnis ist bereits
+  dreifach stabil).
 - **P2, beide JOSS-inspirierten Prototypen VOLLSTAENDIG ABGESCHLOSSEN UND
   BACKPORTED**: VeridicalFlow/Decision-Stability (kein Backport, ADR-003
   - liefert keine actionable Handlungsempfehlung) UND astartes/
@@ -835,44 +864,41 @@ als auch des vierten (2026-08-30) externen Bewertungsdokuments
 vollstaendig abgearbeitet - kein zwingender naechster Schritt mehr aus
 irgendeinem der bisherigen Bewertungsdokumente offen.**
 
-**"Weg B" (n=6->10 CC18-Datensaetze fuer die Decision-Stability-
-Forschungsfrage) ist ebenfalls VOLLSTAENDIG abgeschlossen** (Punkt 20
-oben): 4 neue Datensaetze eingefroren, Level-2 + Decision-Stability
-durchgefuehrt, Korrelationsanalyse bestaetigt den n=6-Nullbefund erneut
-(rho=-0.134, p=0.712) - der urspruengliche suggestive Fold-1-only-Befund
-bleibt ueber zwei unabhaengige Erweiterungsschritte hinweg widerlegt.
-Dabei ein echter Nebenfund: der `optdigits`-OOM-Crash-Fix in
-`class_multiplier_tuning.R` war in 5 von 6 bestehenden Projekt-Kopien
-nie nachgezogen worden - jetzt ueberall synchronisiert (Lehre: zentrale
-Bugfixes NICHT automatisch in bestehenden lokalen Kopien wirksam, siehe
-Punkt 20).
+**"Weg B" (n=6->10->15 CC18-Datensaetze fuer die Decision-Stability-
+Forschungsfrage) ist jetzt VOLLSTAENDIG abgeschlossen, in 2 Tranchen**
+(Punkte 20-21 oben): 9 neue Datensaetze eingefroren, Level-2 +
+Decision-Stability durchgefuehrt, Korrelationsanalyse bestaetigt den
+n=6-Nullbefund DREIFACH (rho=-0.086 -> -0.134 -> -0.147, durchgehend
+nicht signifikant) - der urspruengliche suggestive Fold-1-only-Befund
+bleibt ueber DREI unabhaengige Erweiterungsschritte hinweg widerlegt,
+so solide abgesichert wie fuer dieses Template praktisch erreichbar.
+**Kein weiterer Ausbau mehr sinnvoll (n=15->20+ wuerde voraussichtlich
+keine neue Erkenntnis liefern).** Dabei ein echter Nebenfund (Punkt 20):
+der `optdigits`-OOM-Crash-Fix in `class_multiplier_tuning.R` war in 5
+von 6 bestehenden Projekt-Kopien nie nachgezogen worden - jetzt
+ueberall synchronisiert (Lehre: zentrale Bugfixes NICHT automatisch in
+bestehenden lokalen Kopien wirksam - bei der 2. Tranche deshalb direkt
+aus dem zentralen Template statt einer lokalen Kopie kopiert). Ein
+weiterer Nebenfund (Punkt 21): 2 der 5 neuen Datensaetze
+(`ozone-level-8hr`, `jm1`) zeigen deutlich groessere Level-2-Vorteile
+als alle bisherigen 10 (+20.1/+9.0 BAcc-Punkte) - plausibel durch
+starke Klassenunbalance erklaerbar, aendert aber nichts an der
+Kernaussage (kein Stabilitaets-Erfolgs-Zusammenhang).
 
 **Damit sind jetzt ALLE bisher bekannten Roadmap-Punkte aus allen 4
 externen Bewertungsdokumenten dieser Session (2026-08-27/28/29/30)
-vollstaendig abgearbeitet.** Naheliegendste naechste Schritte, falls der
-Nutzer nichts Konkretes mitbringt: n=10->15 weiter ausbauen (kein
-zwingender Grund mehr, das Ergebnis ist bereits zweifach stabil bestaetigt),
-P3s uebrige 2 Punkte abwarten (externe Nutzerfeedbacks/Issues), die
-optionale Acknowledgements-Sektion in `joss/paper.md`, oder schlicht
+vollstaendig abgearbeitet, inklusive der optionalen Research-Benchmark-
+Erweiterung.** Naheliegendste naechste Schritte, falls der Nutzer nichts
+Konkretes mitbringt: P3s uebrige 2 Punkte abwarten (externe
+Nutzerfeedbacks/Issues), die optionale Acknowledgements-Sektion in
+`joss/paper.md`, der Hard-Split-Stresstest-Schwellenwert (20pp, bislang
+nur grob kalibriert) bei Gelegenheit nachschaerfen, oder schlicht
 abwarten, ob ein FUENFTES externes Bewertungsdokument kommt (bisheriges
-Muster dieser Session). Wiedervorlage JOSS/AutoML-Conf-2027 bleibt
-~November 2026 im Blick (Punkt 10/`project_joss_publication_timeline.md`).
-
-Naheliegendste naechste Schritte, falls der Nutzer nichts Konkretes
-mitbringt: die optionale Research-Benchmark-Erweiterung ("Weg B",
-n=6->10-15 CC18-Datensaetze, nur falls der Research-/AutoML-Conf-2027-
-Pfad weiterverfolgt wird - VORHER einfrieren, nicht nach Sicht der
-Zahlen), oder abwarten, ob ein FUENFTES externes Bewertungsdokument
-kommt (Muster dieser Session: der Nutzer hat bislang nach jedem
-abgeschlossenen Roadmap-Zyklus ein neues gebracht). Ausdrueckliche
-Warnung aus dem vierten Bewertungsdokument im Kopf behalten: kein
-Feature Creep, jede JOSS-Idee braucht erst eine Hypothese/ein
-bestehendes Problem im Template, Default "NO BACKPORT bis Evidenz
-vorhanden" (ADR-003 bleibt massgeblich, jetzt auch fuer ADRs 007-009
-relevant). Kleinere Alternativen: die optionale Acknowledgements-
-Sektion in `joss/paper.md` ausfuellen, `finalize_run_provenance()` auf
-weitere Skripte ausrollen, oder der Hard-Split-Stresstest-Schwellenwert
-(20pp, bislang nur grob kalibriert statt synthetisch hergeleitet wie
-der z-Score-Schwellenwert -2) bei Gelegenheit nachschaerfen. Weiterhin
-im Blick behalten: Wiedervorlage JOSS/AutoML-Conf-2027 ~November 2026
-(Punkt 10/`project_joss_publication_timeline.md`).
+Muster dieser Session: nach jedem abgeschlossenen Roadmap-Zyklus kam
+bisher ein neues). Ausdrueckliche Warnung aus dem vierten
+Bewertungsdokument im Kopf behalten: kein Feature Creep, jede JOSS-Idee
+braucht erst eine Hypothese/ein bestehendes Problem im Template, Default
+"NO BACKPORT bis Evidenz vorhanden" (ADR-003 bleibt massgeblich, jetzt
+auch fuer ADRs 007-009 relevant). Wiedervorlage JOSS/AutoML-Conf-2027
+bleibt ~November 2026 im Blick (Punkt 10/`project_joss_publication_
+timeline.md`).
