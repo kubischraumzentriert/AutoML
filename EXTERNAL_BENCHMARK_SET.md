@@ -129,6 +129,37 @@ Ziehung eingesehen).
 | 16 | `mfeat-karhunen` | 2000 | 64 | 10 | multiclass |
 | 188 | `eucalyptus` | 736 | 19 | 5 | multiclass |
 
+**Status: ERLEDIGT.** Level-2-Prototyp + Decision-Stability fuer alle 4
+durchgefuehrt, Korrelationsanalyse bestaetigt den n=6-Nullbefund erneut
+(rho=-0.134, p=0.712) - siehe `BACKLOG.md`.
+
+## "Weg B", 2. Tranche: n=10 -> n=15 (eingefroren 2026-09-01, VOR jeder Ergebnisberechnung)
+
+Nutzeranweisung "n=10 auf n=15 erweitern" - die Obergrenze der
+urspruenglichen Vormerkung ("n=10-15"). Selektionsskript:
+[`select_n15_extension.R`](select_n15_extension.R) - identische Methodik,
+diesmal ausgeschlossen: alle bereits verwendeten 17 Namen (7
+Template-Projekte + die bestehenden 10 externen Datensaetze). Zulaessiger
+Pool: **33 Datensaetze** (37 minus die 4 Weg-B-Datensaetze - stimmt
+exakt). Metadaten aus der bereits vorhandenen CC18-Abfrage
+wiederverwendet (kein erneuter Download noetig).
+
+Deterministisch per `set.seed(20260901)` (Datum dieser Ziehung, wieder
+ein NEUER Seed aus demselben Grund wie bei der 1. Tranche). Diesmal 3
+binaer + 2 multiclass (aus einem Pool von 19 binaer/14 multiclass) - der
+Gesamt-Datensatz bleibt damit nach dieser Ziehung bei 8 binaer/7
+multiclass, weiterhin nah an 50/50.
+
+| OpenML DID | Name | Instanzen | Features | Klassen | Typ |
+|---|---|---|---|---|---|
+| 1487 | `ozone-level-8hr` | 2534 | 72 | 2 | binaer |
+| 23381 | `dresses-sales` | 500 | 12 | 2 | binaer |
+| 1053 | `jm1` | 10885 | 21 | 2 | binaer |
+| 40966 | `MiceProtein` | 1080 | 81 | 8 | multiclass |
+| 18 | `mfeat-morphological` | 2000 | 6 | 10 | multiclass |
+
+**Status: EINGEFROREN, noch NICHT ausgefuehrt.**
+
 Vollstaendige Metadaten aller 72 CC18-Datensaetze (fuer Nachvollziehbarkeit
 der Poolgroesse):
 [`_artifacts/cc18_full_metadata.csv`](_artifacts/cc18_full_metadata.csv)
