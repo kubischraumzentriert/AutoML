@@ -3140,6 +3140,14 @@ werden?". Testsuite danach weiterhin 356/356 gruen (Skript ist nicht
 Teil der CI-Smoke-Test-Fixture, daher kein CI-Trigger fuer diese
 Aenderung allein).
 
+**Ergebnis des eigentlichen Vergleichs** (nach dem Fix, 5-fache CV,
+volle 668.665 Zeilen, power=1.5): LightGBM AUC 0.9413/LogLoss 0.4299 in
+124s, CatBoost AUC 0.9406/LogLoss 0.4286 (leicht besser) in 1405s
+(~11.3x langsamer). LightGBM bleibt beim Haupt-Metrik AUC leicht vorn
+UND deutlich schneller - bestaetigt die bereits getroffene
+Submission-Modellwahl, kein Grund zum Wechsel. Ergebnis in
+`experiments.db` (s6e9-Projekt) geloggt.
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
