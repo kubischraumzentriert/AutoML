@@ -44,7 +44,22 @@ finalize_task <- function(data, id) {
       !!target_col := as.factor(.data[[target_col]])
     )
 
-  enable_class_stratification(as_task_classif(data, target = target_col, id = id))
+  # BUGFIX (2026-09-01, gefunden im s6e9-Projekt): fehlte bisher hier,
+  # unbemerkt weil health_condition (3-Klassen, positive_class=NULL) davon
+  # nicht betroffen ist. Bei einer binaeren Aufgabe mit gesetzter
+  # positive_class waehlte mlr3 sonst die erste Faktorstufe als "positiv"
+  # statt der konfigurierten Klasse - inkonsistent mit 020_task.R, das
+  # dieselbe Logik bereits richtig anwendet. Ohne diesen Fix wuerden die
+  # "features"/"selected"-Feature-Set-Tasks (036/037/070/155 etc.) mit
+  # einer ANDEREN positiven Klasse arbeiten als "raw" (020_task.R) -
+  # AUC bleibt dabei zufaellig unveraendert (symmetrisch bei Tausch der
+  # positiven Klasse), aber eine finale Submission auf einem dieser
+  # Feature-Sets wuerde P(falsche Klasse) statt P(target_col) ausgeben.
+  task_args <- list(data, target = target_col, id = id)
+  if (!is.null(positive_class) && nlevels(data[[target_col]]) == 2) {
+    task_args$positive <- positive_class
+  }
+  enable_class_stratification(do.call(as_task_classif, task_args))
 }
 
 cat("=== Feature-Family Tasks ===\n")
