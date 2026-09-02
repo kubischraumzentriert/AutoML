@@ -81,8 +81,11 @@ print(instance$result_learner_param_vals)
 best_params <- instance$result_learner_param_vals
 best_params[["classif.ranger.num.trees"]] <- ranger_tuning_final_trees
 
+# predict_type="prob" jeweils: siehe 030_baseline.R/BACKLOG.md (2026-09-01).
+# Ein Feld des Learners, nicht Teil von param_set$values - bleibt daher von
+# der Zuweisung best_params unten unberuehrt.
 learner_ranger_tuned <- make_baseline_learner(
-  lrn("classif.ranger", respect.unordered.factors = "order", seed = seed),
+  lrn("classif.ranger", respect.unordered.factors = "order", seed = seed, predict_type = "prob"),
   id = "ranger_weighted_tuned"
 )
 learner_ranger_tuned$param_set$values <- best_params
@@ -92,7 +95,8 @@ learner_ranger_default <- make_baseline_learner(
     "classif.ranger",
     num.trees = ranger_tuning_final_trees,
     respect.unordered.factors = "order",
-    seed = seed
+    seed = seed,
+    predict_type = "prob"
   ),
   id = "ranger_weighted_default"
 )

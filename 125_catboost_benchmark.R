@@ -32,13 +32,14 @@ make_baseline_learner <- function(base_learner, id = NULL) {
 # CatBoosts Kernvorteil bei uns waere nicht die Kategorie-Kodierung (siehe
 # README, 3-4 Auspraegungen je Spalte), sondern Ordered Boosting, das generell
 # gegen Prediction-Shift/Overfitting hilft - unabhaengig von Kategorien.
+# predict_type="prob" jeweils: siehe 030_baseline.R/BACKLOG.md (2026-09-01).
 learner_catboost <- make_baseline_learner(
-  lrn("classif.catboost", iterations = catboost_iterations),
+  lrn("classif.catboost", iterations = catboost_iterations, predict_type = "prob"),
   id = "catboost"
 )
 
 learner_lightgbm <- make_baseline_learner(
-  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations),
+  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations, predict_type = "prob"),
   id = "lightgbm"
 )
 

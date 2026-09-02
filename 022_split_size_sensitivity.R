@@ -34,8 +34,10 @@ if (task$nrow > split_sensitivity_max_n) {
 # classif.rpart statt eines Projekt-Learners: der Mechanismus (Streuung
 # durch Testset-Groesse) ist weitgehend lernverfahren-unabhaengig, ein
 # schneller Baum-Lerner reicht fuer die Diagnose (siehe Kommentar zu
-# split_sensitivity_max_n in 000_config.R).
-learner <- lrn("classif.rpart")
+# split_sensitivity_max_n in 000_config.R). predict_type="prob": siehe
+# 030_baseline.R/BACKLOG.md (2026-09-01) fuer die Begruendung - noetig
+# fuer eine AUC-/LogLoss-bewertete Uebertragung.
+learner <- lrn("classif.rpart", predict_type = "prob")
 measure <- msr(baseline_measure_ids[1])
 
 sens <- split_ratio_sensitivity(

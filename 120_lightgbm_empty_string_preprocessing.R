@@ -30,14 +30,15 @@ make_baseline_learner <- function(base_learner, id = NULL) {
   if (!is.null(id)) learner$id <- id
   learner
 }
+# predict_type="prob" jeweils: siehe 030_baseline.R/BACKLOG.md (2026-09-01).
 learner_keep_empty <- make_baseline_learner(
-  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations),
+  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations, predict_type = "prob"),
   id = "lightgbm_keep_empty"
 )
 
 # Variante B: "" -> NA -> Imputation via empty_factor_to_na (040_preprocessing.R).
 learner_na_impute <- build_classif_pipeline(
-  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations),
+  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations, predict_type = "prob"),
   encode_factors = FALSE,
   scale_numeric = FALSE
 )

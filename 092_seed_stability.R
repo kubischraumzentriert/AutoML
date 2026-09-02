@@ -64,9 +64,11 @@ if (exists("ranger_tuning_instance_path") && file.exists(ranger_tuning_instance_
     min.node.size = function(x) max(1, round(x * runif(1, 1 - 2 * jr, 1 + 2 * jr))),
     sample.fraction = function(x) min(1, max(0.1, x * runif(1, 1 - jr, 1 + jr)))
   )
+  # predict_type="prob": siehe 030_baseline.R/BACKLOG.md (2026-09-01) fuer
+  # die Begruendung - noetig fuer eine AUC-/LogLoss-bewertete Uebertragung.
   learner_ctor <- function(p) lrn("classif.ranger", num.trees = ranger_tuning_final_trees, seed = seed,
                                    mtry.ratio = p$mtry.ratio, min.node.size = p$min.node.size,
-                                   sample.fraction = p$sample.fraction)
+                                   sample.fraction = p$sample.fraction, predict_type = "prob")
   jitter_result <- hyperparam_jitter_stability(task_train, task_test, base_params, jitter_fns,
                                                 learner_ctor, measure,
                                                 n_jitter = seed_stability_n_jitter, seed = seed)

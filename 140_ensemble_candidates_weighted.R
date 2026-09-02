@@ -33,18 +33,19 @@ make_baseline_learner <- function(base_learner, id = NULL) {
 # Alle drei mit derselben power=1.5-Gewichtung wie das finale LightGBM, um
 # einen fairen Vergleich fuer eine moegliche Ensemble-Entscheidung zu haben
 # (bisherige XGBoost/Ranger-Zahlen aus 080/090 waren ungewichtet).
+# predict_type="prob" jeweils: siehe 030_baseline.R/BACKLOG.md (2026-09-01).
 learner_lightgbm <- make_baseline_learner(
-  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations),
+  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations, predict_type = "prob"),
   id = "lightgbm"
 )
 
 learner_ranger <- make_baseline_learner(
-  lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed),
+  lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed, predict_type = "prob"),
   id = "ranger"
 )
 
 learner_xgboost <- build_classif_pipeline(
-  lrn("classif.xgboost", nrounds = 200),
+  lrn("classif.xgboost", nrounds = 200, predict_type = "prob"),
   encode_factors = TRUE,
   scale_numeric = FALSE
 )

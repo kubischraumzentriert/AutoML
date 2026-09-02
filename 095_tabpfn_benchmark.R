@@ -42,18 +42,19 @@ make_baseline_learner <- function(base_learner) {
 
 # Ranger und LightGBM auf demselben kleinen Subset als Referenz, damit der
 # TabPFN-Vergleich nicht gegen die grossen Benchmarks aus 080/090 schielt,
-# die auf einem 20x groesseren Subset liefen.
+# die auf einem 20x groesseren Subset liefen. predict_type="prob" jeweils:
+# siehe 030_baseline.R/BACKLOG.md (2026-09-01) fuer die Begruendung.
 learner_ranger <- make_baseline_learner(
-  lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed)
+  lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed, predict_type = "prob")
 )
 learner_lightgbm <- make_baseline_learner(
-  lrn("classif.lightgbm", num_iterations = 200)
+  lrn("classif.lightgbm", num_iterations = 200, predict_type = "prob")
 )
 
 # TabPFN akzeptiert nur logical/integer/numeric, daher one-hot-Encoding wie
 # bei xgboost.
 learner_tabpfn <- build_classif_pipeline(
-  lrn("classif.tabpfn", device = "cpu"),
+  lrn("classif.tabpfn", device = "cpu", predict_type = "prob"),
   encode_factors = TRUE,
   scale_numeric = FALSE
 )

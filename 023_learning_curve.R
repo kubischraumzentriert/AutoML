@@ -48,7 +48,13 @@ if (length(fractions) < 3) {
 }
 cat("Getestete fractions:", paste(fractions, collapse = ", "), "\n")
 
-learner <- lrn("classif.ranger", num.trees = 100, respect.unordered.factors = "order", seed = seed)
+# predict_type="prob": kostet fuer response-basierte Metriken wie BAcc/MCC
+# (health_condition) nichts, macht das Skript aber sofort tauglich fuer eine
+# AUC-/LogLoss-bewertete Uebertragung (baseline_measure_ids[1] braucht dann
+# Wahrscheinlichkeiten, sonst NaN statt eines Fehlers) - derselbe Fix wie in
+# 030_baseline.R und (2026-09-01, gefunden im s6e9-Projekt) in
+# base_learner_constructors + 035/036/037/038/050, siehe BACKLOG.md.
+learner <- lrn("classif.ranger", num.trees = 100, respect.unordered.factors = "order", seed = seed, predict_type = "prob")
 measure <- msr(baseline_measure_ids[1])
 
 lc <- learning_curve(task_full, learner, measure, fractions,
