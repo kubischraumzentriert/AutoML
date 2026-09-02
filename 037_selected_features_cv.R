@@ -29,17 +29,25 @@ make_baseline_learner <- function(base_learner) {
   as_learner(po("imputemedian") %>>% po("imputemode") %>>% base_learner)
 }
 
-learner_lda <- make_baseline_learner(lrn("classif.lda"))
+# predict_type="prob" JEWEILS VOR dem Wrap in make_baseline_learner() gesetzt
+# (auf dem Basis-Learner, nicht dem fertigen GraphLearner) - siehe
+# 030_baseline.R fuer die volle Begruendung (BUGFIX 2026-09-01, gefunden im
+# s6e9-Projekt - dieses Skript fehlte bislang, obwohl 030 den identischen
+# Fix schon hatte).
+learner_lda_base <- lrn("classif.lda")
+learner_lda_base$predict_type <- "prob"
+learner_lda <- make_baseline_learner(learner_lda_base)
 
 learner_multinom_base <- lrn("classif.multinom")
 if ("trace" %in% learner_multinom_base$param_set$ids()) {
   learner_multinom_base$param_set$values$trace <- FALSE
 }
+learner_multinom_base$predict_type <- "prob"
 learner_multinom <- make_baseline_learner(learner_multinom_base)
 
-learner_ranger <- make_baseline_learner(
-  lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed)
-)
+learner_ranger_base <- lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed)
+learner_ranger_base$predict_type <- "prob"
+learner_ranger <- make_baseline_learner(learner_ranger_base)
 
 resampling <- rsmp("cv", folds = cv_folds)
 

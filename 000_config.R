@@ -395,17 +395,36 @@ final_model_path <- function(model_name) {
 # 070/140/150). Bei einem neuen Klassifikationsaufgaben-Workflow bleibt diese
 # Liste gleich, sofern dieselben Modellnamen weiterverwendet werden - sonst
 # genuegt es, sie zu ergaenzen.
+#
+# BUGFIX (2026-09-01, gefunden im s6e9-Projekt): predict_type = "prob" jetzt
+# fuer ALLE 4 Konstruktoren gesetzt. Kostet fuer response-basierte Metriken
+# wie BAcc/MCC (health_condition) nichts, macht diese zentrale Liste aber
+# sofort tauglich fuer AUC-/LogLoss-bewertete Projekte - ohne prob-
+# Vorhersagen liefern classif.auc/classif.logloss sonst NaN statt eines
+# Fehlers (schwer zu bemerken, siehe BACKLOG.md). Derselbe Fix stand bereits
+# lokal in 030_baseline.R (dort mit einem Kommentar zu genau diesem
+# wiederkehrenden Uebertragungs-Reibungspunkt), war aber nie hierher in die
+# zentrale, von mehreren Skripten (070/092/136/137) geteilte Liste gewandert.
 base_learner_constructors <- list(
-  lda = function() lrn("classif.lda"),
+  lda = function() { l <- lrn("classif.lda"); l$predict_type <- "prob"; l },
   multinom = function() {
     learner <- lrn("classif.multinom")
     if ("trace" %in% learner$param_set$ids()) {
       learner$param_set$values$trace <- FALSE
     }
+    learner$predict_type <- "prob"
     learner
   },
-  ranger = function() lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed),
-  lightgbm = function() lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations)
+  ranger = function() {
+    l <- lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed)
+    l$predict_type <- "prob"
+    l
+  },
+  lightgbm = function() {
+    l <- lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations)
+    l$predict_type <- "prob"
+    l
+  }
 )
 
 # --- Auswahl des Submission-Modells -----------------------------------------

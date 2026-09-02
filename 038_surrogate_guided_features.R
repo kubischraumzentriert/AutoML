@@ -183,19 +183,28 @@ raw_eval_task <- finalize_task(raw_eval, id = paste0(task_id_prefix, "_raw_eval"
 surrogate_eval <- add_surrogate_guided_features(raw_eval, surrogate_spec, operations = surrogate_guided_operations)
 surrogate_eval_task <- finalize_task(surrogate_eval, id = paste0(task_id_prefix, "_surrogate_guided_eval"))
 
+# predict_type="prob" fuer beide Learner: siehe 030_baseline.R fuer die
+# volle Begruendung (BUGFIX 2026-09-01, gefunden im s6e9-Projekt - dieses
+# Skript fehlte bislang, obwohl 030 den identischen Fix schon hatte).
+# liblinear type=0 (L2-regularisierte logistische Regression) unterstuetzt
+# Wahrscheinlichkeitsausgabe - andere liblinear-Typen (z.B. SVM-Varianten)
+# ggf. nicht, hier unkritisch da der Default-Typ dieses Projekts type=0 ist.
 learner_multinom <- lrn("classif.multinom")
 if ("trace" %in% learner_multinom$param_set$ids()) {
   learner_multinom$param_set$values$trace <- FALSE
 }
+learner_multinom$predict_type <- "prob"
 
+learner_liblinear_base <- lrn(
+  "classif.liblinear",
+  id = "liblinear_l2r_lr",
+  type = surrogate_guided_liblinear_type,
+  cost = surrogate_guided_liblinear_cost,
+  bias = surrogate_guided_liblinear_bias
+)
+learner_liblinear_base$predict_type <- "prob"
 learner_liblinear <- build_classif_pipeline(
-  lrn(
-    "classif.liblinear",
-    id = "liblinear_l2r_lr",
-    type = surrogate_guided_liblinear_type,
-    cost = surrogate_guided_liblinear_cost,
-    bias = surrogate_guided_liblinear_bias
-  ),
+  learner_liblinear_base,
   encode_factors = TRUE,
   scale_numeric = TRUE
 )

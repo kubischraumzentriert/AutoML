@@ -35,6 +35,13 @@ if ("trace" %in% learner_multinom$param_set$ids()) {
   learner_multinom$param_set$values$trace <- FALSE
 }
 
+# predict_type="prob" fuer alle drei Learner: siehe 030_baseline.R fuer die
+# volle Begruendung (BUGFIX 2026-09-01, gefunden im s6e9-Projekt - dieses
+# Skript fehlte bislang, obwohl 030 den identischen Fix schon hatte).
+learner_lda$predict_type <- "prob"
+learner_multinom$predict_type <- "prob"
+learner_ranger$predict_type <- "prob"
+
 learners <- list(
   build_classif_pipeline(learner_lda),
   build_classif_pipeline(learner_multinom),
