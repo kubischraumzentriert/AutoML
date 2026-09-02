@@ -3175,6 +3175,43 @@ Format `id,Will_Buy_EV`, mean(pred)=0.174, nah an der Trainings-
 Basisrate 17% - kein entartetes Ergebnis). Noch NICHT bei Kaggle
 eingereicht (externe Aktion, bewusst dem Nutzer ueberlassen).
 
+### `predict_type`-Bugfix vervollstaendigt: vollstaendiger Sweep ueber alle Skripte (2026-09-01)
+
+**Anlass**: Nutzerfrage "koennen wir was ins Template uebernehmen?" -
+geprueft, ob der s6e9-lokale `predict_type`-Fix in `023_learning_curve.R`
+(dort auf LightGBM umgestellt + `predict_type="prob"` ergaenzt) auch
+zentral nachgezogen wurde - war er NICHT. Daraufhin ein systematischer
+Grep ueber ALLE `.R`-Dateien im Template auf `lrn("classif....)`-Aufrufe
+OHNE jegliche `predict_type`-Erwaehnung in derselben Datei (nicht nur die
+6 bereits gefixten von gestern) - genau die im gestrigen Eintrag selbst
+empfohlene Massnahme ("nach dem Fixen EINES Skripts kurz pruefen, ob
+strukturell aehnliche Geschwister-Skripte denselben Fehler tragen").
+
+**Ergebnis: 9 weitere betroffene Skripte gefunden** (`022_split_size_
+sensitivity.R`, `023_learning_curve.R`, `092_seed_stability.R`,
+`095_tabpfn_benchmark.R`, `110_lightgbm_feature_family_benchmark.R`,
+`120_lightgbm_empty_string_preprocessing.R`, `125_catboost_benchmark.R`,
+`135_lightgbm_class_weight_power_extended.R`,
+`140_ensemble_candidates_weighted.R`, `142_ranger_tuning_weighted.R`) -
+insgesamt also 15 von urspruenglich betroffenen Skripten (6 gestern + 9
+heute) plus die zentrale `base_learner_constructors`-Liste. `predict_type
+= "prob"` in allen ergaenzt (identisches Muster wie beim `030_baseline.R`-
+Vorbild). Ein erneuter Sweep danach: **0 verbleibende Treffer** -
+vollstaendig.
+
+Volle Testsuite 356/356 gruen, CI Smoke Test gruen (deckt 022/023/092
+direkt ab, da Teil der Kernskripte).
+
+**Lehre bestaetigt**: der erste Fund (6 Skripte gestern) war selbst noch
+unvollstaendig - ein Grep-basierter Sweep nach dem ERSTEN Fund haette
+sofort alle 15 betroffenen Stellen gefunden, statt sie ueber zwei
+Sessions verteilt nacheinander zu entdecken. Fuer kuenftige Bugfixes
+dieser Art: sofort nach dem ersten Fund `grep -rl <Fix-Suchmuster>` bzw.
+das GEGENTEIL (Dateien OHNE das Muster, aber mit dem urspruenglichen
+Fehler-ausloesenden Aufruf) ueber das gesamte Repo laufen lassen, statt
+sich auf eine Handvoll "offensichtlich aehnlicher" Skripte zu
+beschraenken.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
