@@ -209,9 +209,14 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `6ba6af7` "Dokumente in
-  docs/{reference,ablations,research} umstrukturiert" - gepusht, CI
-  gruen (unit-tests + smoke-test, beide Jobs). Zwischenstaende auf dem
+- `MLR3_Classifikation` @ `8b70733` "Neue Skill: declutter-flat-scripts"
+  - gepusht (docs-only, kein CI-Trigger; Push brauchte 2 Versuche wegen
+  eines kurzen Netzwerkfehlers). Zwischenstand: `5696b6d` "R-Skripte
+  aufgeraeumt: 31 abgeschlossene Einmal-Skripte nach analysis/" - CI
+  gruen (unit-tests 1m46s, smoke-test 6m20s, beide Jobs). Zwischenstand:
+  `0acb6d6` (Statusanker), `6ba6af7` "Dokumente in
+  docs/{reference,ablations,research} umstrukturiert" - CI gruen
+  (unit-tests + smoke-test, beide Jobs). Weitere Zwischenstaende auf dem
   Weg dorthin (alle gepusht, alle CI-relevant gruen wo `.R`-Dateien
   betroffen waren): `2bc10d5` (Kaggle-Score-Bestaetigung s6e9, docs-only),
   `a69c98d` (BACKLOG: vollstaendiger `predict_type`-Sweep, docs-only),
@@ -890,6 +895,10 @@ externe Adoption - siehe Punkt 19 oben):
 - **Erledigt (Punkt 26)**: die seit dem 2026-09-01-Anker zurueckgestellte
   Dokumenten-Umstrukturierung ist jetzt durchgefuehrt (siehe Punkt 26
   oben) - kein offener Punkt mehr.
+- **Erledigt (Punkt 28)**: R-Skript-Aufraeumung (`analysis/`-Ordner)
+  ebenfalls durchgefuehrt und verifiziert - kein offener Punkt mehr.
+- **Erledigt (Punkt 29)**: neue Skill `declutter-flat-scripts` fasst
+  das Aufraeum-Verfahren fuer eine kuenftige Wiederholung zusammen.
 
 **Keine dringenden Blocker.**
 
@@ -937,11 +946,12 @@ externe Adoption - siehe Punkt 19 oben):
   `outer_workflow_evaluation_v2_fair_baselines.R`,
   `outer_workflow_evaluation_v3_level2.R`, sowie weiterhin
   `TARGETS.md`/`AGENTS.md`/das persistente Gedaechtnis.
-- **NEU (Punkt 25-26)**: `PredictingElectricVehiclePurchases-s6e9`
+- **NEU (Punkt 25-29)**: `PredictingElectricVehiclePurchases-s6e9`
   (Setup bis Submission, s. `ML_Learning`-Commits oben), die 2 zentralen
   Bugfixes (`positive_class`, `predict_type`), der xgboost/renv-
-  Umgebungsfund, sowie die Doku-Umstrukturierung (`docs/reference`,
-  `docs/ablations`, `docs/research`).
+  Umgebungsfund, die Doku-Umstrukturierung (`docs/reference`,
+  `docs/ablations`, `docs/research`), die R-Skript-Umstrukturierung
+  (`analysis/`), und die neue Skill `declutter-flat-scripts`.
 
 ## Empfohlener erster Schritt der naechsten Session
 
@@ -1106,10 +1116,42 @@ historische Punkt-in-Zeit-Logs (`statusanker/`, `_artifacts/`) und reine
 Namensnennungen (`adr/`, `joss/README.md`) bewusst nicht angefasst.
 Testsuite 356/356 gruen, CI (Commit `6ba6af7`) beide Jobs gruen.
 
-**27. Aktualisierung, Stand jetzt**: `s6e9` ist mit der Submission
-(Score 0.94142, s. Punkt 25) fachlich abgeschlossen; die Doku-
-Umstrukturierung (Punkt 26) ist verifiziert und gepusht. Kein offener
-Blocker. Der Nutzer teilte beilaeufig einen weiteren s6e9-Kaggle-Link
-(`s6e9-1st-blood`, Public Score 0.94538, GPU-Notebook) - Code/Methodik
-ohne Kaggle-Login nicht einsehbar, daher noch keine Handlungsempfehlung
-daraus abgeleitet.
+**27. Aktualisierung**: `s6e9` ist mit der Submission (Score 0.94142,
+s. Punkt 25) fachlich abgeschlossen; die Doku-Umstrukturierung
+(Punkt 26) ist verifiziert und gepusht. Der Nutzer teilte beilaeufig
+einen weiteren s6e9-Kaggle-Link (`s6e9-1st-blood`, Public Score 0.94538,
+GPU-Notebook) - Code/Methodik ohne Kaggle-Login nicht einsehbar, daher
+keine Handlungsempfehlung daraus abgeleitet.
+
+**28. Aktualisierung**: Nutzerbeobachtung "es gibt sehr viele R-Dateien -
+viele scheinen nicht Bestandteil des Workflows zu sein" (114 `.R`-Dateien
+im Root). Per Querverweis-Scan kategorisiert: Kern-Workflow (nummeriert
++ direkt gesourcete Support-Module, ADR-007) und ADR-008-eingefrorene
+Benchmark-Protokolle (`outer_workflow_evaluation*.R`) bewusst
+unangetastet gelassen; 31 abgeschlossene Einmal-Skripte (Evidence-
+Logger, Portfolio-Warmstart-Validierungen, Literatur-Vergleiche,
+P2-Forschungsskripte) auf Nutzerbestaetigung ("nur Kategorie C
+verschieben") per `git mv` nach `analysis/` (neu, mit erklaerendem
+README) verschoben - Root auf 83 `.R`-Dateien reduziert. Querverweise in
+11 Dateien automatisiert korrigiert. Testsuite 356/356 gruen, ein
+verschobenes Skript probeweise direkt ausgefuehrt (laeuft korrekt), CI
+(Commit `5696b6d`) beide Jobs gruen.
+
+**29. Aktualisierung**: auf Nutzerfrage "haben wir was gelernt, das wir
+als Skill ablegen koennten?" - neue Skill-Datei
+[`.claude/skills/declutter-flat-scripts/SKILL.md`](.claude/skills/declutter-flat-scripts/SKILL.md)
+angelegt (Nutzerbestaetigung "Ja, Skill-Datei anlegen"). Fasst das in
+Punkt 26+28 zweimal identisch angewendete Aufraeum-Verfahren zusammen
+(Querverweis-Scan, ADR-007/008-Schutzzonen, git mv + automatisiertes
+Link-Rewrite-Skript, die `source()`/Arbeitsverzeichnis-Erkenntnis -
+`source("datei.R")` loest relativ zum Arbeitsverzeichnis auf, nicht zum
+Skript-Pfad, solange die Konvention "immer vom Repo-Root ausfuehren"
+gilt, ist Verschieben von Skripten technisch risikolos). Commit `8b70733`
+(docs-only, kein CI-Trigger; Push brauchte 2 Versuche wegen eines
+kurzen Netzwerkfehlers, 2. Versuch erfolgreich).
+
+**Stand jetzt: kein offener Blocker.** Root-Verzeichnis ist jetzt fuer
+Docs UND Skripte deutlich uebersichtlicher (36->11 `.md`-Dateien im
+Root, 114->83 `.R`-Dateien im Root); das Aufraeum-Verfahren selbst ist
+jetzt als Skill wiederverwendbar dokumentiert, falls erneuter Clutter
+entsteht.
