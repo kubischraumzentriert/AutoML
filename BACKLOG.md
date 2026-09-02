@@ -3212,6 +3212,19 @@ Fehler-ausloesenden Aufruf) ueber das gesamte Repo laufen lassen, statt
 sich auf eine Handvoll "offensichtlich aehnlicher" Skripte zu
 beschraenken.
 
+### s6e9: Kaggle-Leaderboard-Score bestaetigt die interne CV-Schaetzung (2026-09-02)
+
+**Ergebnis der ersten Submission**: `0.94142` (Kaggle Public Leaderboard,
+AUC). Interne CV-Schaetzung des finalen Modells (getuntes LightGBM, volle
+Datensatzgroesse, 5-fache CV): `0.9416`. **Differenz nur 0.0002 - keine
+CV-LB-Luecke.** Bestaetigt, dass die gesamte Methodik dieses Durchlaufs
+(keine Feature-Engineering-Illusion, keine Ueberanpassung durch
+Klassengewichtung, saubere getunte Hyperparameter) ehrlich validiert war,
+nicht nur lokal ueberzeugend aussah. Ergebnis in `submission_result`
+geloggt (`db_log_submission_result()`, `mconf_id
+f0c17d04-28db-404f-b525-28cf5ad2dce5`, Plattform "kaggle", Competition
+"playground-series-s6e9").
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
