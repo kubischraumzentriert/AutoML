@@ -3032,6 +3032,67 @@ Betrifft die ganze Maschine, nicht nur dieses Projekt - falls derselbe
 Fehler in einem anderen Projekt wieder auftaucht, ist die Ursache
 bereits bekannt.
 
+### Zwei weitere echte Bugs im Template, gefunden im s6e9-Projekt (2026-09-01)
+
+**Bug 1 - `025_feature_engineering.R` setzte die positive Klasse nicht.**
+`finalize_task()` rief `as_task_classif()` ohne `positive = positive_class`
+auf - bei `health_condition` (3-Klassen, `positive_class=NULL`) folgenlos,
+bei einer binaeren AUC-Aufgabe (s6e9, `positive_class="Yes"`) waehlte mlr3
+stattdessen die erste Faktorstufe ("No") als positive Klasse. Der AUC-Wert
+selbst bleibt zufaellig unveraendert (symmetrisch bei Tausch der positiven
+Klasse), aber `155_predict_submission.R` haette bei Verwendung eines
+`features`/`selected`-Feature-Sets P(No) statt P(Yes) ausgegeben - ein
+Submission-invertierender Fehler. `020_task.R` hatte die korrekte Logik
+bereits (`if (!is.null(positive_class) && nlevels(...)==2) task_args$positive
+<- positive_class`), war aber nie nach `025` uebertragen worden. Fix:
+`finalize_task()` uebernimmt jetzt dieselbe Logik.
+
+**Bug 2 - `predict_type="prob"` fehlte systemisch in 6 Skripten.**
+`036_feature_family_benchmark.R` lief nach dem Fix von Bug 1 komplett durch
+(inkl. teurer Ranger-Laeufe bei voller Datensatzgroesse, ~20+ Min), lieferte
+aber fuer ALLE Zeilen `NaN` bei `classif.auc`/`classif.logloss` und brach am
+Ende mit `NOT NULL constraint failed: metric_result.mres_value` ab - eine
+teure Sackgasse. Ursache: `lrn("classif.lda")`/`lrn("classif.multinom")`/
+`lrn("classif.ranger")` OHNE `predict_type="prob"` liefern standardmaessig
+nur Klassen-Labels, aber `classif.auc`/`classif.logloss` (die
+`baseline_measure_ids` dieses Projekts) brauchen Wahrscheinlichkeiten -
+still `NaN` statt eines Fehlers. **Genau dieser Fix stand bereits in
+`030_baseline.R`**, mit einem Kommentar, der ihn explizit als
+"wiederholt aufgetretenen Reibungspunkt bei der Uebertragung auf
+playground-series-s6e5/s5e12" beschreibt - war aber nie in die zentrale,
+von mehreren Skripten geteilte `base_learner_constructors`-Liste (in
+`000_config.R`, genutzt von 070/092/136/137) UND nie in die 5 weiteren
+Skripte mit dupliziertem Learner-Code (`035`/`036`/`037`/`038`/`050`)
+propagiert worden. Fix: `predict_type <- "prob"` jetzt in
+`base_learner_constructors` (alle 4 Konstruktoren) UND in allen 5
+betroffenen Skripten ergaenzt (`037`/`038` mit angepasster Reihenfolge -
+Setzen VOR dem `make_baseline_learner()`/`build_classif_pipeline()`-Wrap,
+da GraphLearner den `predict_type` vom Basis-Learner zum Wrap-Zeitpunkt
+uebernimmt). Volle Testsuite danach 356/356 gruen.
+
+**Lehre aus beiden Bugs**: ein Fix, der lokal in EINEM Skript entsteht
+(hier: `020`/`030`), wird nicht automatisch auf strukturell aehnliche
+Geschwister-Skripte uebertragen - dieselbe Klasse von Problem wie beim
+`class_multiplier_tuning.R`-Drift-Fund vom 2026-09-01 (dort: Kopien
+zwischen Projekten drifteten auseinander; hier: Skripte INNERHALB des
+Templates selbst drifteten auseinander). Ein systematischer Grep ueber
+alle numerierten Skripte auf ein bekanntes Fix-Muster (z.B. `predict_type`)
+haette diesen zweiten Fund frueher aufgedeckt - eine Massnahme fuer
+kuenftige Bugfixes: nach dem Fixen EINES Skripts kurz pruefen, ob
+strukturell aehnliche Geschwister-Skripte denselben Fehler tragen, statt
+nur den einen konkreten Fehlerfall zu beheben.
+
+**Eigener Fehler dabei, ebenfalls dokumentiert**: beim Zurueckkopieren der
+gefixten `000_config.R` aus dem Template ins s6e9-Projekt wurde die
+GESAMTE Datei ueberschrieben statt nur der `base_learner_constructors`-
+Aenderung uebertragen - das loeschte kurzzeitig alle s6e9-spezifischen
+Anpassungen (target_col, positive_class, subset_fraction=1.0,
+feature_families etc.). Sofort bemerkt (Datei-Change-Warnung) und aus der
+letzten committeten Version + den in diesem Turn vorgenommenen Aenderungen
+wiederhergestellt, kein Datenverlust. Lehre: bei einem Rueck-Sync einer
+zentralen, aber projektspezifisch ANGEPASSTEN Config-Datei NIE die ganze
+Datei kopieren - nur den konkreten Aenderungsblock gezielt uebertragen.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
