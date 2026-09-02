@@ -3113,6 +3113,33 @@ per `Rscript analysis/check_project_script_coverage.R` probeweise
 ausgefuehrt - laeuft unveraendert korrekt (schreibt weiterhin nach
 `_artifacts/`, relativ zum Arbeitsverzeichnis).
 
+### Bugfix: CatBoost (mlr3) lehnt `integer`-Spalten ab - Konvertierung vor dem Learner (2026-09-02)
+
+**Fund in `PredictingElectricVehiclePurchases-s6e9`**: `125_catboost_benchmark.R`
+schlug fehl mit `Fehler: <TaskClassif:...> has the following unsupported
+feature types: integer` (`Age`, `Charging_Stations_Near_Home/Work`,
+`Number_of_Cars_Owned` sind `integer`-Spalten). Bereits als generelle
+mlr3/CatBoost-Einschraenkung im persoenlichen Gedaechtnis dokumentiert
+(`project_r_windows_env.md`), hier zum ersten Mal konkret in einem
+Projekt aufgetreten (das Template-eigene Projekt hat keine
+`integer`-Spalten, daher nie zuvor sichtbar geworden).
+
+**Fix**: `po("colapply", applicator = as.numeric, affect_columns =
+selector_type("integer"))` direkt vor `lrn("classif.catboost", ...)` in
+die Pipeline eingefuegt (Imputation -> Integer-Konvertierung -> CatBoost).
+No-Op fuer Datensaetze ohne `integer`-Feature, verhindert aber denselben
+Crash bei jedem kuenftigen Projekt mit `integer`-Spalten.
+
+**Kein ADR-003-Bestaetigungs-Gate noetig** (kein zu evaluierendes
+Technique-Backport, sondern ein reiner Robustheits-Fix wie zuvor
+`predict_type`/`positive_class`) - sofort sowohl in
+`PredictingElectricVehiclePurchases-s6e9/125_catboost_benchmark.R`
+(lokal) als auch zentral in `125_catboost_benchmark.R` uebernommen, auf
+Nutzernachfrage "sollte die Konvertierung ins Template ueberspielt
+werden?". Testsuite danach weiterhin 356/356 gruen (Skript ist nicht
+Teil der CI-Smoke-Test-Fixture, daher kein CI-Trigger fuer diese
+Aenderung allein).
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-

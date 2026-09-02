@@ -33,10 +33,17 @@ make_baseline_learner <- function(base_learner, id = NULL) {
 # README, 3-4 Auspraegungen je Spalte), sondern Ordered Boosting, das generell
 # gegen Prediction-Shift/Overfitting hilft - unabhaengig von Kategorien.
 # predict_type="prob" jeweils: siehe 030_baseline.R/BACKLOG.md (2026-09-01).
-learner_catboost <- make_baseline_learner(
-  lrn("classif.catboost", iterations = catboost_iterations, predict_type = "prob"),
-  id = "catboost"
+# CatBoost (mlr3) akzeptiert grundsaetzlich keine integer-Spalten (unabhaengig
+# vom Projekt) - vor dem Learner nach numeric konvertieren. No-Op fuer
+# Datensaetze ohne integer-Feature (wie das Template-Projekt selbst), verhindert
+# aber "unsupported feature types: integer" bei jedem Projekt mit integer-
+# Spalten (Fund: s6e9, 2026-09-02, siehe BACKLOG.md).
+learner_catboost <- as_learner(
+  po("imputemedian") %>>% po("imputemode") %>>%
+    po("colapply", applicator = as.numeric, affect_columns = selector_type("integer")) %>>%
+    lrn("classif.catboost", iterations = catboost_iterations, predict_type = "prob")
 )
+learner_catboost$id <- "catboost"
 
 learner_lightgbm <- make_baseline_learner(
   lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations, predict_type = "prob"),
