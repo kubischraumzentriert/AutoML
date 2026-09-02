@@ -209,9 +209,23 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `7e25b7a` "JOSS_TECHNIQUE_WATCH: neuer
-  Kandidat #8 - negative Stacking-Gewichte (stacks-Paket, Couch/Kuhn
-  2022)" - gepusht (docs-only, kein CI-Trigger). Zwischenstand: `7cb59e0`
+- `MLR3_Classifikation` @ `6ba6af7` "Dokumente in
+  docs/{reference,ablations,research} umstrukturiert" - gepusht, CI
+  gruen (unit-tests + smoke-test, beide Jobs). Zwischenstaende auf dem
+  Weg dorthin (alle gepusht, alle CI-relevant gruen wo `.R`-Dateien
+  betroffen waren): `2bc10d5` (Kaggle-Score-Bestaetigung s6e9, docs-only),
+  `a69c98d` (BACKLOG: vollstaendiger `predict_type`-Sweep, docs-only),
+  `3ff0c54` (Bugfix: `predict_type` in 9 weiteren Skripten, Lauf
+  `33618031823` gruen), `894d9c5` (BACKLOG: Klassengewichtung +
+  finales Modell, docs-only), `cf2f48f` (BACKLOG: Feature-Engineering-
+  Nullbefund, docs-only), `9aca6b9` (BACKLOG: beide Bugs dokumentiert,
+  docs-only), `688594e` (Bugfix: `predict_type` in
+  `base_learner_constructors` + 6 Skripten, Lauf `33598897623` gruen),
+  `45bfd9a` (Bugfix: `positive_class` in `finalize_task()`), `6ef9427`
+  (BACKLOG: xgboost/renv-Drift-Fund), `fdfd70e` (Doku-Umstrukturierung
+  zunaechst zurueckgestellt), `dc5790f` (Statusanker), `7e25b7a`
+  "JOSS_TECHNIQUE_WATCH: neuer Kandidat #8 - negative Stacking-Gewichte
+  (stacks-Paket, Couch/Kuhn 2022)". Zwischenstand: `7cb59e0`
   "Paper-Claim-Hygiene (Hebel 3)" (loeste den Draft-JOSS-PDF-Workflow
   aus, Lauf `33548539731`, gruen). Letzter CI-Smoke-Test-relevanter
   Commit weiterhin `eaa0000` (gruen, Lauf `33406093180`). Tag + [GitHub
@@ -246,6 +260,12 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
   (Commit `10ef610`) - beide gepusht. Lokale Git-Identity dieses Repos
   war unkonfiguriert, per `--local` auf die bereits etablierte
   Konvention "Codex <codex@local>" gesetzt (nicht global geaendert).
+- `ML_Learning`: neues Projekt `PredictingElectricVehiclePurchases-s6e9`
+  (lokal, kein Remote), zuletzt `7747dad` "finales Modell + Submission
+  (getunte Hyperparameter, Kaggle-Score 0.94142 geloggt)". Zwischenstaende:
+  `840044e` (Feature Engineering verworfen - Nullbefund), `b8be70d`
+  (Feature Engineering + `predict_type`-Sync), `edc6759`
+  (`subset_fraction=1.0` + Lernkurve), `c03748a` (initiales Setup).
 - `ML_Learning` (rein lokal, kein Remote): 12 neue Projektordner
   (`openml-cc18-cmc`, `-optdigits`, `-sick`,
   `-analcatdata-authorship`, `-blood-transfusion`, `-ilpd` - je mit
@@ -861,6 +881,15 @@ externe Adoption - siehe Punkt 19 oben):
   Kandidatenpool, um die Hypothese sinnvoll zu testen. Nicht von selbst
   aus anfangen - erst wenn ein passendes Projekt vorliegt oder der
   Nutzer explizit danach fragt (Feature-Creep-Warnung bleibt gueltig).
+- **NEU (Punkt 25)**: der getunte-Hyperparameter-Final-Modell-Fix in
+  `PredictingElectricVehiclePurchases-s6e9/150_train_full_model.R` ist
+  bislang lokal, n=1 - noch NICHT zentral in `150_train_full_model.R`/
+  `070_final_models.R` des Templates verallgemeinert. Braucht laut
+  ADR-003 eine zweite unabhaengige Projektbestaetigung vor einem
+  Backport, kein eigenmaechtiger Vorstoss.
+- **Erledigt (Punkt 26)**: die seit dem 2026-09-01-Anker zurueckgestellte
+  Dokumenten-Umstrukturierung ist jetzt durchgefuehrt (siehe Punkt 26
+  oben) - kein offener Punkt mehr.
 
 **Keine dringenden Blocker.**
 
@@ -908,6 +937,11 @@ externe Adoption - siehe Punkt 19 oben):
   `outer_workflow_evaluation_v2_fair_baselines.R`,
   `outer_workflow_evaluation_v3_level2.R`, sowie weiterhin
   `TARGETS.md`/`AGENTS.md`/das persistente Gedaechtnis.
+- **NEU (Punkt 25-26)**: `PredictingElectricVehiclePurchases-s6e9`
+  (Setup bis Submission, s. `ML_Learning`-Commits oben), die 2 zentralen
+  Bugfixes (`positive_class`, `predict_type`), der xgboost/renv-
+  Umgebungsfund, sowie die Doku-Umstrukturierung (`docs/reference`,
+  `docs/ablations`, `docs/research`).
 
 ## Empfohlener erster Schritt der naechsten Session
 
@@ -1027,3 +1061,55 @@ dokumentiert (Prioritaet mittel). Noch kein Prototyp/Backport - NICHT
 von selbst damit anfangen, wartet auf ein Projekt mit ausreichend
 grossem/redundantem Ensemble-Kandidatenpool oder eine explizite
 Nutzeranweisung.
+
+**25. Aktualisierung (2026-09-02, neuer Tag, Session laeuft nahtlos
+weiter)**: neues Kaggle-Projekt `PredictingElectricVehiclePurchases-s6e9`
+(`ML_Learning`, lokal, kein Remote) komplett aufgesetzt und bis zur
+Submission durchlaufen - Adversarial Validation (kein Distribution
+Shift), LightGBM-Baseline, Ranger-/LightGBM-Tuning, Lernkurve
+(subset_fraction 0.10->1.0, "noch steigend" bei 0.10), Feature-
+Engineering-Nullbefund (3 neue Feature-Familien gebaut, dann per
+Cross-Projekt-Abfrage der zentralen `experiments.db` widerlegt -
+LightGBM reagiert nicht auf abgeleitete Features, Familien behalten,
+aber nicht aktiviert), Klassengewichtungs-Nullbefund (AUC kaum
+beeinflusst, LogLoss verschlechtert), finales Modell mit getunten statt
+Default-Hyperparametern (lokale Sonderloesung in `150_train_full_model.R`,
+n=1, noch nicht zentral verallgemeinert). Kaggle-Score **0.94142**
+bestaetigt die interne CV-Schaetzung (0.9416) fast exakt (Differenz
+0.0002, keine CV-LB-Luecke) - in `submission_result` geloggt.
+
+Dabei **2 echte, zentrale Template-Bugs gefunden und gefixt** (nicht
+s6e9-spezifisch): (a) `finalize_task()` in `025_feature_engineering.R`
+setzte `positive_class` nicht (im Gegensatz zu `020_task.R`) - fuer
+binaere Probleme mit `features`/`selected`-Featuresets relevant. (b)
+`predict_type="prob"` fehlte systematisch in `base_learner_constructors`
+UND in insgesamt 15 weiteren Skripten - ohne diesen fehlte
+probabilistischen Messwerten (AUC/LogLoss) stillschweigend die
+Grundlage, sie lieferten `NaN` statt eines Fehlers. Fund erfolgte in
+ZWEI Durchgaengen (erster Fund: 6 Skripte; ein gezielter Grep-Sweep nach
+der Nutzerfrage "koennen wir was ins Template uebernehmen?" deckte 9
+weitere auf) - als Lehre dokumentiert: bei dieser Bug-Klasse sofort
+repoweit greppen statt einzelne Fundstellen zu fixen. Ausserdem ein
+Umgebungs-Fund: lokal installiertes `xgboost` (1.7.11.1) war unabhaengig
+von `renv.lock` (korrekt 3.2.1.1 gepinnt) gedriftet, weil `renv` fuer
+dieses Repo gar nicht aktiviert ist - `renv.lock` musste NICHT
+angefasst werden, nur die lokale Installation aktualisiert.
+
+**26. Aktualisierung**: die seit `2026-09-01` zurueckgestellte
+Dokumenten-Umstrukturierung (36 Root-`.md`-Dateien, 65 querverweisende
+Dateien) auf explizite Nutzerbestaetigung ("Ja, genau so umsetzen")
+durchgefuehrt - 25 Dateien per `git mv` nach `docs/reference/` (11),
+`docs/ablations/` (3), `docs/research/` (11) verschoben, Root auf 11
+`.md`-Dateien reduziert. Alle Querverweise (41 betroffene Dateien) per
+R-Skript automatisiert neu berechnet statt manuell nachgezogen;
+historische Punkt-in-Zeit-Logs (`statusanker/`, `_artifacts/`) und reine
+Namensnennungen (`adr/`, `joss/README.md`) bewusst nicht angefasst.
+Testsuite 356/356 gruen, CI (Commit `6ba6af7`) beide Jobs gruen.
+
+**27. Aktualisierung, Stand jetzt**: `s6e9` ist mit der Submission
+(Score 0.94142, s. Punkt 25) fachlich abgeschlossen; die Doku-
+Umstrukturierung (Punkt 26) ist verifiziert und gepusht. Kein offener
+Blocker. Der Nutzer teilte beilaeufig einen weiteren s6e9-Kaggle-Link
+(`s6e9-1st-blood`, Public Score 0.94538, GPU-Notebook) - Code/Methodik
+ohne Kaggle-Login nicht einsehbar, daher noch keine Handlungsempfehlung
+daraus abgeleitet.
