@@ -3093,6 +3093,50 @@ wiederhergestellt, kein Datenverlust. Lehre: bei einem Rueck-Sync einer
 zentralen, aber projektspezifisch ANGEPASSTEN Config-Datei NIE die ganze
 Datei kopieren - nur den konkreten Aenderungsblock gezielt uebertragen.
 
+### s6e9 Feature Engineering: Nullbefund, gestuetzt durch die gesamte Projekthistorie (2026-09-01)
+
+**Anlass**: 3 neue Feature-Familien (charging/affordability/interactions)
+fuer s6e9 zeigten in `036_feature_family_benchmark.R` (nach dem
+`predict_type`-Fix) DURCHGEHEND keinen Vorteil gegenueber Rohfeatures
+(LDA/Multinom/Ranger, alle 3 Familien gleich oder leicht schlechter).
+Nutzerfrage: "schau mal in unsere experiments.db inwieweit LightGBM auf
+abgeleitete Features reagiert" - Abfrage der zentralen `experiments.db`
+ueber ALLE Projekte mit LightGBM UND mehr als einem Feature-Set.
+
+**Zentraler Befund - `health_condition` selbst ist der klarste Fall**: 8
+verschiedene Feature-Familien (bmi/sleep/activity/hydration/cardio/
+interactions/features/selected) wurden dort gegen Rohfeatures getestet -
+**Rohfeatures gewinnen bei ALLEN 8** (BAcc 0.9459 roh vs. 0.9408-0.9443
+mit Features). Exakt dasselbe Muster wie gerade bei s6e9.
+
+**Weitere Projekte mit echtem Feature-Engineering-vs-Rohfeatures-
+Vergleich fuer LightGBM**:
+- `zindi-geoai-aquaculture-pond`: "indices"-Features 0.989 AUC vs. raw
+  0.994 AUC - raw besser.
+- `playground-series-s5e9-beats-per-minute`: "boundary_interactions" RMSE
+  26.638 vs. raw 26.628 - praktisch identisch, minimal schlechter.
+- `drivendata-richter-earthquake-damage`: "geo_frequency" 0.710 Acc vs.
+  raw 0.702 Acc - **einziger Fall mit echtem Nutzen** (+0.008), aber das
+  war Frequency-Encoding einer hochkardinalen Geo-ID-Spalte (ein
+  struktureller Fix fuer eine sonst fuer Baeume schlecht nutzbare
+  Kategorie-Spalte), kein generisches Ratio-/Interaktions-Feature wie bei
+  s6e9.
+
+**Schlussfolgerung**: ueber die gesamte Projekthistorie hinweg helfen
+handgefertigte Ratio-/Interaktions-Features LightGBM praktisch nie - der
+einzige Fall mit echtem Nutzen war ein struktureller Encoding-Fix
+(hochkardinale ID), kein Domaenenwissen-Feature. Deckt sich mit der
+bekannten Eigenschaft von Baumverfahren, Interaktionen/Nichtlinearitaeten
+bereits selbst ueber Splits zu finden - ein Ratio wie
+`income/commute_km` liefert typischerweise nichts, was der Baum nicht
+schon aus den beiden Einzelspalten ableiten kann.
+
+**Konsequenz fuer s6e9**: Feature-Engineering-Linie (charging/
+affordability/interactions) aufgegeben, `feature_families`/
+`selected_families` auf `character(0)` zurueckgesetzt, `model_feature_sets`
+bleibt bei "raw". Naechster Fokus: Klassengewichtung/Threshold-Tuning
+statt weiterer Feature-Ideen.
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
