@@ -3137,6 +3137,44 @@ affordability/interactions) aufgegeben, `feature_families`/
 bleibt bei "raw". Naechster Fokus: Klassengewichtung/Threshold-Tuning
 statt weiterer Feature-Ideen.
 
+### s6e9: Klassengewichtung (Nullbefund bei AUC) + finales Modell
+
+**Klassengewichtung**: `105_lightgbm_class_weights.R` (5 Power-Stufen 0-1,
+5-fache CV, volle Groesse) - AUC bewegt sich praktisch nicht (0.9410-0.9413,
+im Rauschen), waehrend LogLoss mit staerkerer Gewichtung deutlich schlechter
+wird (0.234 -> 0.319 von power=0 zu power=1). Erwartbar: AUC ist gegenueber
+Klassengewichtung weitgehend invariant, solange sich die Score-Rangfolge
+nicht aendert - und Kaggle bewertet diese Competition ausschliesslich per
+AUC. Konsequenz: keine Gewichtung (power=0, `model_class_weight_power`
+enthaelt keinen lightgbm-Eintrag). Aus demselben Grund macht auch
+Threshold-Tuning (130/146) keinen Sinn - schwellenwertunabhaengige Metrik.
+
+**Datengetriebene Modellwahl**: `148_select_submission_model.R` bestaetigt
+LightGBM als Sieger (AUC 0.9427 vs. Multinom 0.9403, Ranger 0.9391, LDA
+0.9376, XGBoost 0.9322).
+
+**Echter Nebenfund**: `150_train_full_model.R`/`070_final_models.R`
+verwenden PROJEKTUEBERGREIFEND nur die ungetunten Konstruktor-Defaults aus
+`base_learner_constructors`, selbst wenn eine Tuning-Instanz existiert -
+das finale Modell haette sonst NICHT die in `100_lightgbm_tuning.R`
+gefundenen Hyperparameter genutzt. Per Nutzerentscheidung (AskUserQuestion)
+in `150_train_full_model.R` (nur diese Projekt-Kopie, nicht zentral
+geaendert - eine Verhaltensaenderung fuer ALLE Projekte waere eine groessere
+Design-Entscheidung fuer sich) ein Block ergaenzt, der bei `model_name ==
+"lightgbm"` die Parameter aus `lightgbm_tuning_instance_path` uebernimmt
+(Muster aus `build_tuned_learner_from_instance()` in
+`generalization_gap.R` uebernommen). Kandidat fuer eine spaetere zentrale
+Verallgemeinerung, falls sich das Muster in weiteren Projekten wiederholt
+(ADR-003-Bestaetigungsschwelle: noch n=1).
+
+**Finales Modell trainiert und Submission erzeugt**: LightGBM auf allen
+668665 Zeilen mit getunten Hyperparametern (learning_rate≈0.066,
+num_leaves=158, min_data_in_leaf=63, feature_fraction≈0.57,
+bagging_fraction≈0.74). `submission.csv` verifiziert (286571 Zeilen,
+Format `id,Will_Buy_EV`, mean(pred)=0.174, nah an der Trainings-
+Basisrate 17% - kein entartetes Ergebnis). Noch NICHT bei Kaggle
+eingereicht (externe Aktion, bewusst dem Nutzer ueberlassen).
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.
