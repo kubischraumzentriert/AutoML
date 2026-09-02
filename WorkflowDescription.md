@@ -152,7 +152,7 @@ Weboberflaeche waren in dieser Session wiederholt unzuverlaessig**), (b)
 Schritt 3 entfaellt (keine Wettbewerbsseite - `baseline_measure_ids`
 bewusst auf die Template-Konvention `c("classif.bacc", "classif.mcc")`
 setzen, da keine externe Metrik-Vorgabe existiert), (c) vor Schritt 4
-`Rscript suggest_subset_fraction.R` ausfuehren (kleine OpenML-Datensaetze
+`Rscript analysis/suggest_subset_fraction.R` ausfuehren (kleine OpenML-Datensaetze
 brauchen oft `subset_fraction=1.0`, siehe TARGETS.md).
 
 1. Projektordner mit `train.csv`, `test.csv`, `sample_submission.csv` von
@@ -217,7 +217,7 @@ projektspezifischen Werte.
 - **`subset_fraction`**: NICHT blind beim Template-Default `0.10` belassen -
   bei kleinen Datensaetzen ergibt ein fester Prozentsatz zu wenige absolute
   Zeilen (steel-plates-fault: 1941*0.10 = 194 Zeilen, musste auf `1.0`
-  korrigiert werden). Vorschlag per `Rscript suggest_subset_fraction.R` im
+  korrigiert werden). Vorschlag per `Rscript analysis/suggest_subset_fraction.R` im
   Projektordner (liest `train.csv`, schlaegt einen Anteil vor, der eine
   Mindestzeilenzahl sicherstellt) - Faustregel, kein statistisch
   verifizierter Wert wie bei den Diagnose-Modulen, siehe dessen

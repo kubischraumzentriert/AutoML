@@ -10,7 +10,7 @@ Experimentauswertungen.
 
 > **Wie aktualisiere ich die DuckDB-Dateien?** Nicht automatisch - siehe
 > Abschnitt 15. Kurzfassung: `Rscript 170_build_duckdb_experiment_mart.R`
-> (Template-lokal) bzw. `Rscript merge_duckdb_experiment_marts.R`
+> (Template-lokal) bzw. `Rscript analysis/merge_duckdb_experiment_marts.R`
 > (projektuebergreifend), jeweils VOR einer Analyse-Session manuell
 > ausfuehren - beide Dateien werden von keinem anderen Skript automatisch
 > nachgezogen und koennen tagealt sein.
@@ -326,11 +326,11 @@ herausstellte.
 ## 13. Projektuebergreifender Mart (2026-08-15) - ERLEDIGT
 
 Die in Abschnitt 4 vorgesehene Variante `template_experiment_mart.duckdb`
-ist umgesetzt: [`merge_duckdb_experiment_marts.R`](merge_duckdb_experiment_marts.R)
+ist umgesetzt: [`analysis/merge_duckdb_experiment_marts.R`](analysis/merge_duckdb_experiment_marts.R)
 (Template-Root, analog `merge_project_experiments.R`) sammelt
 `_artifacts/*_results.csv` ueber ALLE Projekte (`R_Workspace`/
 `ML_Learning`-Wurzeln, Projekt = Ordner mit `000_config.R` - dieselbe
-Auto-Discovery wie `check_project_script_coverage.R`).
+Auto-Discovery wie `analysis/check_project_script_coverage.R`).
 
 **Schema-Drift-Loesung**: DuckDBs `read_csv_auto(files, union_by_name =
 TRUE, filename = TRUE)` gleicht Spalten NACH NAME ab (nicht Position) und
@@ -379,7 +379,7 @@ uebrigen Pipeline):
 Rscript 170_build_duckdb_experiment_mart.R
 
 # Projektuebergreifender Mart (alle Projekte unter R_Workspace/ML_Learning)
-Rscript merge_duckdb_experiment_marts.R
+Rscript analysis/merge_duckdb_experiment_marts.R
 ```
 
 Beide Skripte sind idempotent (`CREATE OR REPLACE TABLE`) - mehrfaches

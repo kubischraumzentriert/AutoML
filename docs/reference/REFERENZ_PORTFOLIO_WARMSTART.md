@@ -40,7 +40,7 @@ Validierung entstanden:
 
 ### Interne Retrospektive
 
-`validate_portfolio_warmstart_retrospective.R` prueft die aus der zentralen
+`analysis/validate_portfolio_warmstart_retrospective.R` prueft die aus der zentralen
 Experiment-DB abgeleitete Empfehlung gegen vorhandene Projekt-Metriken:
 
 - 50 Projekt-Metriken aus 16 realen Projekten.
@@ -71,15 +71,15 @@ Schritt ist wertvoll, aber projektspezifisch.
 Im Template-Repo:
 
 ```r
-source("build_portfolio_warmstart_evidence.R")
-source("recommend_portfolio_warmstart.R")
+source("analysis/build_portfolio_warmstart_evidence.R")
+source("analysis/recommend_portfolio_warmstart.R")
 ```
 
 Oder per Konsole:
 
 ```powershell
-Rscript build_portfolio_warmstart_evidence.R
-Rscript recommend_portfolio_warmstart.R --budget=balanced
+Rscript analysis/build_portfolio_warmstart_evidence.R
+Rscript analysis/recommend_portfolio_warmstart.R --budget=balanced
 ```
 
 Optionales Budget:
@@ -111,10 +111,10 @@ Ergaenzend gibt es ein eigenes DB-Schema fuer Literatur-/Benchmarkwerte:
 - `literature_source`
 - `literature_benchmark_result`
 - `v_literature_benchmark_results`
-- Seed-Skript: `seed_literature_benchmark_results.R`
+- Seed-Skript: `analysis/seed_literature_benchmark_results.R`
 
 Diese Werte sind **Kontext**, nicht lokale Evidenz. Sie werden nicht von
-`build_portfolio_warmstart_evidence.R` genutzt. Der Grund ist wichtig:
+`analysis/build_portfolio_warmstart_evidence.R` genutzt. Der Grund ist wichtig:
 Paperwerte haben andere Zeitbudgets, Splits, Frameworks, Preprocessing-
 Konventionen und Metriken. Fuer Publikationsarbeit und Benchmark-Auswahl sind
 sie wertvoll; fuer automatische lokale Portfolio-Gewichte waeren sie ohne

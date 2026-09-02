@@ -120,7 +120,7 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
 - **Haben wir dieses Problem?** War der Ausloeser fuer den
   Research-Aspect-Weg (2026-08-30, siehe `BACKLOG.md`): das gepaarte
   Wilcoxon-Verfahren wird bereits in
-  [`p2_level2_significance_test.R`](p2_level2_significance_test.R)
+  [`analysis/p2_level2_significance_test.R`](analysis/p2_level2_significance_test.R)
   verwendet.
 - **Status**: **TEILWEISE BEREITS UMGESETZT** (kein reiner Watch-Punkt
   mehr) - die Wilcoxon-Signed-Rank-Methodik laeuft produktiv fuer den
@@ -135,7 +135,7 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
 - **Komplexitaetskosten**: gering-mittel - im Kern base-R (`stats`),
   ggf. `scmamp` (R-Aequivalent zu Autorank) fuer Friedman/Nemenyi/
   Critical-Difference-Diagramme.
-- **Prototype**: teilweise (`p2_level2_significance_test.R`).
+- **Prototype**: teilweise (`analysis/p2_level2_significance_test.R`).
 - **Backport**: offen - eine generische Funktion ist noch nicht gebaut.
   **Prioritaet laut Bewertungsdokument: hoch, sobald n groesser ist**
   (aktuell n=6, bei mehr Datensaetzen wird Friedman/Nemenyi erst

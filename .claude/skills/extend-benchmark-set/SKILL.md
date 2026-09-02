@@ -15,7 +15,7 @@ er nicht jedes Mal neu hergeleitet werden muss.
 Der Nutzer bittet, das externe Benchmark-Set (aktuell 15 CC18-
 Datensaetze, siehe `EXTERNAL_BENCHMARK_SET.md`) um weitere N Datensaetze
 zu erweitern - typischerweise fuer die Decision-Stability-Forschungs-
-frage (`decision_stability_level2_analysis_n15.R`) oder eine aehnliche
+frage (`analysis/decision_stability_level2_analysis_n15.R`) oder eine aehnliche
 uebergreifende Analyse.
 
 **Vor dem Start pruefen**: lohnt sich eine weitere Erweiterung ueberhaupt
@@ -41,7 +41,7 @@ dieser Rueckfrage.
 ### 1. Auswahl deterministisch ziehen und SOFORT einfrieren
 
 Ein neues Selektionsskript nach dem Muster von
-`select_weg_b_extension.R`/`select_n15_extension.R` schreiben:
+`analysis/select_weg_b_extension.R`/`analysis/select_n15_extension.R` schreiben:
 
 - Dieselben Einschlusskriterien wie immer (500-20000 Instanzen, <=100
   Features, 2-10 Klassen) - siehe `EXTERNAL_BENCHMARK_SET.md`.
@@ -127,7 +127,7 @@ Ergebnis je Fold aus dem Log: `grep -n "Verteilung:\|Mehrheitsentscheidung:"`.
 ### 5. Korrelationsanalyse aktualisieren
 
 Ein neues Skript `decision_stability_level2_analysis_n<X>.R` nach dem
-Muster von `decision_stability_level2_analysis_weg_b.R`/`_n15.R`
+Muster von `analysis/decision_stability_level2_analysis_weg_b.R`/`_n15.R`
 schreiben - ALLE bisherigen Datensaetze (nicht nur die neuen) mit
 `stab_fold1/2/3` und `delta_level2` auflisten, `avg_stability`
 berechnen, Spearman-Korrelation gegen `delta_level2`. Immer auch den
@@ -136,8 +136,8 @@ n=10 vs. n=X) - zeigt, ob das Ergebnis stabil bleibt oder kippt.
 
 ### 6. Evidence-Logging + Dokumentation + Commit
 
-- Ein Logging-Skript nach dem Muster von `log_weg_b_evidence.R`/
-  `log_n15_evidence.R`: Level-2-Ergebnisse (`role="score_lever"`),
+- Ein Logging-Skript nach dem Muster von `analysis/log_weg_b_evidence.R`/
+  `analysis/log_n15_evidence.R`: Level-2-Ergebnisse (`role="score_lever"`),
   Decision-Stability-Ergebnisse je Fold (`role="trust_gate"`), die
   uebergreifende Korrelation (`role="trust_gate", status="negative"`
   falls weiterhin kein Zusammenhang).

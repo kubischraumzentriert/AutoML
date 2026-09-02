@@ -241,28 +241,28 @@ wichtige Labels:
   Vergleichbarkeit erst nach genauer Split-/Metrik-/Budget-Pruefung gegeben
   ist.
 
-Seed-Daten kommen aus `seed_literature_benchmark_results.R`. Die wichtigste
+Seed-Daten kommen aus `analysis/seed_literature_benchmark_results.R`. Die wichtigste
 View ist `v_literature_benchmark_results`.
 
-**Wichtig:** `build_portfolio_warmstart_evidence.R` nutzt diese Tabellen
+**Wichtig:** `analysis/build_portfolio_warmstart_evidence.R` nutzt diese Tabellen
 absichtlich NICHT. Wer Literaturwerte mit lokalen Ergebnissen vergleichen
-will, nutzt `compare_literature_vs_own_results.R`; das Skript erzeugt einen
+will, nutzt `analysis/compare_literature_vs_own_results.R`; das Skript erzeugt einen
 expliziten Triage-Report statt die Werte automatisch zu vermischen.
 Wenn fuer bereits vorhandene lokale Projekte nur die Literaturmetrik fehlt,
-kann `reproduce_literature_f1_adult_amazon.R` bewusst lokale F1-Laeufe fuer
+kann `analysis/reproduce_literature_f1_adult_amazon.R` bewusst lokale F1-Laeufe fuer
 `adult` und `amazon_employee_access` nachloggen. Auch diese Matches bleiben
 `context_only`, solange Split, positive Klasse, Zeitbudget und Feature
 Engineering nicht quellenidentisch belegt sind.
-`reproduce_literature_f1_credit_bank.R` erweitert diesen Ansatz fuer
+`analysis/reproduce_literature_f1_credit_bank.R` erweitert diesen Ansatz fuer
 `credit-g` (10-fold-CV) und `bank-marketing` (bestehende Holdout-
 Predictions aus der Ensemble-Selection-Verifikation). Das Skript ist ein
 gezielter Triage-Nachlogger fuer OpenML-ID/F1-Kandidaten, kein Ersatz fuer
 einen paper-identischen Benchmark-Harness.
-`classify_literature_comparability.R` erzeugt darauf aufbauend einen
+`analysis/classify_literature_comparability.R` erzeugt darauf aufbauend einen
 Review-Queue-Report (`_artifacts/literature_comparability_triage.*`) mit
 konservativen Vorschlagslabels. Es schreibt die Literaturtabellen bewusst
 nicht automatisch um.
-`review_literature_split_candidates.R` dokumentiert die anschliessende
+`analysis/review_literature_split_candidates.R` dokumentiert die anschliessende
 manuelle Quellenpruefung fuer `split_match_candidate`-Zeilen. Beim aktuellen
 `credit-g`-Review bleibt die Entscheidung `keep_context_only`: die
 FEDOT-Dokumentation bestaetigt F1/10-fold/OpenML-Suite, die

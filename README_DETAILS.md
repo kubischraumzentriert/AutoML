@@ -38,15 +38,15 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `005_benchmark_runtime.R` | Hilfsfunktion fuer Modellbenchmarking mit Laufzeitmessung |
 | `006_tuning_diagnostics.R` | `diagnose_mbo_search()` - prueft nach `tnr("mbo")`-Laeufen auf echte sequenzielle Verfeinerung vs. reines Initialdesign, Plateau-Indikator |
 | `008_curve_diagnostics.R` | Helferfunktionen fuer ROC-/PR-Kurven aus in `experiments.db` geloggten Vorhersagen (Schwellenwert-Sweep, AUC per Trapezregel); funktioniert bei >=3 Klassen als One-vs-Rest (siehe Notiz unten) |
-| `seed_literature_benchmark_results.R` | Seedet externe Paper-/Benchmark-/Dokumentationswerte in eigene Literaturtabellen (`literature_source`, `literature_benchmark_result`), getrennt von lokalen `metric_result`-Runs |
-| `compare_literature_vs_own_results.R` | Expliziter Triage-Vergleich Literaturwerte vs. eigene `v_metric_results`; trennt `no_local_dataset`, `local_dataset_metric_mismatch` und echte Matches |
-| `classify_literature_comparability.R` | Regelbasierter Review-Queue-Report fuer Literaturzeilen: schlaegt konservative Labels wie `split_match_candidate`, `resampling_mismatch_context` oder `aggregate_or_metadata_context` vor, ohne die DB automatisch umzuschreiben |
-| `review_literature_split_candidates.R` | Manuelle Pruefliste fuer `split_match_candidate`-Zeilen; dokumentiert fuer `credit-g`, warum trotz F1/10-fold- bzw. AUC/10-fold-Match kein Upgrade aus `context_only` erfolgt |
-| `reproduce_literature_f1_adult_amazon.R` | Ergaenzt lokale F1-Reproduktionslaeufe fuer bereits vorhandene OpenML-Projekte (`adult`, `amazon_employee_access`), damit Literatur-F1-Werte bewusst als `matched_context_only` statt Metrik-Luecke erscheinen |
-| `reproduce_literature_f1_credit_bank.R` | Ergaenzt lokale F1-Kontextmatches fuer `credit-g` (10-fold-CV) und `bank-marketing` (bestehende Holdout-Predictions aus Ensemble-Selection), beide weiter nur `context_only` |
-| `build_portfolio_warmstart_evidence.R` | Optionaler Portfolio-Warmstart-Helper: wertet die zentrale `experiments.db` als internes Mini-TabRepo aus (Gewinner, Top-3-Rate, Regret, Laufzeit je Modellfamilie) |
-| `recommend_portfolio_warmstart.R` | Erzeugt aus der Portfolio-Evidenz eine budget- und groessenabhaengige Startempfehlung fuer neue Klassifikationsprojekte (`lightgbm`/`ranger` frueh, Ensemble spaet optional) |
-| `validate_portfolio_warmstart_retrospective.R` | Retrospektive und Leave-one-project-out-Pruefung der Portfolio-Warmstart-Linie gegen die zentrale Experiment-DB; Evidenz-/Diagnoseskript, nicht Teil der Produktionspipeline |
+| `analysis/seed_literature_benchmark_results.R` | Seedet externe Paper-/Benchmark-/Dokumentationswerte in eigene Literaturtabellen (`literature_source`, `literature_benchmark_result`), getrennt von lokalen `metric_result`-Runs |
+| `analysis/compare_literature_vs_own_results.R` | Expliziter Triage-Vergleich Literaturwerte vs. eigene `v_metric_results`; trennt `no_local_dataset`, `local_dataset_metric_mismatch` und echte Matches |
+| `analysis/classify_literature_comparability.R` | Regelbasierter Review-Queue-Report fuer Literaturzeilen: schlaegt konservative Labels wie `split_match_candidate`, `resampling_mismatch_context` oder `aggregate_or_metadata_context` vor, ohne die DB automatisch umzuschreiben |
+| `analysis/review_literature_split_candidates.R` | Manuelle Pruefliste fuer `split_match_candidate`-Zeilen; dokumentiert fuer `credit-g`, warum trotz F1/10-fold- bzw. AUC/10-fold-Match kein Upgrade aus `context_only` erfolgt |
+| `analysis/reproduce_literature_f1_adult_amazon.R` | Ergaenzt lokale F1-Reproduktionslaeufe fuer bereits vorhandene OpenML-Projekte (`adult`, `amazon_employee_access`), damit Literatur-F1-Werte bewusst als `matched_context_only` statt Metrik-Luecke erscheinen |
+| `analysis/reproduce_literature_f1_credit_bank.R` | Ergaenzt lokale F1-Kontextmatches fuer `credit-g` (10-fold-CV) und `bank-marketing` (bestehende Holdout-Predictions aus Ensemble-Selection), beide weiter nur `context_only` |
+| `analysis/build_portfolio_warmstart_evidence.R` | Optionaler Portfolio-Warmstart-Helper: wertet die zentrale `experiments.db` als internes Mini-TabRepo aus (Gewinner, Top-3-Rate, Regret, Laufzeit je Modellfamilie) |
+| `analysis/recommend_portfolio_warmstart.R` | Erzeugt aus der Portfolio-Evidenz eine budget- und groessenabhaengige Startempfehlung fuer neue Klassifikationsprojekte (`lightgbm`/`ranger` frueh, Ensemble spaet optional) |
+| `analysis/validate_portfolio_warmstart_retrospective.R` | Retrospektive und Leave-one-project-out-Pruefung der Portfolio-Warmstart-Linie gegen die zentrale Experiment-DB; Evidenz-/Diagnoseskript, nicht Teil der Produktionspipeline |
 | `010_eda.R` | Datenueberblick auf 10%-Subset mit `skimr` |
 | `015_target_leak_audit.R` | Prueft eine zu gute Baseline auf Target-Leakage: Feature-Importance-Konzentration, Determinismus-Check (`P(Ziel\|Feature=Wert)`), optionale Within-Stratum-Zieltrennung, Ehrlich-vs-aufgeblasen-Zerlegung (mit/ohne Verdaechtige) - bewusst auf vollen Daten, kein Subset |
 | `020_task.R` | Erzeugt den Rohfeature-`TaskClassif` |
@@ -168,8 +168,8 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > Hyperparameter-Rauschen.
 > Fuer einen datengetriebenen Vorschlag zu `subset_fraction` (statt blind
 > beim Template-Default `0.10` zu bleiben - bei kleinen Datensaetzen ergibt
-> das zu wenige absolute Zeilen) siehe `suggest_subset_fraction.R`, direkt
-> per `Rscript suggest_subset_fraction.R` im Projektordner ausfuehrbar.
+> das zu wenige absolute Zeilen) siehe `analysis/suggest_subset_fraction.R`, direkt
+> per `Rscript analysis/suggest_subset_fraction.R` im Projektordner ausfuehrbar.
 > Faustregel (`min_rows=20000`), kein statistisch verifizierter Wert wie
 > bei den vier Diagnose-Modulen.
 

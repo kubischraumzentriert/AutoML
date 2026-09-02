@@ -282,7 +282,7 @@ und P1.3 (Experiment-/Daten-Provenienz) aus demselben Plan sind NICHT
 angefasst - nur explizit angeforderte Punkte werden umgesetzt.
 
 **Umgesetzt**: `outer_workflow_evaluation.R` (neu, Repo-Wurzel, analog zu
-`multilayer_stack_test.R`/`hyperband_budget_test.R` - ein Evaluations-
+`analysis/multilayer_stack_test.R`/`analysis/hyperband_budget_test.R` - ein Evaluations-
 Skript, kein Teil der nummerierten Produktions-Pipeline). Frage: wie gut
 generalisiert der TATSÄCHLICH gelebte Projekt-Workflow (klassengewichteter
 Ranger via `add_balanced_class_weights()` + BAcc-optimales Multiplier-
@@ -335,7 +335,7 @@ Fix: expliziter `mlr3tuning::tnr("mbo")`-Aufruf statt des unqualifizierten
 Namens - robust unabhängig von der Ladereihenfolge.
 
 **Kein dediziertes `testthat`-Testfile**: analog zu
-`multilayer_stack_test.R`/`hyperband_budget_test.R` (Evaluations-Skripte,
+`analysis/multilayer_stack_test.R`/`analysis/hyperband_budget_test.R` (Evaluations-Skripte,
 keine wiederverwendbaren Bausteine) - die eingesetzten Bausteine
 (`add_balanced_class_weights()`, `class_multiplier_tuning.R`) sind bereits
 andernorts testabgedeckt.
@@ -720,7 +720,7 @@ Vorgehen fuer die Evidence Registry ("wichtige historische Befunde
 nachziehen").
 
 **Umgesetzt**: neues, einmaliges Migrations-Skript
-`migrate_systematic_evaluation_to_evidence.R` (Repo-Wurzel, kein Teil der
+`analysis/migrate_systematic_evaluation_to_evidence.R` (Repo-Wurzel, kein Teil der
 nummerierten Pipeline, analog zu `merge_project_experiments.R`) - liest
 die grosse Projekt-x-Modul-Tabelle aus `docs/research/SYSTEMATIC_EVALUATION.md` (Stand
 "alle Zellen aufgeloest", 2026-08-15) und loggt jede Zelle mit einem
@@ -1920,7 +1920,7 @@ Befund aus P2 fehlte. Autorank selbst ist Python - **bewusst NICHT
 uebernommen** (R-only-Policy), stattdessen dieselbe Methodik nativ in R
 angewendet (`stats::wilcox.test`, Basis-R, kein neues Paket noetig).
 
-**Neues Skript** [`p2_level2_significance_test.R`](p2_level2_significance_test.R)
+**Neues Skript** [`analysis/p2_level2_significance_test.R`](analysis/p2_level2_significance_test.R)
 (Repo-Root): gepaarter, exakter Wilcoxon-Signed-Rank-Test ueber die 6
 Datensaetze (EIN aggregierter Wert pro Datensatz, nicht pro Outer-Fold -
 Folds sind nicht unabhaengig, das wuerde die Stichprobe kuenstlich
@@ -1992,7 +1992,7 @@ externen Datensaetze mit **30 Evals/Arm** (3x Budget) neu gelaufen
 | `analcatdata-authorship` | 0.9731 | 0.9818 | +0.9 | 0.9921 | Niederlage (unveraendert, kleiner) |
 | `blood-transfusion` | 0.6878 | 0.6720 | -1.6 | 0.6576 | Sieg (unveraendert, kleiner) |
 
-**Formaler Test (in `p2_level2_significance_test.R` erweitert, 3
+**Formaler Test (in `analysis/p2_level2_significance_test.R` erweitert, 3
 Fragen)**: gepaarter Wilcoxon-Signed-Rank-Test 30-Evals- vs. 10-Evals-
 Level2 direkt gegeneinander - **V = 11, p = 1.0**. Das ist der denkbar
 nullste Befund: KEIN nachweisbarer systematischer Effekt der
@@ -2033,7 +2033,7 @@ Objekten gelesen (nicht geschaetzt): ilpd 28.6% Minderheitsklasse, sick
 authorship 6.5% (4-Klassen), optdigits 9.9% (10-Klassen, fast perfekt
 balanciert).
 
-**Neues Skript** [`p2_level2_metafeature_analysis.R`](p2_level2_metafeature_analysis.R):
+**Neues Skript** [`analysis/p2_level2_metafeature_analysis.R`](analysis/p2_level2_metafeature_analysis.R):
 5 Kandidaten-Metafeatures gegen das Level2@10-vs-bester-Wert-Delta
 getestet (Spearman-Korrelation, n=6): Datensatzgroesse, Klassen-
 imbalance, Minderheitsklassen-Zeilenzahl im Inner-Tune-Split (25% von
@@ -2167,7 +2167,7 @@ exakt.
 **Wichtiger Zwischenfund beim Schreiben**: Autorank ist kein reiner
 Watch-Punkt mehr, sondern **teilweise bereits umgesetzt** - die
 Demsar-(2006)-Wilcoxon-Methodik laeuft bereits produktiv in
-`p2_level2_significance_test.R` (Research-Aspect-Schritt 1, siehe
+`analysis/p2_level2_significance_test.R` (Research-Aspect-Schritt 1, siehe
 oben). Offen bleibt nur eine generische, wiederverwendbare
 `benchmark_statistics_report()`-Funktion fuer kuenftige Mehrfach-
 Datensatz-Vergleiche.
@@ -2334,7 +2334,7 @@ blood-transfusion)**:
 | `optdigits` | 60% | ja | +0.2 |
 
 **Formale Nachanalyse** (neues Skript
-[`decision_stability_level2_analysis.R`](decision_stability_level2_analysis.R)):
+[`analysis/decision_stability_level2_analysis.R`](analysis/decision_stability_level2_analysis.R)):
 Spearman-Korrelation Stabilitaet vs. Level-2-Delta: **rho = -0.28, p =
 0.59** (n=6, NICHT signifikant - wie beim gesamten Research-Aspect-Weg
 erwartungsgemaess bei dieser Stichprobengroesse). Wilcoxon-Rangsummen-
@@ -2427,7 +2427,7 @@ den Fold-1-Befund als bestaetigt zu behandeln.
   Folds bei 5 von 6 Datensaetzen nur 0.0-0.2), Ausnahme `sick`
   (Spannweite 0.4 - schwankt zwischen 60% und 100%).
 
-**Aktualisiertes Skript** [`decision_stability_level2_analysis.R`](decision_stability_level2_analysis.R)
+**Aktualisiertes Skript** [`analysis/decision_stability_level2_analysis.R`](analysis/decision_stability_level2_analysis.R)
 (erweitert um die 3-Fold-Auswertung, beide Versionen - Fold-1-only zum
 Vergleich UND das robustere 3-Fold-Mittel - bewusst nebeneinander
 gezeigt statt den Fold-1-Befund stillschweigend zu ersetzen). Alle 18
@@ -2583,7 +2583,7 @@ deutlich guenstiger als 136).
 Neue Config-Sektion in `000_config.R`
 (`hard_split_stress_test_k`/`_n_repeats`/`_flag_threshold_z`/
 `_results_path`, k=2/n_repeats=10/z<-2 als Defaults, unveraendert
-gegenueber dem Prototyp). Eintrag in `check_project_script_coverage.R`
+gegenueber dem Prototyp). Eintrag in `analysis/check_project_script_coverage.R`
 ergaenzt (`"Hard-Split-Stresstest (137)"`).
 
 **Regressionstest gegen das Template-eigene Projekt** (`health_condition`,
@@ -2762,7 +2762,7 @@ Decision-Stability mit 10 Wiederholungen je Fold).
 
 **Auswahl eingefroren VOR jeder Ergebnisberechnung**: siehe
 `docs/research/EXTERNAL_BENCHMARK_SET.md`, Abschnitt "Weg B"-Erweiterung, und
-[`select_weg_b_extension.R`](select_weg_b_extension.R) - repliziert
+[`analysis/select_weg_b_extension.R`](analysis/select_weg_b_extension.R) - repliziert
 exakt dieselbe Methodik wie die urspruengliche 6er-Auswahl (deterministisch,
 2 binaer + 2 multiclass, NEUER Seed `20260831`, da derselbe Seed auf dem
 um 6 Kandidaten reduzierten Pool kein echtes Fortsetzungsergebnis liefern
@@ -2821,7 +2821,7 @@ Konsistent mit dem bisherigen Muster (siehe P2-Rollout der urspruenglichen
 | `eucalyptus` | ensemble, 50% (geflaggt) | ranger, 60% (geflaggt) | ensemble, 60% (geflaggt) |
 
 **Korrelationsanalyse ueber alle 10 Datensaetze x 3 Folds (30 statt 18
-Messungen)**: [`decision_stability_level2_analysis_weg_b.R`](decision_stability_level2_analysis_weg_b.R)
+Messungen)**: [`analysis/decision_stability_level2_analysis_weg_b.R`](analysis/decision_stability_level2_analysis_weg_b.R)
 - Deskriptiv: 22/30 (73%) der Einzelmessungen liegen unter der
   70%-Stabilitaetsschwelle (Median 0.6, Mittel 0.593) - Instabilitaet
   bleibt bei diesem Tuning-Budget eher die Norm als die Ausnahme,
@@ -2854,7 +2854,7 @@ Handlungsempfehlung, unabhaengig von der Stichprobengroesse).
 **Nutzeranweisung**: "n=10 auf n=15 erweitern" - die obere Grenze der
 urspruenglichen Vormerkung ("n=10-15"). Auswahl eingefroren VOR jeder
 Ergebnisberechnung: siehe `docs/research/EXTERNAL_BENCHMARK_SET.md`, Abschnitt "Weg
-B, 2. Tranche", und [`select_n15_extension.R`](select_n15_extension.R)
+B, 2. Tranche", und [`analysis/select_n15_extension.R`](analysis/select_n15_extension.R)
 - identische Methodik wie zuvor, neuer Seed `20260901`, 3 binaer + 2
 multiclass aus einem Pool von 33 zulaessigen Datensaetzen (37 minus die
 4 bereits verwendeten Weg-B-Datensaetze). Gezogen: `ozone-level-8hr`
@@ -2901,7 +2901,7 @@ einzelner Datenpunkt reicht aber nicht, um die Gesamtkorrelation zu
 kippen (siehe unten).
 
 **Korrelationsanalyse ueber alle 15 Datensaetze x 3 Folds (45 statt 30
-Messungen)**: [`decision_stability_level2_analysis_n15.R`](decision_stability_level2_analysis_n15.R)
+Messungen)**: [`analysis/decision_stability_level2_analysis_n15.R`](analysis/decision_stability_level2_analysis_n15.R)
 - Deskriptiv: 32/45 (71%) der Einzelmessungen liegen unter der
   70%-Stabilitaetsschwelle (Median 0.6, Mittel 0.600) - praktisch
   identisch zum n=10-Befund (73%).
@@ -3051,7 +3051,67 @@ keine anklickbaren Markdown-Links, also keine kaputten Referenzen.
 
 **Verifikation**: volle Testsuite nach der Umstrukturierung gruen
 (356/356, 0 Fails, 4 unveraenderte Warnungen aus dem Split-Size-Test).
-CI-Pruefung nach dem Push ausstehend.
+CI gruen (Commit `6ba6af7`, beide Jobs).
+
+### Umgesetzt: R-Skripte aufgeraeumt - `analysis/`-Ordner fuer abgeschlossene Einmal-Skripte (2026-09-02)
+
+**Anlass**: Nutzerbeobachtung "es gibt sehr viele R-Dateien - viele
+scheinen nicht Bestandteil des Workflows zu sein" (114 `.R`-Dateien im
+Root).
+
+**Bestandsaufnahme per Querverweis-Scan**: fuer jede NICHT-nummerierte
+`.R`-Datei geprueft, ob ein anderes `.R`/`.md` sie erwaehnt/sourced.
+Drei Kategorien:
+- **Kern-Workflow** (nummeriert `000`-`170` + davon `source()`te
+  Support-Module wie `db_logging.R`, `evidence_registry.R`,
+  `sanity_checks.R`, `class_multiplier_tuning.R`, `db_housekeeping.R`,
+  `generate_systematic_evaluation.R`, `config_validation.R` - letztere 3
+  haben eigene `testthat`-Tests, die exakte Pfade voraussetzen): bleibt
+  laut ADR-007 flach im Root - das Template lebt vom
+  "Skript kopieren und direkt anpassen"-Workflow ohne Paketstruktur.
+- **ADR-008-eingefrorene Benchmark-Protokolle**
+  (`outer_workflow_evaluation.R`/`_template.R`/`_v2_fair_baselines.R`/
+  `_v3_level2.R`): bleiben unveraendert im Root, bereits berichtete
+  Zahlen haengen an diesen exakten Dateien.
+- **Abgeschlossene Einmal-Skripte** (0-5 Querverweise, kein nummeriertes
+  Skript sourced sie, Ergebnis meist schon als Kommentar im Skript oder
+  in `BACKLOG.md`/`TARGETS.md` dokumentiert): 31 Dateien - Evidence-
+  Logger (`log_*_evidence.R`), Portfolio-Warmstart-Validierungen
+  (`validate_portfolio_warmstart_*.R`), Literatur-Vergleiche
+  (`reproduce_literature_f1_*.R`, `compare_literature_vs_own_results.R`,
+  `classify_literature_comparability.R`,
+  `review_literature_split_candidates.R`,
+  `seed_literature_benchmark_results.R`), P2-Forschungsschritte
+  (`p2_level2_*.R`, `decision_stability_level2_analysis*.R`,
+  `select_*_extension.R`), sowie vereinzelte abgeschlossene
+  Diagnose-/Aufbau-Skripte (`check_native_na_blend.R`,
+  `hard_split_stress_test_prototype.R`, `hyperband_budget_test.R`,
+  `multilayer_stack_test.R`, `suggest_subset_fraction.R`,
+  `build_meta_learning_reference_pool.R`,
+  `build_portfolio_warmstart_evidence.R`,
+  `recommend_portfolio_warmstart.R`, `merge_duckdb_experiment_marts.R`,
+  `migrate_systematic_evaluation_to_evidence.R`,
+  `check_project_script_coverage.R`).
+
+**Nutzer bestaetigte explizit "nur Kategorie C verschieben"** (nicht
+Kern-Workflow/Protokolle anfassen, kein Vorab-Loeschcheck). Umsetzung:
+alle 31 per `git mv` nach `analysis/` (neu, mit erklaerendem
+`analysis/README.md`), technisch risikoarm, da alle betroffenen
+`source("000_config.R")`/`source("db_logging.R")`-Aufrufe relativ zum
+ARBEITSVERZEICHNIS aufgeloest werden (Konvention: immer Repo-Root),
+nicht relativ zum Skript-Pfad - die Verschiebung selbst aendert daran
+nichts. Querverweise (11 betroffene Dateien: `BACKLOG.md`,
+`TARGETS.md`, `EXPERIMENTS_DB.md`, `README_DETAILS.md`,
+`WorkflowDescription.md`, 5 `docs/`-Dateien, 1 Skill-Datei) per
+R-Skript automatisiert mit `analysis/`-Praefix versehen; 2 veraltete
+"Root-Skript"-Bezeichnungen in `TARGETS.md` von Hand auf
+"Analyse-Skript" korrigiert.
+
+**Verifikation**: volle Testsuite danach gruen (356/356). Ein
+verschobenes Skript (`analysis/check_project_script_coverage.R`) direkt
+per `Rscript analysis/check_project_script_coverage.R` probeweise
+ausgefuehrt - laeuft unveraendert korrekt (schreibt weiterhin nach
+`_artifacts/`, relativ zum Arbeitsverzeichnis).
 
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 

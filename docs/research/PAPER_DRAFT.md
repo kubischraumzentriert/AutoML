@@ -462,7 +462,7 @@ budget hypothesis for the mixed P2 pattern ruled out by this test,
 rather than merely untested — a concrete example of a negative result
 that narrows the explanation space instead of leaving it open. The
 reproducible code for both comparisons is in
-`p2_level2_significance_test.R`.
+`analysis/p2_level2_significance_test.R`.
 
 **We also checked whether simple dataset meta-features explain the
 pattern, and found none that do.** Beyond dataset size and class
@@ -479,7 +479,7 @@ the five candidates (dataset size, class imbalance, inner-tune minority
 count, score-instability proxy, ceiling proximity) shows more than a
 weak Spearman correlation with the win/loss delta (|ρ| ≤ 0.37, p ≥ 0.49
 for all five, n = 6 — reproducible in
-`p2_level2_metafeature_analysis.R`). We read this as a genuine,
+`analysis/p2_level2_metafeature_analysis.R`). We read this as a genuine,
 if unsatisfying, conclusion rather than a methodological failure: having
 now ruled out four natural univariate explanations (size, imbalance,
 tuning budget, and three further meta-features), the mixed Level-2

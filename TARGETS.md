@@ -238,15 +238,15 @@ Produktion sauber zu trennen.
   Projekte pruefen (ADR-003), bevor Workflow-Backports entstehen.
 
   **Erster Sprint gestartet (2026-08-24)**:
-  `build_portfolio_warmstart_evidence.R` als Diagnose-/Evidenzskript, das
+  `analysis/build_portfolio_warmstart_evidence.R` als Diagnose-/Evidenzskript, das
   aus `v_metric_results` algorithmische Gewinner, Top-3-Haeufigkeit,
   mittlere/mediane Regrets und Laufzeit aus allen gemergten Projektmetriken
-  ableitet. Darauf aufbauend erzeugt `recommend_portfolio_warmstart.R` eine
+  ableitet. Darauf aufbauend erzeugt `analysis/recommend_portfolio_warmstart.R` eine
   konkrete, budget- und groessenabhaengige Candidate-Startliste als CSV und
   Markdown. Aktuelle Default-Empfehlung fuer das Template-Beispiel:
   `lightgbm` + `ranger` frueh, `ensemble` spaet; `catboost`/`xgboost` nur
   bei kleinerem Projekt oder groesserem Budget, `tabpfn` nur selektiv.
-  `validate_portfolio_warmstart_retrospective.R` prueft diese Linie
+  `analysis/validate_portfolio_warmstart_retrospective.R` prueft diese Linie
   retrospektiv gegen die vorhandene Projekt-DB: 50 Projekt-Metriken aus
   16 realen Projekten, Gewinnerfamilie in Leave-in und Leave-one-project-out
   jeweils 48/50 in der empfohlenen Top-3, Median-Regret nach 1/2/3
@@ -260,7 +260,7 @@ Produktion sauber zu trennen.
   fest. Das Projekt war nicht als regulaerer Klassifikationsbenchmark in der
   Portfolio-LOO-Evidenz enthalten; Besonderheit: hochkardinale Faktoren,
   deshalb Ranger fair mit zielwertfreiem Frequency-Encoding. 3-fold CV,
-  kein Tuning, keine externen Daten (`validate_portfolio_warmstart_pumpitup.R`):
+  kein Tuning, keine externen Daten (`analysis/validate_portfolio_warmstart_pumpitup.R`):
   Probability-Average-Ensemble gewinnt klar nach Accuracy **0.8116** vor
   `ranger_frequency` **0.8039** und `lightgbm_native` **0.8032**. Das ist
   ein erster echter positiver Projektbeleg fuer die AutoGluon/TabRepo-Linie:
@@ -272,7 +272,7 @@ Produktion sauber zu trennen.
   `openml-credit-g` dieselbe Reihenfolge `lightgbm -> ranger -> ensemble`
   fest. Anders als PumpItUp: klein, binaer, BAcc/MCC, kein hochkardinaler
   DrivenData-Multiclass-Fall. 5-fold CV, kein Tuning, keine externen Daten
-  (`validate_portfolio_warmstart_credit_g.R`): `ranger` gewinnt knapp nach
+  (`analysis/validate_portfolio_warmstart_credit_g.R`): `ranger` gewinnt knapp nach
   BAcc **0.6640**, Ensemble **0.6636**, LightGBM **0.6629**. Interpretation:
   zweite positive Bestaetigung fuer das Startportfolio (`lightgbm`/`ranger`
   decken den Gewinner ab), aber auch eine wichtige Nuance: das schlichte
@@ -287,16 +287,16 @@ Produktion sauber zu trennen.
   Neues Profil: klein, binaer, rein numerisch; rohe Sentinel-Variante bewusst
   vorab fixiert, weil die fruehere Pima-Analyse keinen klaren Score-Nutzen
   fuer korrektes Sentinel-Handling gezeigt hatte. 5-fold CV, kein Tuning,
-  keine externen Daten (`validate_portfolio_warmstart_pima.R`): `ranger`
+  keine externen Daten (`analysis/validate_portfolio_warmstart_pima.R`): `ranger`
   gewinnt klar nach BAcc **0.7172** (AUC 0.8244, MCC 0.4537), Ensemble
   **0.7019**, LightGBM **0.6960**. Interpretation: dritte positive
   Bestaetigung fuer das Startportfolio; die Evidenz stuetzt jetzt besonders
   stark "LightGBM und Ranger frueh als Kern pruefen". Das Ensemble bleibt
   optionaler spaeter Hebel: auf PumpItUp klarer Gewinner, auf Credit-G/Pima
   zwischen den Einzelmodellen. **Template-Ueberfuehrung abgeschlossen**:
-  `build_portfolio_warmstart_evidence.R`,
-  `recommend_portfolio_warmstart.R`,
-  `validate_portfolio_warmstart_retrospective.R` und
+  `analysis/build_portfolio_warmstart_evidence.R`,
+  `analysis/recommend_portfolio_warmstart.R`,
+  `analysis/validate_portfolio_warmstart_retrospective.R` und
   `docs/reference/REFERENZ_PORTFOLIO_WARMSTART.md` dokumentieren/implementieren die Linie
   als optionalen Diagnose-Helper. Kein neuer Pflichtschritt im nummerierten
   Workflow und keine `_targets`-Aenderung, weil es um explorative
@@ -306,24 +306,24 @@ Produktion sauber zu trennen.
   jetzt ein eigenes Schema fuer Paper-/Benchmark-/Dokumentationswerte:
   `literature_source`, `literature_benchmark_result` und
   `v_literature_benchmark_results` in `db_schema.sql`, geseedet ueber
-  `seed_literature_benchmark_results.R`. Erste Kontextwerte: AutoML-39-
+  `analysis/seed_literature_benchmark_results.R`. Erste Kontextwerte: AutoML-39-
   Leaderboard-Aggregate (SOTA2), FEDOT-Dokumentationsscores fuer bekannte
   OpenML-Datensaetze (`adult`, `amazon_employee_access`, `bank-marketing`,
   `credit-g`), AutoGluon-Quickstart-Example `knot_theory` sowie Metadaten
   zu TabRepo und TabPFN. Alle Eintraege sind bewusst `context_only`, nicht
   lokale Evidenz: andere Splits/Zeitbudgets/Frameworks duerfen nicht
-  automatisch in `build_portfolio_warmstart_evidence.R` einfliessen.
+  automatisch in `analysis/build_portfolio_warmstart_evidence.R` einfliessen.
   Nacharbeit: OpenML-Dataset-IDs fuer `adult=179`,
   `Amazon_employee_access=4135`, `bank-marketing=1461`, `credit-g=31`
   gepflegt; zusaetzliche Kontextwerte aus AutoMLBench-Dataset-Metadaten und
   einer externen Binary-Classification-Rangliste importiert. Neuer Triage-
-  Helper `compare_literature_vs_own_results.R`: erster Lauf ergab 8
+  Helper `analysis/compare_literature_vs_own_results.R`: erster Lauf ergab 8
   `local_dataset_metric_mismatch` (lokaler Datensatz vorhanden, aber
   Literaturmetrik F1 noch nicht lokal geloggt) und 40 `no_local_dataset`;
-  Nachlauf nach `reproduce_literature_f1_adult_amazon.R` loggt lokale F1-
+  Nachlauf nach `analysis/reproduce_literature_f1_adult_amazon.R` loggt lokale F1-
   Werte fuer `adult` und `amazon_employee_access` und reduziert den Triage-
   Befund auf 16 `matched_context_only` plus 40 `no_local_dataset`. Zweiter
-  gezielter Nachlauf: `reproduce_literature_f1_credit_bank.R` waehlt nur
+  gezielter Nachlauf: `analysis/reproduce_literature_f1_credit_bank.R` waehlt nur
   Kandidaten mit OpenML-ID, klarer F1-Metrik und lokaler Evidenz (`credit-g`
   per 10-fold-CV, `bank-marketing` per vorhandenen Ensemble-Selection-
   Holdout-Predictions) und bringt den Triage-Befund auf 32
@@ -331,13 +331,13 @@ Produktion sauber zu trennen.
   insbesondere Amazon/Bank-Marketing, bleiben ausdruecklich nur Kontext:
   positive Klasse, Split, Zeitbudget, Framework und Feature Engineering sind
   nicht paper-identisch.
-  `classify_literature_comparability.R` erzeugt danach einen Review-Queue-
+  `analysis/classify_literature_comparability.R` erzeugt danach einen Review-Queue-
   Report ohne DB-Umschreibung: 35 `aggregate_or_metadata_context`, 12
   `resampling_mismatch_context`, 7 `source_context_missing_openml_id`,
   4 `split_match_candidate`. Nur `credit-g` ist aktuell Split-Kandidat;
   Adult/Amazon/Bank-Marketing bleiben wegen Resampling-Mismatch
   `context_only`. Manueller Quellenreview mit
-  `review_literature_split_candidates.R`: auch `credit-g` bleibt
+  `analysis/review_literature_split_candidates.R`: auch `credit-g` bleibt
   `keep_context_only`, weil die FEDOT-Dokumentation zwar F1/10-fold/OpenML-
   Suite bestaetigt, aber keine exakte OpenML-Task-ID, positive Klasse,
   Harness-Details oder Zeitbudget fuer ein echtes Upgrade liefert.
@@ -536,7 +536,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   als eigenen, bisher ungetesteten Hebel - der obige Befund testete nur
   EINEN Meta-Learner auf den rohen Basis-Wahrscheinlichkeiten (einlagig),
   nicht die gestapelte Mehrschichten-Architektur selbst.
-  `multilayer_stack_test.R` (Root-Skript, baut auf dem bestehenden
+  `analysis/multilayer_stack_test.R` (Analyse-Skript, baut auf dem bestehenden
   `148_ensemble_candidate_pool.R`-Pool auf, kein neues Basis-Training):
   3-Wege-Split des 147/148-Eval-Splits (Layer1=35%/Layer2=35%/
   Bestaetigung=30%, klassenstratifiziert) - Layer-1 (3 verschiedene
@@ -587,14 +587,14 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   2 Meta-Learner-Stufen). Naechster echter Test dieser Idee waere erst
   sinnvoll, sobald ein diversifizierendes Mitglied (z.B. FT-Transformer)
   im Kandidaten-Pool ist - bislang nur fuer den simplen Blend geprueft
-  (s6e8), nicht fuer Stacking. Skript bleibt im Repo (`multilayer_stack_test.R`)
+  (s6e8), nicht fuer Stacking. Skript bleibt im Repo (`analysis/multilayer_stack_test.R`)
   als wiederverwendbare Vorlage fuer diesen Folgetest.
 
   **Ausweitung auf 3 weitere Projekte (2026-08-25, Nutzerwunsch nach einem
   belastbareren Fundament vor einer endgueltigen Entscheidung).** Dieselbe
   Architektur (3-Wege-Split, Layer-1 aus 3 Meta-Learner-Familien, Layer-2
   NUR aus Layer-1-Vorhersagen) gegen 3 strukturell verschiedene, bereits
-  vorhandene Ensemble-Pools laufen lassen (`multilayer_stack_test.R`,
+  vorhandene Ensemble-Pools laufen lassen (`analysis/multilayer_stack_test.R`,
   projektspezifisch angepasst, jeweils im Zielprojekt abgelegt, kein neues
   Basis-Training):
 
@@ -1566,7 +1566,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     Idee NICHT ins Template zurueckgefuehrt.
     **Referenzpool in der zentralen DB gesichert (2026-08-10)**, fuer einen
     kuenftigen zweiten Versuch (z.B. groesserer Pool, mehr Meta-Features)
-    ohne erneute OpenML-Abfragen: Skript `build_meta_learning_reference_pool.R`
+    ohne erneute OpenML-Abfragen: Skript `analysis/build_meta_learning_reference_pool.R`
     (Template-Root, analog zu `merge_project_experiments.R` ein Template-
     Utility, kein nummeriertes Projekt-Skript) loggt die 8 Referenz-
     Datensaetze als eigenes "Projekt" `meta-learning-reference-pool` in
@@ -1610,7 +1610,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     Oekosystem nicht verfuegbar** (`mlr3hyperband` bietet nur Successive
     Halving/Hyperband, kein Bayesian-Optimization-Hyperband-Hybrid) - dieser
     Test deckt daher gezielt Hyperband ab, nicht BOHB.
-    `hyperband_budget_test.R` (Root-Skript, per Hand implementiert wie der
+    `analysis/hyperband_budget_test.R` (Analyse-Skript, per Hand implementiert wie der
     urspruengliche SH-Test - volle Kontrolle ueber die Budget-Buchhaltung
     via `lgb.train(..., init_model=)`-Fortsetzung): 4 Brackets (`eta=2`,
     `R_MAX=200`=`lightgbm_tuning_final_iterations`, `R_MIN=25`=
@@ -2081,9 +2081,9 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   `0.10`) kann bei kleinen Datensaetzen zu wenige absolute Zeilen ergeben
   (steel-plates-fault: 1941*0.10 = 194 Zeilen, musste diese Session manuell
   auf `1.0` korrigiert werden). Neues Hilfsskript
-  `suggest_subset_fraction.R` (`suggest_subset_fraction(n_full,
+  `analysis/suggest_subset_fraction.R` (`suggest_subset_fraction(n_full,
   default_fraction=0.10, min_rows=20000)`, `min(1, max(default_fraction,
-  min_rows/n_full))`) - direkt per `Rscript suggest_subset_fraction.R` im
+  min_rows/n_full))`) - direkt per `Rscript analysis/suggest_subset_fraction.R` im
   Projektordner ausfuehrbar (liest `train.csv`) oder als Funktion
   importierbar. `min_rows=20000` ist eine FAUSTREGEL (an der unteren Grenze
   dessen, was diese Session als "unauffaellig" in den anderen vier
