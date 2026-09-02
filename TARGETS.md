@@ -255,7 +255,7 @@ Produktion sauber zu trennen.
   vorher festgelegter Empfehlung.
 
   **Erste echte Projektvalidierung (pre-registered, 2026-08-24)**:
-  `PORTFOLIO_WARMSTART_PREREG_PUMPITUP.md` legte vor dem Lauf fuer
+  `docs/research/PORTFOLIO_WARMSTART_PREREG_PUMPITUP.md` legte vor dem Lauf fuer
   `drivendata-pump-it-up` die Reihenfolge `lightgbm -> ranger -> ensemble`
   fest. Das Projekt war nicht als regulaerer Klassifikationsbenchmark in der
   Portfolio-LOO-Evidenz enthalten; Besonderheit: hochkardinale Faktoren,
@@ -268,7 +268,7 @@ Produktion sauber zu trennen.
   spaeter Ensemble-Hebel.
 
   **Zweite echte Projektvalidierung (pre-registered, 2026-08-24)**:
-  `PORTFOLIO_WARMSTART_PREREG_CREDIT_G.md` legte vor dem Lauf fuer
+  `docs/research/PORTFOLIO_WARMSTART_PREREG_CREDIT_G.md` legte vor dem Lauf fuer
   `openml-credit-g` dieselbe Reihenfolge `lightgbm -> ranger -> ensemble`
   fest. Anders als PumpItUp: klein, binaer, BAcc/MCC, kein hochkardinaler
   DrivenData-Multiclass-Fall. 5-fold CV, kein Tuning, keine externen Daten
@@ -282,7 +282,7 @@ Produktion sauber zu trennen.
   einen harten Workflow-Zwang.
 
   **Dritte echte Projektvalidierung (pre-registered, 2026-08-24)**:
-  `PORTFOLIO_WARMSTART_PREREG_PIMA.md` legte vor dem Lauf fuer
+  `docs/research/PORTFOLIO_WARMSTART_PREREG_PIMA.md` legte vor dem Lauf fuer
   `pima-diabetes-sentinel-test` erneut `lightgbm -> ranger -> ensemble` fest.
   Neues Profil: klein, binaer, rein numerisch; rohe Sentinel-Variante bewusst
   vorab fixiert, weil die fruehere Pima-Analyse keinen klaren Score-Nutzen
@@ -297,7 +297,7 @@ Produktion sauber zu trennen.
   `build_portfolio_warmstart_evidence.R`,
   `recommend_portfolio_warmstart.R`,
   `validate_portfolio_warmstart_retrospective.R` und
-  `REFERENZ_PORTFOLIO_WARMSTART.md` dokumentieren/implementieren die Linie
+  `docs/reference/REFERENZ_PORTFOLIO_WARMSTART.md` dokumentieren/implementieren die Linie
   als optionalen Diagnose-Helper. Kein neuer Pflichtschritt im nummerierten
   Workflow und keine `_targets`-Aenderung, weil es um explorative
   Modellauswahl geht, nicht um die finale Produktionspipeline.
@@ -422,7 +422,7 @@ allein auffindbar bleibt.
   **ERLEDIGT (2026-08-17): ZWEITE unabhaengige Bestaetigung UND Backport
   ins Template.** `group_resampling.R` (Regressionsseite bereits
   bestaetigt an `SubjektDatensatz`/`AStepAheadOfdrought`, siehe
-  `REFERENZ_GROUP_AWARE_CV.md` im Regressions-Template) wurde am
+  `docs/reference/REFERENZ_GROUP_AWARE_CV.md` im Regressions-Template) wurde am
   2026-08-15 nach `openml-eeg-eye-state-timeseries` portiert (1. Beleg
   Klassifikation: Random-CV BAcc 0.930 vs. Block-CV 0.717, -21.3 Punkte,
   Zeit-Block-Nachbarschaft als Leck-Mechanismus). **2. Beleg
@@ -440,7 +440,7 @@ allein auffindbar bleibt.
   Rauschen-Artefakt der wenigen Gruppen (nur 8 gesunde Probanden).
   **Backport (2026-08-17)**: `group_resampling.R` (byte-identischer Code
   zur Regressionsseite) liegt jetzt im Template-Root, Theorie/Zahlen in
-  [`REFERENZ_GROUP_AWARE_CV.md`](REFERENZ_GROUP_AWARE_CV.md) (verweist auf
+  [`docs/reference/REFERENZ_GROUP_AWARE_CV.md`](docs/reference/REFERENZ_GROUP_AWARE_CV.md) (verweist auf
   das Regressions-Pendant fuer die volle Herleitung, dokumentiert hier nur
   die Classif-spezifische Bestaetigungsgeschichte). Kein numeriertes
   Treiber-Skript/keine `000_config.R`-Aenderung noetig (wie auf der
@@ -450,7 +450,7 @@ allein auffindbar bleibt.
   NICHT eigenstaendig fuer Classif bestaetigter Teil (setzen numerischen
   Zielwert voraus). Details in `openml-eeg-eye-state-timeseries/README.md`
   bzw. `uci-parkinsons-voice-groupcv/README.md`, konsolidiert in
-  `SYSTEMATIC_EVALUATION.md`.
+  `docs/research/SYSTEMATIC_EVALUATION.md`.
 
   ~~**Klassifikationstaugliche Variante des Gruppen-Permutationstests**~~
   **ERLEDIGT (2026-08-17): Cramer's V ergaenzt.** `test_group_
@@ -465,15 +465,15 @@ allein auffindbar bleibt.
   determiniert sie deterministisch). Negativkontrolle (kuenstliche
   Zufallsgruppe auf `eeg-eye-state`): V=0.09, p=0.942, korrekt
   unauffaellig. Details/vollstaendige Herleitung in
-  `REFERENZ_GROUP_AWARE_CV.md` Abschnitt 4. Rueckgabefeldnamen dabei
+  `docs/reference/REFERENZ_GROUP_AWARE_CV.md` Abschnitt 4. Rueckgabefeldnamen dabei
   generalisiert (`eta2_observed`->`statistic_observed` +
   `statistic_name`) - kein bisheriger Aufrufer betroffen, da diese
   Funktion auf der Classif-Seite noch nie genutzt wurde.
 
 - ~~**Nelder-Mead in `class_multiplier_tuning.R` noch nicht didaktisch
   aufgearbeitet**~~ **ERLEDIGT (2026-08-15).** Als
-  [`REFERENZ_NELDER_MEAD.md`](REFERENZ_NELDER_MEAD.md) geschrieben (analog
-  `REFERENZ_GENERALIZATION_GAP.md`) - Mechanismus (ableitungsfreier
+  [`docs/reference/REFERENZ_NELDER_MEAD.md`](docs/reference/REFERENZ_NELDER_MEAD.md) geschrieben (analog
+  `docs/reference/REFERENZ_GENERALIZATION_GAP.md`) - Mechanismus (ableitungsfreier
   Simplex-Optimierer), warum keine Gradientenmethode (BAcc ist stueckweise
   konstant, nicht differenzierbar), die `log`-Reparametrisierung fuer
   `mult > 0`, und der dokumentierte 1D-Grenzfall (binaere Aufgaben, gefixt
@@ -860,7 +860,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   einen kuenftigen GPU-gestuetzten Test auf den vollen Daten.
 
   Volle Herleitung, Paper-/Repo-Referenzen und Setup-Anleitung (Python-
-  Export statt reticulate) in `REFERENZ_TABICLV2.md`.
+  Export statt reticulate) in `docs/reference/REFERENZ_TABICLV2.md`.
 
   **Dasselbe Follow-up fuer TabPFN (nicht TabICLv2) nachgeholt (2026-08-25)
   - klarer NEGATIVER Befund, staerker als der urspruengliche Naiv-Blend-
@@ -917,7 +917,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   alten TabPFN-Referenz-Checkpoint, nicht die MotherNet-Gewichte.
   Eigentraining unpraktikabel (~4 Wochen/A100 laut Paper). Kein Test
   moeglich - vor einem erneuten Versuch zuerst pruefen, ob das Issue
-  inzwischen geloest wurde. Volle Details in `REFERENZ_TABICLV2.md`
+  inzwischen geloest wurde. Volle Details in `docs/reference/REFERENZ_TABICLV2.md`
   Abschnitt 6.
 - ~~**Exact-value Target-Encoding auch auf NUMERISCHE Spalten**~~ **ERLEDIGT /
   UEBERNOMMEN (2. Bestaetigung)**: Anlass 4th-Place-Writeup zu `s6e7` (XGBoost OOF
@@ -1342,7 +1342,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   beliebige Klassenzahl/Metrik, indem sie das bereits vorhandene
   `tune_class_multipliers()` wiederverwendet (das den binaeren 1D-Fall via
   `optimize()`/Brent und den Multiklassen-Fall via Nelder-Mead schon
-  automatisch unterscheidet, siehe `REFERENZ_NELDER_MEAD.md`) - keine
+  automatisch unterscheidet, siehe `docs/reference/REFERENZ_NELDER_MEAD.md`) - keine
   Logik-Duplikation. Opt-in in `130_threshold_tuning.R` ueber
   `threshold_tuning_nested` (Default `FALSE`, `000_config.R`) - laeuft nur,
   wenn ein Projekt es explizit aktiviert, erzeugt dann zusaetzlich
@@ -1488,7 +1488,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     ueber Greedy (0.9524 vs. 0.9484) - Umkehrung des urspruenglichen
     (fehlerhaften) Ergebnisses. Plausibler Mechanismus: Gewichtung macht alle
     24 Kandidaten deutlich staerker UND aehnlicher (weniger "schwaches Glied"
-    zum Vermeiden) - genau die in `REFERENZ_ENSEMBLE_SELECTION.md` Abschnitt
+    zum Vermeiden) - genau die in `docs/reference/REFERENZ_ENSEMBLE_SELECTION.md` Abschnitt
     5 dokumentierte Grenze der Methode (braucht einen diversen Pool mit
     echtem Staerke-Unterschied). Nutzer entschied sich trotzdem fuer das
     guenstigere Greedy-Ensemble (4 statt 24 Modelle neu zu trainieren, der
@@ -1524,7 +1524,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     Differenz 0.00001) - Greedy braucht einen grossen/diversen Pool, um sein
     Potenzial zu zeigen; bei wenigen, bereits stark abgestimmten, aehnlichen
     Modellen bringt es nichts zusaetzlich. Volle Zahlen + Einordnung in
-    `REFERENZ_ENSEMBLE_SELECTION.md` Abschnitt 4/5.
+    `docs/reference/REFERENZ_ENSEMBLE_SELECTION.md` Abschnitt 4/5.
   - **Meta-Learning-Warmstart fuer `tnr("mbo")`: geprueft, verifiziert -
     NEGATIVES Ergebnis, NICHT ins Template uebernommen (2026-08-08/10).**
     Auto-sklearn-Rezept (Feurer et al.): Meta-Features des neuen Datensatzes
@@ -1803,8 +1803,8 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     Standalone-Prototyp), danach wieder auf leere Defaults zurueckgesetzt
     (Template bleibt default-inert, wie bei `segment_metric_cols`).
     `WorkflowDescription.md`/`README_DETAILS.md` aktualisiert. Neues
-    `REFERENZ_MODEL_SANITY_CHECKS.md` (theoretischer Hintergrund, analog zu
-    `REFERENZ_PROBABILITY_CALIBRATION.md`). **Committet und gepusht**
+    `docs/reference/REFERENZ_MODEL_SANITY_CHECKS.md` (theoretischer Hintergrund, analog zu
+    `docs/reference/REFERENZ_PROBABILITY_CALIBRATION.md`). **Committet und gepusht**
     (`87c4751`).
   - **Cross-Template-Port nach Regression (2026-08-10, gleicher Tag,
     separater Auftrag)**: `sanity_checks.R` dabei aufgabentyp-unabhaengig
@@ -1854,7 +1854,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   aus einem Abgleich der Jason-Brownlee-"Data Science Diagnostic
   Checklist" gegen den Template-Stand) - Modul gebaut, synthetisch UND an 1
   echtem Projekt verifiziert, NOCH NICHT ins Template zurueckgefuehrt.**
-  Siehe [`REFERENZ_GENERALIZATION_GAP.md`](REFERENZ_GENERALIZATION_GAP.md)
+  Siehe [`docs/reference/REFERENZ_GENERALIZATION_GAP.md`](docs/reference/REFERENZ_GENERALIZATION_GAP.md)
   fuer Theorie/Herkunft/Mechanismus. Synthetisch (`rpart`, 60-Konfig-
   "Winner's Curse"-Suche): korrekt als auffaellig erkannt (z=-3.12), eine
   feste Config korrekt nicht (z=+2.30). Real (`openml-steel-plates-fault`,
@@ -1875,11 +1875,11 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Projekt (`health_condition`, groesster der drei getesteten Datensaetze):
   erneut unauffaellig, mit der bisher engsten Luecke (+0.0025, SD 0.0032) -
   3/3 durchgehend konsistent, kein Fall hat bisher tatsaechlich geflaggt
-  (nur synthetisch bewiesen, siehe `REFERENZ_GENERALIZATION_GAP.md`
+  (nur synthetisch bewiesen, siehe `docs/reference/REFERENZ_GENERALIZATION_GAP.md`
   Abschnitt 3).
 
 - **Drei weitere Luecken aus dem Brownlee-Checklisten-Abgleich (2026-08-13,
-  siehe `REFERENZ_GENERALIZATION_GAP.md` Abschnitt 1 fuer die vollstaendige
+  siehe `docs/reference/REFERENZ_GENERALIZATION_GAP.md` Abschnitt 1 fuer die vollstaendige
   Tabelle) - noch NICHT begonnen:**
   - ~~**§3 Split-Size-Sensitivity-Analysis**~~ **ERLEDIGT (2026-08-13)**:
     neues Modul `split_size_sensitivity.R` (`split_ratio_sensitivity()` via
@@ -1971,7 +1971,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     **Bugfix (2026-08-15): "PLATEAU"-Klassifikation war anfaellig gegen
     Einzelpunkt-Ausreisser bei kleinen Stichproben.** Anlass: bei der
     Suche nach einem zweiten Beleg fuer `openml-credit-g`s vermeintlichen
-    ersten Plateau-Fall (siehe SYSTEMATIC_EVALUATION.md) zeigte
+    ersten Plateau-Fall (siehe docs/research/SYSTEMATIC_EVALUATION.md) zeigte
     `openml-synthetic-control-timeseries` (600 Zeilen, KLEINER als
     `credit-g`) "noch steigend" - direkter Widerspruch zur "kleine
     Datensaetze plateauen"-Hypothese. Ursache: `report_learning_curve()`
@@ -2036,7 +2036,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     Nullbefund statt einer unbestaetigten Vermutung - die Klassifikation
     KANN nachweislich Plateaus erkennen, tut es bei den bisher getesteten
     echten Kaggle/OpenML-Datensaetzen aber tatsaechlich nicht. Siehe
-    `SYSTEMATIC_EVALUATION.md` fuer die eingearbeitete Neubewertung.
+    `docs/research/SYSTEMATIC_EVALUATION.md` fuer die eingearbeitete Neubewertung.
   - ~~**§14 Seed-Varianz & Hyperparameter-Rausch-Stabilitaet**~~ **ERLEDIGT
     (2026-08-13)**: `sanity_checks.R` deckte bereits Feature-Rausch-
     Perturbation und Feature-Invarianz ab - neu: `seed_stability.R`
@@ -2065,7 +2065,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
     DB-Logging ergaenzt (`092`). Jitter-Test laeuft nur, wenn `090` bereits
     ausgefuehrt wurde (sonst uebersprungen, kein Fehler).
 
-    **Nebenbefund (2026-08-17, 6. Stichproben-Runde SYSTEMATIC_EVALUATION.md)**:
+    **Nebenbefund (2026-08-17, 6. Stichproben-Runde docs/research/SYSTEMATIC_EVALUATION.md)**:
     `openml-satimage-multiclass` hat KEIN `092_seed_stability.R` im
     Projektordner (nur das Modul `seed_stability.R` ohne aufrufendes
     Skript/Artefakt) - dieselbe Reproduzierbarkeits-Luecken-Klasse wie das
@@ -2547,7 +2547,7 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   - Kap. 8s Bootstrap-Signifikanztest-Empfehlung ("Fishers Prinzipien",
     Test of Significance) ist konzeptionell bereits durch
     `136_generalization_gap.R` abgedeckt (Bootstrap-Test-Verteilung gegen
-    CV-Verteilung, siehe `REFERENZ_GENERALIZATION_GAP.md`).
+    CV-Verteilung, siehe `docs/reference/REFERENZ_GENERALIZATION_GAP.md`).
   - Kap. 8s PCA/Factor-Analysis/CCA zur Dimensionsreduktion adressieren
     kein Problem, das unsere GBM-lastige Pipeline hat (Baumverfahren sind
     robust gegen hochdimensionale/korrelierte Features; PCA wuerde hier

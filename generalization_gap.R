@@ -5,7 +5,7 @@
 # Herkunft: Jason Brownlee, "Data Science Diagnostic Checklist", Abschnitte
 # 5 ("Quantify the Performance Gap") und 6 ("Challenge the Performance Gap").
 # Formalisiert, was bisher ad-hoc als "CV<->LB-Luecke gross/klein?" beurteilt
-# wurde (siehe s6e6/s6e8-Notizen in REFERENZ_ENSEMBLE_SELECTION.md): statt
+# wurde (siehe s6e6/s6e8-Notizen in docs/reference/REFERENZ_ENSEMBLE_SELECTION.md): statt
 # eines Bauchgefuehls ein statistischer Test (Mann-Whitney U, robust bei
 # kleinem n/keiner Normalitaetsannahme - Alternative zum t-Test, siehe
 # Checkliste) + Effektgroesse (Cohen's d) + ein Referenzbereich aus mehreren

@@ -5,9 +5,9 @@
 # zu pflegen ("Publikations-Tabellen aus Registry erzeugen").
 # =====================================================================
 # Scope-Entscheidung (additiv, siehe unten): dieses Skript erzeugt eine
-# NEUE Datei (`SYSTEMATIC_EVALUATION_GENERATED.md`), es ueberschreibt
-# NICHT die bestehende, handgepflegte `SYSTEMATIC_EVALUATION.md`. Grund:
-# `SYSTEMATIC_EVALUATION.md` enthaelt redaktionellen Mehrwert, den eine
+# NEUE Datei (`docs/research/SYSTEMATIC_EVALUATION_GENERATED.md`), es ueberschreibt
+# NICHT die bestehende, handgepflegte `docs/research/SYSTEMATIC_EVALUATION.md`. Grund:
+# `docs/research/SYSTEMATIC_EVALUATION.md` enthaelt redaktionellen Mehrwert, den eine
 # reine DB-Pivot-Tabelle nicht reproduzieren kann - Fussnoten,
 # Korrekturvermerke (z.B. die IQR-Nenner-Korrektur vom 2026-08-15/17),
 # einen "Was diese erste Fassung zeigt"-Diskussionsabschnitt. Der Plan
@@ -20,7 +20,7 @@
 # Dokumente bewusst zusammenzufuehren, sobald der redaktionelle Text
 # manuell in die Registry uebertragen wurde (z.B. als `evid_notes`).
 #
-# Deckt ausserdem NEUE Inhalte ab, die `SYSTEMATIC_EVALUATION.md` selbst
+# Deckt ausserdem NEUE Inhalte ab, die `docs/research/SYSTEMATIC_EVALUATION.md` selbst
 # noch nicht kennt (z.B. das Modul `outer_workflow_evaluation` aus
 # Phase C) - die generierte Tabelle ist bereits AKTUELLER als die
 # manuelle Datei, ein konkreter Beleg fuer den Wert der Registry.
@@ -52,7 +52,7 @@ build_systematic_evaluation_pivot <- function(con) {
 }
 
 # Bevorzugte Spaltenreihenfolge - die 9 Original-Module aus
-# `SYSTEMATIC_EVALUATION.md` zuerst (fuer Vergleichbarkeit), alles
+# `docs/research/SYSTEMATIC_EVALUATION.md` zuerst (fuer Vergleichbarkeit), alles
 # Weitere (z.B. neue Module wie `outer_workflow_evaluation`) alphabetisch
 # dahinter.
 KNOWN_MODULE_ORDER <- c(
@@ -78,7 +78,7 @@ render_systematic_evaluation_markdown <- function(con) {
     "Automatisch erzeugt aus der `evidence`-Tabelle via ",
     "`generate_systematic_evaluation.R` (P1.2 Schritt 3 / Phase D, siehe ",
     "BACKLOG.md \"Naechste Bewertung 2026-08-28\") am ", format(Sys.time(), "%Y-%m-%d %H:%M"), ".\n\n",
-    "**Dies ersetzt NICHT** `SYSTEMATIC_EVALUATION.md` (dort steht ",
+    "**Dies ersetzt NICHT** `docs/research/SYSTEMATIC_EVALUATION.md` (dort steht ",
     "redaktionelles Material - Fussnoten, Korrekturvermerke, Diskussion -, ",
     "das diese generierte Tabelle nicht enthaelt). Diese Datei zeigt, dass ",
     "die Evidence Registry die Kerntabelle reproduzieren kann, und ist ",
@@ -102,8 +102,8 @@ render_systematic_evaluation_markdown <- function(con) {
 }
 
 #' Schreibt das generierte Markdown nach `out_path` (Default:
-#' `SYSTEMATIC_EVALUATION_GENERATED.md` im `project_dir`).
-generate_systematic_evaluation_file <- function(con, out_path = file.path(project_dir, "SYSTEMATIC_EVALUATION_GENERATED.md")) {
+#' `docs/research/SYSTEMATIC_EVALUATION_GENERATED.md` im `project_dir`).
+generate_systematic_evaluation_file <- function(con, out_path = file.path(project_dir, "docs/research/SYSTEMATIC_EVALUATION_GENERATED.md")) {
   writeLines(render_systematic_evaluation_markdown(con), out_path)
   invisible(out_path)
 }

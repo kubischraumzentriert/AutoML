@@ -533,7 +533,7 @@ segment_metric_warn_gap <- 0.05
 segment_metrics_path <- file.path(artifact_dir, "segment_metrics.csv")
 
 # Multi-Label-Klassifikation (021_multilabel_workflow.R, siehe multilabel.R
-# und REFERENZ_METRIC_TARGET_MISMATCH.md fuer den theoretischen Hintergrund).
+# und docs/reference/REFERENZ_METRIC_TARGET_MISMATCH.md fuer den theoretischen Hintergrund).
 # Verifiziert an 3 unabhaengigen OpenML-Standalone-Projekten (yeast/scene/
 # birds - Protein/Bild/Bioakustik). NUR aktiv, wenn ein Projekt mehrere
 # nicht-exklusive Zielspalten hat (Binary Relevance statt eines einzelnen
@@ -620,7 +620,7 @@ final_ensemble_full_path <- function(run_id) {
 submission_ensemble_path <- file.path(project_dir, "submission_ensemble.csv")
 
 # Generalisierungsluecke (136_generalization_gap.R, siehe generalization_gap.R
-# und REFERENZ_GENERALIZATION_GAP.md fuer Theorie/Herkunft): stratifizierter
+# und docs/reference/REFERENZ_GENERALIZATION_GAP.md fuer Theorie/Herkunft): stratifizierter
 # Split von task_train_small in einen CV-Trainingsanteil und einen komplett
 # unberuehrten Testanteil (eigener Split, GETRENNT von validation_ratio - der
 # Zweck ist, echten Train/Test-Grenz-Optimismus zu messen, nicht eine normale
@@ -628,7 +628,7 @@ submission_ensemble_path <- file.path(project_dir, "submission_ensemble.csv")
 # base_learner_constructors, Kandidaten aus den 090/100-Tuning-Instanzen
 # (falls vorhanden - sonst wird der jeweilige Kandidat uebersprungen). An 2
 # unabhaengigen OpenML-Datensaetzen verifiziert (steel-plates-fault/
-# satimage-multiclass, siehe REFERENZ_GENERALIZATION_GAP.md) - beide Male
+# satimage-multiclass, siehe docs/reference/REFERENZ_GENERALIZATION_GAP.md) - beide Male
 # kein Beleg fuer Test-Harness-Optimismus durch die Suche in 090/100.
 generalization_gap_test_ratio <- 0.2
 generalization_gap_n_boot <- 200
@@ -707,7 +707,7 @@ seed_stability_jitter_relative <- 0.1  # +/-10% Jitter auf mtry.ratio/sample.fra
 seed_stability_results_path <- file.path(artifact_dir, "seed_stability_results.csv")
 
 # Hard-Split-Stresstest (137_hard_split_stress_test.R, siehe
-# hard_split_stress_test.R und JOSS_TECHNIQUE_WATCH.md, astartes-inspiriert):
+# hard_split_stress_test.R und docs/research/JOSS_TECHNIQUE_WATCH.md, astartes-inspiriert):
 # prueft EXTRAPOLATION statt Interpolation - ein k-means-Cluster-Split (kleinstes
 # Cluster = Test-Set) ist ein strukturell schwierigerer Train/Test-Split als
 # Zufalls-CV, der einen ganz anderen Rauschkanal misst als generalization_gap.R

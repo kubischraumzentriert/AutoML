@@ -10,7 +10,7 @@
 # schwaecherem B und reinem Rauschen C - erwartet A/B gewaehlt, C nicht).
 # Caruana et al. 2004, wie in Auto-sklearn. Bestaetigt an mehreren
 # unabhaengigen OpenML-Datensaetzen (siehe TARGETS.md/
-# REFERENZ_ENSEMBLE_SELECTION.md).
+# docs/reference/REFERENZ_ENSEMBLE_SELECTION.md).
 
 #' Balanced Accuracy aus einer Wahrscheinlichkeits-Matrix (argmax-Entscheidung).
 #' @param prob_mat Matrix (Zeilen = Beobachtungen, Spalten = Klassen).

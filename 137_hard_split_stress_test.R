@@ -1,6 +1,6 @@
 # =====================================================================
 # 137_hard_split_stress_test.R -- Extrapolations-Stresstest (siehe
-# hard_split_stress_test.R und JOSS_TECHNIQUE_WATCH.md, astartes-
+# hard_split_stress_test.R und docs/research/JOSS_TECHNIQUE_WATCH.md, astartes-
 # inspiriert - Burns et al. 2023, JOSS 10.21105/joss.05996).
 # =====================================================================
 # Ergaenzt 136_generalization_gap.R (dort: CV- vs. Bootstrap-Test-Verteilung

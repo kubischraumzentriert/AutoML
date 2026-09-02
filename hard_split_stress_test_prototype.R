@@ -3,7 +3,7 @@ rm(list = ls())
 # =====================================================================
 # hard_split_stress_test_prototype.R -- P2, JOSS-Technique-Watch-
 # Prototyp #2 (2026-08-31, astartes-inspiriert, siehe
-# JOSS_TECHNIQUE_WATCH.md + hard_split_stress_test.R).
+# docs/research/JOSS_TECHNIQUE_WATCH.md + hard_split_stress_test.R).
 # =====================================================================
 # Wendet hard_split_stress_test() auf ein reales Projekt an: ein
 # ungetunter, klassengewichteter Ranger (dieselbe Grundkonfiguration wie

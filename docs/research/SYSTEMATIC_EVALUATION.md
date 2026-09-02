@@ -165,7 +165,7 @@ Ergebnis (Group-aware CV hat noch keine eigene Spalte): Random-CV BAcc
   690088). Alle vier bislang gemessenen Faelle unauffaellig - bisher KEIN
   einziger realer Beleg fuer Test-Harness-Optimismus durch die Suche
   gefunden (nur synthetisch nachgewiesen, siehe
-  `REFERENZ_GENERALIZATION_GAP.md`).
+  `../reference/REFERENZ_GENERALIZATION_GAP.md`).
 - **Threshold-Tuning (130) aufgelöst (2026-08-15)**: `health_condition`
   selbst war trotz Template-eigenem Projekt bisher als `?` offen - dabei
   ist das dort der GRÖSSTE dokumentierte Einzelhebel überhaupt
@@ -634,7 +634,7 @@ Dateneigenschaften, nicht nur "funktioniert der Mechanismus")
   i.i.d. Zeilen) - kein Mechanismus-Versagen dort, sondern schlicht nicht
   anwendbar. **Backport (2026-08-17) abgeschlossen**: `group_resampling.R`
   liegt jetzt im Template-Root, siehe
-  [`REFERENZ_GROUP_AWARE_CV.md`](REFERENZ_GROUP_AWARE_CV.md).
+  [`../reference/REFERENZ_GROUP_AWARE_CV.md`](../reference/REFERENZ_GROUP_AWARE_CV.md).
 - **FT-Transformer-Ensemble-Diversitaet**: CPU-Machbarkeit war projekt-
   unabhaengig **innerhalb** der getesteten Groessenspanne, aber selbst NICHT
   projekttyp-unabhaengig - der zweite Datenpunkt (`eeg-eye-state`, 14980
@@ -758,7 +758,7 @@ Abdeckungsquote zu praesentieren.
    Leck-Mechanismus - ADR-003-Backport-Kriterium erfuellt, siehe Diskussion
    oben/TARGETS.md. Backport von `group_resampling.R` als eigenstaendiges
    Klassifikations-Modul ins Template ebenfalls erledigt (2026-08-17),
-   siehe `REFERENZ_GROUP_AWARE_CV.md`.
+   siehe `../reference/REFERENZ_GROUP_AWARE_CV.md`.
    ~~Learning-Curve-Plateau~~ **umformuliert statt bestaetigt
    (2026-08-17)**: der urspruengliche Punkt war durch den `credit-g`-
    IQR-Fix bereits obsolet (kein Plateau-Fund mehr, den man haette

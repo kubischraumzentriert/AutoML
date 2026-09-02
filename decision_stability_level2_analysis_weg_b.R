@@ -5,7 +5,7 @@
 # die Level-2-Arm-Wahl-Stabilitaet mit dem urspruenglichen Level-2-
 # Ergebnis zusammen? Erweitert decision_stability_level2_analysis.R
 # (dort: n=6, "Weg A" - mehr Outer-Folds statt neuer Datensaetze) um die
-# 4 in EXTERNAL_BENCHMARK_SET.md eingefrorenen neuen Datensaetze.
+# 4 in docs/research/EXTERNAL_BENCHMARK_SET.md eingefrorenen neuen Datensaetze.
 # =====================================================================
 # Werte stammen aus den 12 neuen decision_stability_level2_prototype.R-
 # Laeufen (DECISION_STABILITY_OUTER_FOLD=1/2/3 x 4 Datensaetze) und den 4

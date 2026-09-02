@@ -3,7 +3,7 @@
 # =====================================================================
 # Nur aktiv, wenn `label_cols` in 000_config.R gesetzt ist (mehrere nicht-
 # exklusive Zielspalten statt eines einzelnen `target_col`). Siehe
-# multilabel.R fuer die Bausteine, REFERENZ_METRIC_TARGET_MISMATCH.md fuer
+# multilabel.R fuer die Bausteine, docs/reference/REFERENZ_METRIC_TARGET_MISMATCH.md fuer
 # das Warum der Accuracy- statt BAcc-Schwellenwertsuche (3/3 unabhaengig
 # bestaetigt: BAcc-Tuning verschlechtert Hamming Loss/Subset Accuracy trotz
 # besserer Pro-Label-BAcc, weil BAcc eine balancierte, Hamming Loss/Subset
@@ -46,7 +46,7 @@ char_feature_cols <- feature_cols[vapply(train[, ..feature_cols], is.character, 
 if (length(char_feature_cols) > 0) train[, (char_feature_cols) := lapply(.SD, as.factor), .SDcols = char_feature_cols]
 # Labels robust normalisieren - OpenML-Multi-Label-Quellen liefern oft
 # FALSE/TRUE-Faktoren statt 0/1 (zweimal in dieser Session als Falle
-# aufgetreten, siehe REFERENZ_METRIC_TARGET_MISMATCH.md/Session-Notizen).
+# aufgetreten, siehe docs/reference/REFERENZ_METRIC_TARGET_MISMATCH.md/Session-Notizen).
 # NA bleibt NA (weder as.logical(NA) noch as.integer(NA) veraendern das).
 train[, (label_cols) := lapply(.SD, function(x) {
   if (is.logical(x) || is.factor(x)) as.integer(as.logical(as.character(x))) else as.integer(x)
@@ -107,7 +107,7 @@ for (j in seq_along(label_cols)) {
               lbl, length(names(prob_eval)), mean(truth_eval01), n_positive_train, best_thr, acc_default, acc_tuned))
   if (n_positive_train < 10L) {
     cat(sprintf("    HINWEIS: nur %d positive Trainingsbeispiele - Schwellen-Tuning fuer dieses Label\n", n_positive_train))
-    cat("    ist laut REFERENZ_METRIC_TARGET_MISMATCH.md unzuverlaessig (Faustregel: >=10 noetig).\n")
+    cat("    ist laut docs/reference/REFERENZ_METRIC_TARGET_MISMATCH.md unzuverlaessig (Faustregel: >=10 noetig).\n")
   }
 }
 
@@ -129,5 +129,5 @@ cat("\nGespeichert:\n")
 cat("Pro-Label   :", multilabel_per_label_results_path, "\n")
 cat("Zusammenfass.:", multilabel_results_path, "\n")
 cat("\nHinweis: BAcc-Schwellenwert-Tuning (analog 130_threshold_tuning.R) ist HIER\n")
-cat("bewusst NICHT verwendet - siehe REFERENZ_METRIC_TARGET_MISMATCH.md, warum das\n")
+cat("bewusst NICHT verwendet - siehe docs/reference/REFERENZ_METRIC_TARGET_MISMATCH.md, warum das\n")
 cat("Hamming Loss/Subset Accuracy in 3/3 Testfaellen verschlechtert haette.\n")

@@ -2,7 +2,7 @@
 # merge_duckdb_experiment_marts.R -- projektuebergreifender DuckDB-Mart
 # =====================================================================
 # Ergaenzt 170_build_duckdb_experiment_mart.R (projekt-lokal) um die in
-# REFERENZ_DUCKDB_EXPERIMENT_MART.md Abschnitt 4 vorgesehene Variante
+# docs/reference/REFERENZ_DUCKDB_EXPERIMENT_MART.md Abschnitt 4 vorgesehene Variante
 # "template_experiment_mart.duckdb": sammelt `_artifacts/*_results.csv`
 # ueber ALLE Projekte hinweg (R_Workspace/ML_Learning-Wurzeln, gleiche
 # Auto-Discovery wie merge_project_experiments.R/
@@ -13,7 +13,7 @@
 # classif.bacc) wird ueber DuckDBs read_csv_auto(union_by_name=TRUE) geloest
 # - fehlende Spalten werden NULL statt eines Fehlers. `filename=TRUE` liefert
 # den Ursprungspfad, aus dem der Projektname abgeleitet wird (siehe
-# REFERENZ_DUCKDB_EXPERIMENT_MART.md Abschnitt 11: project_name/source_file
+# docs/reference/REFERENZ_DUCKDB_EXPERIMENT_MART.md Abschnitt 11: project_name/source_file
 # muessen bei projektuebergreifenden Marts immer mitgeschrieben werden).
 #
 # Bewusst NUR die *_results.csv-Familie (wie 170) - Rohdaten/Modell-RDS
@@ -21,7 +21,7 @@
 if (!requireNamespace("duckdb", quietly = TRUE)) {
   stop(
     "Paket 'duckdb' ist nicht installiert - dieses Skript ist bewusst ",
-    "optional (siehe REFERENZ_DUCKDB_EXPERIMENT_MART.md). ",
+    "optional (siehe docs/reference/REFERENZ_DUCKDB_EXPERIMENT_MART.md). ",
     "install.packages('duckdb') ausfuehren, dann erneut versuchen."
   )
 }

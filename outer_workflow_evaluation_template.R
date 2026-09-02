@@ -25,7 +25,7 @@ rm(list = ls())
 #    methodisch nicht sinnvoll (Argmax-Neugewichtung aendert nichts an
 #    einer Rangfolgen-Metrik). Sonst: nur klassengewichtetes Training,
 #    kein Multiplier-Schritt - entspricht der bereits in
-#    SYSTEMATIC_EVALUATION.md dokumentierten Konvention dieses Templates
+#    docs/research/SYSTEMATIC_EVALUATION.md dokumentierten Konvention dieses Templates
 #    ("Threshold-Tuning strukturell uebersprungen bei
 #    schwellenwertunabhaengiger Zielmetrik").
 #

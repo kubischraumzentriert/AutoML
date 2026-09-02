@@ -60,7 +60,7 @@ flowchart TD
     AdvVal --> DShift{"Adversarial-Validation-AUC?"}
     DShift -- "um 0.5" --> Calib
     DShift -- "0.6 bis 0.7" --> ShiftCare["Treiber-Spalten vorsichtig behandeln,<br/>CV-Entscheidungen kritischer pruefen"]
-    DShift -- "0.9 oder mehr, strukturell" --> ShiftPlaybook[["REFERENZ_DISTRIBUTION_SHIFT.md<br/>gestufte Zerlegung, ESS-Gate,<br/>Invarianz statt Korrektur"]]
+    DShift -- "0.9 oder mehr, strukturell" --> ShiftPlaybook[["docs/reference/REFERENZ_DISTRIBUTION_SHIFT.md<br/>gestufte Zerlegung, ESS-Gate,<br/>Invarianz statt Korrektur"]]
     ShiftCare --> Calib
     ShiftPlaybook --> Calib
 
@@ -389,7 +389,7 @@ Projekt z.B. `gender` mit p_adj_BH ~1e-297, aber Cramers V nur 0.037).
 
 **Bei hartem oder strukturellem Shift** (AUC ~0.9+, oder wenn die Feature-
 Importance nicht auf einzelne Spalten reduzierbar ist) reicht die reine
-Importance-Betrachtung nicht - dann dem Playbook `REFERENZ_DISTRIBUTION_SHIFT.md`
+Importance-Betrachtung nicht - dann dem Playbook `docs/reference/REFERENZ_DISTRIBUTION_SHIFT.md`
 folgen: gestufte Shift-Zerlegung (roh -> missing-robuste Aggregate -> gleiche
 Achse), ESS-Gate vor Importance-Weighting, Invarianz statt Korrektur, und - der
 zentrale Punkt - die CV kann Shift-Robustheit NICHT bewerten, die Feature-Set-
@@ -410,7 +410,7 @@ Baselines anwenden, aber frueh vormerken:
 - Nach Modell-/Feature-Auswahl OOF-Vorhersagen erzeugen und eine monotone
   Kalibrierung testen.
 
-Fuer Details siehe `REFERENZ_PROBABILITY_CALIBRATION.md`. Wichtigster Punkt:
+Fuer Details siehe `docs/reference/REFERENZ_PROBABILITY_CALIBRATION.md`. Wichtigster Punkt:
 Kalibrierung nie auf denselben Zeilen bewerten, auf denen sie gefittet wurde.
 Platt-Kalibrierung ist:
 
@@ -636,7 +636,7 @@ auf der unberuehrten Bestaetigungsmenge. An 2 unabhaengigen OpenML-
 Datensaetzen verifiziert (bank-marketing/electricity, Standalone-Skripte),
 gegen health_condition regressionsgetestet: Greedy-Ensemble > bestes
 Einzelmodell > gleichgewichteter Blend, siehe `TARGETS.md` fuer die vollen
-Zahlen, `REFERENZ_ENSEMBLE_SELECTION.md` fuer den theoretischen Hintergrund.
+Zahlen, `docs/reference/REFERENZ_ENSEMBLE_SELECTION.md` fuer den theoretischen Hintergrund.
 
 **Ensemble Deploy (`156_train_full_ensemble.R` + `157_predict_ensemble_
 submission.R`)**: schliesst den Loop, wenn Greedy gewinnt. `_train_full_

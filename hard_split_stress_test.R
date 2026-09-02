@@ -1,7 +1,7 @@
 # =============================================================================
 # hard_split_stress_test.R -- P2, JOSS-Technique-Watch-Prototyp #2
 # (2026-08-31, inspiriert durch astartes - Burns et al. 2023, JOSS
-# 10.21105/joss.05996, siehe JOSS_TECHNIQUE_WATCH.md).
+# 10.21105/joss.05996, siehe docs/research/JOSS_TECHNIQUE_WATCH.md).
 # =============================================================================
 # LUECKE, die dieses Modul schliesst: normale (zufaellige) Train/Test-
 # Splits pruefen vor allem INTERPOLATION - ob das Modell innerhalb

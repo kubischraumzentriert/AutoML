@@ -108,7 +108,7 @@ winner <- results[rank_bacc == 1][1]
 md <- c(
   "# Credit-G Portfolio-Warmstart Validation",
   "",
-  "- Pre-registered file: `PORTFOLIO_WARMSTART_PREREG_CREDIT_G.md`",
+  "- Pre-registered file: `docs/research/PORTFOLIO_WARMSTART_PREREG_CREDIT_G.md`",
   "- Project: `openml-credit-g`",
   "- Protocol: 5-fold CV, no tuning, no external data",
   "- Recommended sequence tested: `lightgbm -> ranger -> ensemble`",

@@ -154,7 +154,7 @@ winner <- results[rank_accuracy == 1][1]
 md <- c(
   "# PumpItUp Portfolio-Warmstart Validation",
   "",
-  "- Pre-registered file: `PORTFOLIO_WARMSTART_PREREG_PUMPITUP.md`",
+  "- Pre-registered file: `docs/research/PORTFOLIO_WARMSTART_PREREG_PUMPITUP.md`",
   "- Project: `drivendata-pump-it-up`",
   "- Protocol: 3-fold CV, no tuning, no external data",
   "- Recommended sequence tested: `lightgbm -> ranger -> ensemble`",

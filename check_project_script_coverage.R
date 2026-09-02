@@ -4,7 +4,7 @@ suppressPackageStartupMessages({
   library(data.table)
 })
 
-# Automatisiert, was bei der Pflege von SYSTEMATIC_EVALUATION.md bisher
+# Automatisiert, was bei der Pflege von docs/research/SYSTEMATIC_EVALUATION.md bisher
 # manuell per `ls`/Bash-Schleife je Spalte geprueft wurde: welches Projekt
 # hat welches nummerierte Workflow-Skript tatsaechlich im Ordner? Anlass:
 # genau dieser manuelle Weg fuehrte einmal zu einer echten Fehl-Zuordnung
@@ -23,7 +23,7 @@ suppressPackageStartupMessages({
 # Sorte Fehlzuordnung riskiert, die dieses Skript eigentlich vermeiden soll -
 # FALSE heisst hier also "kein Skript unter dem AKTUELLEN kanonischen Namen
 # gefunden", nicht zwingend "Mechanismus nie angewendet". Solche Alias-Faelle
-# bleiben bewusste manuelle Dokumentation (siehe SYSTEMATIC_EVALUATION.md).
+# bleiben bewusste manuelle Dokumentation (siehe docs/research/SYSTEMATIC_EVALUATION.md).
 #
 # Quellen werden wie in merge_project_experiments.R automatisch unter den
 # bekannten Projekt-Wurzeln gesucht, keine manuell gepflegte Liste.

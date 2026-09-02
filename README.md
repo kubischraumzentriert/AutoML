@@ -108,13 +108,13 @@ einer aufwendigen Blackbox.
 
 ## Mehr Tiefe
 
-- [`REFERENZ_DUCKDB_EXPERIMENT_MART.md`](REFERENZ_DUCKDB_EXPERIMENT_MART.md) — DuckDB als optionaler lokaler Analyse-Mart fuer CSV-/Parquet-Artefakte und Experimentauswertungen.
-- [`REFERENZ_PORTFOLIO_WARMSTART.md`](REFERENZ_PORTFOLIO_WARMSTART.md) — Portfolio-Warmstart aus der zentralen Experiment-DB: `lightgbm`/`ranger` frueh pruefen, Ensemble spaet optional.
+- [`docs/reference/REFERENZ_DUCKDB_EXPERIMENT_MART.md`](docs/reference/REFERENZ_DUCKDB_EXPERIMENT_MART.md) — DuckDB als optionaler lokaler Analyse-Mart fuer CSV-/Parquet-Artefakte und Experimentauswertungen.
+- [`docs/reference/REFERENZ_PORTFOLIO_WARMSTART.md`](docs/reference/REFERENZ_PORTFOLIO_WARMSTART.md) — Portfolio-Warmstart aus der zentralen Experiment-DB: `lightgbm`/`ranger` frueh pruefen, Ensemble spaet optional.
 - [`README_DETAILS.md`](README_DETAILS.md) — vollständige Skriptübersicht (85+ Skripte), alle Baseline-/Tuning-/Ensemble-Ergebnisse im Detail.
 - [`WorkflowDescription.md`](WorkflowDescription.md) — der komplette Ablauf als Mermaid-Diagramm inkl. aller Entscheidungspunkte; auch ohne KI-Unterstützung nachvollziehbar.
 - [`TARGETS.md`](TARGETS.md) — die `targets`-Pipeline (Caching/Reproduzierbarkeit) und die vollständige Entscheidungshistorie.
 - [`adr/`](adr/) — Architekturentscheidungen (warum lokale Projekt-DBs statt einer geteilten Live-DB, R-only-Policy, die ≥2-Projekt-Backport-Regel).
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — wie Beiträge/Bug-Reports/Support-Anfragen in der Praxis gehandhabt werden.
-- [`JOSS_TECHNIQUE_WATCH.md`](JOSS_TECHNIQUE_WATCH.md) — gezielte Suche im JOSS-Paper-Korpus nach Trust-/Reproduzierbarkeits-/Evaluationstechniken, mit ADR-003-Backport-Gate statt Feature Creep.
+- [`docs/research/JOSS_TECHNIQUE_WATCH.md`](docs/research/JOSS_TECHNIQUE_WATCH.md) — gezielte Suche im JOSS-Paper-Korpus nach Trust-/Reproduzierbarkeits-/Evaluationstechniken, mit ADR-003-Backport-Gate statt Feature Creep.
 
 Schwesterprojekt für Regressionsaufgaben: [`AutoML_Regression`](https://github.com/kubischraumzentriert/AutoML_Regression), gleiche Methodik, geteiltes DB-Schema.

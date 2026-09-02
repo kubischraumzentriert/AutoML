@@ -102,11 +102,11 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > (Beispielbefehle, erwartete Ausgaben, Entscheidungsregeln je Phase - auch
 > ohne KI-Unterstuetzung nachvollziehbar) siehe [`WorkflowDescription.md`](WorkflowDescription.md).
 > Fuer Probability-Challenges mit LogLoss/Brier-Anteil siehe ausserdem
-> [`REFERENZ_PROBABILITY_CALIBRATION.md`](REFERENZ_PROBABILITY_CALIBRATION.md):
+> [`docs/reference/REFERENZ_PROBABILITY_CALIBRATION.md`](docs/reference/REFERENZ_PROBABILITY_CALIBRATION.md):
 > OOF-Kalibrierung, Platt-Scaling und die Fairness-Regel "lokal validieren,
 > einmal bestaetigen, dann keine Mikrovarianten ans Leaderboard schicken".
 > Fuer den aus TabRepo/AutoGluon abgeleiteten Portfolio-Warmstart siehe
-> [`REFERENZ_PORTFOLIO_WARMSTART.md`](REFERENZ_PORTFOLIO_WARMSTART.md):
+> [`docs/reference/REFERENZ_PORTFOLIO_WARMSTART.md`](docs/reference/REFERENZ_PORTFOLIO_WARMSTART.md):
 > zentrale Experiment-DB als internes Mini-TabRepo, `lightgbm`/`ranger` als
 > frueher Kern, Ensemble als optionaler spaeter Score-Hebel.
 > Fuer neuronale Tabellenmodelle (FT-Transformer) als Ensemble-Diversitaet siehe
@@ -114,19 +114,19 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > Modell lohnt, und der Python-GPU-Export-Workflow fuer Kaggle.
 > Fuer den theoretischen Hintergrund der `147_error_analysis_ranger_
 > sanity_checks.R`-Tests (Perturbation/Invarianz/Directional Expectation)
-> siehe [`REFERENZ_MODEL_SANITY_CHECKS.md`](REFERENZ_MODEL_SANITY_CHECKS.md):
+> siehe [`docs/reference/REFERENZ_MODEL_SANITY_CHECKS.md`](docs/reference/REFERENZ_MODEL_SANITY_CHECKS.md):
 > Behavioral-Testing-Hintergrund nach Huyen (2022), Mechanik je Test,
 > Ground-Truth-Verifikation, und wann diese Trust-Checks (kein Metrik-Hebel)
 > sich lohnen.
 > Fuer den theoretischen Hintergrund von `148_ensemble_candidate_pool.R` +
 > `149_ensemble_selection.R` siehe
-> [`REFERENZ_ENSEMBLE_SELECTION.md`](REFERENZ_ENSEMBLE_SELECTION.md): Caruana
+> [`docs/reference/REFERENZ_ENSEMBLE_SELECTION.md`](docs/reference/REFERENZ_ENSEMBLE_SELECTION.md): Caruana
 > et al. (2004), warum "greedy", warum ein getrennter Selektions-/
 > Bestaetigungs-Split noetig ist, und die Grenzen der Methode.
 > Fuer die generelle Lehre "Tuning-Ziel muss zur Bewertungsmetrik passen"
 > (3-fach bestaetigt: BAcc↔MCC bei health_condition, RMSE-vs-Devianz bei
 > tweet, BAcc-vs-Hamming-Loss bei Multi-Label) siehe
-> [`REFERENZ_METRIC_TARGET_MISMATCH.md`](REFERENZ_METRIC_TARGET_MISMATCH.md).
+> [`docs/reference/REFERENZ_METRIC_TARGET_MISMATCH.md`](docs/reference/REFERENZ_METRIC_TARGET_MISMATCH.md).
 > Fuer Aufgaben mit MEHREREN nicht-exklusiven Zielspalten (Multi-Label,
 > `label_cols` in `000_config.R` setzen statt `target_col`) siehe
 > `multilabel.R` (Binary Relevance + Accuracy-Threshold-Tuning, an 3
@@ -136,7 +136,7 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 > Fuer die formale Quantifizierung/Herausforderung der Generalisierungsluecke
 > (CV- vs. Test-Score-Verteilung, Referenzbereich aus ungetunten Baselines,
 > nach Jason Brownlees "Data Science Diagnostic Checklist") siehe
-> [`REFERENZ_GENERALIZATION_GAP.md`](REFERENZ_GENERALIZATION_GAP.md) und
+> [`docs/reference/REFERENZ_GENERALIZATION_GAP.md`](docs/reference/REFERENZ_GENERALIZATION_GAP.md) und
 > `136_generalization_gap.R` (nach `090`/`100` ausfuehren - baut den
 > Referenzbereich aus `base_learner_constructors`, die Kandidaten aus deren
 > Tuning-Instanzen). An 2 unabhaengigen OpenML-Projekten verifiziert

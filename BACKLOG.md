@@ -154,7 +154,7 @@ umgesetzt, P1-P3 folgen bei Bedarf in derselben angepassten Form.**
   Probability-/Calibration-Helper vollständig abgearbeitet.**
 - **Probability-/Calibration-Helper getestet (8., letzter Punkt aus
   P0.1) - Fund: es existiert KEIN eigenständiges Modul dafür.**
-  `REFERENZ_PROBABILITY_CALIBRATION.md` ist explizit als reine Referenz
+  `docs/reference/REFERENZ_PROBABILITY_CALIBRATION.md` ist explizit als reine Referenz
   ohne Code-Änderung markiert ("Dies ist eine Referenz, keine
   Template-Code-Änderung"). Der einzige tatsächliche Template-Code zu
   diesem Thema liegt bereits in `db_logging.R` (`calibration_sensitive_
@@ -349,19 +349,19 @@ andere Projekte wäre eine Wiederholung auf einem 2. Datensatz nötig
 ## P1.2 - Status (2026-08-27)
 
 **Ziel laut ChatGPTs korrigiertem Plan**: Experimentwissen verteilt sich
-aktuell auf `TARGETS.md`, `README_DETAILS.md`, `SYSTEMATIC_EVALUATION.md`,
+aktuell auf `TARGETS.md`, `README_DETAILS.md`, `docs/research/SYSTEMATIC_EVALUATION.md`,
 Projekt-READMEs, Statusanker, Commits und die Experiment-DB - eine
 maschinenlesbare "Evidence Registry" als zusaetzliche, strukturierte
 Quelle fuer neue Befunde. Der Plan selbst schreibt ein 3-Schritte-Vorgehen
 vor: "1. nur neue Befunde strukturiert loggen, 2. wichtige historische
-Befunde nachziehen, 3. SYSTEMATIC_EVALUATION.md automatisch erzeugen.
+Befunde nachziehen, 3. docs/research/SYSTEMATIC_EVALUATION.md automatisch erzeugen.
 **Nicht sofort alles migrieren.**"
 
 **Scope dieses Prototyps**: NUR Schritt 1. Schritt 2 (rueckwirkendes
-Nachtragen von `SYSTEMATIC_EVALUATION.md`s ~20 Projekten x 9 Modulen in
+Nachtragen von `docs/research/SYSTEMATIC_EVALUATION.md`s ~20 Projekten x 9 Modulen in
 die Registry) und Schritt 3 (automatische Generierung dieser Datei aus der
 Registry) sind NICHT umgesetzt - beides waere angesichts der Detailtiefe
-von `SYSTEMATIC_EVALUATION.md` (Fussnoten, Korrekturvermerke, Methodik-
+von `docs/research/SYSTEMATIC_EVALUATION.md` (Fussnoten, Korrekturvermerke, Methodik-
 Hinweise je Zelle) ein eigener, erheblich groesserer Arbeitsschritt, den
 ChatGPTs eigener Plan ausdruecklich vertagt.
 
@@ -406,7 +406,7 @@ bestehenden nummerierten Skript - wie bei `validate_config()` (P0.3) ein
 manuell aufzurufendes Werkzeug, kein Teil der Pipeline.
 
 **Naechster moeglicher Schritt (nicht angefordert)**: Schritt 2 (historische
-Befunde aus `SYSTEMATIC_EVALUATION.md` in die Registry nachtragen) waere
+Befunde aus `docs/research/SYSTEMATIC_EVALUATION.md` in die Registry nachtragen) waere
 die logische Fortsetzung, sollte aber als eigener, bewusst geplanter
 Arbeitsschritt behandelt werden statt beilaeufig mit P1.2 vermischt zu
 werden.
@@ -654,7 +654,7 @@ Nutzer sie konkretisiert (der Plan selbst liefert dafuer keine
 verwertbare Spezifikation - ein Umsetzungsversuch ohne Konkretisierung
 haette geraten statt spezifiziert).
 
-**Umgesetzt**: neue, reine Doku-Datei `MODEL_HYPOTHESIS_CRITERIA.md` -
+**Umgesetzt**: neue, reine Doku-Datei `docs/research/MODEL_HYPOTHESIS_CRITERIA.md` -
 kodifiziert eine Regel, die dieses Projekt bereits informell befolgt hat
 (kein neues Verhalten, nur explizit aufgeschrieben). 8 Pflichtpunkte vor
 jedem neuen Modellkandidaten-Test (Hypothese/Datensatztyp/Baseline/
@@ -722,7 +722,7 @@ nachziehen").
 **Umgesetzt**: neues, einmaliges Migrations-Skript
 `migrate_systematic_evaluation_to_evidence.R` (Repo-Wurzel, kein Teil der
 nummerierten Pipeline, analog zu `merge_project_experiments.R`) - liest
-die grosse Projekt-x-Modul-Tabelle aus `SYSTEMATIC_EVALUATION.md` (Stand
+die grosse Projekt-x-Modul-Tabelle aus `docs/research/SYSTEMATIC_EVALUATION.md` (Stand
 "alle Zellen aufgeloest", 2026-08-15) und loggt jede Zelle mit einem
 echten Legenden-Symbol (✓/✓✓/~/✗) als eigene `evidence`-Zeile via
 `db_log_evidence()`.
@@ -755,11 +755,11 @@ UND Threshold-Tuning-Kernbefunde, `s6e8`s Live-Kaggle-Bestaetigung, der
 wdbc-plateau-test-Plateau-Fund), 2 `negative` (s6e5/s5e12s abgelehnte
 Ensemble-Alternativen), 1 `neutral` (s5e12s strukturell uebersprungenes
 Threshold-Tuning). `evidence_source` einheitlich auf
-"SYSTEMATIC_EVALUATION.md (historischer Backfill, P1.2 Schritt 2,
+"docs/research/SYSTEMATIC_EVALUATION.md (historischer Backfill, P1.2 Schritt 2,
 2026-08-27)" gesetzt, damit die Migration in der Registry selbst als
 eigene, unterscheidbare Charge erkennbar bleibt.
 
-**`SYSTEMATIC_EVALUATION.md` selbst bleibt unveraendert** - dieses
+**`docs/research/SYSTEMATIC_EVALUATION.md` selbst bleibt unveraendert** - dieses
 Skript kopiert Befunde IN die Registry, ersetzt die Markdown-Tabelle
 nicht (das waere Schritt 3, automatische Generierung, weiterhin nicht
 umgesetzt).
@@ -788,7 +788,7 @@ Full-Workflow Outer Evaluation).
    `capture_run_provenance()` standardmaessig in neue echte Runs einbinden
    (NICHT rueckwirkend historische Runs nachbessern).
 3. **Evidence Registry zur Source of Truth machen** (P1) - P1.2 Schritt 3:
-   `SYSTEMATIC_EVALUATION.md` aus der Registry generieren statt manuell
+   `docs/research/SYSTEMATIC_EVALUATION.md` aus der Registry generieren statt manuell
    pflegen.
 
 **Vorgeschlagene Reihenfolge (Phasen A-E)**: A) Dokumentation korrigieren +
@@ -807,7 +807,7 @@ Evidence-Registry-Generator (P1.2 Schritt 3); E) Publikationsvorbereitung
 2. ~~AGENTS-Publikationsstatus korrigieren~~ **ERLEDIGT** - `AGENTS.md`
    sagte faelschlich, es fehle "eine breite systematische Evaluation"
    (die MODULWEISE Evaluation ist laengst abgeschlossen, siehe
-   `SYSTEMATIC_EVALUATION.md`). Korrigiert: fehlt ist stattdessen eine
+   `docs/research/SYSTEMATIC_EVALUATION.md`). Korrigiert: fehlt ist stattdessen eine
    BREITE Full-Workflow Outer Evaluation (Hebel 1 oben).
 3. ~~Classification-/Regression-DB-Discovery sauber trennen~~
    **ERLEDIGT** - neue Funktionen `detect_problem_type(db_path)` und
@@ -891,7 +891,7 @@ Runs mit Provenienz - explizit vom Bewertungsdokument ausgeschlossen
 ### Phase C - Status (2026-08-28): Outer Evaluation auf 7 Datensaetze/Kategorien
 
 **Sprachliche Praezisierung (2026-08-29, siehe
-[`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md))**: alles unten
+[`docs/research/EVALUATION_LEVELS.md`](docs/research/EVALUATION_LEVELS.md))**: alles unten
 Beschriebene ist **Level 1 (Component Workflow)** - gewichtetes Training
 + ggf. Multiplier-Korrektur. "Full-Workflow"/"der Workflow generalisiert"
 in den urspruenglichen Formulierungen unten meinte immer schon genau
@@ -938,7 +938,7 @@ strukturelle Unterschiede, die eine 1:1-Kopie unehrlich gemacht haetten:
   (schwellenwertunabhaengig) - bei diesen Projekten fehlt
   `class_multiplier_tuning.R` im Projektordner UEBERHAUPT, weil
   Multiplier-Tuning fuer eine Rangfolgen-Metrik methodisch nicht greift
-  (bereits so in `SYSTEMATIC_EVALUATION.md` dokumentiert: "Threshold-
+  (bereits so in `docs/research/SYSTEMATIC_EVALUATION.md` dokumentiert: "Threshold-
   Tuning strukturell uebersprungen"). Ein hartkodierter BAcc-Score
   (wie im P1.1-Original) haette bei diesen Projekten die FALSCHE Metrik
   optimiert/verglichen.
@@ -1070,7 +1070,7 @@ behoben". Beide Befunde in die Evidence Registry geloggt.
 
 ### Phase D - Status (2026-08-28): Evidence Registry als Quelle fuer die Ergebnistabelle
 
-**Ziel laut Bewertungsdokument (Punkte 13-15)**: `SYSTEMATIC_EVALUATION.md`
+**Ziel laut Bewertungsdokument (Punkte 13-15)**: `docs/research/SYSTEMATIC_EVALUATION.md`
 aus der Evidence Registry generieren, manuelle Doppelpflege beenden,
 Publikations-Tabellen aus der Registry erzeugen (P1.2 Schritt 3, bislang
 bewusst vertagt).
@@ -1082,16 +1082,16 @@ einander zu ueberschreiben), `render_systematic_evaluation_markdown(con)`
 (Markdown-Tabelle, bekannte 9 Original-Module zuerst, alles Weitere
 alphabetisch danach) und `generate_systematic_evaluation_file(con,
 out_path)`. Ausgabe: neue Datei
-[`SYSTEMATIC_EVALUATION_GENERATED.md`](SYSTEMATIC_EVALUATION_GENERATED.md).
+[`docs/research/SYSTEMATIC_EVALUATION_GENERATED.md`](docs/research/SYSTEMATIC_EVALUATION_GENERATED.md).
 
 **Scope-Entscheidung (additiv, NICHT die bestehende Datei ersetzt)**: die
-generierte Tabelle ERSETZT `SYSTEMATIC_EVALUATION.md` NICHT - die
+generierte Tabelle ERSETZT `docs/research/SYSTEMATIC_EVALUATION.md` NICHT - die
 handgepflegte Datei enthaelt redaktionelles Material (Fussnoten,
 Korrekturvermerke wie die IQR-Nenner-Korrektur, einen ganzen
 Diskussionsabschnitt "Was diese erste Fassung zeigt"), das eine reine
 DB-Pivot-Tabelle strukturell nicht abbilden kann. Ein einmaliges
 Ueberschreiben in diesem Schritt haette dieses Material unwiederbringlich
-verloren. Stattdessen: ein Hinweis am Kopf von `SYSTEMATIC_EVALUATION.md`
+verloren. Stattdessen: ein Hinweis am Kopf von `docs/research/SYSTEMATIC_EVALUATION.md`
 verweist auf die generierte Version. "Manuelle Doppelpflege beenden" ist
 damit als LANGFRISTIGES Ziel dokumentiert, nicht in diesem Schritt
 erzwungen - konsistent mit dem bereits bei P1.2 Schritt 1 etablierten
@@ -1100,7 +1100,7 @@ Muster ("nicht sofort alles migrieren").
 **Konkreter, ueberpruefbarer Beleg, dass der Generator funktioniert**:
 gegen die ECHTE `health_condition`-Registry ausgefuehrt - die erzeugte
 Tabelle reproduziert alle bislang manuell gepflegten Zellen korrekt UND
-zeigt bereits Inhalte, die `SYSTEMATIC_EVALUATION.md` noch nicht kennt
+zeigt bereits Inhalte, die `docs/research/SYSTEMATIC_EVALUATION.md` noch nicht kennt
 (die neue Spalte `outer_workflow_evaluation` aus Phase C, inkl. des
 Cross-Projekt-Meta-Befunds) - ein direkter, praktischer Beleg fuer den
 Wert der Registry ggue. der rein manuellen Pflege.
@@ -1112,7 +1112,7 @@ Spaltenreihenfolge bekannt-zuerst, Hinweistext bei leerer Registry,
 Datei-Schreiben). Volle Suite weiterhin gruen (jetzt 16 Testdateien).
 
 **Bewusst NICHT umgesetzt**: das tatsaechliche Zusammenfuehren beider
-Dokumente (redaktionelles Material aus `SYSTEMATIC_EVALUATION.md`
+Dokumente (redaktionelles Material aus `docs/research/SYSTEMATIC_EVALUATION.md`
 manuell als `evid_notes`/Fussnoten in die Registry uebertragen, danach
 die generierte Version zur einzigen Quelle machen) - das ist der
 naechste Schritt auf dem Weg zu "Doppelpflege beenden", aber ein
@@ -1127,16 +1127,16 @@ aus den Ergebnissen ableiten.
 
 **Umgesetzt**:
 1. ~~Benchmark-Protokoll einfrieren~~ **ERLEDIGT** - neue Datei
-   `BENCHMARK_PROTOCOL.md`, "Version 1": fixiert exakt, was Phase C
+   `docs/research/BENCHMARK_PROTOCOL.md`, "Version 1": fixiert exakt, was Phase C
    gemacht hat (3 Outer Folds, 3 Vergleichs-Arme, generisches
    `msr()`-Scoring, die bedingte Multiplier-Tuning-Regel, erlaubte
    Abweichungen fuer aeltere Projekte) als verbindliche Referenz fuer
    jeden weiteren Datensatz. Jede zusaetzliche Abweichung braucht eine
    explizite Version 2 statt stiller Drift.
 2. ~~Ablationsstudien definieren~~ **ERLEDIGT** - neue Datei
-   `ABLATION_STUDIES_PLAN.md`, 4 Ablationen (A1 Gewichtung+Multiplier,
+   `docs/ablations/ABLATION_STUDIES_PLAN.md`, 4 Ablationen (A1 Gewichtung+Multiplier,
    A2 Leak-Audit, A3 Drift-/Stabilitaets-Checks, A4 Ensemble Selection),
-   jeweils nach dem `MODEL_HYPOTHESIS_CRITERIA.md`-Schema
+   jeweils nach dem `docs/research/MODEL_HYPOTHESIS_CRITERIA.md`-Schema
    (Hypothese/Datensatztyp/Baseline/Metrik/Budget/Abbruchkriterium) PLUS
    einer Rollen-Zuordnung (Score/Trust/Fehlervermeidung, wie vom
    Bewertungsdokument gefordert). **Wichtiger Befund beim Definieren**:
@@ -1166,9 +1166,9 @@ automatisch angestossen, nur dokumentiert als naechstmoegliche Schritte.
 
 ## Ablation A2 (Leak-Audit) - Status (2026-08-28)
 
-Auf Nutzeranfrage ausgefuehrt: die in `ABLATION_STUDIES_PLAN.md`
+Auf Nutzeranfrage ausgefuehrt: die in `docs/ablations/ABLATION_STUDIES_PLAN.md`
 definierte Ablation A2 (Full Workflow vs. ohne Leak-Audit) ist
-abgeschlossen - siehe [`ABLATION_A2_LEAK_AUDIT.md`](ABLATION_A2_LEAK_AUDIT.md)
+abgeschlossen - siehe [`docs/ablations/ABLATION_A2_LEAK_AUDIT.md`](docs/ablations/ABLATION_A2_LEAK_AUDIT.md)
 fuer die volle Auswertung. Wie geplant ueberwiegend Dokumentations-
 Zusammenstellung bereits vorhandener Befunde (kein neues Modelltraining -
 der Leak-Audit ist kein Score-Hebel). 4 Kategorien mit konkreten Zahlen:
@@ -1184,11 +1184,11 @@ moderatere Redundanz). Abbruchkriterium mehrfach uebererfuellt.
 
 ## Ablation A3 (Drift-/Stabilitaets-Checks) - Status (2026-08-28)
 
-Auf Nutzeranfrage ausgefuehrt: die in `ABLATION_STUDIES_PLAN.md`
+Auf Nutzeranfrage ausgefuehrt: die in `docs/ablations/ABLATION_STUDIES_PLAN.md`
 definierte Ablation A3 (Full Workflow vs. ohne Adversarial Validation/
 Split-Size-Sensitivity/Learning-Curve/Seed-Stabilitaet/Generalisierungs-
 luecke) ist abgeschlossen - siehe
-[`ABLATION_A3_DRIFT_STABILITY_CHECKS.md`](ABLATION_A3_DRIFT_STABILITY_CHECKS.md).
+[`docs/ablations/ABLATION_A3_DRIFT_STABILITY_CHECKS.md`](docs/ablations/ABLATION_A3_DRIFT_STABILITY_CHECKS.md).
 Wie geplant Dokumentations-Zusammenstellung, kein neues Modelltraining.
 Kernbefunde: `geoai-aquaculture` (extremer Covariate Shift, aenderte die
 Methodenwahl weg von Reweighting hin zu Invarianz), `openml-credit-g`
@@ -1197,7 +1197,7 @@ selbst korrigiert - zeigt, dass das Template auch eigene Kalibrierungs-
 fehler findet, nicht nur externe Probleme), eine kontrollierte
 Generalisierungsluecke-Validierung ("Winner's Curse", z=-3.12 korrekt
 erkannt), sowie durchgaengige "korrekt still"-Bestaetigungen ohne falsche
-Alarme. Damit sind alle 4 in `ABLATION_STUDIES_PLAN.md` definierten
+Alarme. Damit sind alle 4 in `docs/ablations/ABLATION_STUDIES_PLAN.md` definierten
 Ablationen (A1-A4) bearbeitet - A1/A4 waren bereits durch bestehende
 Ergebnisse beantwortet, A2/A3 wurden jetzt als eigene Dokumente
 ausgearbeitet.
@@ -1292,12 +1292,12 @@ Rohentwurf).
 
 1. ~~Begriffe `workflow_ranger`/`model-selection workflow`/`full AutoML
    process` klar trennen~~ **ERLEDIGT** - neue Datei
-   [`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md) definiert die 3 Ebenen
+   [`docs/research/EVALUATION_LEVELS.md`](docs/research/EVALUATION_LEVELS.md) definiert die 3 Ebenen
    praezise und legt fest: alles bisher Gemessene (P1.1, Phase C,
    Multiplier-Nachpruefung) ist Level 1, ueber Level 2/3 liegt keine
    Evidenz vor.
 2. ~~aktuelle Dokumentation entsprechend anpassen~~ **ERLEDIGT** -
-   `BENCHMARK_PROTOCOL.md` (Kopf-Hinweis "Level 1"), `AGENTS.md`
+   `docs/research/BENCHMARK_PROTOCOL.md` (Kopf-Hinweis "Level 1"), `AGENTS.md`
    (Paper-Story-Zitat um die Level-1-Einschraenkung ergaenzt, explizit
    "ueber Level 2/3 liegt keine Evidenz vor" statt es zu verschweigen),
    `BACKLOG.md` (dieser Abschnitt + Praezisierung am Kopf des
@@ -1307,11 +1307,11 @@ Rohentwurf).
    Paper-Story-Zitat wurde umformuliert, nicht nur ergaenzt (kein
    unqualifiziertes "der Workflow generalisiert" mehr im Fliesstext).
 
-**Bewusst NICHT geaendert**: `ABLATION_STUDIES_PLAN.md`/die 2
+**Bewusst NICHT geaendert**: `docs/ablations/ABLATION_STUDIES_PLAN.md`/die 2
 ausgearbeiteten Ablations-Dokumente (A2/A3) - die behandeln einzelne
 Diagnose-Module (Leak-Audit, Drift-/Stabilitaets-Checks), nicht die
 "Workflow generalisiert"-Aussage, die Level-Frage betrifft sie nicht
-direkt (siehe `EVALUATION_LEVELS.md`s eigene Begruendung dafuer).
+direkt (siehe `docs/research/EVALUATION_LEVELS.md`s eigene Begruendung dafuer).
 
 ### P1 - Status (2026-08-29): externer Benchmark (Auswahl)
 
@@ -1319,7 +1319,7 @@ direkt (siehe `EVALUATION_LEVELS.md`s eigene Begruendung dafuer).
 
 ~~Einschlusskriterien definieren~~/~~Dataset-Liste vorab einfrieren~~/
 ~~keine Auswahl anhand bereits bekannter Modellperformance~~ **ERLEDIGT**
-- siehe [`EXTERNAL_BENCHMARK_SET.md`](EXTERNAL_BENCHMARK_SET.md). Quelle:
+- siehe [`docs/research/EXTERNAL_BENCHMARK_SET.md`](docs/research/EXTERNAL_BENCHMARK_SET.md). Quelle:
 [OpenML-CC18](https://www.openml.org/search?type=study&study_type=task&id=99)
 (72 extern kuratierte Klassifikations-Datensaetze, per OpenML-API
 abgerufen). Kriterien (500-20.000 Instanzen, <=100 Features, 2-10
@@ -1351,7 +1351,7 @@ Fuer alle 6 eingefrorenen Datensaetze: Projekt-Setup via `mlr3oml`
 `outer_workflow_evaluation_template.R` aus dem Template, uniforme
 Primaermetrik `classif.bacc`/`classif.mcc` (Template-Standardkonvention).
 Alle 6 Projekte in `ML_Learning` angelegt und lokal committet (kein
-Remote). Level-1-Protokoll (`BENCHMARK_PROTOCOL.md`) unveraendert
+Remote). Level-1-Protokoll (`docs/research/BENCHMARK_PROTOCOL.md`) unveraendert
 angewendet.
 
 **Ergebnis (alle 6, `workflow_ranger` vs. beste Baseline, BAcc)**:
@@ -1402,7 +1402,7 @@ Evidence Registry geloggt.**
 
 ~~tuned Ranger~~/~~tuned LightGBM~~/~~ggf. Best Single Tuned Model~~/
 ~~Compute-Budget dokumentieren~~/~~Workflow gegen diese Baselines
-vergleichen~~ **ERLEDIGT** - siehe `BENCHMARK_PROTOCOL.md` Version 2 und
+vergleichen~~ **ERLEDIGT** - siehe `docs/research/BENCHMARK_PROTOCOL.md` Version 2 und
 [`outer_workflow_evaluation_v2_fair_baselines.R`](outer_workflow_evaluation_v2_fair_baselines.R).
 3 neue Arme (`tuned_ranger`, `tuned_lightgbm`, `best_single_tuned_model`,
 je 15 Random-Search-/MBO-Evals, Inner-Holdout(0.75) INNERHALB des
@@ -1456,7 +1456,7 @@ Registry geloggt.
 **Nutzerentscheidung**: "mach weiter mit P2", dann per `AskUserQuestion`
 "Nur 1-2 Datensaetze zuerst (Empfehlung)" fuer den Umfang.
 
-Neues Konzept-Dokument [`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md)
+Neues Konzept-Dokument [`docs/research/EVALUATION_LEVELS.md`](docs/research/EVALUATION_LEVELS.md)
 praezisiert: Level 1 = Component Workflow (Gewichtung + optionale
 Multiplier-Korrektur - das ist ALLES, was bisher unter "Outer Evaluation"
 lief, inkl. Phase C und P1/v1/v2). Level 2 = Model-Selection Workflow
@@ -1523,7 +1523,7 @@ Alle 6 Ergebnisse in die Evidence Registry geloggt (Rolle `score_lever`,
 Status `core_finding`).
 
 **Offen**: P2s zweite Haelfte ("Evidence Registry finalisieren" /
-`SYSTEMATIC_EVALUATION.md`-Struktur) - auf explizite Nutzeranweisung. Ein
+`docs/research/SYSTEMATIC_EVALUATION.md`-Struktur) - auf explizite Nutzeranweisung. Ein
 groesseres Tuning-Budget fuer Level 2 (aktuell nur 10 Evals/Arm) koennte
 das Bild veraendern, ist aber nicht getestet.
 
@@ -1535,14 +1535,14 @@ das Bild veraendern, ist aber nicht getestet.
 Session (externes Benchmark-Set, faire Baselines, Level-2-Rollout - alle
 direkt in die zentrale `experiments.db` geloggt, nicht in
 Projekt-lokale DBs, siehe `evidence_registry_summary()`-Check) waren noch
-nicht in [`SYSTEMATIC_EVALUATION_GENERATED.md`](SYSTEMATIC_EVALUATION_GENERATED.md)
+nicht in [`docs/research/SYSTEMATIC_EVALUATION_GENERATED.md`](docs/research/SYSTEMATIC_EVALUATION_GENERATED.md)
 enthalten (zuletzt generiert 2026-08-28, vor P1/P2). `generate_
 systematic_evaluation_file()` erneut ausgefuehrt - die Datei enthaelt
 jetzt alle 6 externen CC18-Projekte mit ihren `outer_workflow_evaluation`-
 Zellen (v1/v2/v3 zusammengefasst, da dieselbe Modul-Spalte).
 
 **Schritt 2 (Entscheidung "manuelle Tabelle abschaffen?")**: geprueft,
-ob `SYSTEMATIC_EVALUATION.md` (770 Zeilen, handgepflegte 9-Modul-Tabelle
+ob `docs/research/SYSTEMATIC_EVALUATION.md` (770 Zeilen, handgepflegte 9-Modul-Tabelle
 + dichte redaktionelle Diskussion je Spalte, Korrekturvermerke,
 Fussnoten) durch die generierte Version ersetzt werden kann.
 **Entscheidung: NEIN, nicht jetzt** - die redaktionelle Dichte des
@@ -1554,7 +1554,7 @@ Tabelle) oder den redaktionellen Mehrwert kappen wuerde - das widerspraeche
 der Session-Konvention "additive/verlustfreie Aenderungen vor
 destruktiven Umbauten". Stattdessen: **klare Arbeitsteilung
 formalisiert** (siehe aktualisierter Hinweis-Absatz oben in
-`SYSTEMATIC_EVALUATION.md`) - die manuelle Tabelle bleibt massgeblich fuer
+`docs/research/SYSTEMATIC_EVALUATION.md`) - die manuelle Tabelle bleibt massgeblich fuer
 die urspruenglichen 9 Trust-/Diagnose-Module, waehrend ALLES rund um
 `outer_workflow_evaluation` (Phase C, P1, P2) nur noch ueber die
 generierte Datei gepflegt wird und dort NICHT mehr manuell nachgezogen
@@ -1630,7 +1630,7 @@ Nutzeranweisung, deutlich groesserer, eigenstaendiger Arbeitsschritt.
 
 **Nutzeranfrage**: "mach weiter mit dem Paper-Rohentwurf".
 
-Neue Datei [`PAPER_DRAFT.md`](PAPER_DRAFT.md) - erster vollstaendiger
+Neue Datei [`docs/research/PAPER_DRAFT.md`](docs/research/PAPER_DRAFT.md) - erster vollstaendiger
 Durchgang, EXPLIZIT als DRAFT markiert. Auf Englisch geschrieben (Standard
 fuer die anvisierten Venues), obwohl das Repo selbst auf Deutsch
 dokumentiert ist - eine bewusste, im Dokument selbst begruendete
@@ -1640,7 +1640,7 @@ Entscheidung, kein Widerspruch zur sonstigen Repo-Sprache.
 Trust-Layer, ADR-003-Governance, CI/Tests), Related Work (**bewusst nur
 Platzhalter** - eine echte Literaturrecherche wurde NICHT gemacht, das
 Dokument sagt das explizit statt es zu verschleiern), die 3
-Evaluations-Ebenen (Section 4, direkt aus `EVALUATION_LEVELS.md`), Level-1-
+Evaluations-Ebenen (Section 4, direkt aus `docs/research/EVALUATION_LEVELS.md`), Level-1-
 Ergebnis (Section 5, Phase C + externes Benchmark-Set + faire Baselines -
 die praezise, metrik-bedingte Kernaussage), Level-2-Prototyp als
 ausdruecklich NEGATIVES Ergebnis (Section 6), zwei Trust-Layer-Ablationen
@@ -1653,8 +1653,8 @@ NICHT verwischen darf), Conclusion.
 
 **Jede konkrete Zahl im Entwurf stammt direkt aus bereits bestehenden,
 gepruesften Repo-Dokumenten** (`BACKLOG.md`, `AGENTS.md`,
-`EVALUATION_LEVELS.md`, `BENCHMARK_PROTOCOL.md`,
-`EXTERNAL_BENCHMARK_SET.md`, beide Ablationsdokumente) - keine neue
+`docs/research/EVALUATION_LEVELS.md`, `docs/research/BENCHMARK_PROTOCOL.md`,
+`docs/research/EXTERNAL_BENCHMARK_SET.md`, beide Ablationsdokumente) - keine neue
 Recherche, kein neuer Code-Lauf, reine Syntheseleistung. Ein
 "How to use this draft"-Abschnitt am Ende benennt explizit, was noch
 menschliche Entscheidungen braucht (Ziel-Venue, echte Literaturrecherche,
@@ -1668,7 +1668,7 @@ zwingend erforderlich, aus Vorsicht trotzdem verifiziert (weiterhin
 Damit ist die GESAMTE P0-P3-Roadmap des dritten Bewertungsdokuments
 (2026-08-29) abgearbeitet.
 
-### PAPER_DRAFT.md - Literaturrecherche fuer Section 3 (2026-08-29)
+### docs/research/PAPER_DRAFT.md - Literaturrecherche fuer Section 3 (2026-08-29)
 
 **Nutzeranfrage**: "literaturrecherche fuer Section 3 anfangen" - einer
 der beiden im Draft selbst als offen benannten Punkte (der andere:
@@ -1680,7 +1680,7 @@ Erinnerungs-Zitate), gegliedert in 6 thematische Abschnitte -
 AutoML-Systeme (Auto-sklearn/Feurer 2015, AutoGluon-Tabular/Erickson
 2020, das AutoML-Buch/Hutter/Kotthoff/Vanschoren 2019), Benchmark-
 Methodik (OpenML-CC18/Bischl 2021, "An Open Source AutoML Benchmark"/
-Gijsbers 2019 - direkt relevant fuer die eigene `BENCHMARK_PROTOCOL.md`-
+Gijsbers 2019 - direkt relevant fuer die eigene `docs/research/BENCHMARK_PROTOCOL.md`-
 Disziplin), Daten-Leakage/Dataset-Shift (Kaufman/Rosset/Perlich 2011,
 Quinonero-Candela et al. 2009 - direkt relevant fuer Section 7.1/7.2),
 Reproduzierbarkeit/Testing (Pineau et al. 2021, Gundersen/Kjensmo 2018,
@@ -1710,7 +1710,7 @@ Validation-Zitations-Entscheidung).
 Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
 vorsichtshalber verifiziert (weiterhin 322/322 gruen).
 
-### PAPER_DRAFT.md - Ziel-Venue festgelegt: JOSS (2026-08-29)
+### docs/research/PAPER_DRAFT.md - Ziel-Venue festgelegt: JOSS (2026-08-29)
 
 **Nutzeranfrage**: "ziel-venue festlegen", per `AskUserQuestion`
 beantwortet mit "JOSS (Software-Paper, Empfehlung)" (Alternativen waren
@@ -1722,7 +1722,7 @@ SOFTWARE, kein vollstaendiges empirisches Paper - die Einreichung ist
 ein kurzes `paper.md` (750-1750 Woerter: Summary, Statement of Need,
 Comparison to existing software, Acknowledgements) mit YAML-Header
 (Titel/Autoren/Affiliations/Tags) und einer separaten `paper.bib`.
-`PAPER_DRAFT.md` (der bisherige 9-Abschnitte-Volltext) ist damit NICHT
+`docs/research/PAPER_DRAFT.md` (der bisherige 9-Abschnitte-Volltext) ist damit NICHT
 mehr die Einreichung selbst, sondern dient als der "extended technical
 report", auf den `paper.md` fuer die volle Level-1/2-Auswertung
 verweist - explizit als solcher umdeklariert, keine Loeschung.
@@ -1733,7 +1733,7 @@ Neuer Ordner `joss/`:
   ORCID-Platzhaltern (bewusst NICHT erfunden, explizit als `TODO`
   markiert)
 - [`joss/paper.bib`](joss/paper.bib) - 6 BibTeX-Eintraege (Teilmenge der
-  14 Quellen aus `PAPER_DRAFT.md`s Section 3 - JOSS-Papers zitieren
+  14 Quellen aus `docs/research/PAPER_DRAFT.md`s Section 3 - JOSS-Papers zitieren
   sparsam, sind keine Literaturuebersicht)
 - [`joss/README.md`](joss/README.md) - dokumentiert die Rollenteilung
   und listet explizit, was VOR einer echten Einreichung noch fehlt
@@ -1741,7 +1741,7 @@ Neuer Ordner `joss/`:
   Lizenzdatei/Contributing-Guidelines noch nicht gegen JOSS-Kriterien
   verifiziert -, lokal kompilieren, tatsaechlich einreichen)
 
-`PAPER_DRAFT.md`s Kopf-Status und "How to use this draft" Punkt 1
+`docs/research/PAPER_DRAFT.md`s Kopf-Status und "How to use this draft" Punkt 1
 entsprechend aktualisiert (Ziel-Venue jetzt "DECIDED", nicht mehr offen).
 
 **Bewusst nicht erledigt**: keiner der in `joss/README.md` gelisteten
@@ -1763,7 +1763,7 @@ entsprechend aktualisiert (Punkt 1 jetzt "DONE"). Die
 Acknowledgements-Sektion bleibt bewusst ein offener `TODO` - nichts
 wurde hineingeraten.
 
-### PAPER_DRAFT.md/joss/ - JOSS-Repo-Checkliste geprueft + Lizenz ergaenzt (2026-08-29)
+### docs/research/PAPER_DRAFT.md/joss/ - JOSS-Repo-Checkliste geprueft + Lizenz ergaenzt (2026-08-29)
 
 **Nutzeranfrage**: "JOSS-Repo-Checkliste pruefen", dann "welche Lizenz
 empfiehlst Du", dann "ja, MIT eintragen".
@@ -1929,7 +1929,7 @@ NICHT von einem Nulleffekt unterscheidbar. Demsar selbst empfiehlt fuer
 den Wilcoxon-Test ~8-10 Datensaetze fuer ausreichende Power - eine
 echte Stichprobengroessen-Einschraenkung, kein Kunstfehler.
 
-**In `PAPER_DRAFT.md` eingearbeitet**:
+**In `docs/research/PAPER_DRAFT.md` eingearbeitet**:
 - Section 6 (Level-2-Negativbefund): der formale Test ergaenzt (nicht
   ersetzt) die informelle 3/3-Zaehlung, mit der expliziten Begruendung,
   warum das wichtig ist ("a small, cherry-pickable set of deltas can
@@ -2009,7 +2009,7 @@ zu lassen). Mehr Budget aendert, WELCHE Datensaetze gewinnen, nicht OB
 Level 2 im Aggregat gewinnt. Alle 7 neuen Ergebnisse (6 Datensaetze +
 der aggregierte Vergleichstest) in die Evidence Registry geloggt.
 
-**In `PAPER_DRAFT.md` eingearbeitet**: neuer Absatz in Section 6 (nach
+**In `docs/research/PAPER_DRAFT.md` eingearbeitet**: neuer Absatz in Section 6 (nach
 dem urspruenglichen Signifikanztest), Limitations-Punkt zum Tuning-
 Budget aktualisiert (war "untested", ist jetzt "getestet, kein Effekt
 bei 3x - groessere Budgets als 30 bleiben ungetestet").
@@ -2058,7 +2058,7 @@ externes Benchmark-Set erfordern als die hier verwendeten 6 Datensaetze -
 bewusst als offene Grenze benannt statt eine schwache Korrelation
 ueberzuinterpretieren.
 
-**In `PAPER_DRAFT.md` eingearbeitet**: neuer Absatz am Ende von
+**In `docs/research/PAPER_DRAFT.md` eingearbeitet**: neuer Absatz am Ende von
 Section 6, der diese ehrliche Schlussfolgerung explizit zieht statt den
 Versuch zu verschweigen.
 
@@ -2087,15 +2087,15 @@ Dokumentationskonsistenz und der Schaerfung der Publikationsstrategie".
 
 **Wichtigster konkreter Kritikpunkt**: Dokumentationsdrift - mehrere
 zentrale Dokumente hinken der tatsaechlichen Software-Entwicklung
-hinterher (konkrete Beispiele: `EVALUATION_LEVELS.md`s Roadmap-Abschnitt
-sagte noch "P1/P2/P3 offen", `EXTERNAL_BENCHMARK_SET.md` sagte noch
+hinterher (konkrete Beispiele: `docs/research/EVALUATION_LEVELS.md`s Roadmap-Abschnitt
+sagte noch "P1/P2/P3 offen", `docs/research/EXTERNAL_BENCHMARK_SET.md` sagte noch
 "Noch NICHT ausgefuehrt" - beides laengst ueberholt). Weitere Punkte:
 JOSS-Draft-Sprachgebrauch ("package" vs. "template/software"
 uneinheitlich), Evidence-Registry-Claim zu pauschal formuliert
 (verschweigt die Arbeitsteilung manuell/generiert).
 
 **Vorgeschlagene neue Roadmap**: P0 Dokumentationskonsistenz (guenstig),
-P1 `JOSS_TECHNIQUE_WATCH.md` + optionale Research-Benchmark-Erweiterung
+P1 `docs/research/JOSS_TECHNIQUE_WATCH.md` + optionale Research-Benchmark-Erweiterung
 auf 10-15 Datensaetze (teurer), P2 erster JOSS-inspirierter
 Forschungsprototyp (VeridicalFlow/PCS-Decision-Stability oder
 astartes/schwierige Splits), P3 externe Adoption vorbereiten.
@@ -2106,15 +2106,15 @@ astartes/schwierige Splits), P3 externe Adoption vorbereiten.
 
 Alle 3 konkret benannten Faelle behoben:
 
-1. **`EVALUATION_LEVELS.md`**: Roadmap-Abschnitt ("Bezug zur neuen
+1. **`docs/research/EVALUATION_LEVELS.md`**: Roadmap-Abschnitt ("Bezug zur neuen
    Roadmap") von "P1/P2/P3 Noch offen" auf den tatsaechlichen Stand
    korrigiert (alle 3 erledigt, mit Verweisen auf die jeweiligen
    Ergebnisdokumente).
-2. **`EXTERNAL_BENCHMARK_SET.md`**: "Noch NICHT ausgefuehrt"-Hinweis am
+2. **`docs/research/EXTERNAL_BENCHMARK_SET.md`**: "Noch NICHT ausgefuehrt"-Hinweis am
    Kopf und der "Naechster Schritt (nicht Teil dieses Dokuments)"-
    Abschnitt am Ende beide auf "AUSGEFUEHRT" mit Verweisen auf die
-   tatsaechlichen Ergebnisse (`BACKLOG.md`, `EVALUATION_LEVELS.md`,
-   `PAPER_DRAFT.md`) aktualisiert.
+   tatsaechlichen Ergebnisse (`BACKLOG.md`, `docs/research/EVALUATION_LEVELS.md`,
+   `docs/research/PAPER_DRAFT.md`) aktualisiert.
 3. **`joss/paper.md`**: durchgehend "this package"/"the package"/
    "package's" durch "this template"/"the template"/"template's"
    ersetzt (10 Stellen) - `mlr3`-Paket-Referenzen und der explizite
@@ -2123,17 +2123,17 @@ Alle 3 konkret benannten Faelle behoben:
    korrekte technische Begriff ist. Wortzahl bleibt bei 1382 innerhalb
    des 750-1750-Limits.
 4. **Evidence-Registry-Claim praezisiert**: sowohl in `joss/paper.md`s
-   Summary als auch in `PAPER_DRAFT.md` Abschnitt 2.4 wurde die
+   Summary als auch in `docs/research/PAPER_DRAFT.md` Abschnitt 2.4 wurde die
    pauschale Aussage ("jeder Claim ist per Evidence-Registry-Eintrag
    belegt") durch die tatsaechliche Arbeitsteilung ersetzt - die 9
    urspruenglichen Trust-Module bleiben in der handgepflegten
-   `SYSTEMATIC_EVALUATION.md` verankert, NUR die neueren Outer-
+   `docs/research/SYSTEMATIC_EVALUATION.md` verankert, NUR die neueren Outer-
    Evaluation-Befunde (Phase C/P1/P2) laufen ausschliesslich ueber die
    generierte Evidence-Registry-Tabelle - mit explizitem Verweis auf
    die Arbeitsteilungs-Entscheidung in `BACKLOG.md`/P2-Status
    (2. Haelfte).
 
-**Weitere geprueft, kein Fund**: `BENCHMARK_PROTOCOL.md`,
+**Weitere geprueft, kein Fund**: `docs/research/BENCHMARK_PROTOCOL.md`,
 `BACKLOG.md` selbst (chronologisches Journal - historische "noch nicht
 ausgefuehrt"-Eintraege sind fuer ihren Zeitstempel korrekt und werden
 von spaeteren Eintraegen ueberholt, keine Korrektur noetig), `AGENTS.md`
@@ -2143,15 +2143,15 @@ historische Anmerkung, keine Drift).
 Kein Code geaendert - reine Dokumentation, `testthat` trotzdem
 vorsichtshalber verifiziert.
 
-**Offen**: P1 (`JOSS_TECHNIQUE_WATCH.md` anlegen, optionale Research-
+**Offen**: P1 (`docs/research/JOSS_TECHNIQUE_WATCH.md` anlegen, optionale Research-
 Benchmark-Erweiterung), P2 (erster JOSS-inspirierter Prototyp), P3
 (externe Adoption) - auf explizite Nutzeranweisung.
 
-### P1 - Status (2026-08-30): JOSS_TECHNIQUE_WATCH.md angelegt
+### P1 - Status (2026-08-30): docs/research/JOSS_TECHNIQUE_WATCH.md angelegt
 
-**Nutzeranfrage**: "ja, JOSS_TECHNIQUE_WATCH.md anlegen".
+**Nutzeranfrage**: "ja, docs/research/JOSS_TECHNIQUE_WATCH.md anlegen".
 
-Neue Datei [`JOSS_TECHNIQUE_WATCH.md`](JOSS_TECHNIQUE_WATCH.md): alle
+Neue Datei [`docs/research/JOSS_TECHNIQUE_WATCH.md`](docs/research/JOSS_TECHNIQUE_WATCH.md): alle
 7 im Bewertungsdokument genannten Kandidaten (VeridicalFlow, astartes,
 Autorank, PyExperimenter, ReciPies, ImageMLResearch, mlr3extralearners)
 strukturiert dokumentiert (Titel/Autoren/DOI/Problem/Uebertragbarkeit/
@@ -2178,7 +2178,7 @@ ReciPies/mlr3-Check = mittel, ImageMLResearch = niedrig-mittel,
 mlr3extralearners = niedrig. Die verbindliche ADR-003-Backport-Regel
 ("NO BACKPORT bis Evidenz vorhanden") explizit im Dokument verankert.
 
-`README.md` um einen Verweis auf `JOSS_TECHNIQUE_WATCH.md` ergaenzt.
+`README.md` um einen Verweis auf `docs/research/JOSS_TECHNIQUE_WATCH.md` ergaenzt.
 Noch KEINE Implementierung/Prototyp begonnen - reine Recherche-
 Dokumentation, wie vom Bewertungsdokument fuer P1 gefordert.
 
@@ -2195,7 +2195,7 @@ Top-Kandidaten), P3 (externe Adoption) - auf explizite Nutzeranweisung.
 "VeridicalFlow / Decision-Stability-Report" gewaehlt (Alternativen:
 astartes/schwierige Splits, oder beide erst grob skizzieren).
 
-Pipeline aus `JOSS_TECHNIQUE_WATCH.md` befolgt: Problem identifiziert ->
+Pipeline aus `docs/research/JOSS_TECHNIQUE_WATCH.md` befolgt: Problem identifiziert ->
 Hypothese -> Komplexitaetskosten -> kleiner Prototyp -> synthetischer
 Test -> 1-2 reale Projekte.
 
@@ -2302,11 +2302,11 @@ angelegt:
   nie in-place veraendert - formalisiert die bereits gelebte Praxis
   (neue Protokollversion = neue Datei, nie die alte editieren).
 - [`adr/009-evidence-registry-dual-source-split.md`](adr/009-evidence-registry-dual-source-split.md):
-  Evidence Registry und `SYSTEMATIC_EVALUATION.md` bleiben dauerhaft
+  Evidence Registry und `docs/research/SYSTEMATIC_EVALUATION.md` bleiben dauerhaft
   getrennte Quellen mit fester Arbeitsteilung (formalisiert die
   P2-2.-Haelfte-Entscheidung vom 2026-08-29).
 
-Ein 4. Kandidat (`PAPER_DRAFT.md` vs. `joss/paper.md` als getrennte
+Ein 4. Kandidat (`docs/research/PAPER_DRAFT.md` vs. `joss/paper.md` als getrennte
 Dokumente) wurde als schwaecher/schmaler im Scope eingeordnet und
 NICHT angelegt, auf Nachfrage aber genannt.
 
@@ -2446,7 +2446,7 @@ Option, falls der Research-Pfad weiterverfolgt wird.
 ### P2 - 2. JOSS-inspirierter Prototyp: Hard-Split-Stresstest (astartes-inspiriert, 2026-08-31)
 
 **Nutzeranfrage**: "ein neuer Tag - astartes als zweiten Prototyp
-angehen". Gleiche Pipeline aus `JOSS_TECHNIQUE_WATCH.md`: Problem ->
+angehen". Gleiche Pipeline aus `docs/research/JOSS_TECHNIQUE_WATCH.md`: Problem ->
 Hypothese -> Komplexitaetskosten -> kleiner Prototyp -> synthetischer
 Test -> 1-2 reale Projekte.
 
@@ -2761,7 +2761,7 @@ n=15), da jeder neue Datensatz denselben teuren Ablauf braucht
 Decision-Stability mit 10 Wiederholungen je Fold).
 
 **Auswahl eingefroren VOR jeder Ergebnisberechnung**: siehe
-`EXTERNAL_BENCHMARK_SET.md`, Abschnitt "Weg B"-Erweiterung, und
+`docs/research/EXTERNAL_BENCHMARK_SET.md`, Abschnitt "Weg B"-Erweiterung, und
 [`select_weg_b_extension.R`](select_weg_b_extension.R) - repliziert
 exakt dieselbe Methodik wie die urspruengliche 6er-Auswahl (deterministisch,
 2 binaer + 2 multiclass, NEUER Seed `20260831`, da derselbe Seed auf dem
@@ -2853,7 +2853,7 @@ Handlungsempfehlung, unabhaengig von der Stichprobengroesse).
 
 **Nutzeranweisung**: "n=10 auf n=15 erweitern" - die obere Grenze der
 urspruenglichen Vormerkung ("n=10-15"). Auswahl eingefroren VOR jeder
-Ergebnisberechnung: siehe `EXTERNAL_BENCHMARK_SET.md`, Abschnitt "Weg
+Ergebnisberechnung: siehe `docs/research/EXTERNAL_BENCHMARK_SET.md`, Abschnitt "Weg
 B, 2. Tranche", und [`select_n15_extension.R`](select_n15_extension.R)
 - identische Methodik wie zuvor, neuer Seed `20260901`, 3 binaer + 2
 multiclass aus einem Pool von 33 zulaessigen Datensaetzen (37 minus die
@@ -2966,7 +2966,7 @@ verifiziert, nicht nur aus dem Paper-Abstract angenommen. Der Kaggle-
 Befund ist damit keine Einzelanekdote, sondern deckt sich mit einer
 bewusst eingebauten Option in einem publizierten Paket.
 
-Als Kandidat #8 in `JOSS_TECHNIQUE_WATCH.md` dokumentiert (Prioritaet
+Als Kandidat #8 in `docs/research/JOSS_TECHNIQUE_WATCH.md` dokumentiert (Prioritaet
 mittel, Ursprung explizit als "nicht aus dem urspruenglichen
 Bewertungsdokument" gekennzeichnet). Uebertragbarer Teil: NICHT das
 Paket selbst, sondern die konkrete Idee eines alternativen linearen
@@ -2993,10 +2993,10 @@ mitziehen.
 explizit zurueckgestellt - "machen wir weiter mit Kaggle"):
 - `docs/reference/` (8): alle `REFERENZ_*.md`
 - `docs/ablations/` (3): alle `ABLATION_*.md`
-- `docs/research/` (9): `PAPER_DRAFT.md`, `EVALUATION_LEVELS.md`,
-  `EXTERNAL_BENCHMARK_SET.md`, `BENCHMARK_PROTOCOL.md`,
-  `SYSTEMATIC_EVALUATION*.md` (2), `MODEL_HYPOTHESIS_CRITERIA.md`,
-  `PORTFOLIO_WARMSTART_PREREG_*.md` (3), `JOSS_TECHNIQUE_WATCH.md`
+- `docs/research/` (9): `docs/research/PAPER_DRAFT.md`, `docs/research/EVALUATION_LEVELS.md`,
+  `docs/research/EXTERNAL_BENCHMARK_SET.md`, `docs/research/BENCHMARK_PROTOCOL.md`,
+  `SYSTEMATIC_EVALUATION*.md` (2), `docs/research/MODEL_HYPOTHESIS_CRITERIA.md`,
+  `PORTFOLIO_WARMSTART_PREREG_*.md` (3), `docs/research/JOSS_TECHNIQUE_WATCH.md`
 - Bleibt im Root: `README.md`, `README_DETAILS.md`, `TARGETS.md`,
   `AGENTS.md`, `BACKLOG.md`, `CONTRIBUTING.md`, `LICENSE`,
   `ENVIRONMENT.md`, `WorkflowDescription.md`, `EXPERIMENTS_DB.md`,
@@ -3009,6 +3009,49 @@ ggf. nochmal mit dem Nutzer abstimmen (wurde nur vorgeschlagen, nicht
 final bestaetigt), dann alle Links per Skript statt manuell nachziehen
 (65 betroffene Dateien) und danach die volle Testsuite + CI pruefen,
 bevor committet wird.
+
+### Umgesetzt: Dokumenten-Umstrukturierung (2026-09-02)
+
+Nutzer hat die oben vorgeschlagene Kategorisierung unveraendert bestaetigt
+("Ja, genau so umsetzen"). Umsetzung:
+
+- `docs/reference/` (11, nicht 8 - Zaehlfehler im urspruenglichen Vorschlag):
+  alle `REFERENZ_*.md` per `git mv`.
+- `docs/ablations/` (3): alle `ABLATION_*.md` per `git mv`.
+- `docs/research/` (11, nicht 9 - `PORTFOLIO_WARMSTART_PREREG_*.md` und
+  `SYSTEMATIC_EVALUATION*.md` waren im Vorschlag als je 1 Sammel-Bullet
+  gezaehlt, nicht als Einzeldateien): `PAPER_DRAFT.md`,
+  `EVALUATION_LEVELS.md`, `EXTERNAL_BENCHMARK_SET.md`,
+  `BENCHMARK_PROTOCOL.md`, `SYSTEMATIC_EVALUATION.md`,
+  `SYSTEMATIC_EVALUATION_GENERATED.md`, `MODEL_HYPOTHESIS_CRITERIA.md`,
+  `PORTFOLIO_WARMSTART_PREREG_CREDIT_G.md`,
+  `PORTFOLIO_WARMSTART_PREREG_PIMA.md`,
+  `PORTFOLIO_WARMSTART_PREREG_PUMPITUP.md`, `JOSS_TECHNIQUE_WATCH.md`.
+- Root wie vorgeschlagen: 11 verbleibende `.md`-Dateien (README.md,
+  README_DETAILS.md, TARGETS.md, AGENTS.md, BACKLOG.md, CONTRIBUTING.md,
+  ENVIRONMENT.md, WorkflowDescription.md, EXPERIMENTS_DB.md,
+  SHARED_CORE_ANALYSIS.md, NEURAL_DEPLOY.md) plus `LICENSE`.
+  11 + 25 verschoben = 36 - stimmt mit der urspruenglichen Root-Zaehlung
+  ueberein.
+
+**Link-Korrektur per Skript statt manuell**: ein R-Skript hat alle
+`.md`/`.R`-Dateien im Root sowie in den 3 neuen `docs/`-Unterordnern nach
+Vorkommen der 25 verschobenen Dateinamen durchsucht und die relativen
+Pfade automatisch neu berechnet (root->docs/X: `docs/X/datei.md`;
+docs/X->docs/Y: `../Y/datei.md`; docs/X->root: `../../datei.md`).
+41 Dateien geaendert. Stichprobenkontrolle in `README.md` bestaetigt
+korrekt aufgeloeste Links.
+
+**Bewusst nicht angefasst**: Datei-Erwaehnungen in `statusanker/*.md`
+(historische Session-Logs, Punkt-in-Zeit-Aufzeichnungen - sollen nicht
+rueckwirkend veraendert werden), `_artifacts/*.md` (generierte Snapshots)
+sowie vereinzelte reine Namensnennungen in `adr/*.md`, `joss/README.md`
+und einem Testkommentar - das sind Prosa-Erwaehnungen des Dateinamens,
+keine anklickbaren Markdown-Links, also keine kaputten Referenzen.
+
+**Verifikation**: volle Testsuite nach der Umstrukturierung gruen
+(356/356, 0 Fails, 4 unveraenderte Warnungen aus dem Split-Size-Test).
+CI-Pruefung nach dem Push ausstehend.
 
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 

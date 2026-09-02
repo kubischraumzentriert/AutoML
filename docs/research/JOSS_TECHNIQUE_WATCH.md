@@ -266,7 +266,7 @@ begutachteten R-Paket.
   erlaubt, also NEGATIVE Stacking-Gewichte zulaesst.
 - **Welcher Teil ist uebertragbar?** NICHT das Paket selbst (wir
   bleiben bei unserer eigenen Caruana-Greedy-Ensemble-Selection, siehe
-  `REFERENZ_ENSEMBLE_SELECTION.md`), sondern die KONKRETE Idee: unsere
+  `../reference/REFERENZ_ENSEMBLE_SELECTION.md`), sondern die KONKRETE Idee: unsere
   `ensemble_selection.R` erlaubt aktuell NUR nicht-negative Gewichte
   (Greedy-Selection mit Zuruecklegen, klassisches Caruana-Verfahren) -
   ein zusaetzlicher, alternativer linearer Stacking-Modus mit erlaubten

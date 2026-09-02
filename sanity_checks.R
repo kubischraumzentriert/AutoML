@@ -7,7 +7,7 @@
 # die erwartete Richtung (Directional Expectation)? Verifiziert an
 # synthetischer Ground Truth + 2 realen Projekten (health_condition,
 # drivendata-pump-it-up), siehe TARGETS.md (Klassifikation). Theoretischer
-# Hintergrund/Mechanik je Test: REFERENZ_MODEL_SANITY_CHECKS.md.
+# Hintergrund/Mechanik je Test: docs/reference/REFERENZ_MODEL_SANITY_CHECKS.md.
 #
 # Aufgabentyp-unabhaengig (identisch in beide Templates uebernommen, wie
 # univariate_drift.R): alle drei Funktionen sind modell-agnostisch

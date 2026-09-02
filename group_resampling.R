@@ -16,7 +16,7 @@ suppressPackageStartupMessages({ library(mlr3); library(data.table) })
 # Mal an `uci-parkinsons-voice-groupcv` (echte Entitaets-Wiederholung,
 # Random-CV BAcc 0.804 vs. Group-CV BAcc 0.568) auf der Klassifikations-
 # seite bestaetigt - ADR-003-Kriterium (2 unabhaengige Projekte) erfuellt,
-# siehe REFERENZ_GROUP_AWARE_CV.md fuer Details/Zahlen.
+# siehe docs/reference/REFERENZ_GROUP_AWARE_CV.md fuer Details/Zahlen.
 #
 # KLASSIFIKATIONS-ERWEITERUNG (2026-08-17): `test_group_significance()`/
 # `scan_group_candidates()` waren urspruenglich reine eta^2-Permutationstests
@@ -26,7 +26,7 @@ suppressPackageStartupMessages({ library(mlr3); library(data.table) })
 # (eta^2) oder kategorial (Cramer's V, Chi-Quadrat-basiert) ist - dieselbe
 # Permutationslogik, nur andere Teststatistik. An 2 unabhaengigen
 # Klassifikationsprojekten bestaetigt (`openml-eeg-eye-state-timeseries`/
-# `uci-parkinsons-voice-groupcv`, siehe REFERENZ_GROUP_AWARE_CV.md) - deren
+# `uci-parkinsons-voice-groupcv`, siehe docs/reference/REFERENZ_GROUP_AWARE_CV.md) - deren
 # Group-CV-Luecken (`diagnose_group_cv()`) waren bereits unabhaengig
 # bestaetigt, der Permutationstest bestaetigt hier zusaetzlich, dass die
 # jeweilige Gruppenspalte auch statistisch von einer Zufallsaufteilung
@@ -73,7 +73,7 @@ diagnose_group_cv <- function(task_grouped, learner, measure, folds = 5, seed = 
 #
 # ADR-003 (Regressionsseite): an 2 unabhaengigen Projekten bestaetigt
 # (SubjektDatensatz/Parkinson-Telemonitoring, AStepAheadOfdrought/
-# Klima-Panel) - siehe REFERENZ_GROUP_AWARE_CV.md fuer Theorie/Herkunft/
+# Klima-Panel) - siehe docs/reference/REFERENZ_GROUP_AWARE_CV.md fuer Theorie/Herkunft/
 # Zahlen.
 .eta_squared <- function(y, g) {
   total_ss <- sum((y - mean(y))^2)
@@ -149,7 +149,7 @@ test_group_significance <- function(target, group, n_perm = 999, seed = 42) {
 # Kategorie (z.B. 6 echte Auspraegungen) oder eine GETEILTE Zeitachse (viele
 # Level, aber keine wiederholbare Entitaet - bestaetigt an AStepAheadOfdrought:
 # `time` wird trotz fehlender echter Entitaetsstruktur markiert) koennen den
-# Filter trotzdem durchrutschen. Siehe REFERENZ_GROUP_AWARE_CV.md Abschnitt
+# Filter trotzdem durchrutschen. Siehe docs/reference/REFERENZ_GROUP_AWARE_CV.md Abschnitt
 # "Grenzen" fuer beide dokumentierten Faelle.
 #
 # data: data.table. target_col: Zielspalte. candidate_cols: zu pruefende

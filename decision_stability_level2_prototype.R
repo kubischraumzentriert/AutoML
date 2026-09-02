@@ -3,7 +3,7 @@ rm(list = ls())
 # =====================================================================
 # decision_stability_level2_prototype.R -- P2, JOSS-Technique-Watch-
 # Prototyp #1 (2026-08-30, VeridicalFlow/PCS-inspiriert, siehe
-# JOSS_TECHNIQUE_WATCH.md + decision_stability.R).
+# docs/research/JOSS_TECHNIQUE_WATCH.md + decision_stability.R).
 # =====================================================================
 # Wendet decision_stability_report() auf die konkreteste, bereits
 # instrumentierte kategoriale Entscheidung dieses Templates an: welcher

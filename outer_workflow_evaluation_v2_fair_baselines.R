@@ -8,7 +8,7 @@ rm(list = ls())
 # Arm - Reaktion auf den Kritikpunkt "Default-Hyperparameter zu
 # schwache Baseline fuer ein Research-Paper".
 # =====================================================================
-# Aenderungen ggue. v1 (siehe BENCHMARK_PROTOCOL.md fuer die volle
+# Aenderungen ggue. v1 (siehe docs/research/BENCHMARK_PROTOCOL.md fuer die volle
 # v1-Spezifikation, hier NUR die Differenz):
 # 1. NEU: `tuned_ranger` - `AutoTuner` (mlr3tuning) mit Random-Search-
 #    Budget `tuned_baseline_evals` (fest = 15, siehe unten), Inner-

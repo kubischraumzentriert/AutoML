@@ -94,7 +94,7 @@ negativ - Level 2/3 wurden schlicht noch nicht getestet).
 - `AGENTS.md` (Paper-Story): "der Workflow generalisiert" durch "der
   Level-1-Component-Workflow generalisiert" ersetzt, mit einem klaren
   Hinweis, dass Level 2/3 noch offen sind (P2 der neuen Roadmap).
-- `ABLATION_STUDIES_PLAN.md`/die 2 ausgearbeiteten Ablations-Dokumente
+- `../ablations/ABLATION_STUDIES_PLAN.md`/die 2 ausgearbeiteten Ablations-Dokumente
   (A2/A3): NICHT geaendert - diese behandeln einzelne Diagnose-Module,
   nicht die "Workflow generalisiert"-Aussage, die Level-Frage betrifft
   sie nicht direkt.

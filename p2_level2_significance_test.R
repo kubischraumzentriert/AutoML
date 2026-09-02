@@ -17,7 +17,7 @@
 # optimistische p-Werte liefern. Die Werte unten stammen direkt aus
 # BACKLOG.md/P2-Status (v1/v2/v3-Zusammenfassungs-CSVs je Projekt).
 #
-# Ergebnis (10 Evals, siehe PAPER_DRAFT.md Abschnitt 6/8): V = 8,
+# Ergebnis (10 Evals, siehe docs/research/PAPER_DRAFT.md Abschnitt 6/8): V = 8,
 # p = 0.6875 - bei n = 6 statistisch nicht von einem Nulleffekt
 # unterscheidbar. Demsar selbst empfiehlt fuer den Wilcoxon-Test ~8-10
 # Datensaetze fuer ausreichende Power - eine echte Stichprobengroessen-

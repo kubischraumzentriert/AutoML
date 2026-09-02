@@ -1,13 +1,13 @@
 # =====================================================================
 # 170_build_duckdb_experiment_mart.R -- lokaler DuckDB-Analyse-Mart
 # =====================================================================
-# Siehe REFERENZ_DUCKDB_EXPERIMENT_MART.md fuer die volle Begruendung.
+# Siehe docs/reference/REFERENZ_DUCKDB_EXPERIMENT_MART.md fuer die volle Begruendung.
 # Bewusst OPTIONAL und OHNE Ruecksicht auf die uebrige Pipeline: keine
 # _artifacts-CSVs werden veraendert, keine Abhaengigkeit anderer Skripte
 # auf diese Datei. Wenn das Paket `duckdb` fehlt, bricht das Skript frueh
 # mit einer klaren Meldung ab statt kryptisch.
 #
-# Schritte (siehe REFERENZ_DUCKDB_EXPERIMENT_MART.md Abschnitt 12):
+# Schritte (siehe docs/reference/REFERENZ_DUCKDB_EXPERIMENT_MART.md Abschnitt 12):
 # 1. Alle `_artifacts/*_results.csv` erkennen.
 # 2. Jede CSV als eigene DuckDB-Tabelle registrieren (1:1-Rohspiegel,
 #    IMMER moeglich, unabhaengig vom Spaltenschema).
@@ -27,7 +27,7 @@ rm(list = ls())
 if (!requireNamespace("duckdb", quietly = TRUE)) {
   stop(
     "Paket 'duckdb' ist nicht installiert - dieses Skript ist bewusst ",
-    "optional (siehe REFERENZ_DUCKDB_EXPERIMENT_MART.md). ",
+    "optional (siehe docs/reference/REFERENZ_DUCKDB_EXPERIMENT_MART.md). ",
     "install.packages('duckdb') ausfuehren, dann erneut versuchen."
   )
 }

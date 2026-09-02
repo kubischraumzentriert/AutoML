@@ -112,7 +112,7 @@ winner <- results[rank_bacc == 1][1]
 md <- c(
   "# Pima Portfolio-Warmstart Validation",
   "",
-  "- Pre-registered file: `PORTFOLIO_WARMSTART_PREREG_PIMA.md`",
+  "- Pre-registered file: `docs/research/PORTFOLIO_WARMSTART_PREREG_PIMA.md`",
   "- Project: `pima-diabetes-sentinel-test`",
   "- Protocol: 5-fold CV, raw sentinel variant, no tuning, no external data",
   "- Recommended sequence tested: `lightgbm -> ranger -> ensemble`",

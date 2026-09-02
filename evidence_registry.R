@@ -1,15 +1,15 @@
 # =====================================================================
 # evidence_registry.R -- P1.2 (ChatGPTs korrigierter Plan): "Evidence
 # Registry" als maschinenlesbare Ergaenzung zu TARGETS.md/README_DETAILS.md/
-# SYSTEMATIC_EVALUATION.md/Statusankern.
+# docs/research/SYSTEMATIC_EVALUATION.md/Statusankern.
 # =====================================================================
 # Scope (siehe BACKLOG.md P1.2-Status): NUR Schritt 1 aus ChatGPTs eigenem
 # 3-Schritte-Vorgehen ("1. nur neue Befunde strukturiert loggen, 2. wichtige
-# historische Befunde nachziehen, 3. SYSTEMATIC_EVALUATION.md automatisch
+# historische Befunde nachziehen, 3. docs/research/SYSTEMATIC_EVALUATION.md automatisch
 # erzeugen. Nicht sofort alles migrieren."). Dieser Prototyp deckt Schritt 1
 # ab: eine `evidence`-Tabelle (siehe db_schema.sql) + eine Logging-Funktion.
 # Schritt 2 (rueckwirkendes Nachtragen der ~20 Projekte x 9 Module aus
-# SYSTEMATIC_EVALUATION.md) und Schritt 3 (automatische Generierung dieser
+# docs/research/SYSTEMATIC_EVALUATION.md) und Schritt 3 (automatische Generierung dieser
 # Datei aus der Registry) sind bewusst NICHT Teil dieses Prototyps - beides
 # waere ein eigener, deutlich groesserer Arbeitsschritt.
 #

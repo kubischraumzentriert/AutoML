@@ -3,11 +3,11 @@ rm(list = ls())
 # =====================================================================
 # outer_workflow_evaluation_v3_level2.R -- Benchmark-Protokoll Version 3
 # (P2 "Level-2 Outer Evaluation prototypisieren", 2026-08-29-Bewertung,
-# siehe EVALUATION_LEVELS.md): erste Level-2-Umsetzung - Modellwahl UND
+# siehe docs/research/EVALUATION_LEVELS.md): erste Level-2-Umsetzung - Modellwahl UND
 # Hyperparameter-Tuning laufen jetzt INNERHALB jedes Outer-Train-Splits,
 # nicht nur ein fester Arm-Katalog wie in v1/v2.
 # =====================================================================
-# Ablauf je Outer-Fold (Level 2, siehe EVALUATION_LEVELS.md):
+# Ablauf je Outer-Fold (Level 2, siehe docs/research/EVALUATION_LEVELS.md):
 #   1. Inner-Split (75/25) DES Outer-Train (NICHT des Outer-Test).
 #   2. Ranger UND LightGBM je per AutoTuner AUF DEM GEWICHTETEN
 #      Inner-Train getunt (kleines Budget, `tuned_baseline_evals`).

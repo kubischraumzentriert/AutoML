@@ -1,6 +1,6 @@
 # =====================================================================
 # 136_generalization_gap.R -- formale Generalisierungsluecken-Pruefung
-# (siehe generalization_gap.R und REFERENZ_GENERALIZATION_GAP.md).
+# (siehe generalization_gap.R und docs/reference/REFERENZ_GENERALIZATION_GAP.md).
 # =====================================================================
 # Vergleicht CV-Score-Verteilung (auf einem Trainingsanteil) gegen eine
 # Bootstrap-Verteilung auf einem komplett unberuehrten Testanteil, fuer

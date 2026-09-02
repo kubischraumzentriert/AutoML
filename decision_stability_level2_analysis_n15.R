@@ -4,7 +4,7 @@
 # alle 3 Outer-Folds (45 statt 30 Einzelmessungen) - haengt die Level-2-
 # Arm-Wahl-Stabilitaet mit dem urspruenglichen Level-2-Ergebnis zusammen?
 # Erweitert decision_stability_level2_analysis_weg_b.R (dort: n=10) um
-# die 5 in EXTERNAL_BENCHMARK_SET.md eingefrorenen "Weg B, 2. Tranche"-
+# die 5 in docs/research/EXTERNAL_BENCHMARK_SET.md eingefrorenen "Weg B, 2. Tranche"-
 # Datensaetze.
 # =====================================================================
 # Werte stammen aus den 15 neuen decision_stability_level2_prototype.R-

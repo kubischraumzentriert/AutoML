@@ -2,11 +2,11 @@ rm(list = ls())
 # =====================================================================
 # select_weg_b_extension.R -- P1-Rest ("Weg B"): Erweiterung des
 # eingefrorenen externen Benchmark-Sets von n=6 auf n=10 (siehe
-# EXTERNAL_BENCHMARK_SET.md und BACKLOG.md, Nutzerentscheidung
+# docs/research/EXTERNAL_BENCHMARK_SET.md und BACKLOG.md, Nutzerentscheidung
 # 2026-08-31 "erst Weg A", jetzt "+4 neue (n=10 insgesamt)").
 # =====================================================================
 # Repliziert EXAKT dieselbe Methodik wie die urspruengliche 6er-Auswahl
-# (siehe EXTERNAL_BENCHMARK_SET.md "Einschlusskriterien"/"Auswahl-
+# (siehe docs/research/EXTERNAL_BENCHMARK_SET.md "Einschlusskriterien"/"Auswahl-
 # mechanismus"): OpenML-CC18 (Studie 99), 500<=Instanzen<=20000,
 # Features<=100, 2<=Klassen<=10, NICHT bereits im Template verwendet -
 # UND JETZT ZUSAETZLICH nicht bereits eines der bestehenden 6 externen

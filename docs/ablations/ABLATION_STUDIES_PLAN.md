@@ -15,7 +15,7 @@ eigenstaendiger, spaeter zu beauftragender Schritt).
 > welche verhindern Fehlentscheidungen?
 
 Jede Ablation unten definiert die 8 Punkte aus
-[`MODEL_HYPOTHESIS_CRITERIA.md`](MODEL_HYPOTHESIS_CRITERIA.md) (dieselbe
+[`../research/MODEL_HYPOTHESIS_CRITERIA.md`](../research/MODEL_HYPOTHESIS_CRITERIA.md) (dieselbe
 Disziplin wie fuer einen neuen Modellkandidaten), plus explizit, in
 welche der 3 Rollen (Score/Trust/Fehlervermeidung) der erwartete Effekt
 faellt.
@@ -71,7 +71,7 @@ faellt.
 - **Baseline**: der jeweilige Full-Workflow-Score MIT Leak-Audit
   (nachtraeglich entfernter Leak vs. Score, WENN der Leak nicht entdeckt
   worden waere - kontrafaktische Rekonstruktion, teils bereits in
-  `TARGETS.md`/`SYSTEMATIC_EVALUATION.md` dokumentiert).
+  `TARGETS.md`/`../research/SYSTEMATIC_EVALUATION.md` dokumentiert).
 - **Primaermetrik**: je Projekt eigene.
 - **Diversitaetsmetrik**: entfaellt.
 - **Laufzeitbudget**: gering (kein neues Modelltraining, nur eine
@@ -132,7 +132,7 @@ faellt.
 - **Hypothese**: Ensemble Selection bringt einen KLEINEN, aber
   konsistenten Score-Gewinn ggue. dem besten Einzelmodell, ist aber NICHT
   in jedem Projekt der groesste Hebel (bereits teilweise widerlegt/
-  bestaetigt je nach Projekt, siehe `SYSTEMATIC_EVALUATION.md`s
+  bestaetigt je nach Projekt, siehe `../research/SYSTEMATIC_EVALUATION.md`s
   gemischte Befunde: `s6e6` z.B. KEIN Score-Gewinn trotz korrekt
   laufendem Mechanismus).
 - **Datensatztyp**: Projekte mit bereits vorhandenem Ensemble-Selection-

@@ -1,11 +1,11 @@
 # =====================================================================
 # migrate_systematic_evaluation_to_evidence.R -- P1.2 Schritt 2:
-# historische Befunde aus SYSTEMATIC_EVALUATION.md in die Evidence
+# historische Befunde aus docs/research/SYSTEMATIC_EVALUATION.md in die Evidence
 # Registry (evidence-Tabelle) nachtragen.
 # =====================================================================
 # Einmaliges Migrations-Skript (kein Teil der nummerierten Pipeline,
 # analog zu merge_project_experiments.R). Quelle: die grosse Projekt x
-# Modul-Tabelle in SYSTEMATIC_EVALUATION.md (Stand "alle Zellen aufgeloest,
+# Modul-Tabelle in docs/research/SYSTEMATIC_EVALUATION.md (Stand "alle Zellen aufgeloest,
 # 2026-08-15", siehe dortiger Kopf).
 #
 # Scope-Entscheidung: NUR Zellen mit einem echten Legenden-Symbol
@@ -38,7 +38,7 @@ source("000_config.R")
 source("db_logging.R")
 source("evidence_registry.R")
 
-evidence_source_label <- "SYSTEMATIC_EVALUATION.md (historischer Backfill, P1.2 Schritt 2, 2026-08-27)"
+evidence_source_label <- "docs/research/SYSTEMATIC_EVALUATION.md (historischer Backfill, P1.2 Schritt 2, 2026-08-27)"
 
 findings <- list(
   # --- health_condition (Template-eigen) ---------------------------------
@@ -190,7 +190,7 @@ findings <- list(
        notes = "gezielt gebauter PLATEAU-Fall, 7.5% des IQR nach Mindest-n-Fix - erster echter Plateau-Fund")
 )
 
-cat(sprintf("Migriere %d historische Befunde aus SYSTEMATIC_EVALUATION.md in die evidence-Tabelle...\n", length(findings)))
+cat(sprintf("Migriere %d historische Befunde aus docs/research/SYSTEMATIC_EVALUATION.md in die evidence-Tabelle...\n", length(findings)))
 
 con <- db_connect(experiments_db_path)
 logged_ids <- character(0)

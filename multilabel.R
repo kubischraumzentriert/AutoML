@@ -12,7 +12,7 @@
 # (19 Labels, Bioakustik, GEMISCHTE Feature-Typen), `tox21-multilabel`
 # (12 Labels, Chemie/molekulare Fingerprints, ERSTER Datensatz mit echten
 # fehlenden Labels - siehe NA-Maskierung unten). Volle Zahlen dort bzw. in
-# REFERENZ_METRIC_TARGET_MISMATCH.md.
+# docs/reference/REFERENZ_METRIC_TARGET_MISMATCH.md.
 #
 # EMPFOHLENER WEG (3/3 bestaetigt bester Ansatz): Binary Relevance
 # (N unabhaengige Binaerklassifikatoren) + Schwellenwert je Label auf
@@ -39,7 +39,7 @@ suppressPackageStartupMessages({
 
 #' Hamming Loss: mittlerer Fehler ueber ALLE (Zeile,Label)-Paare
 #' (kleiner=besser). Das ist eine ROHE (unbalancierte) Fehlerrate - siehe
-#' REFERENZ_METRIC_TARGET_MISMATCH.md fuer die Konsequenz beim Tuning.
+#' docs/reference/REFERENZ_METRIC_TARGET_MISMATCH.md fuer die Konsequenz beim Tuning.
 hamming_loss <- function(truth_mat, pred_mat) mean(truth_mat != pred_mat)
 
 #' Subset Accuracy / Exact Match: Anteil Zeilen, bei denen ALLE Labels

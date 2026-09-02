@@ -1,6 +1,6 @@
 # =============================================================================
 # decision_stability.R -- P2, JOSS-Technique-Watch-Prototyp #1 (2026-08-30,
-# siehe JOSS_TECHNIQUE_WATCH.md, inspiriert durch VeridicalFlow/PCS -
+# siehe docs/research/JOSS_TECHNIQUE_WATCH.md, inspiriert durch VeridicalFlow/PCS -
 # Duncan et al. 2022, JOSS 10.21105/joss.03895).
 # =============================================================================
 # LUECKE, die dieses Modul schliesst: `seed_stability.R` misst, wie sehr der

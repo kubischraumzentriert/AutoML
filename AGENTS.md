@@ -95,13 +95,13 @@ Arbeitshypothese fuer kuenftige Sessions:
   Tests/CI).
 
 **Aktualisierte Paper-Story nach Phase C (2026-08-28, siehe
-`BACKLOG.md`/Phase C, `BENCHMARK_PROTOCOL.md`,
-`ABLATION_STUDIES_PLAN.md`), sprachlich praezisiert (2026-08-29, siehe
-[`EVALUATION_LEVELS.md`](EVALUATION_LEVELS.md))**: die bisherige Outer
+`BACKLOG.md`/Phase C, `docs/research/BENCHMARK_PROTOCOL.md`,
+`docs/ablations/ABLATION_STUDIES_PLAN.md`), sprachlich praezisiert (2026-08-29, siehe
+[`docs/research/EVALUATION_LEVELS.md`](docs/research/EVALUATION_LEVELS.md))**: die bisherige Outer
 Evaluation ist nicht mehr nur ein 1-Datensatz-Prototyp, sondern lief auf
 7 bewusst diversen Datensaetzen/Kategorien (binaer ausgeglichen/
 unausgeglichen, multiclass, klein/gross, Covariate Shift, Group-/Time-
-Struktur) nach einem eingefrorenen Protokoll (`BENCHMARK_PROTOCOL.md`,
+Struktur) nach einem eingefrorenen Protokoll (`docs/research/BENCHMARK_PROTOCOL.md`,
 Version 1). **Wichtige Praezisierung**: gemessen wurde bislang
 ausschliesslich **Level 1 (Component Workflow)** - gewichtetes Training +
 ggf. Multiplier-Korrektur - NICHT der vollstaendige AutoML-
@@ -130,8 +130,8 @@ funktioniert UNTER WELCHEN BEDINGUNGEN, und warum nicht sonst").
 **P1 vollstaendig abgeschlossen (2026-08-29): externes Benchmark-Set +
 faire getunte Baselines, beide Kritikpunkte der 2026-08-29-Bewertung
 direkt beantwortet.** 6 vorab (nur nach Metadaten, ohne jede Performance-
-Kenntnis) eingefrorene OpenML-CC18-Datensaetze (`EXTERNAL_BENCHMARK_SET.md`)
-liefen unter Protokoll v2 (`BENCHMARK_PROTOCOL.md`) - `workflow_ranger`
+Kenntnis) eingefrorene OpenML-CC18-Datensaetze (`docs/research/EXTERNAL_BENCHMARK_SET.md`)
+liefen unter Protokoll v2 (`docs/research/BENCHMARK_PROTOCOL.md`) - `workflow_ranger`
 vs. Default-Baselines UND vs. `tuned_ranger`/`tuned_lightgbm`/
 `best_single_tuned_model` (je 15 Tuning-Evals). **Ergebnis, die
 praeziseste Version der Story bislang**: gegen faire getunte Baselines
@@ -148,7 +148,7 @@ gleichwertig oder mehr.** Details/volle Tabelle: `BACKLOG.md`/P1-Status.
 **P2 abgeschlossen (2026-08-29): Level-2-Outer-Evaluation (Modellwahl+
 Tuning+Ensemble innerhalb jedes Outer-Train-Splits) auf allen 6 externen
 Datensaetzen getestet.** `outer_workflow_evaluation_v3_level2.R`
-(Protokoll v3, `BENCHMARK_PROTOCOL.md`) - **Ergebnis GEMISCHT, kein
+(Protokoll v3, `docs/research/BENCHMARK_PROTOCOL.md`) - **Ergebnis GEMISCHT, kein
 verlaesslicher Vorteil**: 3 von 6 Siegen (`sick` +0.1, `blood-transfusion`
 +3.0, `optdigits` +0.2 BAcc-Punkte ggue. dem bisher besten Wert), 3 von 6
 Niederlagen (`ilpd` -3.7, `cmc` -2.6, `analcatdata-authorship` -1.9).
@@ -162,7 +162,7 @@ Evals/Arm) keinen systematischen Mehrwert gegenueber Level 1/den fairen
 v2-Baselines, das Ergebnis ist datensatzabhaengig und (bislang) nicht
 durch eine einfache Eigenschaft vorhersagbar, bei gleichzeitig 5-30x
 hoeheren Rechenkosten. Volle Tabelle: `BACKLOG.md`/P2-Status,
-`EVALUATION_LEVELS.md`.
+`docs/research/EVALUATION_LEVELS.md`.
 
 Fuer ein staerkeres Forschungs-Paper waere jetzt interessant: ob ein
 groesseres Tuning-Budget das Bild veraendert, sowie ggf. eine
@@ -177,11 +177,11 @@ Naechste Schritte, die bei neuen Arbeiten mitgedacht werden sollen:
    passiert (siehe `ML_Learning/README.md` fuer die vollstaendige Liste).
 2. ~~Fuer jeden Datensatz dieselben Artefakte sammeln: Baseline, Tuning,
    ggf. Ensemble, Laufzeit, manuelle Eingriffe, Drift-/Leak-/Segment-/
-   Sanity-Befunde.~~ **ERLEDIGT**, in `SYSTEMATIC_EVALUATION.md`
+   Sanity-Befunde.~~ **ERLEDIGT**, in `docs/research/SYSTEMATIC_EVALUATION.md`
    konsolidiert.
 3. ~~Eine Ergebnistabelle pflegen: Welche Workflow-Komponente wurde auf
    welchem Projekt bestaetigt, war neutral, oder wurde verworfen?~~
-   **ERLEDIGT.** `SYSTEMATIC_EVALUATION.md` ist fertig (eigener
+   **ERLEDIGT.** `docs/research/SYSTEMATIC_EVALUATION.md` ist fertig (eigener
    Status-Header: "alle Zellen aufgeloest, keine `?` mehr offen") -
    dieser Punkt hier war bis 2026-08-21 faelschlich noch als "aktueller
    Arbeitsschwerpunkt/noch nicht begonnen" markiert, obwohl die Tabelle
