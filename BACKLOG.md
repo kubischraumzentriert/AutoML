@@ -3180,6 +3180,33 @@ deutlich weniger CPU-Zeit anfiel). Nutzer hat den AC-Ruhemodus-Timeout
 daraufhin selbst auf 5h angehoben - danach lief der Rest ohne weitere
 Unterbrechung durch.
 
+### Trust-Gate-Diagnostik fuer s6e9: 136 (nach Erweiterung) + 137 (2026-09-03)
+
+Fortsetzung von "Ensemble Selection zuerst, dann Trust-Gate-Diagnostik".
+
+**136 (Generalisierungsluecke)**: erst nach der obigen AUC/LogLoss-
+Erweiterung von `generalization_gap.R`/`136_generalization_gap.R`
+ueberhaupt lauffaehig fuer s6e9 (baseline_measure_ids[1] = classif.auc).
+
+**137 (Hard-Split-Stresstest)**: harter k-means-Cluster-Split (k=2,
+Test-Cluster n=239.086, 35.8% von n=668.665) vs. Referenzbereich aus 10
+zufaelligen Splits gleicher Testgroesse. Score hart=0.9369 vs.
+Referenz=0.9380±0.0004 -> **z=-2.42, AUFFAELLIG** (Schwelle -2).
+Klassenverschiebung im Test-Cluster nur max. 1.0 Prozentpunkte - KEIN
+Class-Holdout-Verdacht, spricht fuer echtes Extrapolationsrisiko.
+**Einordnung**: der absolute Effekt ist klein (0.0011 AUC-Punkte) - die
+Referenz-SD ist bei diesem Datensatz sehr eng (0.0004), daher faellt
+schon eine kleine Differenz statistisch auf. Kein dramatischer Befund
+wie optdigits (z=-157.67, 2026-08-31), sondern ein mildes, aber
+plausibles Signal: bei strukturell neuen Kundensegmenten (z.B. neue
+Fahrzeugtyp-/Regions-Cluster) generalisiert das Modell vermutlich
+etwas schwaecher, als der CV-Score allein suggeriert. Kein Grund, die
+bestehende Submission zurueckzuziehen - reine Diagnose/Erwartungs-
+Kalibrierung, kein Score-Hebel.
+
+**Damit sind beide Nutzeranweisungen ("Ensemble Selection zuerst, dann
+Trust-Gate-Diagnostik") fuer s6e9 abgeschlossen.**
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
