@@ -209,10 +209,17 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `3f15247` "BACKLOG: CatBoost-vs-LightGBM-
-  Ergebnis fuer s6e9 dokumentiert" - gepusht, docs-only. Zwischenstand:
-  `ae88221` "Bugfix: CatBoost lehnt integer-Spalten ab" - CI gruen
-  (Lauf `33670597158`, 2m24s). Zwischenstand: `8b70733` "Neue Skill:
+- `MLR3_Classifikation` @ `8cd15e3` "BACKLOG: s6e9-Trust-Gate-Diagnostik
+  (136+137) dokumentiert" - gepusht, docs-only. Zwischenstaende (alle
+  gepusht, CI gruen wo `.R`-Dateien betroffen): `0ffb24d` "Erweiterung:
+  generalization_gap.R unterstuetzt jetzt AUC/LogLoss" (359/359 Tests,
+  136 ist Teil der CI-Fixture), `a181416` (BACKLOG Ensemble-Ergebnis,
+  docs-only), `a413836` "Bugfix: CatBoost-Kandidat in
+  148_ensemble_candidate_pool.R lehnte integer-Spalten ab" (CI gruen),
+  `3f15247` "BACKLOG: CatBoost-vs-LightGBM-Ergebnis fuer s6e9
+  dokumentiert" (docs-only), `ae88221` "Bugfix: CatBoost lehnt
+  integer-Spalten ab" - CI gruen (Lauf `33670597158`, 2m24s).
+  Zwischenstand: `8b70733` "Neue Skill:
   declutter-flat-scripts" - gepusht (docs-only, kein CI-Trigger; Push
   brauchte 2 Versuche wegen eines kurzen Netzwerkfehlers). Zwischenstand:
   `5696b6d` "R-Skripte
@@ -270,10 +277,13 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
   war unkonfiguriert, per `--local` auf die bereits etablierte
   Konvention "Codex <codex@local>" gesetzt (nicht global geaendert).
 - `ML_Learning`: neues Projekt `PredictingElectricVehiclePurchases-s6e9`
-  (lokal, kein Remote), zuletzt `25f59bf` "CatBoost-vs-LightGBM-Vergleich
-  (integer-Spalten-Fix + Ergebnis)". Zwischenstand: `7747dad` "finales
-  Modell + Submission (getunte Hyperparameter, Kaggle-Score 0.94142
-  geloggt)". Weitere Zwischenstaende:
+  (lokal, kein Remote), zuletzt `d262f6a` "136 (AUC-Erweiterung
+  synchronisiert) + 137 Trust-Gate-Diagnostik". Zwischenstaende:
+  `f05068d` "Ensemble Selection (148/149) - CatBoost-integer-Fix +
+  Ergebnis", `25f59bf` "CatBoost-vs-LightGBM-Vergleich (integer-Spalten-
+  Fix + Ergebnis)", `7747dad` "finales Modell + Submission (getunte
+  Hyperparameter, Kaggle-Score 0.94142 geloggt)". Weitere
+  Zwischenstaende:
   `840044e` (Feature Engineering verworfen - Nullbefund), `b8be70d`
   (Feature Engineering + `predict_type`-Sync), `edc6759`
   (`subset_fraction=1.0` + Lernkurve), `c03748a` (initiales Setup).
@@ -1187,14 +1197,92 @@ bestehende Submission-Modellwahl, kein Wechselgrund. In `BACKLOG.md`
 (Commit `3f15247`) sowie im s6e9-Projekt selbst (lokal, `ML_Learning`,
 kein Remote, Commit `25f59bf`) dokumentiert.
 
+**31. Aktualisierung ("Ensemble Selection zuerst, dann Trust-Gate-
+Diagnostik")**: `147_error_analysis_ranger_models.R` (schnell) ->
+`148_ensemble_candidate_pool.R` (24-Modelle-Pool: 8 Ranger/8 LightGBM/8
+CatBoost) -> `149_ensemble_selection.R` fuer s6e9 durchgefuehrt. Dabei
+EIN WEITERER CatBoost-`integer`-Bug gefunden (diesmal in `148`s eigener
+`make_learner()`, nicht in `125` - der urspruengliche Fund deckte nur
+`125_catboost_benchmark.R` ab) - als `GraphLearner` geloest
+(`colapply`->`classif.catboost`), `weights`-Eigenschaft bleibt
+nachweislich erhalten. Zentral UND lokal gefixt, Testsuite 356/356,
+CI gruen (Commit `a413836`). **Ensemble-Ergebnis**: Greedy Ensemble
+BAcc 0.8769 vs. bestes Einzelmodell (Ranger, nicht LightGBM!) 0.8748 vs.
+gleichgewichteter Blend 0.8746 - kleiner Gewinn, ABER Metrik-Mismatch
+(diese Pipeline bewertet BAcc, die Submission-Wahl basiert auf AUC) -
+kein direkter Beleg fuer "Ensemble schlaegt LightGBM bei AUC". Reine
+Diagnose, kein `156_train_full_ensemble.R`-Lauf angestossen. Commit
+`a181416` (zentral), `f05068d` (s6e9 lokal).
+
+**Nebenfund (Umgebung)**: der Rechner ging waehrend des 148-Laufs
+mehrfach in Standby (Windows-Ereignisprotokoll bestaetigt: "System
+Idle", "Application API", "Hibernate from Sleep - Fixed Timeout"),
+verlangsamte den 1. Versuch massiv (41267s Timer-Anzeige bei real
+deutlich weniger Rechenzeit). Nutzer hat den AC-Ruhemodus-Timeout
+selbst auf 5h angehoben - der Rest lief durch.
+
+**32. Aktualisierung (Trust-Gate-Diagnostik)**: `136_generalization_gap.R`
+war fuer s6e9 urspruenglich NICHT lauffaehig (dokumentierte
+Einschraenkung: `bootstrap_score_distribution()` nutzte nur
+klassenbasierte Metriken via `pred$response`, s6e9s Hauptmetrik ist aber
+`classif.auc`, probabilistisch). Per AskUserQuestion gefragt: "ueber-
+springen" vs. "Template erweitern" - Nutzer waehlte **Erweiterung**.
+`bootstrap_score_distribution()` erkennt jetzt anhand der Formalnamen
+von `measure_fn`, ob eine `prob`-Matrix (+ optional `positive`-Klasse)
+noetig ist (mlr3measures-Konvention). Dabei EIN WEITERER,
+eigenstaendiger predict_type-Bug gefunden:
+`build_tuned_learner_from_instance()` in `136` selbst setzte
+`predict_type` nicht (dynamisches `lrn(learner_id)` mit String-Variable
+- vom urspruenglichen Sweep uebersehen, da nicht grep-bar wie ein
+direkter `lrn("classif.X", ...)`-Aufruf). Beides gefixt, 2 neue Tests
+(AUC-Pfad + Fehlermeldung), Testsuite 359/359, CI gruen (Commit
+`0ffb24d` - `136_generalization_gap.R` ist Teil der CI-Smoke-Test-
+Fixture, der Fix wurde also direkt scharf getestet).
+
+**137 (Hard-Split-Stresstest)**: harter k-means-Cluster-Split (k=2,
+Test-Cluster n=239.086, 35.8%) vs. Referenzbereich (10 zufaellige
+Splits). Score hart=0.9369 vs. Referenz=0.9380±0.0004 -> **z=-2.42,
+AUFFAELLIG**. Klassenverschiebung nur max. 1.0pp - KEIN Class-Holdout-
+Verdacht, spricht fuer echtes Extrapolationsrisiko. Wichtige Einordnung:
+absoluter Effekt ist klein (0.0011 AUC-Punkte) - die Referenz-SD ist bei
+diesem Datensatz sehr eng, daher faellt schon eine kleine Differenz
+statistisch auf. Kein dramatischer Befund wie optdigits (z=-157.67),
+sondern ein mildes, plausibles Signal (neue Kundensegmente/Fahrzeugtyp-
+Cluster koennten schwaecher generalisieren als der CV-Score suggeriert).
+Kein Score-Hebel, reine Diagnose - kein Grund, die Submission
+zurueckzuziehen. Commit `8cd15e3` (zentral), `d262f6a` (s6e9 lokal).
+**Damit sind beide Nutzeranweisungen fuer s6e9 dieser Session
+abgeschlossen.**
+
+**33. Aktualisierung (Nutzeranfrage: Festplattenplatz)**: `ML_Learning`
+hatte nur noch ~10GB frei. Systematische Kandidatensuche (3 Risikostufen:
+sicher/re-downloadbar, redundante Modell-Checkpoints, schwerer
+neubeschaffbar). Nutzer lehnte reines Loeschen der Roh-CSVs ab
+("dann koennen wir keine Verbesserungen mehr machen") und schlug
+Zippen statt Loeschen vor. PowerShell `Compress-Archive` (kein Install
+noetig, 7-Zip war nicht installiert) erreichte ~70% Kompression,
+identisch zu gzip getestet. **21 Roh-CSV-Dateien** (abgeschlossene/
+inaktive Projekte, NICHT das aktive s6e9) gezippt, JEDES Zip einzeln
+verifiziert (Eintragsanzahl=1, Eintragsgroesse=Original-Groesse) VOR
+UND NOCHMAL UNMITTELBAR VOR dem Loeschen der Originale (Sicherheitsnetz).
+1005MB -> 302MB, **703MB freigegeben** nach Nutzerbestaetigung "Ja,
+loesche die Originale". Freier Speicher jetzt 10.44GB. Offene, nicht
+umgesetzte Kandidaten: `FinancialStressPredictionChallenge`s 5 fast
+identische Modell-Checkpoints (~745MB, braucht erst Pruefung welche
+Datei zur echten Submission gehoert), `niftis/extracted/` (633MB,
+Vorsicht - Rohdaten fuer DAT_Parkinsons, ggf. nicht trivial neu
+beschaffbar), s6e9s eigene `train.csv`/`test.csv` (61MB, aktives
+Projekt, bewusst nicht angefasst).
+
+**Stand jetzt: kein offener Blocker.** Root-Verzeichnis ist jetzt fuer
+Docs UND Skripte deutlich uebersichtlicher (36->11 `.md`-Dateien im
+Root, 114->83 `.R`-Dateien im Root); das Aufraeum-Verfahren selbst ist
+jetzt als Skill wiederverwendbar dokumentiert, falls erneuter Clutter
+entsteht. s6e9 ist inhaltlich vollstaendig durchgearbeitet (Submission +
+Ensemble-Check + Trust-Gate-Diagnostik), kein zwingender naechster
+Schritt dort mehr offen, ausser der Nutzer bringt explizit etwas Neues
+mit (z.B. eine der oben genannten Festplatten-Aufraeum-Optionen, oder
+ein neues Kaggle-Projekt).
+
 **Empfohlener erster Schritt, Stand jetzt**: kein zwingender
-Einstiegspunkt, kein offener Blocker. Am Ende dieser Session offen
-gelassene s6e9-Optionen, falls der Nutzer weitermachen will: **Ensemble
-Selection** (`148_ensemble_candidate_pool.R`/
-`149_ensemble_selection.R` - bislang nur der beste EINZELNE Algorithmus
-gewaehlt, kein Ensemble ueber die 5 Kandidaten lightgbm/multinom/ranger/
-lda/xgboost versucht) ODER **Trust-Gate-Diagnostik**
-(`136_generalization_gap.R`/`137_hard_split_stress_test.R` - noch nicht
-geprueft, ob das Modell bei einem harten Split z.B. neue
-Fahrzeugsegmente einbricht). Beides reine Vorschlaege, keine Nutzerwahl
-bisher getroffen - per AskUserQuestion abfragen, nicht selbst entscheiden.
+Einstiegspunkt, kein offener Blocker.
