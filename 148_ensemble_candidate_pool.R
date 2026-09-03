@@ -5,6 +5,7 @@ suppressPackageStartupMessages({
   library(mlr3)
   library(mlr3learners)
   library(mlr3extralearners)
+  library(mlr3pipelines)
 })
 
 source("000_config.R")
@@ -65,6 +66,13 @@ catboost_grid <- sample_grid(expand.grid(
   depth = c(4L, 6L, 8L), learning_rate = c(0.01, 0.05, 0.1), iterations = c(100L, 200L)
 ), n_per_family)
 
+# CatBoost (mlr3) akzeptiert keine integer-Spalten (siehe
+# 125_catboost_benchmark.R/BACKLOG.md, 2026-09-02) - hier ueber eine
+# vorgeschaltete colapply-PipeOp geloest, da train_task/train_task_weighted
+# bereits fertige integer-Spalten enthalten koennen (147 liefert manuell
+# imputierte Rohdaten, keine mlr3pipelines-Imputation). Die "weights"-
+# Eigenschaft bleibt beim GraphLearner erhalten (verifiziert), der
+# Gewichtungs-Fallback oben funktioniert daher unveraendert.
 make_learner <- function(family, params) {
   if (family == "ranger") {
     lrn("classif.ranger", predict_type = "prob", seed = seed, respect.unordered.factors = "order",
@@ -73,8 +81,13 @@ make_learner <- function(family, params) {
     lrn("classif.lightgbm", predict_type = "prob", num_iterations = 200,
         num_leaves = params$num_leaves, learning_rate = params$learning_rate, feature_fraction = params$feature_fraction)
   } else {
-    lrn("classif.catboost", predict_type = "prob", logging_level = "Silent",
+    catboost_base <- lrn("classif.catboost", predict_type = "prob", logging_level = "Silent",
         depth = params$depth, learning_rate = params$learning_rate, iterations = params$iterations)
+    graph_learner <- as_learner(
+      po("colapply", applicator = as.numeric, affect_columns = selector_type("integer")) %>>% catboost_base
+    )
+    graph_learner$predict_type <- "prob"
+    graph_learner
   }
 }
 
