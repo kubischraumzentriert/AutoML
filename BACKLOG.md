@@ -3148,6 +3148,38 @@ UND deutlich schneller - bestaetigt die bereits getroffene
 Submission-Modellwahl, kein Grund zum Wechsel. Ergebnis in
 `experiments.db` (s6e9-Projekt) geloggt.
 
+### Bugfix: CatBoost-Kandidat in `148_ensemble_candidate_pool.R` lehnte integer-Spalten ab (2026-09-03)
+
+Gleiche Ursache wie oben (`125_catboost_benchmark.R`), diesmal in
+`make_learner()`s catboost-Zweig innerhalb der Ensemble-Pool-Erzeugung
+(dort fehlte die `colapply`-Konvertierung). Als `GraphLearner`
+geloest (`colapply` -> `classif.catboost`), `weights`-Eigenschaft bleibt
+nachweislich erhalten (per Miniskript verifiziert, bevor der teure
+Pool-Lauf erneut gestartet wurde). Sowohl zentral als auch lokal in
+`PredictingElectricVehiclePurchases-s6e9` gefixt, Testsuite weiterhin
+356/356 gruen, CI gruen.
+
+**Ensemble-Selection-Ergebnis fuer s6e9** (nach dem Fix, Caruana Greedy
+Ensemble Selection auf einem 24-Modelle-Pool aus je 8 Ranger/LightGBM/
+CatBoost-Varianten, Bestaetigungs-BAcc auf 66.867 zurueckgehaltenen
+Zeilen): Greedy-Ensemble 0.8769 vs. bestes Einzelmodell (`ranger_8`)
+0.8748 vs. gleichgewichteter Blend 0.8746. Kleiner Ensemble-Gewinn
+(+0.21 Prozentpunkte BAcc), Einzelmodell-Gewinner hier Ranger statt
+LightGBM. **Wichtiger Vorbehalt**: diese Pipeline (147-149) bewertet
+BAcc, die tatsaechliche Submission-Modellwahl (148_select_submission_
+model.R) basierte auf AUC - kein direkter Beleg, dass ein Ensemble das
+bereits eingereichte LightGBM-Modell bei AUC schlagen wuerde. Reine
+Diagnose bisher, kein `156_train_full_ensemble.R`-Lauf (voller
+Re-Train) angestossen.
+
+**Nebenbeobachtung (Umgebung)**: der Rechner ging waehrend des Laufs
+mehrfach in den Standby (Windows-Ereignisprotokoll: "System Idle",
+"Application API", "Hibernate from Sleep - Fixed Timeout"), was den
+1. Lauf-Versuch massiv verlangsamte (Timer zeigte 41267s wo real
+deutlich weniger CPU-Zeit anfiel). Nutzer hat den AC-Ruhemodus-Timeout
+daraufhin selbst auf 5h angehoben - danach lief der Rest ohne weitere
+Unterbrechung durch.
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
