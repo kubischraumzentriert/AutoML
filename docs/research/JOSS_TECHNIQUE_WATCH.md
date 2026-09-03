@@ -294,8 +294,28 @@ begutachteten R-Paket.
   `nested_cv_class_multiplier_tuning.R`), da unbeschraenkte/negative
   Gewichte deutlich anfaelliger fuer Overfitting auf Rauschen sind als
   nicht-negative Greedy-Selection.
-- **Prototype**: nein (Stand 2026-09-01).
-- **Backport**: nein/offen. Prioritaet: **mittel** - kein Bewertungs-
+- **Prototype**: JA (2026-09-03) - `163_stacking_negative_weights.R` in
+  `PredictingElectricVehiclePurchases-s6e9` (24-Modelle-Pool aus
+  `148_ensemble_candidate_pool.R`: 8 Ranger/8 LightGBM/8 CatBoost).
+  `glmnet::cv.glmnet(family="binomial", lower.limits=0 vs. -Inf)` als
+  direkter Mechanik-Nachbau von `stacks::blend_predictions()`s
+  `non_negative`-Argument. **Ergebnis: Nullbefund.** Der Meta-Learner
+  waehlte selbst mit erlaubten negativen Gewichten 0 von 24 negative
+  Koeffizienten - die Hypothese ("ueberbenutzte Fehlerrichtung
+  korrigieren") griff hier nicht, beide Varianten identisch (AUC
+  0.9416 auf der Bestaetigungsmenge). Bemerkenswert: das beste
+  Einzelmodell im Pool (AUC 0.9427) schlug SOGAR beide Stacking-
+  Varianten UND den gleichgewichteten Blend - konsistent mit dem
+  durchgehenden Nullbefund-Muster dieses Projekts (Feature Engineering,
+  Klassengewichtung, CatBoost-Einzelmodell, AUC-Blend - siehe
+  BACKLOG.md, 2026-09-02/03). **Einordnung**: n=1-Bestaetigung, deckt
+  sich mit der im Kopf-Kommentar oben schon vermuteten Unsicherheit
+  ("unklar, ob die Situation bei unserer Pool-Groesse ueberhaupt
+  auftritt") - hier trat sie nicht auf. Kein Backport, ADR-003-Schwelle
+  (>=2 unabhaengige Projektbestaetigungen) bei weitem nicht erreicht,
+  und die einzige bisherige Bestaetigung ist negativ.
+- **Backport**: nein/offen (nach obigem Nullbefund noch unwahrscheinlicher
+  als zuvor). Prioritaet: **mittel -> niedrig** - kein Bewertungs-
   dokument-Ursprung, daher nicht in der urspruenglichen Priorisierungs-
   tabelle, aber ein konkreter, extern gemessener Befund (nicht nur eine
   theoretische Idee) macht ihn einen ernsthaften Kandidaten fuer den

@@ -3229,6 +3229,34 @@ konsistent mit dem bisherigen Muster fuer dieses Projekt (Feature
 Engineering, Klassengewichtung, CatBoost - alles Nullbefunde). Ergebnis
 in `experiments.db` geloggt.
 
+### s6e9: Prototyp JOSS-Kandidat #8 - negative Stacking-Gewichte (2026-09-03)
+
+Nutzerfrage "haben wir noch Ideen, wie wir den Score erhoehen koennten?"
+fuehrte zur Beobachtung, dass s6e9s 24-Modelle-Pool aus
+`148_ensemble_candidate_pool.R` genau die in `JOSS_TECHNIQUE_WATCH.md`
+Kandidat #8 (siehe dort, `stacks`-Paket/Couch & Kuhn 2022) genannte
+Voraussetzung ("Projekt mit ausreichend grossem/redundantem
+Kandidatenpool") erfuellt - erster echter Test der Hypothese.
+
+**Neues Skript `163_stacking_negative_weights.R`**: `glmnet::cv.glmnet(
+family="binomial", lower.limits=0 vs. -Inf)` als direkter Mechanik-
+Nachbau von `stacks::blend_predictions()`s `non_negative`-Argument
+(NICHT das `stacks`-Paket selbst - tidymodels-gebunden, siehe R-only-
+Policy). Gleicher Selektions-/Bestaetigungs-Split wie
+`149_ensemble_selection.R`.
+
+**Ergebnis: Nullbefund.** Der Meta-Learner waehlte selbst mit erlaubten
+negativen Gewichten 0 von 24 negative Koeffizienten - beide Varianten
+identisch (AUC 0.9416 auf der Bestaetigungsmenge). Bemerkenswert: das
+beste EINZELMODELL im Pool (AUC 0.9427) schlug SOGAR beide Stacking-
+Varianten UND den gleichgewichteten Blend. Damit vier von vier
+Score-Hebel-Versuchen dieser Session Nullbefunde (Feature Engineering,
+Klassengewichtung, AUC-Blend, negatives Stacking) - starkes Indiz, dass
+das Signal bei diesem synthetischen Playground-Datensatz mit einem gut
+getunten LightGBM bereits weitgehend ausgeschoepft ist.
+`JOSS_TECHNIQUE_WATCH.md` Kandidat #8 entsprechend aktualisiert
+(Prioritaet mittel -> niedrig nach diesem negativen n=1-Befund).
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
