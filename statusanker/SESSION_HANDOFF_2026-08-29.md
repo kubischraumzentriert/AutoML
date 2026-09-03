@@ -209,9 +209,13 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `8b70733` "Neue Skill: declutter-flat-scripts"
-  - gepusht (docs-only, kein CI-Trigger; Push brauchte 2 Versuche wegen
-  eines kurzen Netzwerkfehlers). Zwischenstand: `5696b6d` "R-Skripte
+- `MLR3_Classifikation` @ `3f15247` "BACKLOG: CatBoost-vs-LightGBM-
+  Ergebnis fuer s6e9 dokumentiert" - gepusht, docs-only. Zwischenstand:
+  `ae88221` "Bugfix: CatBoost lehnt integer-Spalten ab" - CI gruen
+  (Lauf `33670597158`, 2m24s). Zwischenstand: `8b70733` "Neue Skill:
+  declutter-flat-scripts" - gepusht (docs-only, kein CI-Trigger; Push
+  brauchte 2 Versuche wegen eines kurzen Netzwerkfehlers). Zwischenstand:
+  `5696b6d` "R-Skripte
   aufgeraeumt: 31 abgeschlossene Einmal-Skripte nach analysis/" - CI
   gruen (unit-tests 1m46s, smoke-test 6m20s, beide Jobs). Zwischenstand:
   `0acb6d6` (Statusanker), `6ba6af7` "Dokumente in
@@ -266,8 +270,10 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
   war unkonfiguriert, per `--local` auf die bereits etablierte
   Konvention "Codex <codex@local>" gesetzt (nicht global geaendert).
 - `ML_Learning`: neues Projekt `PredictingElectricVehiclePurchases-s6e9`
-  (lokal, kein Remote), zuletzt `7747dad` "finales Modell + Submission
-  (getunte Hyperparameter, Kaggle-Score 0.94142 geloggt)". Zwischenstaende:
+  (lokal, kein Remote), zuletzt `25f59bf` "CatBoost-vs-LightGBM-Vergleich
+  (integer-Spalten-Fix + Ergebnis)". Zwischenstand: `7747dad` "finales
+  Modell + Submission (getunte Hyperparameter, Kaggle-Score 0.94142
+  geloggt)". Weitere Zwischenstaende:
   `840044e` (Feature Engineering verworfen - Nullbefund), `b8be70d`
   (Feature Engineering + `predict_type`-Sync), `edc6759`
   (`subset_fraction=1.0` + Lernkurve), `c03748a` (initiales Setup).
@@ -1155,3 +1161,40 @@ Docs UND Skripte deutlich uebersichtlicher (36->11 `.md`-Dateien im
 Root, 114->83 `.R`-Dateien im Root); das Aufraeum-Verfahren selbst ist
 jetzt als Skill wiederverwendbar dokumentiert, falls erneuter Clutter
 entsteht.
+
+**30. Aktualisierung ("mach weiter mit s6e9", per AskUserQuestion auf
+"CatBoost-Benchmark" praezisiert)**: `125_catboost_benchmark.R` fuer
+`PredictingElectricVehiclePurchases-s6e9` ausgefuehrt (5-fache CV, volle
+668.665 Zeilen). Dabei ein echter, allgemeiner Bug gefunden: CatBoost
+(mlr3) lehnt `integer`-Spalten grundsaetzlich ab (`Fehler: ... has the
+following unsupported feature types: integer`) - hier `Age`,
+`Charging_Stations_Near_Home/Work`, `Number_of_Cars_Owned`. Fix:
+`po("colapply", applicator = as.numeric, affect_columns =
+selector_type("integer"))` vor `classif.catboost` eingefuegt - No-Op fuer
+Datensaetze ohne `integer`-Spalten (daher im Template-eigenen Projekt nie
+zuvor sichtbar geworden). Auf Nutzernachfrage "sollte die Konvertierung
+ins Template ueberspielt werden?" sofort auch zentral in
+`125_catboost_benchmark.R` uebernommen (kein ADR-003-Bestaetigungs-Gate
+noetig - reiner Robustheits-Fix wie zuvor `predict_type`/`positive_class`,
+kein zu evaluierendes Technique-Backport). Testsuite 356/356 gruen, CI
+gruen (Commit `ae88221`).
+
+**Eigentliches Vergleichsergebnis** (nach dem Fix): LightGBM AUC
+0.9413/LogLoss 0.4299 in 124s vs. CatBoost AUC 0.9406/LogLoss 0.4286
+(leicht besser) in 1405s (~11.3x langsamer) - LightGBM bleibt beim
+Haupt-Metrik AUC leicht vorn UND deutlich schneller, bestaetigt die
+bestehende Submission-Modellwahl, kein Wechselgrund. In `BACKLOG.md`
+(Commit `3f15247`) sowie im s6e9-Projekt selbst (lokal, `ML_Learning`,
+kein Remote, Commit `25f59bf`) dokumentiert.
+
+**Empfohlener erster Schritt, Stand jetzt**: kein zwingender
+Einstiegspunkt, kein offener Blocker. Am Ende dieser Session offen
+gelassene s6e9-Optionen, falls der Nutzer weitermachen will: **Ensemble
+Selection** (`148_ensemble_candidate_pool.R`/
+`149_ensemble_selection.R` - bislang nur der beste EINZELNE Algorithmus
+gewaehlt, kein Ensemble ueber die 5 Kandidaten lightgbm/multinom/ranger/
+lda/xgboost versucht) ODER **Trust-Gate-Diagnostik**
+(`136_generalization_gap.R`/`137_hard_split_stress_test.R` - noch nicht
+geprueft, ob das Modell bei einem harten Split z.B. neue
+Fahrzeugsegmente einbricht). Beides reine Vorschlaege, keine Nutzerwahl
+bisher getroffen - per AskUserQuestion abfragen, nicht selbst entscheiden.
