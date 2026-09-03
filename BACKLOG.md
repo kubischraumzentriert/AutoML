@@ -3207,6 +3207,28 @@ Kalibrierung, kein Score-Hebel.
 **Damit sind beide Nutzeranweisungen ("Ensemble Selection zuerst, dann
 Trust-Gate-Diagnostik") fuer s6e9 abgeschlossen.**
 
+### s6e9: ROC-/PR-Kurven + AUC-optimierter Ranger/LightGBM-Blend (2026-09-03)
+
+**160/161 (ROC-/PR-Kurven)**: guenstig aus bereits in 147 geloggten
+Vorhersagen erzeugt, kein neues Training. LightGBM fuehrt bei beiden
+Kurven (ROC-AUC 0.9424, PR-AUC/Average-Precision 0.7579), bestaetigt
+die bestehende Modellwahl visuell.
+
+**Neues Skript `162_auc_blend_ranger_lightgbm.R`** (Nutzerfrage "haben
+wir noch Ideen, wie wir den Score erhoehen koennten?" - Beobachtung,
+dass die bisherige Ensemble Selection 148/149 BAcc-optimiert war,
+waehrend die Submission-Metrik AUC ist): Gewicht-Suche fuer einen
+Ranger/LightGBM-Wahrscheinlichkeits-Blend, mit demselben Selektions-/
+Bestaetigungs-Split-Muster wie `149_ensemble_selection.R` (Ueberoptimierung
+vermeiden). **Ergebnis: Nullbefund.** Die Gewicht-Suche konvergiert
+gegen w_lightgbm=0.95 (fast reines LightGBM), AUC=0.9424 auf der
+Selektionsmenge - auf der unabhaengigen Bestaetigungsmenge liegt dieser
+"optimierte" Blend (0.94243) aber MARGINAL UNTER reinem LightGBM
+(0.94245). Ranger bringt beim AUC-Blend keinen messbaren Mehrwert -
+konsistent mit dem bisherigen Muster fuer dieses Projekt (Feature
+Engineering, Klassengewichtung, CatBoost - alles Nullbefunde). Ergebnis
+in `experiments.db` geloggt.
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
