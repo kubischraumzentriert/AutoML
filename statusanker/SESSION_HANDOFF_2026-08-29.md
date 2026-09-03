@@ -209,8 +209,13 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `8cd15e3` "BACKLOG: s6e9-Trust-Gate-Diagnostik
-  (136+137) dokumentiert" - gepusht, docs-only. Zwischenstaende (alle
+- `MLR3_Classifikation` @ `98f08bf` "JOSS-Kandidat #8 (negative
+  Stacking-Gewichte): erster Prototyp-Test, Nullbefund" - gepusht,
+  docs-only. Zwischenstand: `7d66506` "BACKLOG: s6e9 ROC/PR-Kurven +
+  AUC-Blend-Nullbefund dokumentiert" (docs-only). Zwischenstand:
+  `0106c12`/Statusanker. Zwischenstand: `8cd15e3` "BACKLOG:
+  s6e9-Trust-Gate-Diagnostik (136+137) dokumentiert" - gepusht, docs-only.
+  Weitere Zwischenstaende (alle
   gepusht, CI gruen wo `.R`-Dateien betroffen): `0ffb24d` "Erweiterung:
   generalization_gap.R unterstuetzt jetzt AUC/LogLoss" (359/359 Tests,
   136 ist Teil der CI-Fixture), `a181416` (BACKLOG Ensemble-Ergebnis,
@@ -277,8 +282,11 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
   war unkonfiguriert, per `--local` auf die bereits etablierte
   Konvention "Codex <codex@local>" gesetzt (nicht global geaendert).
 - `ML_Learning`: neues Projekt `PredictingElectricVehiclePurchases-s6e9`
-  (lokal, kein Remote), zuletzt `d262f6a` "136 (AUC-Erweiterung
-  synchronisiert) + 137 Trust-Gate-Diagnostik". Zwischenstaende:
+  (lokal, kein Remote), zuletzt `a9aa844` "JOSS-Kandidat #8 Prototyp -
+  negative Stacking-Gewichte, Nullbefund". Zwischenstand: `8153a6c`
+  "ROC/PR-Kurven (160/161) + neues 162_auc_blend_ranger_lightgbm.R".
+  Zwischenstand: `d262f6a` "136 (AUC-Erweiterung
+  synchronisiert) + 137 Trust-Gate-Diagnostik". Weitere Zwischenstaende:
   `f05068d` "Ensemble Selection (148/149) - CatBoost-integer-Fix +
   Ergebnis", `25f59bf` "CatBoost-vs-LightGBM-Vergleich (integer-Spalten-
   Fix + Ergebnis)", `7747dad` "finales Modell + Submission (getunte
@@ -1274,15 +1282,74 @@ Vorsicht - Rohdaten fuer DAT_Parkinsons, ggf. nicht trivial neu
 beschaffbar), s6e9s eigene `train.csv`/`test.csv` (61MB, aktives
 Projekt, bewusst nicht angefasst).
 
+**34. Aktualisierung (Nutzeranfrage: FinancialStressPredictionChallenge-
+Checkpoints pruefen)**: `README.md` des Projekts dokumentiert die
+komplette Leaderboard-Historie mit Scores - eindeutig identifiziert:
+`final_model_lightgbm_features_iter175_ens7_l2_5.rds` (247.6MB, spaetester
+Zeitstempel) ist das Modell hinter dem tatsaechlich besten/finalen
+Submission-Kandidaten (Public LB 0.697156, mit OOF-Platt-Kalibrierung
+obendrauf). 6 weitere, durch spaetere LB-bestaetigte Submissions
+ueberholte Checkpoints identifiziert und - nach Nutzerbestaetigung "Ja,
+loesche die 6 Dateien" - geloescht (~566MB). Freier Speicher jetzt
+11.75GB (von 10.44GB). Offene Kandidaten: `predictingsmartphoneAddiction_
+s6e8`/`playground-series-s5e12` (kleinere Mengen aehnlicher redundanter
+Checkpoints, ~90MB/~40MB), `niftis/extracted/` (633MB, weiterhin
+Vorsicht-Flag).
+
+**35. Aktualisierung ("machen wir weiter mit
+PredictingElectricVehiclePurchases-s6e9")**: Nutzerwunsch "ROC-/PR-Kurven
+zuerst, dann Fehleranalyse-Vertiefung" - 160/161 ausgefuehrt (guenstig,
+nutzt bereits geloggte 147-Vorhersagen). LightGBM fuehrt bei beiden
+(ROC-AUC 0.9424, PR-AUC/Average-Precision 0.7579) - bestaetigt die
+Modellwahl visuell. Beide PNGs per SendUserFile ausgeliefert.
+
+Mitten in der Arbeit fragte der Nutzer "haben wir noch Ideen, wie wir
+den Score erhoehen koennten?" - daraufhin 2 KONKRETE, noch nicht
+versuchte Ideen vorgeschlagen und auf Nutzeranweisung ("AUC-Blend
+zuerst, dann Stacking mit negativen Gewichten") beide getestet, BEIDE
+NULLBEFUND:
+
+- **Neues Skript `162_auc_blend_ranger_lightgbm.R`**: AUC-optimierter
+  Ranger/LightGBM-Wahrscheinlichkeits-Blend (Motivation: 148/149 war
+  BAcc-optimiert, Submission-Metrik ist aber AUC). Gewicht-Suche
+  konvergiert gegen w_lightgbm=0.95, aber auf der unabhaengigen
+  Bestaetigungsmenge liegt dieser "optimierte" Blend (0.94243) MARGINAL
+  UNTER reinem LightGBM (0.94245) - Ranger bringt keinen Mehrwert.
+- **Neues Skript `163_stacking_negative_weights.R`**: erster echter Test
+  von JOSS_TECHNIQUE_WATCH.md Kandidat #8 (negative Stacking-Gewichte,
+  `stacks`-Paket/Couch & Kuhn 2022) - s6e9s 24-Modelle-Pool aus
+  `148_ensemble_candidate_pool.R` erfuellt genau die im Kandidaten
+  genannte Voraussetzung. `glmnet::cv.glmnet(lower.limits=0 vs. -Inf)`
+  als Mechanik-Nachbau von `stacks::blend_predictions()`. Ergebnis:
+  Meta-Learner waehlte 0 von 24 negative Koeffizienten - beide Varianten
+  identisch (AUC 0.9416), UND das beste Einzelmodell im Pool (AUC
+  0.9427) schlug SOGAR beide Stacking-Varianten. `JOSS_TECHNIQUE_WATCH.md`
+  entsprechend aktualisiert (Prioritaet mittel -> niedrig nach diesem
+  negativen n=1-Befund).
+
+**Damit sind jetzt VIER von VIER Score-Hebel-Versuchen dieser Session
+fuer s6e9 Nullbefunde** (Feature Engineering, Klassengewichtung,
+AUC-Blend, negatives Stacking) - starkes Indiz, dass das Signal bei
+diesem synthetischen Playground-Datensatz mit einem gut getunten
+LightGBM bereits weitgehend ausgeschoepft ist. Commits: `98f08bf`
+(zentral: JOSS_TECHNIQUE_WATCH.md + BACKLOG.md), `a9aa844`/`8153a6c`
+(s6e9 lokal).
+
+Nutzer entschied "das machen wir morgen" fuer die urspruenglich geplante
+**Fehleranalyse-Vertiefung** (`147_error_analysis_ranger_confidence.R`/
+`_isolation_forest.R`/`_kernelshap.R`/`_segments.R` - `_tabpfn.R` separat
+zu bewerten) - EXPLIZIT VERSCHOBEN, nicht vergessen, naechster
+konkreter Einstiegspunkt fuer s6e9.
+
 **Stand jetzt: kein offener Blocker.** Root-Verzeichnis ist jetzt fuer
 Docs UND Skripte deutlich uebersichtlicher (36->11 `.md`-Dateien im
 Root, 114->83 `.R`-Dateien im Root); das Aufraeum-Verfahren selbst ist
 jetzt als Skill wiederverwendbar dokumentiert, falls erneuter Clutter
-entsteht. s6e9 ist inhaltlich vollstaendig durchgearbeitet (Submission +
-Ensemble-Check + Trust-Gate-Diagnostik), kein zwingender naechster
-Schritt dort mehr offen, ausser der Nutzer bringt explizit etwas Neues
-mit (z.B. eine der oben genannten Festplatten-Aufraeum-Optionen, oder
-ein neues Kaggle-Projekt).
+entsteht.
 
-**Empfohlener erster Schritt, Stand jetzt**: kein zwingender
-Einstiegspunkt, kein offener Blocker.
+**Empfohlener erster Schritt, Stand jetzt**: die vom Nutzer explizit auf
+"morgen" verschobene **Fehleranalyse-Vertiefung fuer s6e9** (Punkt 35) -
+`147_error_analysis_ranger_confidence.R`/`_isolation_forest.R`/
+`_kernelshap.R`/`_segments.R` (`_tabpfn.R` separat abwaegen, ggf. teurer/
+Token-Setup noetig). Kein zwingender ANDERER Einstiegspunkt, aber dies
+ist der explizit angekuendigte naechste Schritt, kein reiner Vorschlag.
