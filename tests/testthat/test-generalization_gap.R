@@ -47,6 +47,30 @@ test_that("bootstrap_score_distribution() gibt eine verstaendliche Fehlermeldung
   expect_error(bootstrap_score_distribution(c(1, 2, 3), c(1, 2), function(t, r) 0), "gleich lang")
 })
 
+test_that("bootstrap_score_distribution() unterstuetzt wahrscheinlichkeitsbasierte Metriken (AUC) ueber prob/positive (2026-09-03)", {
+  skip_if_not_installed("mlr3measures")
+  set.seed(4)
+  n <- 100
+  truth <- factor(sample(c("a", "b"), n, replace = TRUE), levels = c("a", "b"))
+  # Perfekt trennende Wahrscheinlichkeit: p(a) = 1 wenn truth == a, sonst 0 -> AUC exakt 1.
+  prob_a <- ifelse(truth == "a", 1, 0)
+  prob_mat <- cbind(a = prob_a, b = 1 - prob_a)
+  response <- factor(ifelse(prob_a > 0.5, "a", "b"), levels = c("a", "b"))
+  dist <- bootstrap_score_distribution(
+    truth, response, mlr3measures::auc,
+    n_boot = 20, seed = 42, prob = prob_mat, positive = "a"
+  )
+  expect_length(dist, 20)
+  expect_true(all(dist == 1))
+})
+
+test_that("bootstrap_score_distribution() verlangt 'prob', wenn measure_fn es erwartet (P0.2-Haertung)", {
+  expect_error(
+    bootstrap_score_distribution(c(1, 2), c(1, 2), mlr3measures::auc, n_boot = 5),
+    "prob"
+  )
+})
+
 test_that("reference_gap_distribution() berechnet die Luecke je Algorithmus korrekt", {
   cv_list <- list(ranger = c(0.80, 0.82), lightgbm = c(0.85, 0.87))
   test_list <- list(ranger = c(0.75, 0.77), lightgbm = c(0.86, 0.88))

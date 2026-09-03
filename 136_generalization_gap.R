@@ -58,7 +58,15 @@ build_tuned_learner_from_instance <- function(instance_path, learner_id, final_o
   best <- inst$result_learner_param_vals
   names(best) <- sub(paste0("^", learner_id, "\\."), "", names(best))
   best <- utils::modifyList(best, final_override)
-  learner <- lrn(learner_id)
+  # predict_type="prob": siehe 030_baseline.R/BACKLOG.md (2026-09-01) - lrn()
+  # defaultet auf "response", ohne diese Zeile liefern probabilistische
+  # baseline_measure_ids (AUC/LogLoss) hier stillschweigend NaN statt eines
+  # Fehlers. Dieser Konstruktionsweg (dynamisches lrn(learner_id)) wurde vom
+  # urspruenglichen predict_type-Sweep uebersehen, da er learner_id als
+  # String-Variable nutzt statt eines direkt grep-baren
+  # lrn("classif.X", ...)-Aufrufs (Fund: 2026-09-03, s6e9-Trust-Gate-
+  # Diagnostik, siehe BACKLOG.md).
+  learner <- lrn(learner_id, predict_type = "prob")
   learner$param_set$values <- utils::modifyList(learner$param_set$values, best)
   make_pipeline_learner(learner)
 }
@@ -97,15 +105,21 @@ run_learner <- function(nm, learner) {
   fit <- learner$clone(deep = TRUE)
   fit$train(task_train)
   pred <- fit$predict(task_test)
-  # Nimmt eine klassenresponse-basierte Zielmetrik an (BAcc/MCC/Accuracy -
-  # so an beiden Bestaetigungsprojekten verifiziert). Bei einer wahrschein-
-  # lichkeitsbasierten Metrik (AUC/LogLoss) muesste measure_fn stattdessen
-  # auf pred$prob operieren - hier NICHT abgedeckt, analog zur bestehenden
-  # Einschraenkung bei 130_threshold_tuning.R/146 (siehe deren Kopfkommentar).
+  # Unterstuetzt sowohl klassenbasierte (BAcc/MCC/Accuracy) als auch
+  # wahrscheinlichkeitsbasierte Zielmetriken (AUC/LogLoss) - siehe
+  # bootstrap_score_distribution() in generalization_gap.R (2026-09-03-
+  # Erweiterung). Die 130_threshold_tuning.R/146-Einschraenkung ist ein
+  # separates, dort weiterhin gueltiges Thema (Schwellenwert-Optimierung
+  # ist bei probabilistischen Metriken konzeptionell nicht sinnvoll).
   measure_name <- sub("^classif\\.", "", baseline_measure_ids[1])
   measure_fn <- get(measure_name, envir = asNamespace("mlr3measures"))
-  test_boot <- bootstrap_score_distribution(pred$truth, pred$response, measure_fn,
-                                             n_boot = generalization_gap_n_boot, seed = seed)
+  fn_needs_prob <- "prob" %in% names(formals(measure_fn))
+  test_boot <- bootstrap_score_distribution(
+    pred$truth, pred$response, measure_fn,
+    n_boot = generalization_gap_n_boot, seed = seed,
+    prob = if (fn_needs_prob) pred$prob else NULL,
+    positive = if (fn_needs_prob && "positive" %in% names(formals(measure_fn))) task_train$positive else NULL
+  )
   cat("Test-Bootstrap-Mittel: ", round(mean(test_boot), 4), "\n\n")
   list(cv = cv, test = test_boot)
 }

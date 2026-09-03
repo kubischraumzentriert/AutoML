@@ -20,17 +20,53 @@
 # viele Konfigurationen).
 
 #' Bootstrap-Verteilung eines Scores auf (idealerweise unberuehrten) Zeilen.
+#'
+#' Unterstuetzt sowohl klassenbasierte Metriken (BAcc/MCC/Accuracy, Signatur
+#' `function(truth, response)`) als auch wahrscheinlichkeitsbasierte
+#' (AUC/LogLoss, Signatur `function(truth, prob, ...)`) - erkannt an den
+#' Formalnamen von `measure_fn` (mlr3measures-Konvention: `prob` fuer die
+#' Wahrscheinlichkeitsmatrix, zusaetzlich `positive` bei AUC fuer den Namen
+#' der positiven Klasse). Ohne `prob`/`positive`-Argument identisch zum
+#' bisherigen Verhalten (P0.2/2026-09-03-Erweiterung, Anlass:
+#' 136_generalization_gap.R war bisher nur mit klassenbasierten
+#' baseline_measure_ids nutzbar, siehe BACKLOG.md).
 #' @param truth,response Vektoren gleicher Laenge (Wahrheit/Vorhersage)
-#' @param measure_fn function(truth, response) -> Skalar (z.B. Accuracy/BAcc)
+#' @param measure_fn function(truth, response) -> Skalar (z.B. Accuracy/BAcc),
+#'   ODER function(truth, prob, positive, ...) -> Skalar (z.B. AUC/LogLoss)
 #' @param n_boot Anzahl Bootstrap-Resamples (Checkliste: 30-1000)
+#' @param prob Wahrscheinlichkeitsmatrix (n x k, Spalten = Klassennamen) -
+#'   nur noetig, wenn `measure_fn` ein `prob`-Argument hat
+#' @param positive Name der positiven Klasse - nur noetig, wenn `measure_fn`
+#'   ein `positive`-Argument hat (z.B. `mlr3measures::auc`)
 #' @return numerischer Vektor der Laenge n_boot
-bootstrap_score_distribution <- function(truth, response, measure_fn, n_boot = 200, seed = NULL) {
+bootstrap_score_distribution <- function(truth, response, measure_fn, n_boot = 200, seed = NULL,
+                                          prob = NULL, positive = NULL) {
   stopifnot("truth und response muessen gleich lang sein" = length(truth) == length(response))
+  fn_args <- names(formals(measure_fn))
+  needs_prob <- "prob" %in% fn_args
+  needs_positive <- "positive" %in% fn_args
+  if (needs_prob && is.null(prob)) {
+    stop("measure_fn erwartet ein 'prob'-Argument (wahrscheinlichkeitsbasierte ",
+         "Metrik wie AUC/LogLoss) - bitte 'prob' (Wahrscheinlichkeitsmatrix) uebergeben.")
+  }
+  if (needs_positive && is.null(positive)) {
+    stop("measure_fn erwartet ein 'positive'-Argument (z.B. AUC) - bitte den ",
+         "Namen der positiven Klasse als 'positive' uebergeben.")
+  }
   if (!is.null(seed)) set.seed(seed)
   n <- length(truth)
   vapply(seq_len(n_boot), function(i) {
     idx <- sample.int(n, n, replace = TRUE)
-    measure_fn(truth[idx], response[idx])
+    if (needs_prob) {
+      prob_idx <- prob[idx, , drop = FALSE]
+      if (needs_positive) {
+        measure_fn(truth[idx], prob_idx[, positive], positive = positive)
+      } else {
+        measure_fn(truth[idx], prob_idx)
+      }
+    } else {
+      measure_fn(truth[idx], response[idx])
+    }
   }, numeric(1))
 }
 
