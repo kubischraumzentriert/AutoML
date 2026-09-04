@@ -3384,6 +3384,41 @@ Kernsignal). Ergebnis in `experiments.db` geloggt (2000 Zeilen).
 VOLLSTAENDIG abgeschlossen** (alle 5 Bausteine: confidence, isolation_
 forest, kernelshap, segments, tabpfn).
 
+### s6e9: zweite/dritte Kaggle-Submission (2026-09-04)
+
+Nutzeranfrage: Kaggle erlaubt 2 finale Submissions - eine zweite,
+"aehnlich gute" sollte erzeugt werden. Ausgangspunkt: `lightgbm_10` aus
+dem `148_ensemble_candidate_pool.R`-Pool tauchte in `163_stacking_
+negative_weights.R` wiederholt als bestes Einzelmodell auf (Bestaetigungs-
+AUC 0.9427 vs. 0.9413-0.9416 fuer das deployte, getunte Modell) -
+**wichtiger Vorbehalt**: nur eine EINZELNE Holdout-Auswertung (67k
+Zeilen), nicht der robustere 5-fache-CV-Durchschnitt, der Unterschied
+liegt vermutlich im Rauschbereich.
+
+**Neues Skript `165_train_predict_lightgbm10.R`**: `lightgbm_10`s
+Konfiguration (num_leaves=63, learning_rate=0.05, feature_fraction=0.6,
+num_iterations=200 - identisch zur Pool-Auswertung, keine neue
+unvalidierte Konfiguration) auf vollem Trainingsdatensatz trainiert,
+`submission_lightgbm10.csv` erzeugt (eigenstaendiges Skript statt
+150/155, um `submission.csv` der ersten Submission nicht zu
+ueberschreiben). **Diversitaets-Check**: Korrelation zur ersten
+Submission 0.9983, mittlere absolute Differenz 0.0083 - PRAKTISCH EIN
+NAHE-DUPLIKAT, kaum Hedge-Wert gegen eine Verteilungsverschiebung.
+
+Auf Nutzerwunsch ("Ranger auch erzeugen") zusaetzlich **neues Skript
+`166_train_predict_ranger.R`**: getunte Ranger-Konfiguration (aus
+`090_ranger_tuning.R`) auf vollem Trainingsdatensatz,
+`submission_ranger.csv`. Strukturell andere Modellfamilie (Bagging
+statt Boosting). **Diversitaets-Check**: Korrelation zur ersten
+Submission 0.9898, mittlere absolute Differenz 0.0211 - ~2.5x diverser
+als die lightgbm_10-Variante, bei etwas niedrigerer erwarteter AUC
+(~0.939 vs. ~0.9416).
+
+**Empfehlung fuer die 2 finalen Kaggle-Submissions**: `submission.csv`
+(beste erwartete Einzelleistung) + `submission_ranger.csv` (echte
+strukturelle Diversitaet als Hedge) - NICHT `submission_lightgbm10.csv`
+(zu aehnlich zur ersten, praktisch redundant).
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
