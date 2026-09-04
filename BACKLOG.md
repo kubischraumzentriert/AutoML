@@ -3419,6 +3419,29 @@ als die lightgbm_10-Variante, bei etwas niedrigerer erwarteter AUC
 strukturelle Diversitaet als Hedge) - NICHT `submission_lightgbm10.csv`
 (zu aehnlich zur ersten, praktisch redundant).
 
+**Kaggle-Score der Ranger-Submission**: Public LB **0.93829**, in
+`experiments.db` geloggt (mconf_id `adf1f8d8-e231-4377-bd93-b29a628d7c7e`).
+
+### Fund: Ranger-Tuning lief nie bei voller Datenmenge (2026-09-04)
+
+Beim Loggen des Ranger-Submission-Scores aufgefallen:
+`ranger_tuning_final_results.csv` zeigt `task_id=will_buy_ev_10pct` -
+das 10%-Subset aus der urspruenglichen Projekt-Einrichtung (Commit
+`c03748a`), NICHT die volle Datenmenge. Anders als beim LightGBM (das
+nach der Lernkurven-Erkenntnis "noch steigend bei 10-20%" explizit bei
+`subset_fraction=1.0` neu getunt wurde, mit messbarer Verbesserung
+0.9405->0.9416) wurde `090_ranger_tuning.R` seit der Umstellung auf die
+volle Datenmenge (`edc6759`, 2026-09-01) nie erneut ausgefuehrt - die
+fuer die Ranger-Submission verwendeten Hyperparameter stammen aus dem
+10%-Tuning, potenziell suboptimal fuer die volle Groesse.
+
+Per AskUserQuestion 2 Optionen vorgelegt (nur dokumentieren vs. bei
+voller Datenmenge neu tunen) - Nutzer waehlte **neu tunen** (Empfehlung).
+`090_ranger_tuning.R` bei `subset_fraction=1.0` erneut gestartet
+(668.665 Zeilen, 20 Suchevaluationen + 5-facher CV-Finalvergleich,
+Kostenschaetzung ~60-100 Minuten) - Ergebnis folgt in einem
+Folgeeintrag.
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
