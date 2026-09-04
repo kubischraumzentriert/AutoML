@@ -209,9 +209,13 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `98f08bf` "JOSS-Kandidat #8 (negative
-  Stacking-Gewichte): erster Prototyp-Test, Nullbefund" - gepusht,
-  docs-only. Zwischenstand: `7d66506` "BACKLOG: s6e9 ROC/PR-Kurven +
+- `MLR3_Classifikation` @ `46feebd` "BACKLOG: s6e9
+  rausch-arme-Features-Entfernung dokumentiert" - gepusht, docs-only.
+  Zwischenstaende (alle docs-only, kein CI-Trigger): `8221f4e`
+  "Segmentmetriken - Hauptfund", `6fade18` "confidence/isolation_forest
+  + LDA-Nachtest", `3abf6d0`/Statusanker, `98f08bf` "JOSS-Kandidat #8
+  (negative Stacking-Gewichte): erster Prototyp-Test, Nullbefund".
+  Zwischenstand: `7d66506` "BACKLOG: s6e9 ROC/PR-Kurven +
   AUC-Blend-Nullbefund dokumentiert" (docs-only). Zwischenstand:
   `0106c12`/Statusanker. Zwischenstand: `8cd15e3` "BACKLOG:
   s6e9-Trust-Gate-Diagnostik (136+137) dokumentiert" - gepusht, docs-only.
@@ -282,7 +286,12 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
   war unkonfiguriert, per `--local` auf die bereits etablierte
   Konvention "Codex <codex@local>" gesetzt (nicht global geaendert).
 - `ML_Learning`: neues Projekt `PredictingElectricVehiclePurchases-s6e9`
-  (lokal, kein Remote), zuletzt `a9aa844` "JOSS-Kandidat #8 Prototyp -
+  (lokal, kein Remote), zuletzt `389a880` "neues
+  164_low_signal_feature_removal.R - Rausch-Feature-Test". Zwischenstand:
+  `ad08609` "segment_metric_cols befuellt - Hauptfund der
+  Fehleranalyse-Vertiefung". Zwischenstand: `96eaaff` "147
+  Fehleranalyse (confidence/isolation_forest) + 163 LDA-Erweiterung".
+  Zwischenstand: `a9aa844` "JOSS-Kandidat #8 Prototyp -
   negative Stacking-Gewichte, Nullbefund". Zwischenstand: `8153a6c`
   "ROC/PR-Kurven (160/161) + neues 162_auc_blend_ranger_lightgbm.R".
   Zwischenstand: `d262f6a` "136 (AUC-Erweiterung
@@ -1341,15 +1350,67 @@ Nutzer entschied "das machen wir morgen" fuer die urspruenglich geplante
 zu bewerten) - EXPLIZIT VERSCHOBEN, nicht vergessen, naechster
 konkreter Einstiegspunkt fuer s6e9.
 
+**36. Aktualisierung (neuer Tag, "nun die Fehleranalyse")**: die auf
+"morgen" verschobene Fehleranalyse-Vertiefung durchgefuehrt -
+`147_error_analysis_ranger_confidence.R`/`_isolation_forest.R`/
+`_kernelshap.R`/`_segments.R` (`_sanity_checks.R` war nie Teil des
+Plans, `_tabpfn.R` bleibt offen).
+
+- **confidence**: LDA rettet 62.2% von Rangers Fehlern, LightGBM nur
+  4.5% - hoehere Fehler-Diversitaet trotz niedrigerer Einzel-AUC (LDA
+  0.9353 vs. LightGBM 0.9413). Mitten in der Arbeit fragte der Nutzer
+  "Greedy am besten fuer LDA im Ensemble?" - klargestellt, dass Greedy
+  (149) BAcc-optimiert ist, nicht AUC (unsere Metrik), daher stattdessen
+  `163_stacking_negative_weights.R` um LDA als 25. Kandidaten erweitert
+  (aus dem 147-Artefakt, exakt derselbe Eval-Split wie der 148-Pool).
+  **Erneuter Nullbefund**: weiterhin 0 negative Koeffizienten, bestes
+  Einzelmodell (LightGBM, AUC 0.9427) schlaegt beide Stacking-Varianten
+  (0.9417) - Fehler-Diversitaet uebersetzt sich hier nicht in AUC-Gewinn.
+- **isolation_forest**: die 6.180 "alle drei falsch"-Faelle sind KEINE
+  Feature-Raum-Ausreisser (Anomalie-Score sogar leicht niedriger als
+  Baseline, p=1.3e-132) - genuin mehrdeutige Grenzfaelle, kein
+  Datenqualitaetsproblem.
+- **kernelshap**: Fehler haeufen sich ueberproportional bei den
+  Features mit der GERINGSTEN Gesamtwichtigkeit (`City_Type` etc.,
+  error_ratio 1.57-1.94x), waehrend die dominanten Treiber
+  (`Subsidy_Available`, `Environmental_Concern_Level`) bei Fehlern fast
+  neutral bleiben.
+- **segments** (`segment_metric_cols` war leer, mit 5 kategorialen
+  Spalten befuellt): **DER HAUPTFUND der gesamten Fehleranalyse.** Ohne
+  verfuegbare Subsidy (`Subsidy_Available = "No"`, **37% der
+  Eval-Zeilen!**) landen ALLE DREI Modellfamilien (LDA/LightGBM/Ranger)
+  unabhaengig voneinander bei BAcc~0.50 - praktisch Zufallsniveau.
+  Konvergentes Signal fuer echte irreduzible Unsicherheit in diesem
+  Datenbereich (kein Modell-Bug), erklaert rueckblickend, warum ALLE
+  Score-Hebel-Versuche dieser Session (Feature Engineering,
+  Klassengewichtung, AUC-Blend, Stacking mit/ohne LDA) ins Leere liefen.
+
+Anschliessende Nutzerfrage: "waere es sinnvoll, Features ohne Signal zu
+entfernen, um Rauschen zu unterdruecken, oder fallen die im Baum eh
+weg?" - `037_selected_features_cv.R` als ungeeignet erkannt (domaenenfremde,
+bei s6e9 leere "selected"-Familie, kein LightGBM) - stattdessen neues,
+gezieltes `164_low_signal_feature_removal.R`: LightGBM-CV ohne die 5
+SHAP-schwaechsten Features. **Ergebnis**: AUC minimal schlechter
+(0.9410 -> 0.9403, -0.0007), aber LogLoss besser (0.2343 -> 0.2299) und
+Training 23% schneller (113s -> 87s). Bestaetigt die Nutzerintuition
+weitgehend - LightGBM filtert Rauschen schon weitgehend selbst, kein
+AUC-Gewinn durch manuelles Entfernen, aber ein vertretbarer
+Zeit/Kalibrierungs-Tausch fuer andere Prioritaeten.
+
+Commits: `46feebd`/`389a880` (Rausch-Feature-Test), `8221f4e`/`ad08609`
+(Segmentmetriken-Hauptfund), `6fade18`/`96eaaff` (confidence/isolation_
+forest + LDA-Nachtest) - alle zentral gepusht, s6e9 lokal (kein Remote).
+
 **Stand jetzt: kein offener Blocker.** Root-Verzeichnis ist jetzt fuer
 Docs UND Skripte deutlich uebersichtlicher (36->11 `.md`-Dateien im
 Root, 114->83 `.R`-Dateien im Root); das Aufraeum-Verfahren selbst ist
 jetzt als Skill wiederverwendbar dokumentiert, falls erneuter Clutter
-entsteht.
+entsteht. Die Fehleranalyse-Vertiefung fuer s6e9 ist jetzt VOLLSTAENDIG
+abgeschlossen, inklusive eines methodisch wichtigen Hauptfunds
+(Subsidy-Segment). Kein zwingender naechster Schritt mehr offen -
+`147_error_analysis_ranger_tabpfn.R` bleibt die einzige noch nicht
+bewertete Option, kein Vorschlag mehr auf dem Tisch bis der Nutzer neu
+entscheidet.
 
-**Empfohlener erster Schritt, Stand jetzt**: die vom Nutzer explizit auf
-"morgen" verschobene **Fehleranalyse-Vertiefung fuer s6e9** (Punkt 35) -
-`147_error_analysis_ranger_confidence.R`/`_isolation_forest.R`/
-`_kernelshap.R`/`_segments.R` (`_tabpfn.R` separat abwaegen, ggf. teurer/
-Token-Setup noetig). Kein zwingender ANDERER Einstiegspunkt, aber dies
-ist der explizit angekuendigte naechste Schritt, kein reiner Vorschlag.
+**Empfohlener erster Schritt, Stand jetzt**: kein zwingender
+Einstiegspunkt, kein offener Blocker.
