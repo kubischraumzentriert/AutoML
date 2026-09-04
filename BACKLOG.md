@@ -3331,6 +3331,30 @@ abgeschlossen** (`confidence`, `isolation_forest`, `kernelshap`,
 bewertende Option, `_sanity_checks.R` war nicht Teil des urspruenglichen
 Plans).
 
+### s6e9: Entfernen rausch-armer Features - direkter Test (2026-09-04)
+
+Nutzerfrage: "waere es sinnvoll, Features ohne Signal komplett zu
+entfernen, um Rauschen zu unterdruecken - oder fallen die im Baum eh
+automatisch weg?" `037_selected_features_cv.R` war fuer diesen Test
+ungeeignet (domaenenfremde, bei s6e9 leere "selected"-Feature-Familie,
+deckt LightGBM nicht ab) - stattdessen neues, gezieltes Skript
+`164_low_signal_feature_removal.R`: LightGBM-CV-AUC mit vollen
+Rohfeatures (13) vs. ohne die 5 laut KernelSHAP schwaechsten, aber bei
+Fehlern ueberproportional beteiligten Features (`City_Type`,
+`Charging_Stations_Near_Work`, `Age`, `Home_Charging_Possible`,
+`Daily_Commute_km`).
+
+**Ergebnis**: AUC 0.9410 (voll) vs. 0.9403 (reduziert, 8 Features) -
+winziger, aber realer Verlust (-0.0007). LogLoss dagegen BESSER
+(0.2343 -> 0.2299) und Trainingszeit 23% kuerzer (113s -> 87s) ohne
+diese Features. Bestaetigt die Nutzerintuition weitgehend: LightGBM
+filtert rauscharme Features bereits weitgehend selbst heraus (ueber
+gain-basierte Splits + `feature_fraction`-Sampling), der AUC-Effekt
+ist marginal. Fuer reine AUC-Maximierung (Submission-Kriterium) kein
+Grund zum Entfernen (kein Gewinn, kleiner Verlust); bei Prioritaet auf
+Trainingszeit/Kalibrierung waere der Tausch vertretbar. Ergebnis in
+`experiments.db` geloggt.
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
