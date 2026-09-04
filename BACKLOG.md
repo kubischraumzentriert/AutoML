@@ -3285,6 +3285,52 @@ gegenueber dem 24-Kandidaten-Lauf ohne LDA). Fehler-Diversitaet allein
 uebersetzt sich hier nicht in einen AUC-Gewinn - fuenfter Nullbefund in
 Folge fuer Score-Hebel bei diesem Projekt.
 
+**147_error_analysis_ranger_kernelshap.R** (100 falsch/100 richtig
+klassifizierte Zeilen, Hintergrund n=100): interessantes, interpretierbares
+Muster - die Features mit der GERINGSTEN Gesamtwichtigkeit (`City_Type`,
+`Charging_Stations_Near_Work`, `Age`, `Home_Charging_Possible`,
+`Daily_Commute_km`) sind bei Fehlern UEBERPROPORTIONAL beteiligt
+(error_ratio 1.57-1.94x), waehrend die dominanten Treiber
+(`Subsidy_Available`, error_ratio 0.997; `Environmental_Concern_Level`,
+1.101) bei Fehlern fast neutral bleiben. Interpretation: das Modell ist
+zuverlaessig, wenn Subsidy/Umweltbewusstsein ein klares Signal liefern -
+Fehler haeufen sich dort, wo es staerker auf schwaechere Nebenfeatures
+(Standort/Demografie) angewiesen ist. Konsistent mit dem Isolation-
+Forest-Befund (keine Ausreisser, sondern Grenzfaelle ohne starkes
+Signal). Reine Interpretierbarkeits-Erkenntnis, kein Score-Hebel.
+
+**147_error_analysis_ranger_segments.R** (`segment_metric_cols` war
+leer, mit `City_Type`/`Current_Car_Type`/`Range_Anxiety_Level`/
+`Subsidy_Available`/`Home_Charging_Possible` befuellt): **DER
+wichtigste Fund dieser Fehleranalyse-Vertiefung.** Zwei Segmente, in
+denen ALLE DREI Modelle (LDA/LightGBM/Ranger, strukturell verschiedene
+Familien) unabhaengig voneinander auf praktisch Zufallsniveau (BAcc
+~0.50) landen:
+- `Subsidy_Available = "No"` (n=49.970, **37% der Eval-Zeilen!**):
+  LDA=0.502, LightGBM=0.521, Ranger=0.500 (Gesamt-BAcc ~0.68-0.70).
+- `Range_Anxiety_Level = "High"` (n=464, kleines Segment): LDA=0.495,
+  LightGBM=0.499, Ranger=0.500 (Gesamt-BAcc ~0.78-0.86).
+
+**Einordnung**: kein Modell-Bug - drei unabhaengige, strukturell
+verschiedene Modellfamilien (linear/Baum/Boosting) landen konvergent
+bei ~0.50, das ist ein starkes Signal fuer echte, irreduzible
+Unsicherheit in diesem Datenbereich, nicht fuer eine behebbare
+Modellierungsschwaeche. Erklaert konsistent, warum ALLE Score-Hebel-
+Versuche dieser Session (Feature Engineering, Klassengewichtung,
+AUC-Blend, Stacking mit/ohne LDA) ins Leere liefen: ohne verfuegbare
+Subsidy scheint die Kaufentscheidung aus den vorhandenen Features
+praktisch nicht vorhersagbar - passt zum KernelSHAP-Befund
+(`Subsidy_Available` dominiert die Vorhersage so stark, dass ohne sie
+kaum Signal uebrig bleibt). Das verbleibende, unerklaerte Drittel der
+Daten ist vermutlich nahe der intrinsischen Rauschgrenze dieses
+synthetischen Datensatzes.
+
+**Damit ist die geplante Fehleranalyse-Vertiefung fuer s6e9
+abgeschlossen** (`confidence`, `isolation_forest`, `kernelshap`,
+`segments` durchgefuehrt; `_tabpfn.R` bleibt eine offene, separat zu
+bewertende Option, `_sanity_checks.R` war nicht Teil des urspruenglichen
+Plans).
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
