@@ -209,9 +209,14 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `46feebd` "BACKLOG: s6e9
+- `MLR3_Classifikation` @ `939eebf` "BACKLOG: s6e9 TabPFN-Fehleranalyse
+  dokumentiert - Fehleranalyse-Vertiefung vollstaendig" - gepusht,
+  docs-only. Zwischenstand: `ac507d9` "TabPFN-Fehleranalyse:
+  Abfragezeilen-Kappung fuer grosse Eval-Splits" - CI gruen (neue Config
+  `error_analysis_tabpfn_query_sample_size`, Testsuite 359/359).
+  Zwischenstand: `46feebd` "BACKLOG: s6e9
   rausch-arme-Features-Entfernung dokumentiert" - gepusht, docs-only.
-  Zwischenstaende (alle docs-only, kein CI-Trigger): `8221f4e`
+  Weitere Zwischenstaende (alle docs-only, kein CI-Trigger): `8221f4e`
   "Segmentmetriken - Hauptfund", `6fade18` "confidence/isolation_forest
   + LDA-Nachtest", `3abf6d0`/Statusanker, `98f08bf` "JOSS-Kandidat #8
   (negative Stacking-Gewichte): erster Prototyp-Test, Nullbefund".
@@ -286,8 +291,10 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
   war unkonfiguriert, per `--local` auf die bereits etablierte
   Konvention "Codex <codex@local>" gesetzt (nicht global geaendert).
 - `ML_Learning`: neues Projekt `PredictingElectricVehiclePurchases-s6e9`
-  (lokal, kein Remote), zuletzt `389a880` "neues
-  164_low_signal_feature_removal.R - Rausch-Feature-Test". Zwischenstand:
+  (lokal, kein Remote), zuletzt `0000b78` "TabPFN-Fehleranalyse -
+  Fehleranalyse-Vertiefung vollstaendig abgeschlossen". Zwischenstand:
+  `389a880` "neues
+  164_low_signal_feature_removal.R - Rausch-Feature-Test". Weiterer Zwischenstand:
   `ad08609` "segment_metric_cols befuellt - Hauptfund der
   Fehleranalyse-Vertiefung". Zwischenstand: `96eaaff` "147
   Fehleranalyse (confidence/isolation_forest) + 163 LDA-Erweiterung".
@@ -1401,16 +1408,44 @@ Commits: `46feebd`/`389a880` (Rausch-Feature-Test), `8221f4e`/`ad08609`
 (Segmentmetriken-Hauptfund), `6fade18`/`96eaaff` (confidence/isolation_
 forest + LDA-Nachtest) - alle zentral gepusht, s6e9 lokal (kein Remote).
 
+**37. Aktualisierung ("TabPFN-Fehleranalyse probieren")**: letzter der
+5 Fehleranalyse-Bausteine. **Kosten-Fund vorab**: `interesting_idx`
+hatte 32.528 Zeilen - bei TabPFN-CPU-Inferenz mutmasslich mehrere
+Stunden. Per AskUserQuestion 3 Optionen vorgelegt (Stichprobe
+reduzieren/vollstaendig im Hintergrund/abbrechen) - Nutzer waehlte
+"auf Stichprobe reduzieren". Neue Config `error_analysis_tabpfn_
+query_sample_size` (Default 2000, No-op fuer kleinere Projekte) ZENTRAL
+eingefuehrt (nicht nur lokal) - kappt `interesting_idx`
+klassenstratifiziert per Zufall, `147_error_analysis_ranger_tabpfn.R`
+entsprechend angepasst (na.rm=TRUE in den Rescue-Rate-Berechnungen).
+Testsuite 359/359, CI gruen (Commit `ac507d9`).
+
+**Ergebnis**: TabPFN rettet 61.3% von Rangers Fehlern (Stichprobe,
+vergleichbar mit LDA 62.2%, deutlich mehr als LightGBM 4.5%) - erneut
+das Muster "methodisch grundverschiedener Ansatz rettet mehr". Aber bei
+den 6.180 "alle drei selbstsicher falsch"-Faellen nur 7.1% -
+**unabhaengige Bestaetigung des Segmentmetriken-Hauptfunds** (Punkt 36):
+selbst ein leistungsfaehiges Foundation-Model kommt bei den wirklich
+harten Faellen kaum weiter, kein methodenspezifisches Problem, sondern
+echte irreduzible Unsicherheit. Commits: `939eebf` (zentral), `0000b78`
+(s6e9 lokal).
+
+**Damit ist die Fehleranalyse-Vertiefung fuer s6e9 jetzt WIRKLICH
+VOLLSTAENDIG abgeschlossen** (alle 5 Bausteine: confidence,
+isolation_forest, kernelshap, segments, tabpfn - keine offene Option
+mehr aus dem urspruenglichen Plan).
+
 **Stand jetzt: kein offener Blocker.** Root-Verzeichnis ist jetzt fuer
 Docs UND Skripte deutlich uebersichtlicher (36->11 `.md`-Dateien im
 Root, 114->83 `.R`-Dateien im Root); das Aufraeum-Verfahren selbst ist
 jetzt als Skill wiederverwendbar dokumentiert, falls erneuter Clutter
-entsteht. Die Fehleranalyse-Vertiefung fuer s6e9 ist jetzt VOLLSTAENDIG
-abgeschlossen, inklusive eines methodisch wichtigen Hauptfunds
-(Subsidy-Segment). Kein zwingender naechster Schritt mehr offen -
-`147_error_analysis_ranger_tabpfn.R` bleibt die einzige noch nicht
-bewertete Option, kein Vorschlag mehr auf dem Tisch bis der Nutzer neu
-entscheidet.
+entsteht. Die komplette Fehleranalyse-Vertiefung fuer s6e9 ist
+abgeschlossen, inklusive eines methodisch wichtigen, zweifach
+(Segmentmetriken UND TabPFN) bestaetigten Hauptfunds (Subsidy-Segment/
+irreduzible Unsicherheit). Kein zwingender naechster Schritt mehr
+offen - kein Vorschlag mehr auf dem Tisch bis der Nutzer neu
+entscheidet (z.B. neues Kaggle-Projekt, oder eine der offenen
+Festplatten-Aufraeum-Optionen aus Punkt 33/34).
 
 **Empfohlener erster Schritt, Stand jetzt**: kein zwingender
 Einstiegspunkt, kein offener Blocker.
