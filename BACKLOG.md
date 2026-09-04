@@ -3438,9 +3438,47 @@ fuer die Ranger-Submission verwendeten Hyperparameter stammen aus dem
 Per AskUserQuestion 2 Optionen vorgelegt (nur dokumentieren vs. bei
 voller Datenmenge neu tunen) - Nutzer waehlte **neu tunen** (Empfehlung).
 `090_ranger_tuning.R` bei `subset_fraction=1.0` erneut gestartet
-(668.665 Zeilen, 20 Suchevaluationen + 5-facher CV-Finalvergleich,
-Kostenschaetzung ~60-100 Minuten) - Ergebnis folgt in einem
-Folgeeintrag.
+(668.665 Zeilen, 20 Suchevaluationen + 5-facher CV-Finalvergleich).
+**Korrigierte Kostenschaetzung**: bei 5/20 Suchevaluationen lag die
+tatsaechliche Zeit pro Eval bei ~7-12 Minuten (nicht wie urspruenglich
+geschaetzt ~1.5-2.5 Min) - die urspruengliche ~60-100-Minuten-Schaetzung
+war deutlich zu niedrig, real eher mehrere Stunden fuer Suchphase +
+Finalvergleich zusammen. Ergebnis folgt in einem Folgeeintrag.
+
+### s6e9: Prototyp "Reshuffling Resampling Splits" (Nagler/Schneider/Bischl/Feurer, NeurIPS 2024) (2026-09-04)
+
+Nutzerfrage zu den AutoML-Seminars (youtube.com/@automlseminars4622,
+automl-seminars.github.io/talks) fuehrte zum Fund eines direkt
+relevanten, begutachteten Papers: [Reshuffling Resampling Splits Can
+Improve Generalization of Hyperparameter Optimization](https://arxiv.org/abs/2405.15393)
+(arXiv:2405.15393, NeurIPS 2024). Kernbefund: der Standard-Ablauf (EIN
+fixer Train/Validation-Split, wiederverwendet fuer ALLE waehrend der
+Tuning-Suche getesteten Konfigurationen) generalisiert schlechter als
+ein Ablauf mit einem NEU gezogenen Split je Konfiguration - besonders
+stark bei Holdout-Validierung (genau unser Suchphasen-Setup in
+`090_ranger_tuning.R`/`100_lightgbm_tuning.R`), ohne zusaetzlichen
+Rechenaufwand.
+
+**Neues Prototyp-Skript `167_ranger_tuning_reshuffled.R`**: manuelle
+Zufallssuche (mlr3tuning instanziiert den Resampling normalerweise
+EINMAL fuer die gesamte Suche - kein eingebauter "reshuffle je
+Evaluation"-Modus, daher kein `tnr("random_search")`), identischer
+Suchraum/identische Eval-Anzahl/identischer finaler 5-facher-CV-
+Vergleich wie `090_ranger_tuning.R`, einziger Unterschied: JEDE
+Suchevaluation bekommt einen frisch gezogenen Holdout-Split (anderer
+Seed) statt eines einmal instanziierten, wiederverwendeten Splits.
+Direkter Vergleich zum selben Tag gegen die `090`-Baseline (fixer
+Split, ebenfalls bei voller Datenmenge).
+
+Per AskUserQuestion auf die (deutlich hoehere als urspruenglich
+geschaetzte) Kostenschaetzung hingewiesen - Nutzer waehlte "trotzdem
+probieren, beide Laeufe nacheinander im Hintergrund". Als Kette
+gestartet: wartet auf den Abschluss von `090_ranger_tuning.R`, startet
+danach automatisch `167_ranger_tuning_reshuffled.R`. **Ergebnis folgt in
+einem Folgeeintrag** - falls sich der Reshuffling-Vorteil bestaetigt,
+ist das ein echter, kostenloser (kein Mehraufwand) Kandidat fuer einen
+Backport in `090`/`100` (nach ADR-003, sobald eine zweite unabhaengige
+Projektbestaetigung vorliegt).
 
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
