@@ -209,9 +209,13 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `939eebf` "BACKLOG: s6e9 TabPFN-Fehleranalyse
-  dokumentiert - Fehleranalyse-Vertiefung vollstaendig" - gepusht,
-  docs-only. Zwischenstand: `ac507d9` "TabPFN-Fehleranalyse:
+- `MLR3_Classifikation` @ `3b613f9` "BACKLOG: Ranger-LB-Score geloggt +
+  Fund: Ranger-Tuning nie bei voller Datenmenge" - gepusht, docs-only.
+  Zwischenstand: `48b3b20` "BACKLOG: s6e9 zweite/dritte Submission
+  dokumentiert" - gepusht, docs-only. Zwischenstand: `939eebf` "BACKLOG:
+  s6e9 TabPFN-Fehleranalyse dokumentiert - Fehleranalyse-Vertiefung
+  vollstaendig" - gepusht, docs-only. Weiterer Zwischenstand: `ac507d9`
+  "TabPFN-Fehleranalyse:
   Abfragezeilen-Kappung fuer grosse Eval-Splits" - CI gruen (neue Config
   `error_analysis_tabpfn_query_sample_size`, Testsuite 359/359).
   Zwischenstand: `46feebd` "BACKLOG: s6e9
@@ -291,7 +295,11 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
   war unkonfiguriert, per `--local` auf die bereits etablierte
   Konvention "Codex <codex@local>" gesetzt (nicht global geaendert).
 - `ML_Learning`: neues Projekt `PredictingElectricVehiclePurchases-s6e9`
-  (lokal, kein Remote), zuletzt `0000b78` "TabPFN-Fehleranalyse -
+  (lokal, kein Remote), zuletzt `60cff38` "zweite (lightgbm_10) + dritte
+  (Ranger getunt) Submission erzeugt". Kaggle-LB-Score der Ranger-
+  Submission (0.93829) und der laufende `090_ranger_tuning.R`-Neu-Lauf
+  sind NUR in `experiments.db` (gitignored), nicht in einem weiteren
+  Commit. Zwischenstand: `0000b78` "TabPFN-Fehleranalyse -
   Fehleranalyse-Vertiefung vollstaendig abgeschlossen". Zwischenstand:
   `389a880` "neues
   164_low_signal_feature_removal.R - Rausch-Feature-Test". Weiterer Zwischenstand:
@@ -1435,17 +1443,53 @@ VOLLSTAENDIG abgeschlossen** (alle 5 Bausteine: confidence,
 isolation_forest, kernelshap, segments, tabpfn - keine offene Option
 mehr aus dem urspruenglichen Plan).
 
-**Stand jetzt: kein offener Blocker.** Root-Verzeichnis ist jetzt fuer
-Docs UND Skripte deutlich uebersichtlicher (36->11 `.md`-Dateien im
-Root, 114->83 `.R`-Dateien im Root); das Aufraeum-Verfahren selbst ist
-jetzt als Skill wiederverwendbar dokumentiert, falls erneuter Clutter
-entsteht. Die komplette Fehleranalyse-Vertiefung fuer s6e9 ist
-abgeschlossen, inklusive eines methodisch wichtigen, zweifach
-(Segmentmetriken UND TabPFN) bestaetigten Hauptfunds (Subsidy-Segment/
-irreduzible Unsicherheit). Kein zwingender naechster Schritt mehr
-offen - kein Vorschlag mehr auf dem Tisch bis der Nutzer neu
-entscheidet (z.B. neues Kaggle-Projekt, oder eine der offenen
-Festplatten-Aufraeum-Optionen aus Punkt 33/34).
+**38. Aktualisierung ("wir sollten eine zweite Submission erzeugen,
+aehnlich gut wie die erste")**: Kaggle erlaubt 2 finale Submissions.
+Kandidat `lightgbm_10` aus dem 148-Pool (wiederholt bestes Einzelmodell
+in 163, Bestaetigungs-AUC 0.9427 - mit dem Vorbehalt, dass das nur eine
+Holdout-Auswertung war) auf vollen Daten trainiert
+(`165_train_predict_lightgbm10.R`) -> `submission_lightgbm10.csv`.
+**Diversitaets-Check ergab: PRAKTISCH EIN NAHE-DUPLIKAT** der ersten
+Submission (Korrelation 0.9983) - kaum Hedge-Wert. Auf Nutzerwunsch
+("Ranger auch erzeugen") zusaetzlich `166_train_predict_ranger.R` ->
+`submission_ranger.csv` (getunte Ranger-Konfiguration, strukturell
+andere Modellfamilie) - Korrelation nur 0.9898, ~2.5x diverser.
+**Empfehlung**: `submission.csv` + `submission_ranger.csv` fuer die 2
+finalen Einreichungen (nicht die lightgbm_10-Variante). Commits:
+`48b3b20` (zentral, docs-only), `60cff38` (s6e9 lokal, Skripte - die
+Submission-CSVs selbst sind gitignored).
 
-**Empfohlener erster Schritt, Stand jetzt**: kein zwingender
-Einstiegspunkt, kein offener Blocker.
+Nebenfrage des Nutzers: "die Submission hat sehr viele Nachkommastellen -
+sind die sinnvoll?" - erklaert: statistisch nicht (R-Standard-Float-
+Serialisierung, nicht echte Modellpraezision), aber irrelevant fuer AUC
+(rangfolgebasiert) und deckungsgleich mit dem Format von Kaggles eigener
+`sample_submission.csv` - kein Handlungsbedarf.
+
+Nutzer teilte den Public-LB-Score der Ranger-Submission: **0.93829** -
+in `experiments.db` geloggt (mconf_id `adf1f8d8-...`). Dabei ein echter
+Fund: `090_ranger_tuning.R` lief SEIT DER UMSTELLUNG AUF DIE VOLLE
+DATENMENGE (`edc6759`, 2026-09-01) NIE ERNEUT - die Ranger-Submission
+nutzt Hyperparameter aus dem urspruenglichen 10%-Subset-Tuning
+(anders als beim LightGBM, das explizit bei voller Groesse neu getunt
+wurde, mit messbarer Verbesserung). Per AskUserQuestion 2 Optionen
+vorgelegt (nur dokumentieren vs. neu tunen) - Nutzer waehlte **neu
+tunen bei voller Datenmenge** (Empfehlung). `090_ranger_tuning.R`
+laeuft im Hintergrund (~60-100 Min. Kostenschaetzung, 20 Suchevaluationen
++ 5-facher CV-Finalvergleich auf 668.665 Zeilen) - **Ergebnis noch
+NICHT bekannt bei diesem Statusanker-Update, folgt als Nachtrag**.
+Commit `3b613f9` (zentral, docs-only).
+
+**Stand jetzt: EIN LAUFENDER HINTERGRUNDPROZESS** (`090_ranger_tuning.R`
+bei voller Datenmenge) - Ergebnis bei Sessionende noch offen. Root-
+Verzeichnis ist weiterhin fuer Docs UND Skripte deutlich uebersichtlicher
+(36->11 `.md`-Dateien im Root, 114->83 `.R`-Dateien im Root); das
+Aufraeum-Verfahren selbst ist als Skill wiederverwendbar dokumentiert.
+Die komplette Fehleranalyse-Vertiefung fuer s6e9 ist abgeschlossen. 2
+Submission-Optionen (LightGBM + Ranger) liegen bereit, eine davon
+(Ranger) bereits mit LB-Score 0.93829 bestaetigt.
+
+**Empfohlener erster Schritt, Stand jetzt**: das Ergebnis des laufenden
+`090_ranger_tuning.R`-Neu-Tunings abwarten/pruefen - falls das
+Full-Data-Tuning bessere Hyperparameter findet, `submission_ranger.csv`
+ggf. mit den neuen Parametern neu erzeugen (analog zu `166_train_
+predict_ranger.R`, ggf. anpassen). Kein anderer zwingender Einstiegspunkt.
