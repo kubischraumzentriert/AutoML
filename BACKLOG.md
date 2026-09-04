@@ -3257,6 +3257,34 @@ getunten LightGBM bereits weitgehend ausgeschoepft ist.
 `JOSS_TECHNIQUE_WATCH.md` Kandidat #8 entsprechend aktualisiert
 (Prioritaet mittel -> niedrig nach diesem negativen n=1-Befund).
 
+### s6e9: Fehleranalyse-Vertiefung (147_confidence/isolation_forest/kernelshap) + LDA-Nachtest (2026-09-04)
+
+**147_error_analysis_ranger_confidence.R**: 20.378 von 133.733 Ranger-
+Fehlern. Bemerkenswerter Fund: **LDA "rettet" 62.2% von Rangers
+Fehlern, LightGBM nur 4.5%** - obwohl LightGBM die bessere Gesamt-AUC
+hat (0.9413 vs. LDA 0.9353). Erklaerung: LightGBM/Ranger sind beide
+baumbasiert und teilen aehnliche Fehlermuster, LDA (linear) irrt sich
+strukturell anders - hoehere Fehler-Diversitaet trotz niedrigerer
+Einzel-AUC. 6.180 Faelle, wo Ranger/LightGBM/LDA sich einig UND
+selbstsicher falsch liegen (alle mit derselben falschen Klasse).
+
+**147_error_analysis_ranger_isolation_forest.R**: diese 6.180 "harten"
+Faelle sind KEINE Feature-Raum-Ausreisser - Anomalie-Score sogar leicht
+NIEDRIGER (Median 0.484) als bei korrekt klassifizierten Faellen
+(0.496), p=1.3e-132 (hochsignifikant bei grossem n, aber winziger
+Effekt). Interpretation: genuin mehrdeutige/ueberlappende Faelle nahe
+der Entscheidungsgrenze, kein Datenqualitaetsproblem.
+
+**LDA-Nachtest**: der LDA-Rescue-Rate-Fund motivierte eine Erweiterung
+von `163_stacking_negative_weights.R` um LDA als 25. Kandidaten (aus
+dem 147-Artefakt, exakt derselbe Eval-Split wie der 148-Pool). Trotz
+nachgewiesener Fehler-Diversitaet: **erneuter Nullbefund** - weiterhin
+0 negative Koeffizienten, bestes Einzelmodell (LightGBM, AUC 0.9427)
+schlaegt beide Stacking-Varianten (0.9417, praktisch unveraendert
+gegenueber dem 24-Kandidaten-Lauf ohne LDA). Fehler-Diversitaet allein
+uebersetzt sich hier nicht in einen AUC-Gewinn - fuenfter Nullbefund in
+Folge fuer Score-Hebel bei diesem Projekt.
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
