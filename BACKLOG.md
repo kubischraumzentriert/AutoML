@@ -3355,6 +3355,35 @@ Grund zum Entfernen (kein Gewinn, kleiner Verlust); bei Prioritaet auf
 Trainingszeit/Kalibrierung waere der Tausch vertretbar. Ergebnis in
 `experiments.db` geloggt.
 
+### s6e9: TabPFN-Fehleranalyse (147_error_analysis_ranger_tabpfn.R) (2026-09-04)
+
+**Kosten-Fund vorab**: `interesting_idx` (Fehler + unsichere Faelle) hatte
+32.528 Zeilen - bei TabPFN-CPU-Inferenz mutmasslich mehrere Stunden.
+Nutzer waehlte per AskUserQuestion "auf Stichprobe reduzieren". Neue,
+zentral (nicht nur lokal) eingefuehrte Config `error_analysis_tabpfn_
+query_sample_size` (Default 2000, No-op fuer kleinere Projekte) kappt
+`interesting_idx` klassenstratifiziert per Zufall, `147_error_analysis_
+ranger_tabpfn.R` entsprechend angepasst (na.rm=TRUE in den Rescue-Rate-
+Berechnungen, da `misclassified_idx`/`hard_case_idx` weiterhin
+vollstaendig bleiben). Testsuite 359/359, CI gruen (Commit `ac507d9`).
+
+**Ergebnis**: TabPFN rettet 61.3% von Rangers Fehlern (Stichprobe,
+n=1280 der 20.378 Gesamtfehler) - vergleichbar mit LDA (62.2%, siehe
+oben), deutlich mehr als LightGBM (4.5%) - erneut das Muster, dass ein
+methodisch grundverschiedener Ansatz (In-Context-Learning statt
+trainiertes Modell) mehr Baumfehler "rettet". Aber bei den 6.180 "alle
+drei selbstsicher falsch"-Faellen (Stichprobe n=378) rettet TabPFN nur
+7.1%. **Starke unabhaengige Bestaetigung des Segmentmetriken-Hauptfunds**:
+selbst ein fundamental anderer, leistungsfaehiger Foundation-Model-
+Ansatz kommt bei den wirklich harten Faellen kaum weiter - kein
+methodenspezifisches Problem, sondern echte irreduzible Unsicherheit
+(vermutlich die "Subsidy_Available=No"-Faelle ohne verfuegbares
+Kernsignal). Ergebnis in `experiments.db` geloggt (2000 Zeilen).
+
+**Damit ist die Fehleranalyse-Vertiefung fuer s6e9 jetzt WIRKLICH
+VOLLSTAENDIG abgeschlossen** (alle 5 Bausteine: confidence, isolation_
+forest, kernelshap, segments, tabpfn).
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
