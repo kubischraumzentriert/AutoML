@@ -520,6 +520,16 @@ error_analysis_uncertainty_threshold <- 0.5
 # sondern nur auf den "interessanten" Zeilen (siehe error_analysis_uncertainty_threshold).
 error_analysis_tabpfn_context_size <- 999
 
+# Obergrenze fuer die Anzahl "interessanter" Abfragezeilen, auf denen TabPFN
+# tatsaechlich Inferenz laeuft (CPU-Kosten skalieren mit Kontext x
+# Abfragezeilen). Bei kleinen Projekten (interesting_idx < diese Grenze) ein
+# No-op; bei grossen Eval-Splits (Fund: PredictingElectricVehiclePurchases-
+# s6e9, 2026-09-04, interesting_idx=32528 - ohne Kappung mutmasslich mehrere
+# Stunden CPU-Zeit) verhindert dies eine unpraktikabel lange Laufzeit, ohne
+# das Skript fuer kleinere Projekte zu aendern. Stratifizierte Zufallsstich-
+# probe (nicht die ersten N) fuer eine repraesentative Rescue-Rate-Schaetzung.
+error_analysis_tabpfn_query_sample_size <- 2000
+
 # Segmentmetriken (147_error_analysis_ranger_segments.R): baut auf dem
 # `error_analysis_models_path`-Artefakt auf (kein erneutes Training). Prueft
 # je Spalte in `segment_metric_cols`, ob BAcc/MCC in einer Untergruppe deutlich

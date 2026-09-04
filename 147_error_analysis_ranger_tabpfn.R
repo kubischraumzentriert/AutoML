@@ -38,6 +38,23 @@ interesting_idx <- indices$interesting_idx
 # ein kleiner, klassenstratifizierter Kontext. Vorhersage NUR auf den
 # "interessanten" Zeilen (nicht dem kompletten Eval-Split), um die
 # CPU-Inferenzzeit praktikabel zu halten.
+#
+# Zusaetzliche Kappung auf error_analysis_tabpfn_query_sample_size (siehe
+# 000_config.R) - bei grossen Eval-Splits kann interesting_idx selbst schon
+# zu gross fuer eine praktikable CPU-Laufzeit sein (Fund: s6e9, 2026-09-04).
+# Klassenstratifizierte Zufallsstichprobe statt der ersten N, damit die
+# Rescue-Rate weiterhin repraesentativ bleibt.
+if (length(interesting_idx) > error_analysis_tabpfn_query_sample_size) {
+  set.seed(seed)
+  interesting_strata <- split(interesting_idx, truth[interesting_idx])
+  frac <- error_analysis_tabpfn_query_sample_size / length(interesting_idx)
+  interesting_idx <- unlist(lapply(interesting_strata, function(idx) {
+    sample(idx, max(1, round(length(idx) * frac)))
+  }))
+  cat("Hinweis:", length(indices$interesting_idx), "'interessante' Zeilen auf",
+      length(interesting_idx), "klassenstratifiziert per Zufall reduziert (error_analysis_tabpfn_query_sample_size).\n")
+}
+
 cat("=== TabPFN auf den", length(interesting_idx), "'interessanten' Zeilen (Kontext:", error_analysis_tabpfn_context_size, "klassenstratifizierte Zeilen) ===\n")
 
 set.seed(seed)
@@ -66,14 +83,20 @@ tabpfn_response <- pred_tabpfn$response
 tabpfn_probs <- pred_tabpfn$prob
 tabpfn_correct <- tabpfn_response == truth[interesting_idx]
 
+# na.rm=TRUE: bei einer Stichprobenreduktion (s.o.) sind misclassified_idx/
+# hard_case_idx weiterhin die VOLLSTAENDIGEN Mengen aus 147_..._confidence.R,
+# nicht jede davon liegt in der reduzierten interesting_idx-Stichprobe -
+# match() liefert dafuer NA, ohne na.rm wuerde die Rate selbst zu NA werden.
 misclassified_pos <- match(misclassified_idx, interesting_idx)
-tabpfn_rescue_rate <- mean(tabpfn_correct[misclassified_pos])
+tabpfn_rescue_rate <- mean(tabpfn_correct[misclassified_pos], na.rm = TRUE)
 
 hard_case_pos <- match(hard_case_idx, interesting_idx)
-tabpfn_hard_case_rescue_rate <- if (length(hard_case_idx) > 0) mean(tabpfn_correct[hard_case_pos]) else NA_real_
+tabpfn_hard_case_rescue_rate <- if (length(hard_case_idx) > 0) mean(tabpfn_correct[hard_case_pos], na.rm = TRUE) else NA_real_
 
-cat("TabPFN 'rettet'", sprintf("%.1f%%", 100 * tabpfn_rescue_rate), "von Rangers", length(misclassified_idx), "Fehlern.\n")
-cat("TabPFN 'rettet'", sprintf("%.1f%%", 100 * tabpfn_hard_case_rescue_rate), "der", length(hard_case_idx), "'alle drei selbstsicher falsch'-Zeilen.\n")
+cat("TabPFN 'rettet'", sprintf("%.1f%%", 100 * tabpfn_rescue_rate), "von",
+    sum(!is.na(misclassified_pos)), "in der Stichprobe enthaltenen Rangers-Fehlern (von", length(misclassified_idx), "insgesamt).\n")
+cat("TabPFN 'rettet'", sprintf("%.1f%%", 100 * tabpfn_hard_case_rescue_rate), "der",
+    sum(!is.na(hard_case_pos)), "in der Stichprobe enthaltenen 'alle drei selbstsicher falsch'-Zeilen (von", length(hard_case_idx), "insgesamt).\n")
 cat("(Hinweis: TabPFN nur auf", error_analysis_tabpfn_context_size, "Kontextzeilen trainiert, nicht auf allen", nrow(train_imputed), "- kein fairer Gesamtvergleich, siehe README zu 095.)\n")
 
 # --- Experiment-Tracking (SQLite) -------------------------------------------
