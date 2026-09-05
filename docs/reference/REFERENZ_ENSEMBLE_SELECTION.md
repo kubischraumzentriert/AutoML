@@ -290,17 +290,27 @@ Wahl fuer diesen Wettbewerb; `submission_ensemble.csv` ersetzt sie nicht.
   wertvoll: eine starke Konzentration auf 1-2 Modelle bestaetigt oft eine
   bereits bekannte "staerkste Familie"; eine breite Streuung deutet auf
   echte, komplementaere Diversitaet im Pool hin.
-- **Datensatzgroesse als Faustregel (2026-09-05, 2 unabhaengige
-  Bestaetigungen)**: bei kleinen/mittleren Datensaetzen (~500-1000
-  Zeilen, `openml-cc18-ilpd`/`openml-cc18-blood-transfusion`) brachte
-  das Ensemble konsistent einen echten Gewinn gegenueber dem besten
-  Einzelmodell (+0.71/+1.76 BAcc-Prozentpunkte). Bei einem sehr grossen
-  Datensatz (`PredictingElectricVehiclePurchases-s6e9`, 668.665 Zeilen)
-  dagegen KEIN messbarer Gewinn (Greedy-Ensemble/Stacking blieben
-  durchgehend unter dem besten Einzelmodell, auch mit LDA als
-  zusaetzlichem diversem Kandidaten - siehe BACKLOG.md, 2026-09-02/03/04).
-  Plausible Erklaerung: bei viel Trainingsdaten ist die Einzelmodell-
-  Varianz gering, es gibt fuer Diversitaet wenig zu gewinnen. **Faustregel**:
-  den Ensemble-Pool bei kleinen/mittleren Datensaetzen routinemaessig
-  pruefen, bei sehr grossen (>~500k Zeilen) eher nicht - der Aufwand
-  rechtfertigt dort selten den (wenn ueberhaupt vorhandenen) Gewinn.
+- **Datensatzgroesse KEINE verlaessliche Faustregel (2026-09-05,
+  korrigiert nach Erweiterung auf 4 kleine Datensaetze)**: eine erste
+  Zwischenauswertung an nur 2 kleinen Datensaetzen (`openml-cc18-ilpd`/
+  `openml-cc18-blood-transfusion`, +0.71/+1.76 BAcc-Prozentpunkte)
+  legte voreilig eine "kleine Datensaetze -> Ensemble hilft"-Regel nahe.
+  Nach Erweiterung auf 2 weitere kleine Datensaetze
+  (`openml-cc18-qsar-biodeg` -0.72pp, `openml-cc18-eucalyptus` -2.77pp)
+  kippte das Bild: **2 von 4 positiv, 2 von 4 negativ** - kein
+  konsistenter Effekt. Bei `PredictingElectricVehiclePurchases-s6e9`
+  (668.665 Zeilen) ebenfalls kein Gewinn (siehe BACKLOG.md,
+  2026-09-02/03/04). **Auffaelligkeit bei `eucalyptus`** (5 Klassen,
+  nur 147 Eval-Zeilen): grosse Luecke zwischen Selektions-BAcc (0.79)
+  und Bestaetigungs-BAcc (0.56) - starkes Ueberanpassungs-Signal. Bei
+  sehr kleinen/vielklassigen Datensaetzen wird der Selektions-/
+  Bestaetigungs-Split selbst zu rauschanfaellig, um eine verlaessliche
+  Ensemble-Entscheidung zu treffen - das ist wahrscheinlicher die
+  Erklaerung als eine echte Datensatzgroessen-Abhaengigkeit.
+  **Konsequenz**: KEIN Backport in den Standard-Workflow (weder als
+  generelle Empfehlung fuer kleine Datensaetze noch als Default-Schritt) -
+  der Ensemble-Pool bleibt ein optionales Diagnose-/Experimentierskript,
+  das man PROJEKTWEISE per Selektions-/Bestaetigungs-Split verifiziert,
+  nicht blind uebernimmt. Lehre fuer kuenftige n=2-Zwischenbefunde:
+  IMMER auf n>=4 erweitern, bevor eine Faustregel formuliert wird -
+  bei n=2 haette ein Zufallsergebnis genauso ausgesehen.

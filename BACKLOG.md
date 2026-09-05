@@ -3548,6 +3548,50 @@ den Ensemble-Pool routinemaessig pruefen, bei sehr grossen (>500k
 Zeilen wie s6e9) eher nicht, da dort der Aufwand den Gewinn kaum
 rechtfertigt.
 
+### Korrektur: Ensemble-Pilot auf 4 kleine Datensaetze erweitert - keine verlaessliche Faustregel (2026-09-05)
+
+Nutzerwunsch "koennen wir das Ensembling fuer 2 weitere kleinere
+Projekte versuchen? Und dann eventuell in Template Workflow
+uebernehmen?" - genau die richtige Vorsicht vor einer verfruehten
+Verallgemeinerung aus nur 2 Datenpunkten.
+
+**Setup**: `openml-cc18-dresses-sales` als 3. Kandidat gewaehlt, scheiterte
+aber an einem LDA-spezifischen Fehler (`147_error_analysis_ranger_
+models.R` bricht ab: "Variablen ... scheinen innerhalb der Gruppen
+konstant zu sein" - Kollinearitaet nach Imputation, datensatzspezifisch,
+nicht unser eigentliches Thema) - pragmatisch durch
+`openml-cc18-qsar-biodeg` (1055 Zeilen) ersetzt. Dazu
+`openml-cc18-eucalyptus` (736 Zeilen, 5 Klassen) als 4. Kandidat.
+
+**Ergebnis: 2 von 4 positiv, 2 von 4 negativ** - kein konsistenter
+Effekt:
+- `ilpd`: +0.71 BAcc-Punkte (siehe oben)
+- `blood-transfusion`: +1.76 BAcc-Punkte (siehe oben)
+- `qsar-biodeg`: **-0.72 BAcc-Punkte** (bestes Einzelmodell 0.8143,
+  Ensemble 0.8071)
+- `eucalyptus`: **-2.77 BAcc-Punkte** (bestes Einzelmodell 0.5866,
+  Ensemble 0.5589) - bei nur 147 Eval-Zeilen (5 Klassen) grosse Luecke
+  zwischen Selektions-BAcc (0.79) und Bestaetigungs-BAcc (0.56), starkes
+  Ueberanpassungs-Signal auf der winzigen Selektionsmenge.
+
+**Korrigiertes Fazit** (ersetzt die vorschnelle "kleine Datensaetze ->
+Ensemble hilft"-Faustregel vom selben Tag, siehe vorheriger Eintrag):
+kein verlaesslicher Zusammenhang zwischen Datensatzgroesse und Ensemble-
+Nutzen. Bei sehr kleinen/vielklassigen Datensaetzen wird eher der
+Selektions-/Bestaetigungs-Split selbst zu rauschanfaellig fuer eine
+stabile Ensemble-Entscheidung. **KEIN Backport in den Standard-Workflow**
+- der Ensemble-Pool bleibt ein optionales, projektweise per Split zu
+verifizierendes Diagnoseskript, keine automatische Empfehlung fuer
+kleine Datensaetze. `docs/reference/REFERENZ_ENSEMBLE_SELECTION.md`
+entsprechend korrigiert.
+
+**Lehre fuer kuenftige Zwischenbefunde**: bei n=2 IMMER auf n>=4
+erweitern, bevor eine Faustregel formuliert wird - ein Zufallsergebnis
+haette bei n=2 identisch ausgesehen. Deckt sich mit der bereits
+etablierten Lehre aus der Decision-Stability-Forschungslinie
+(Zwischenbefunde immer als vorlaeufig kennzeichnen, siehe
+`statusanker/SESSION_HANDOFF_2026-08-29.md`).
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
