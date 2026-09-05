@@ -3474,11 +3474,27 @@ Per AskUserQuestion auf die (deutlich hoehere als urspruenglich
 geschaetzte) Kostenschaetzung hingewiesen - Nutzer waehlte "trotzdem
 probieren, beide Laeufe nacheinander im Hintergrund". Als Kette
 gestartet: wartet auf den Abschluss von `090_ranger_tuning.R`, startet
-danach automatisch `167_ranger_tuning_reshuffled.R`. **Ergebnis folgt in
-einem Folgeeintrag** - falls sich der Reshuffling-Vorteil bestaetigt,
-ist das ein echter, kostenloser (kein Mehraufwand) Kandidat fuer einen
-Backport in `090`/`100` (nach ADR-003, sobald eine zweite unabhaengige
-Projektbestaetigung vorliegt).
+danach automatisch `167_ranger_tuning_reshuffled.R`. Beide Laeufe
+wurden ueber Nacht durch ~11.5h System-Standby (2 Ruhemodus-Phasen,
+"System Idle") mehrfach unterbrochen (kein Datenverlust, nur
+verlaengerte Wall-Clock-Zeit).
+
+**Ergebnis (2026-09-05): kein messbarer Unterschied.** Finale 5-fache-
+CV-AUC: fixer Split (090-Baseline) 0.938788 vs. reshuffled (167)
+0.938750 - Differenz 0.00004, klar im Rauschbereich. Fuer dieses
+Projekt bringt Reshuffling keinen messbaren Vorteil. **Plausible
+Erklaerung, konsistent mit dem Paper selbst**: der Effekt ist laut den
+Autoren am staerksten bei einem relativ instabilen/rauschanfaelligen
+fixen Split (kleine Datensaetze). Bei s6e9 ist der Holdout-Split selbst
+auf ~535k Zeilen (validation_ratio=0.80 von 668.665) bereits sehr
+stabil - da gibt es fuer Reshuffling wenig zu reparieren. Kein
+Widerspruch zum Paper, eher eine Bestaetigung der dort genannten
+Randbedingung (Signal/Rausch-Charakteristik des Optimierungsproblems).
+**Kein Backport-Kandidat aus diesem einen Befund** (n=1, negativ,
+zudem plausibel durch die grosse Datenmenge dieses Projekts erklaerbar
+statt durch eine generelle Wirkungslosigkeit der Technik) - bei einem
+kuenftigen Projekt mit kleinerer Trainingsmenge (wo die Suchphase auf
+einem instabileren Split laeuft) waere ein erneuter Test aussagekraeftiger.
 
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
