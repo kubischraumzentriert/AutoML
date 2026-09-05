@@ -3496,6 +3496,58 @@ statt durch eine generelle Wirkungslosigkeit der Technik) - bei einem
 kuenftigen Projekt mit kleinerer Trainingsmenge (wo die Suchphase auf
 einem instabileren Split laeuft) waere ein erneuter Test aussagekraeftiger.
 
+### Pilot: Reshuffling + Ensemble-Diversitaet auf 2 kleinen OpenML-Datensaetzen (2026-09-05)
+
+Nutzeridee: die beiden bei s6e9 getesteten Methoden (Reshuffling-
+Resampling-Splits, Ensemble-Pool mit Hyperparameter-Vielfalt) sollten
+bei KLEINEN Datensaetzen aussagekraeftiger sein (fixer Split
+instabiler, Modell-Varianz hoeher) - bei Erfolg Kandidat fuer einen
+Template-Backport. `openml-cc18-ilpd` (~583 Zeilen) und
+`openml-cc18-blood-transfusion` (~748 Zeilen) ausgewaehlt (2 Projekte,
+erfuellt die ADR-003-Schwelle direkt bei Erfolg).
+
+**Setup**: beide Projekte hatten bisher nur die Decision-Stability-/
+Hard-Split-Stresstest-Infrastruktur, keine numerierte Tuning-/Ensemble-
+Pipeline. `005_benchmark_runtime.R`, `090_ranger_tuning.R`,
+`167_ranger_tuning_reshuffled.R`, `147_error_analysis_ranger_models.R`,
+`148_ensemble_candidate_pool.R`, `149_ensemble_selection.R`,
+`ensemble_selection.R`, `db_logging.R`, `db_schema.sql`, `provenance.R`
+aus dem zentralen Template kopiert, fehlende Config-Variablen/Helfer-
+Funktionen (`task_id_prefix`, `feature_set_from_task_id()`,
+`algorithm_from_learner_id()`, `enable_class_stratification()`,
+`add_balanced_class_weights()`, Tuning-/Ensemble-Pfade) ergaenzt.
+
+**Ergebnis Reshuffling: 2/2 NEGATIV** (kein Backport-Kandidat):
+- `ilpd`: fixer Split 0.5906 vs. reshuffled 0.5875 BAcc
+- `blood-transfusion`: fixer Split 0.6340 vs. reshuffled 0.6290 BAcc
+
+Bei beiden kleinen Datensaetzen leicht SCHLECHTER mit Reshuffling -
+konsistent negativ, kein Hinweis auf einen Vorteil bei kleiner
+Datenmenge (anders als urspruenglich erhofft). Zusammen mit dem
+s6e9-Nullbefund (grosse Datenmenge) jetzt 3/3 Projekte ohne
+nachweisbaren Reshuffling-Vorteil - die Technik bringt fuer unsere Art
+Projekte offenbar keinen verlaesslichen Gewinn. **Nicht weiter
+verfolgen.**
+
+**Ergebnis Ensemble-Pool: 2/2 POSITIV** (ADR-003-Schwelle erfuellt):
+- `ilpd`: bestes Einzelmodell 0.7999 vs. Greedy-Ensemble 0.8070 BAcc
+  (+0.71 Prozentpunkte, Ensemble aus catboost_19+catboost_20)
+- `blood-transfusion`: bestes Einzelmodell 0.7412 vs. Greedy-Ensemble
+  0.7588 BAcc (+1.76 Prozentpunkte, Ensemble aus catboost_21+ranger_3x3;
+  hier identisch zum gleichgewichteten Blend)
+
+Beide Male ein echter, nicht-trivialer Ensemble-Gewinn - deutlich
+staerker als bei s6e9 (dort kein messbarer Gewinn, siehe 2026-09-02/03-
+Eintraege). **Bestaetigt die Erwartung**: Ensemble-Pooling lohnt sich
+bei kleinen Datensaetzen (hoehere Einzelmodell-Varianz -> mehr
+Angriffsflaeche fuer Diversitaet) deutlich mehr als bei sehr grossen.
+`148_ensemble_candidate_pool.R`/`149_ensemble_selection.R` sind bereits
+Teil des Templates (kein neuer Mechanismus noetig) - die Erkenntnis ist
+eher eine **Nutzungs-Empfehlung**: bei kleinen/mittleren Datensaetzen
+den Ensemble-Pool routinemaessig pruefen, bei sehr grossen (>500k
+Zeilen wie s6e9) eher nicht, da dort der Aufwand den Gewinn kaum
+rechtfertigt.
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-

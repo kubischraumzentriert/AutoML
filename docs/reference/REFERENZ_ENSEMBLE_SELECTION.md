@@ -290,3 +290,17 @@ Wahl fuer diesen Wettbewerb; `submission_ensemble.csv` ersetzt sie nicht.
   wertvoll: eine starke Konzentration auf 1-2 Modelle bestaetigt oft eine
   bereits bekannte "staerkste Familie"; eine breite Streuung deutet auf
   echte, komplementaere Diversitaet im Pool hin.
+- **Datensatzgroesse als Faustregel (2026-09-05, 2 unabhaengige
+  Bestaetigungen)**: bei kleinen/mittleren Datensaetzen (~500-1000
+  Zeilen, `openml-cc18-ilpd`/`openml-cc18-blood-transfusion`) brachte
+  das Ensemble konsistent einen echten Gewinn gegenueber dem besten
+  Einzelmodell (+0.71/+1.76 BAcc-Prozentpunkte). Bei einem sehr grossen
+  Datensatz (`PredictingElectricVehiclePurchases-s6e9`, 668.665 Zeilen)
+  dagegen KEIN messbarer Gewinn (Greedy-Ensemble/Stacking blieben
+  durchgehend unter dem besten Einzelmodell, auch mit LDA als
+  zusaetzlichem diversem Kandidaten - siehe BACKLOG.md, 2026-09-02/03/04).
+  Plausible Erklaerung: bei viel Trainingsdaten ist die Einzelmodell-
+  Varianz gering, es gibt fuer Diversitaet wenig zu gewinnen. **Faustregel**:
+  den Ensemble-Pool bei kleinen/mittleren Datensaetzen routinemaessig
+  pruefen, bei sehr grossen (>~500k Zeilen) eher nicht - der Aufwand
+  rechtfertigt dort selten den (wenn ueberhaupt vorhandenen) Gewinn.
