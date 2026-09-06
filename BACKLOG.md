@@ -3764,6 +3764,14 @@ Submission ist jetzt methodisch konsistent mit dem tatsaechlichen
 Full-Data-Tuning. Kaggle-Score der neuen Version noch nicht bekannt -
 falls der Nutzer erneut einreicht, Ergebnis nachtragen.
 
+**Nachtrag**: Nutzer reichte die neu erzeugte Submission ein - Public LB
+**0.93854** (vorher 0.93829, veraltetes 10%-Subset-Tuning) - **+0.00025**,
+klein aber konsistent mit der internen CV-Verbesserung (0.9383 Default
+-> 0.9388 getunt bei voller Datenmenge). In `experiments.db` geloggt
+(mconf_id `316faa65-abe5-4689-bd37-cbe41c6a14b4`). Bestaetigt, dass der
+urspruengliche Ranger-Tuning-Luecken-Fund (Punkt 38) real war und die
+Korrektur einen echten, wenn auch kleinen Nutzen brachte.
+
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
 Projekt: `Fehler: 'xgb.params' ist kein exportiertes Objekt aus
 'namespace:xgboost'`. Ursache: die lokal installierte `xgboost`-R-

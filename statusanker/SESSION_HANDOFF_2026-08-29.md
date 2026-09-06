@@ -209,7 +209,10 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `e8ea5ed` "FinancialStressPredictionChallenge
+- `MLR3_Classifikation` @ `b820cbd` "BACKLOG: s6e9
+  submission_ranger.csv mit korrekt getunten Hyperparametern neu
+  erzeugt" - gepusht, docs-only. Zwischenstand: `e8ea5ed`
+  "FinancialStressPredictionChallenge
   geprueft: keine Bugfix-Luecken, Korrektur zur CatBoost-Fund-Herkunft"
   - gepusht, docs-only. Zwischenstand: `0a4dd1e`/Statusanker.
   Zwischenstand: `fe3bc09` "ADR-003-Eskalationsklausel + neue
@@ -1647,8 +1650,30 @@ nicht). Commit `e8ea5ed` (zentral, docs-only).
 (Punkt 42, Aufraeum-Umfang fuer die Pilot-Projekte - Frage wurde
 verworfen, nicht beantwortet). Kein laufender Hintergrundprozess.
 
+**44. Aktualisierung ("machen wir mit
+PredictingElectricVehiclePurchases-s6e9 weiter")**: der aus Punkt 38
+offen gelassene Punkt nachgeholt - `ranger_tuning_instance.rds` enthielt
+seit dem `090`-Full-Data-Rerun bereits die richtig getunten
+Hyperparameter (statt der alten 10%-Subset-Werte), `166_train_predict_
+ranger.R` musste dafuer nur erneut ausgefuehrt werden (kein Code-
+Aenderungsbedarf) - `submission_ranger.csv` neu erzeugt. Nutzer reichte
+ein: **Public LB 0.93854** (vorher 0.93829) - **+0.00025**, klein aber
+real, konsistent mit der internen CV-Verbesserung (0.9383->0.9388). In
+`experiments.db` geloggt (mconf_id `316faa65-...`). Commit `b820cbd`
+(zentral, docs-only).
+
+**Stand jetzt: kein offener Blocker, ABER weiterhin 1 offene
+Nutzerentscheidung** (Punkt 42, Aufraeum-Umfang fuer die 10
+Ensemble-Pilot-Projekte - Frage wurde verworfen, nicht beantwortet,
+Nutzer ging stattdessen zu anderen Themen ueber). Kein laufender
+Hintergrundprozess. s6e9 ist jetzt in JEDER Hinsicht abgeschlossen -
+beide finalen Submissions (LightGBM 0.94142, Ranger 0.93854) sind
+LB-bestaetigt, alle offenen Punkte aus der Session nachgeholt.
+
 **Empfohlener erster Schritt, Stand jetzt**: kein zwingender
 Einstiegspunkt. Falls der Nutzer auf das Aufraeumen der Pilot-Projekte
 zurueckkommt: NICHT dieselbe 3-Optionen-Frage wiederholen, sondern
 direkt fragen, was ihn an der letzten Frage gestoert hat, oder eine
-einzelne, konkretere Vorgehensweise vorschlagen.
+einzelne, konkretere Vorgehensweise vorschlagen. Sonst: kein offener
+Punkt mehr fuer s6e9, naechster natuerlicher Schritt waere ein neues
+Kaggle-/OpenML-Projekt, falls der Nutzer eines mitbringt.
