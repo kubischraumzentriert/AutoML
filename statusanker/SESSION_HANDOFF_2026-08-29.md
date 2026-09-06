@@ -209,9 +209,11 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `db3a1f5` "BACKLOG: Ensemble-Pilot
+- `MLR3_Classifikation` @ `fe3bc09` "ADR-003-Eskalationsklausel + neue
+  Skill pilot-external-technique" - gepusht, docs-only. Zwischenstand:
+  `db3a1f5` "BACKLOG: Ensemble-Pilot
   abgeschlossen - 10 Projekte, kein systematischer Nutzen" - gepusht,
-  docs-only. Zwischenstaende (alle docs-only): `e7089cb` (cmc +
+  docs-only. Weitere Zwischenstaende (alle docs-only): `e7089cb` (cmc +
   ozone-level-8hr), `d6c3395` (analcatdata-authorship + mice-protein),
   `63d03b2` (Ensemble-Faustregel-Korrektur), `7b3aab7` (Reshuffling +
   Ensemble-Pilot, erste 2 Projekte), `2a96684` (Reshuffling-Ergebnis:
@@ -1567,6 +1569,36 @@ Ensemblegroesse 1, statt unnoetig aufzublaehen) - spricht fuer die
 Robustheit des Algorithmus selbst, auch wenn die Datensatzgroessen-
 Frage negativ beantwortet wurde.
 
+**41. Aktualisierung ("haben wir was gelernt, das wir in Skills
+speichern koennen?" + Vorschlag, die n=2-Schwelle zu erhoehen und
+vergangene Entscheidungen nachzupruefen)**: `adr/003-backport-after-
+confirmation.md` um eine Eskalationsklausel ergaenzt (Nutzerentscheidung:
+KEINE starre n=4-Erhoehung, sondern eine Stabilitaets-Regel) - die
+2-Projekte-Mindestschwelle reicht nur bei KONSISTENTEM Ergebnis und
+nicht offensichtlich rauschanfaelliger Messgroesse; sonst auf n>=4
+(ohne feste Obergrenze - massgeblich ist Stabilitaet ueber wiederholte
+Erweiterung, nicht eine bestimmte Zahl) eskalieren. Ruecksichtig auf
+den eigenen Pilot: selbst n=4 reichte dort nicht (2:2), erst n=10 gab
+ein stabiles Bild.
+
+**Rueckwirkende Pruefung durchgefuehrt** (Nutzerfrage, ob vergangene
+Entscheidungen nachgeholt werden sollten): BACKLOG.md systematisch nach
+allen "ADR-003"/"2 Projekte"/"2 unabhaengige"-Eintraegen durchsucht.
+**Ergebnis: kein weiterer Nachpruefungsbedarf gefunden** - Decision-
+Stability (n=2, widerspruechlich) wurde bereits korrekt NICHT
+backported und explizit als offen markiert (spaeter auf n=6->10->15
+erweitert); Hard-Split-Stresstest (n=2 zunaechst) wurde ebenfalls erst
+bei n=7 als Pipeline-Skript backported. Der Ensemble-Pool-Fehltritt
+bleibt ein Einzelfall, kein systematisches Muster in der bisherigen
+Historie.
+
+**Neue Skill** [`.claude/skills/pilot-external-technique/SKILL.md`](.claude/skills/pilot-external-technique/SKILL.md):
+fasst das CC18-Pilot-Setup-Rezept (fehlende Config-Variablen/
+Helferfunktionen, bekannte LDA-Fallstricke, die Bash-`\\.`-Escape-Falle)
+UND die Eskalationsdisziplin (ADR-003-Klausel, "kein Unterschied" !=
+"negativ", Korrektur statt stillem Ueberschreiben) zusammen. Commit
+`fe3bc09` (zentral, docs-only).
+
 **Stand jetzt: kein offener Blocker, kein laufender Hintergrundprozess.**
 s6e9 ist inhaltlich vollstaendig abgeschlossen (Submission + Ensemble-
 Check + Trust-Gate-Diagnostik + Fehleranalyse + 2 zusaetzliche
@@ -1574,6 +1606,8 @@ Submissions, eine davon LB-bestaetigt). Reshuffling UND Ensemble-Pool-
 Backport sind beide abschliessend NEGATIV beantwortet (je mit robuster
 Mehrfach-Projekt-Evidenz) - keine weitere Untersuchung dieser beiden
 Ideen geplant, ausser der Nutzer bringt neue Evidenz/einen neuen Ansatz.
+Die ADR-003-Eskalationsdisziplin ist jetzt formal festgehalten UND als
+Skill wiederverwendbar, falls ein kuenftiger Pilot aehnlich verlaeuft.
 
 **Empfohlener erster Schritt, Stand jetzt**: kein zwingender
 Einstiegspunkt, kein offener Blocker (s6e9-Fehleranalyse inkl. TabPFN
