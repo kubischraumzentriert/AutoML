@@ -209,8 +209,11 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `fe3bc09` "ADR-003-Eskalationsklausel + neue
-  Skill pilot-external-technique" - gepusht, docs-only. Zwischenstand:
+- `MLR3_Classifikation` @ `e8ea5ed` "FinancialStressPredictionChallenge
+  geprueft: keine Bugfix-Luecken, Korrektur zur CatBoost-Fund-Herkunft"
+  - gepusht, docs-only. Zwischenstand: `0a4dd1e`/Statusanker.
+  Zwischenstand: `fe3bc09` "ADR-003-Eskalationsklausel + neue
+  Skill pilot-external-technique" - gepusht, docs-only. Weiterer Zwischenstand:
   `db3a1f5` "BACKLOG: Ensemble-Pilot
   abgeschlossen - 10 Projekte, kein systematischer Nutzen" - gepusht,
   docs-only. Weitere Zwischenstaende (alle docs-only): `e7089cb` (cmc +
@@ -1609,10 +1612,43 @@ Ideen geplant, ausser der Nutzer bringt neue Evidenz/einen neuen Ansatz.
 Die ADR-003-Eskalationsdisziplin ist jetzt formal festgehalten UND als
 Skill wiederverwendbar, falls ein kuenftiger Pilot aehnlich verlaeuft.
 
+**42. Aktualisierung ("Aufraeumen der 10 Ensemble-Pilot-Projekt-Setups")**:
+per AskUserQuestion 3 Umfang-Optionen vorgelegt (nur Skripte+Config /
+zusaetzlich Artefakte / nur die 2 gescheiterten Projekte) - **Nutzer hat
+die Frage VERWORFEN ("dismissed - do not proceed, wait for next
+instruction")**. **OFFENER PUNKT, NICHTS UMGESETZT** - die 10(+2
+gescheiterten) Pilot-Projekt-Setups in `ML_Learning` sind unveraendert
+stehen geblieben. Naechstes Mal NICHT einfach nochmal dieselbe Frage
+stellen, sondern abwarten, was der Nutzer stattdessen vorhat (er ging
+direkt zu einer anderen Aufgabe ueber, s.u.).
+
+**43. Aktualisierung ("koennen wir c:\...\FinancialStressPredictionChallenge
+nochmal anschauen - gibt es was wir rueckspielen koennen, etwas das den
+Score erhoehen koennte?")**: Projekt hat einen expliziten, fairness-
+motivierten Abschluss-Vermerk im eigenen README ("Der Workflow wird
+hier bewusst beendet... keine weiteren Mikrovarianten... keine
+zusaetzlichen Leaderboard-Sonden", Public LB bereits bestaetigt bei
+0.697156). Per AskUserQuestion geklaert, ob dieser Stopp aufgehoben
+werden soll - Nutzer waehlte die konservative Option: NUR echte
+Bugfixes aus dieser Session pruefen (predict_type/positive_class/
+CatBoost-integer), kein neues Tuning, Fairness-Stopp bleibt bestehen.
+
+**Ergebnis: keine Luecken gefunden** - alle 3 Fixes bereits vorhanden.
+**Bemerkenswerter Nebenfund**: der CatBoost-`integer`-Fix existierte in
+diesem Projekt bereits SEIT JULI 2026 (`038_model_diversity_check.R`) -
+VOR dem vermeintlichen "Erstfund" bei s6e9 im September (Punkt 30/2026-
+09-02-BACKLOG-Eintrag). Die urspruengliche Formulierung "hier zum
+ersten Mal konkret in einem Projekt aufgetreten" war demnach falsch -
+Korrektur direkt im betroffenen BACKLOG-Eintrag ergaenzt (der Fix
+selbst war inhaltlich immer korrekt, nur die Herkunfts-Zuschreibung
+nicht). Commit `e8ea5ed` (zentral, docs-only).
+
+**Stand jetzt: kein offener Blocker, ABER 1 offene Nutzerentscheidung**
+(Punkt 42, Aufraeum-Umfang fuer die Pilot-Projekte - Frage wurde
+verworfen, nicht beantwortet). Kein laufender Hintergrundprozess.
+
 **Empfohlener erster Schritt, Stand jetzt**: kein zwingender
-Einstiegspunkt, kein offener Blocker (s6e9-Fehleranalyse inkl. TabPFN
-ist bereits vollstaendig abgeschlossen, siehe Punkt 37). Naheliegende
-Option, falls der Nutzer nichts Neues mitbringt: ein neues Kaggle-/
-OpenML-Projekt, oder Aufraeumen der 10 Ensemble-Pilot-Projekt-Setups
-in `ML_Learning` (temporaere Skript-Kopien, kein Loeschbedarf, aber
-falls der Nutzer aufraeumen will).
+Einstiegspunkt. Falls der Nutzer auf das Aufraeumen der Pilot-Projekte
+zurueckkommt: NICHT dieselbe 3-Optionen-Frage wiederholen, sondern
+direkt fragen, was ihn an der letzten Frage gestoert hat, oder eine
+einzelne, konkretere Vorgehensweise vorschlagen.
