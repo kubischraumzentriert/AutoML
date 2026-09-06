@@ -3772,6 +3772,32 @@ klein aber konsistent mit der internen CV-Verbesserung (0.9383 Default
 urspruengliche Ranger-Tuning-Luecken-Fund (Punkt 38) real war und die
 Korrektur einen echten, wenn auch kleinen Nutzen brachte.
 
+### Ensemble-Pilot-Projekte aufgeraeumt (2026-09-06)
+
+Nutzer delegierte die Aufraeum-Umfang-Entscheidung ("entscheide du") -
+gewaehlt: vollstaendige Rueckkehr zum Vorher-Zustand fuer alle 12
+beruehrten Projekte (10 erfolgreich getestete + 2 gescheiterte
+`dresses-sales`/`sick`). Begruendung: alle Zahlen/Befunde sind bereits
+dauerhaft in `BACKLOG.md`/`REFERENZ_ENSEMBLE_SELECTION.md` dokumentiert,
+nichts geht verloren; die neue `pilot-external-technique`-Skill macht
+ein erneutes Setup jederzeit guenstig reproduzierbar; verwaiste
+Artefakte ohne ihre erzeugenden Skripte waeren mehr Verwirrung als
+Nutzen.
+
+**Umsetzung**: die 5 Pilot-Setup-Commits in `ML_Learning` per `git
+revert` sauber rueckgaengig gemacht (jederzeit ueber die Git-Historie
+wiederherstellbar, keine destruktive Loeschung) - `000_config.R` aller
+12 Projekte wieder auf die urspruengliche minimale Groesse (29 Zeilen),
+alle kopierten Skripte (`005`/`090`/`147`/`148`/`149`/`167`/
+`ensemble_selection.R`/`db_logging.R`/`db_schema.sql`/`provenance.R`)
+entfernt. Zusaetzlich die generierten, gitignored `_artifacts/`-Dateien
+des Pilots (`error_analysis_models.rds`, `ensemble_candidate_pool.rds`,
+`ensemble_composition.rds`, `ensemble_selection_results.csv`,
+`ranger_tuning_*`, `experiments.db`) manuell entfernt - vorhandene
+Decision-Stability-/Hard-Split-Stresstest-Artefakte blieben unangetastet.
+Verifiziert: alle 12 Projekte wieder im urspruenglichen Zustand.
+`ML_Learning` hat kein Remote (lokal-only), kein Push noetig.
+
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
 Projekt: `Fehler: 'xgb.params' ist kein exportiertes Objekt aus
 'namespace:xgboost'`. Ursache: die lokal installierte `xgboost`-R-
