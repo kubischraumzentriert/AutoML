@@ -3749,6 +3749,21 @@ genutzt, und der CatBoost-`integer`-Fix war bereits vorhanden -
 September** (siehe Korrektur oben). Kein Backport in dieses Projekt
 noetig, der Fairness-Stopp bleibt unangetastet.
 
+### s6e9: `submission_ranger.csv` mit korrekt getunten Hyperparametern neu erzeugt (2026-09-06)
+
+Offener Punkt aus Punkt 38 (Statusanker) nachgeholt: `ranger_tuning_
+instance.rds` enthaelt seit dem `090`-Full-Data-Rerun (2026-09-04/05)
+bereits die richtig getunten Hyperparameter (mtry.ratio=0.827,
+min.node.size=20, sample.fraction=0.523, Such-AUC=0.9391) statt der
+alten 10%-Subset-Werte. Da `166_train_predict_ranger.R` diese Instanz
+direkt einliest, reichte ein einfacher erneuter Lauf (kein Code-
+Aenderungsbedarf) - `submission_ranger.csv` wurde ueberschrieben (mean
+pred 0.176, vorher 0.1755, plausibel aehnlich). Erwarteter Score-Gewinn
+klein (CV-AUC 0.9388 vs. vorheriges effektives ~0.937), aber die
+Submission ist jetzt methodisch konsistent mit dem tatsaechlichen
+Full-Data-Tuning. Kaggle-Score der neuen Version noch nicht bekannt -
+falls der Nutzer erneut einreicht, Ergebnis nachtragen.
+
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
 Projekt: `Fehler: 'xgb.params' ist kein exportiertes Objekt aus
 'namespace:xgboost'`. Ursache: die lokal installierte `xgboost`-R-
