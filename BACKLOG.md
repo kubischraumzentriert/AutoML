@@ -3148,6 +3148,20 @@ UND deutlich schneller - bestaetigt die bereits getroffene
 Submission-Modellwahl, kein Grund zum Wechsel. Ergebnis in
 `experiments.db` (s6e9-Projekt) geloggt.
 
+**Korrektur (2026-09-06)**: die obige Aussage "hier zum ersten Mal
+konkret in einem Projekt aufgetreten" war FALSCH. Bei einer Durchsicht
+von `ML_Learning/FinancialStressPredictionChallenge` (Nutzerfrage
+"gibt es was wir rueckspielen koennen?") zeigte sich: dieses Projekt
+hatte exakt denselben `po("colapply", applicator=as.numeric,
+affect_columns=selector_type("integer"))`-Fix vor CatBoost bereits SEIT
+JULI 2026 (`038_model_diversity_check.R`), also VOR dem s6e9-Fund im
+September. Der Fix selbst war also nicht neu - nur meine Formulierung,
+er sei "hier zum ersten Mal aufgetreten", war ungenau (das persoenliche
+Gedaechtnis war korrekt, ich habe beim s6e9-Fund nur nicht nach
+Vorkommen in anderen `ML_Learning`-Projekten gesucht, bevor ich die
+Neuheit behauptet habe). Kein inhaltlicher Fehler im Fix selbst, nur
+in der Herkunfts-Zuschreibung.
+
 ### Bugfix: CatBoost-Kandidat in `148_ensemble_candidate_pool.R` lehnte integer-Spalten ab (2026-09-03)
 
 Gleiche Ursache wie oben (`125_catboost_benchmark.R`), diesmal in
@@ -3714,7 +3728,26 @@ Bash-`\\.`-Escape-Falle) UND die Eskalationsdisziplin (ADR-003-Klausel,
 "kein Unterschied" != "negativ", Korrektur statt stillem Ueberschreiben)
 zusammen.
 
-### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
+### FinancialStressPredictionChallenge auf Bugfix-Luecken geprueft (2026-09-06)
+
+Nutzerfrage "gibt es was wir rueckspielen koennen, etwas das den Score
+erhoehen koennte?" fuer `ML_Learning/FinancialStressPredictionChallenge`
+(Zindi-Wettbewerb, LogLoss/AUC-Multi-Metrik). Das Projekt hat einen
+expliziten, fairness-motivierten Abschluss-Vermerk im eigenen README
+("Der Workflow wird hier bewusst beendet... keine weiteren
+Mikrovarianten... keine zusaetzlichen Leaderboard-Sonden") - per
+AskUserQuestion geklaert, ob dieser Stopp aufgehoben werden soll.
+Nutzer waehlte die konservative Option: NUR echte Bugfixes aus dieser
+Session pruefen, kein neues Score-Tuning, kein Ueberschreiben des
+Fairness-Stopps.
+
+**Ergebnis: keine Luecken gefunden.** `predict_type="prob"` ist in
+JEDEM Skript mit einem `lrn("classif...")`-Aufruf gesetzt (keine
+Ausnahme), `positive_class` korrekt konfiguriert und durchgaengig
+genutzt, und der CatBoost-`integer`-Fix war bereits vorhanden -
+**seit Juli 2026, also VOR dem vermeintlichen "Erstfund" bei s6e9 im
+September** (siehe Korrektur oben). Kein Backport in dieses Projekt
+noetig, der Fairness-Stopp bleibt unangetastet.
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
 Projekt: `Fehler: 'xgb.params' ist kein exportiertes Objekt aus
