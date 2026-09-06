@@ -209,9 +209,15 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `3b613f9` "BACKLOG: Ranger-LB-Score geloggt +
-  Fund: Ranger-Tuning nie bei voller Datenmenge" - gepusht, docs-only.
-  Zwischenstand: `48b3b20` "BACKLOG: s6e9 zweite/dritte Submission
+- `MLR3_Classifikation` @ `db3a1f5` "BACKLOG: Ensemble-Pilot
+  abgeschlossen - 10 Projekte, kein systematischer Nutzen" - gepusht,
+  docs-only. Zwischenstaende (alle docs-only): `e7089cb` (cmc +
+  ozone-level-8hr), `d6c3395` (analcatdata-authorship + mice-protein),
+  `63d03b2` (Ensemble-Faustregel-Korrektur), `7b3aab7` (Reshuffling +
+  Ensemble-Pilot, erste 2 Projekte), `2a96684` (Reshuffling-Ergebnis:
+  kein Unterschied), `d57a069` (Reshuffling-Prototyp gestartet),
+  `3b613f9` "BACKLOG: Ranger-LB-Score geloggt +
+  Fund: Ranger-Tuning nie bei voller Datenmenge". Zwischenstand: `48b3b20` "BACKLOG: s6e9 zweite/dritte Submission
   dokumentiert" - gepusht, docs-only. Zwischenstand: `939eebf` "BACKLOG:
   s6e9 TabPFN-Fehleranalyse dokumentiert - Fehleranalyse-Vertiefung
   vollstaendig" - gepusht, docs-only. Weiterer Zwischenstand: `ac507d9`
@@ -294,12 +300,21 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
   (Commit `10ef610`) - beide gepusht. Lokale Git-Identity dieses Repos
   war unkonfiguriert, per `--local` auf die bereits etablierte
   Konvention "Codex <codex@local>" gesetzt (nicht global geaendert).
-- `ML_Learning`: neues Projekt `PredictingElectricVehiclePurchases-s6e9`
-  (lokal, kein Remote), zuletzt `60cff38` "zweite (lightgbm_10) + dritte
-  (Ranger getunt) Submission erzeugt". Kaggle-LB-Score der Ranger-
-  Submission (0.93829) und der laufende `090_ranger_tuning.R`-Neu-Lauf
-  sind NUR in `experiments.db` (gitignored), nicht in einem weiteren
-  Commit. Zwischenstand: `0000b78` "TabPFN-Fehleranalyse -
+- `ML_Learning`: der Reshuffling-/Ensemble-Pilot (Punkte 39-40) beruehrt
+  10 zusaetzliche kleine CC18-Projektordner (`openml-cc18-ilpd`,
+  `-blood-transfusion`, `-qsar-biodeg`, `-eucalyptus`,
+  `-analcatdata-authorship`, `-mice-protein`, `-cmc`,
+  `-ozone-level-8hr`, `-mfeat-morphological`, `-mfeat-karhunen`, plus
+  `-dresses-sales`/`-sick` als gescheiterte, nicht ausgewertete
+  Kandidaten) - jeweils um `005_benchmark_runtime.R`/`090`/`147`/`148`/
+  `149`/`167`/`ensemble_selection.R`/`db_logging.R`/`db_schema.sql`/
+  `provenance.R` sowie Config-Ergaenzungen erweitert, mehrere Commits
+  (alle lokal, kein Remote). `PredictingElectricVehiclePurchases-s6e9`
+  selbst zuletzt unveraendert bei `60cff38` "zweite (lightgbm_10) +
+  dritte (Ranger getunt) Submission erzeugt" - Kaggle-LB-Score der
+  Ranger-Submission (0.93829) und der `090_ranger_tuning.R`-Neu-Lauf
+  sind NUR in `experiments.db` (gitignored), kein weiterer Commit dort
+  noetig. Zwischenstand: `0000b78` "TabPFN-Fehleranalyse -
   Fehleranalyse-Vertiefung vollstaendig abgeschlossen". Zwischenstand:
   `389a880` "neues
   164_low_signal_feature_removal.R - Rausch-Feature-Test". Weiterer Zwischenstand:
@@ -1488,8 +1503,82 @@ Die komplette Fehleranalyse-Vertiefung fuer s6e9 ist abgeschlossen. 2
 Submission-Optionen (LightGBM + Ranger) liegen bereit, eine davon
 (Ranger) bereits mit LB-Score 0.93829 bestaetigt.
 
-**Empfohlener erster Schritt, Stand jetzt**: das Ergebnis des laufenden
-`090_ranger_tuning.R`-Neu-Tunings abwarten/pruefen - falls das
-Full-Data-Tuning bessere Hyperparameter findet, `submission_ranger.csv`
-ggf. mit den neuen Parametern neu erzeugen (analog zu `166_train_
-predict_ranger.R`, ggf. anpassen). Kein anderer zwingender Einstiegspunkt.
+**39. Aktualisierung (Ergebnis des `090`-Neu-Tunings + Nutzerfrage zu
+AutoML-Seminars, 2026-09-04/05)**: Ranger getunt bei voller Datenmenge
+AUC 0.9388 vs. Default 0.9383 - bestaetigt, dass die Tuning-Luecke real
+war, Gewinn aber klein. Nutzer fragte nach interessanten Inhalten von
+youtube.com/@automlseminars4622/automl-seminars.github.io/talks -
+Recherche fand ein direkt relevantes, begutachtetes Paper: [Reshuffling
+Resampling Splits Can Improve Generalization of Hyperparameter
+Optimization](https://arxiv.org/abs/2405.15393) (Nagler/Schneider/
+Bischl/Feurer, NeurIPS 2024) - Kernbefund: ein je Tuning-Konfiguration
+NEU gezogener Split generalisiert besser als ein fixer, wiederverwendeter
+Split (v.a. bei Holdout, genau unser Suchphasen-Setup), ohne
+Mehraufwand. Neues Prototyp-Skript `167_ranger_tuning_reshuffled.R`
+(manuelle Zufallssuche, da mlr3tuning keinen "reshuffle je Evaluation"-
+Modus hat) - Nutzer bestaetigte trotz stark nach oben korrigierter
+Kostenschaetzung (Stunden statt Minuten) "trotzdem probieren". **Ergebnis:
+kein messbarer Unterschied** (CV-AUC 0.938750 reshuffled vs. 0.938788
+fixer Split) - plausibel durch den bei 668k Zeilen bereits sehr
+stabilen Split erklaerbar (Paper-eigene Randbedingung). Commits:
+`d57a069`/`2a96684` (zentral).
+
+**40. Aktualisierung (Nutzerfrage "sollten wir die beiden Methoden bei
+anderen Projekten probieren", Ensemble-Pilot ueber 2 Tage)**: Idee, die
+Reshuffling- UND Ensemble-Diversitaets-Methode auf kleinen OpenML-
+Datensaetzen zu testen (theoretisch aussagekraeftiger als bei s6e9s
+668k Zeilen) - bei Erfolg Kandidat fuer einen Template-Backport
+(ADR-003-Schwelle: >=2 unabhaengige Bestaetigungen). Setup-Infrastruktur
+fuer kleine CC18-Projekte etabliert (fehlende Config-Variablen/
+Helferfunktionen ergaenzt, `005_benchmark_runtime.R`/`090`/`147`/`148`/
+`149`/`167`/`ensemble_selection.R`/`db_logging.R`/`db_schema.sql`/
+`provenance.R` aus dem zentralen Template kopiert).
+
+- **Reshuffling** (2 kleine Projekte: `ilpd`, `blood-transfusion`):
+  BEIDE negativ (0.5906->0.5875; 0.6340->0.6290). Zusammen mit dem
+  s6e9-Nullbefund jetzt **3/3 ohne Vorteil** - Technik nicht weiter
+  verfolgt, kein Backport.
+- **Ensemble-Pool**: erste 2 Projekte (ilpd +0.71pp, blood-transfusion
+  +1.76pp) legten voreilig eine "kleine Datensaetze -> Ensemble hilft"-
+  Faustregel nahe, in `REFERENZ_ENSEMBLE_SELECTION.md` dokumentiert
+  (Commit `7b3aab7`). Nutzer bat NOCHMAL um Vorsicht ("2 weitere
+  Projekte probieren") - `qsar-biodeg` (-0.72pp, `dresses-sales` scheiterte
+  an LDA-Kollinearitaet und wurde ersetzt) und `eucalyptus` (-2.77pp,
+  grosse Selektions-/Bestaetigungs-Luecke = Ueberanpassung bei nur 147
+  Eval-Zeilen) KIPPTEN DAS BILD auf 2/4 positiv, 2/4 negativ - **Faustregel
+  explizit zurueckgenommen und korrigiert** (Commit `63d03b2`, wichtige
+  Lehre: n=2 reicht nie fuer eine Faustregel).
+  
+  Nutzer liess NOCHMAL 2 (`analcatdata-authorship`, `mice-protein` -
+  beide Deckeneffekt BAcc=1.0, uninformativ) UND NOCHMAL 2 (`cmc` -2.02pp,
+  `ozone-level-8hr` +0.84pp) und ABSCHLIESSEND NOCHMAL 2 (`sick` scheiterte
+  an einer fast komplett fehlenden Spalte und wurde durch
+  `mfeat-morphological` ersetzt, `mfeat-karhunen` - beide EXAKT
+  IDENTISCH Einzelmodell=Ensemble) testen. **ENDGUELTIGES BILD (10
+  Projekte)**: 3 positiv, 3 negativ, 4 kein Unterschied - Rauschen um
+  Null, KEIN systematischer Ensemble-Nutzen. Pilot bewusst
+  abgeschlossen (10 Projekte als ausreichend belastbar erachtet).
+  **Endgueltige Konsequenz: KEIN Backport in den Standard-Workflow.**
+  Commits: `d6c3395`, `e7089cb`, `db3a1f5` (zentral, alle docs-only).
+
+**Methodische Randbeobachtung**: die Caruana-Greedy-Selection verhielt
+sich in allen 4 "kein Unterschied"-Faellen korrekt (waehlte
+Ensemblegroesse 1, statt unnoetig aufzublaehen) - spricht fuer die
+Robustheit des Algorithmus selbst, auch wenn die Datensatzgroessen-
+Frage negativ beantwortet wurde.
+
+**Stand jetzt: kein offener Blocker, kein laufender Hintergrundprozess.**
+s6e9 ist inhaltlich vollstaendig abgeschlossen (Submission + Ensemble-
+Check + Trust-Gate-Diagnostik + Fehleranalyse + 2 zusaetzliche
+Submissions, eine davon LB-bestaetigt). Reshuffling UND Ensemble-Pool-
+Backport sind beide abschliessend NEGATIV beantwortet (je mit robuster
+Mehrfach-Projekt-Evidenz) - keine weitere Untersuchung dieser beiden
+Ideen geplant, ausser der Nutzer bringt neue Evidenz/einen neuen Ansatz.
+
+**Empfohlener erster Schritt, Stand jetzt**: kein zwingender
+Einstiegspunkt, kein offener Blocker (s6e9-Fehleranalyse inkl. TabPFN
+ist bereits vollstaendig abgeschlossen, siehe Punkt 37). Naheliegende
+Option, falls der Nutzer nichts Neues mitbringt: ein neues Kaggle-/
+OpenML-Projekt, oder Aufraeumen der 10 Ensemble-Pilot-Projekt-Setups
+in `ML_Learning` (temporaere Skript-Kopien, kein Loeschbedarf, aber
+falls der Nutzer aufraeumen will).
