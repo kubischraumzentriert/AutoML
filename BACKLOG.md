@@ -3642,6 +3642,47 @@ erkennbares Muster** - bestaetigt den Befund vom 2026-09-05 robust.
 Keine Aenderung an der Empfehlung in `docs/reference/
 REFERENZ_ENSEMBLE_SELECTION.md` noetig.
 
+### Ensemble-Pilot abgeschlossen: 10 Projekte, endgueltiges Bild (2026-09-06)
+
+Nutzerwunsch "ja, nur noch 2" - `openml-cc18-sick` als Kandidat
+gewaehlt, scheiterte aber (wie zuvor `dresses-sales`) an einem
+datensatzspezifischen Problem: die Spalte `TBG` ist im Trainingsteil
+praktisch vollstaendig fehlend, LDA akzeptiert das nicht (manuelle
+Median-Imputation in `147_error_analysis_ranger_models.R` kann eine
+komplett fehlende numerische Spalte nicht sinnvoll auffuellen -
+`median()` einer All-NA-Spalte bleibt NA). Pragmatisch durch
+`openml-cc18-mfeat-morphological` (400 Eval-Zeilen) ersetzt, dazu
+`openml-cc18-mfeat-karhunen` (400 Eval-Zeilen, 10 Klassen).
+
+**Ergebnis: beide Male EXAKT IDENTISCH** (kein Deckeneffekt wie zuvor,
+aber trotzdem kein Unterschied):
+- `mfeat-morphological`: bestes Einzelmodell 0.740, Ensemble 0.740
+  (Greedy waehlte Ensemblegroesse 8, kam aber auf denselben Wert)
+- `mfeat-karhunen`: bestes Einzelmodell 0.975, Ensemble 0.975 (Greedy
+  waehlte korrekt Ensemblegroesse 1)
+
+**ENDGUELTIGES GESAMTBILD (10 kleine/mittlere Datensaetze,
+2026-09-05/06)**:
+
+| Ergebnis | Anzahl | Datensaetze |
+|---|---|---|
+| Positiv | 3 | ilpd (+0.71pp), blood-transfusion (+1.76pp), ozone-level-8hr (+0.84pp) |
+| Negativ | 3 | qsar-biodeg (-0.72pp), eucalyptus (-2.77pp), cmc (-2.02pp) |
+| Kein Unterschied | 4 | analcatdata-authorship, mice-protein, mfeat-morphological, mfeat-karhunen |
+
+**Robustes Endergebnis**: ueber 10 unabhaengige kleine/mittlere
+Datensaetze hinweg gibt es KEINEN verlaesslichen, systematischen
+Nutzen des Ensemble-Pools gegenueber dem besten Einzelmodell - weder
+positiv noch negativ, das Ergebnis ist im Wesentlichen Rauschen um
+Null. **Endgueltige Konsequenz**: der Ensemble-Pool wird NICHT in den
+Standard-Workflow uebernommen, weder generell noch fuer eine bestimmte
+Datensatzgroessen-Kategorie. Er bleibt ein optionales Diagnoseskript,
+das projektweise per Selektions-/Bestaetigungs-Split zu pruefen ist -
+`docs/reference/REFERENZ_ENSEMBLE_SELECTION.md` (Stand 2026-09-05)
+bleibt gueltig, keine weitere Aenderung noetig. **Pilot hiermit
+abgeschlossen**, kein weiterer Ausbau geplant (10 Projekte sind fuer
+diese Fragestellung ausreichend belastbar).
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
