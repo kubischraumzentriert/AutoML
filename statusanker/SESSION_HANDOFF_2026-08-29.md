@@ -209,9 +209,12 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `b820cbd` "BACKLOG: s6e9
+- `MLR3_Classifikation` @ `3e25390` "BACKLOG: Ensemble-Pilot-Projekte
+  aufgeraeumt (git revert, vollstaendige Rueckkehr)" - gepusht,
+  docs-only. Zwischenstand: `954ab87`/Statusanker+BACKLOG (Ranger-LB-
+  Bestaetigung). Zwischenstand: `b820cbd` "BACKLOG: s6e9
   submission_ranger.csv mit korrekt getunten Hyperparametern neu
-  erzeugt" - gepusht, docs-only. Zwischenstand: `e8ea5ed`
+  erzeugt" - gepusht, docs-only. Weiterer Zwischenstand: `e8ea5ed`
   "FinancialStressPredictionChallenge
   geprueft: keine Bugfix-Luecken, Korrektur zur CatBoost-Fund-Herkunft"
   - gepusht, docs-only. Zwischenstand: `0a4dd1e`/Statusanker.
@@ -308,19 +311,19 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
   (Commit `10ef610`) - beide gepusht. Lokale Git-Identity dieses Repos
   war unkonfiguriert, per `--local` auf die bereits etablierte
   Konvention "Codex <codex@local>" gesetzt (nicht global geaendert).
-- `ML_Learning`: der Reshuffling-/Ensemble-Pilot (Punkte 39-40) beruehrt
-  10 zusaetzliche kleine CC18-Projektordner (`openml-cc18-ilpd`,
+- `ML_Learning`: der Reshuffling-/Ensemble-Pilot (Punkte 39-40) hatte 12
+  kleine CC18-Projektordner beruehrt (`openml-cc18-ilpd`,
   `-blood-transfusion`, `-qsar-biodeg`, `-eucalyptus`,
   `-analcatdata-authorship`, `-mice-protein`, `-cmc`,
   `-ozone-level-8hr`, `-mfeat-morphological`, `-mfeat-karhunen`, plus
-  `-dresses-sales`/`-sick` als gescheiterte, nicht ausgewertete
-  Kandidaten) - jeweils um `005_benchmark_runtime.R`/`090`/`147`/`148`/
-  `149`/`167`/`ensemble_selection.R`/`db_logging.R`/`db_schema.sql`/
-  `provenance.R` sowie Config-Ergaenzungen erweitert, mehrere Commits
-  (alle lokal, kein Remote). `PredictingElectricVehiclePurchases-s6e9`
-  selbst zuletzt unveraendert bei `60cff38` "zweite (lightgbm_10) +
+  `-dresses-sales`/`-sick` als gescheiterte Kandidaten) - **Punkt 45:
+  alle 12 per `git revert` (5 Commits) wieder auf den Vorher-Zustand
+  zurueckgesetzt**, inkl. manuellem Entfernen der gitignored Pilot-
+  Artefakte. Zuletzt: `60e8a0d` (Revert-Kette, lokal, kein Remote).
+  `PredictingElectricVehiclePurchases-s6e9`
+  selbst unveraendert bei `60cff38` "zweite (lightgbm_10) +
   dritte (Ranger getunt) Submission erzeugt" - Kaggle-LB-Score der
-  Ranger-Submission (0.93829) und der `090_ranger_tuning.R`-Neu-Lauf
+  Ranger-Submission (jetzt 0.93854, siehe Punkt 44) und der `090_ranger_tuning.R`-Neu-Lauf
   sind NUR in `experiments.db` (gitignored), kein weiterer Commit dort
   noetig. Zwischenstand: `0000b78` "TabPFN-Fehleranalyse -
   Fehleranalyse-Vertiefung vollstaendig abgeschlossen". Zwischenstand:
@@ -1662,18 +1665,34 @@ real, konsistent mit der internen CV-Verbesserung (0.9383->0.9388). In
 `experiments.db` geloggt (mconf_id `316faa65-...`). Commit `b820cbd`
 (zentral, docs-only).
 
-**Stand jetzt: kein offener Blocker, ABER weiterhin 1 offene
-Nutzerentscheidung** (Punkt 42, Aufraeum-Umfang fuer die 10
-Ensemble-Pilot-Projekte - Frage wurde verworfen, nicht beantwortet,
-Nutzer ging stattdessen zu anderen Themen ueber). Kein laufender
-Hintergrundprozess. s6e9 ist jetzt in JEDER Hinsicht abgeschlossen -
-beide finalen Submissions (LightGBM 0.94142, Ranger 0.93854) sind
-LB-bestaetigt, alle offenen Punkte aus der Session nachgeholt.
+**45. Aktualisierung ("entscheide du ueber den Aufraeum-Umfang der
+Pilot-Projekte")**: der aus Punkt 42 offen gelassene Punkt geschlossen -
+Nutzer delegierte die Entscheidung explizit. Gewaehlt: vollstaendige
+Rueckkehr zum Vorher-Zustand fuer alle 12 beruehrten Projekte (10
+erfolgreich getestete + 2 gescheiterte `dresses-sales`/`sick`) -
+Begruendung: alle Zahlen/Befunde bereits dauerhaft in `BACKLOG.md`/
+`REFERENZ_ENSEMBLE_SELECTION.md` dokumentiert, die neue `pilot-
+external-technique`-Skill macht ein erneutes Setup jederzeit guenstig
+reproduzierbar, verwaiste Artefakte ohne erzeugende Skripte waeren
+mehr Verwirrung als Nutzen. Umsetzung: die 5 Pilot-Setup-Commits in
+`ML_Learning` per `git revert` sauber rueckgaengig gemacht (jederzeit
+ueber die Git-Historie wiederherstellbar, KEINE destruktive Loeschung) -
+`000_config.R` aller 12 Projekte wieder auf die urspruengliche minimale
+Groesse (29 Zeilen), alle kopierten Skripte entfernt. Zusaetzlich die
+generierten, gitignored `_artifacts/`-Pilot-Dateien manuell entfernt -
+vorhandene Decision-Stability-/Hard-Split-Stresstest-Artefakte blieben
+unangetastet. Verifiziert: alle 12 Projekte wieder im Ausgangszustand.
+`ML_Learning` hat kein Remote, kein Push noetig. Commit `3e25390`
+(zentral, docs-only).
+
+**Stand jetzt: kein offener Blocker, keine offene Nutzerentscheidung
+mehr.** Kein laufender Hintergrundprozess. s6e9 ist in JEDER Hinsicht
+abgeschlossen - beide finalen Submissions (LightGBM 0.94142, Ranger
+0.93854) sind LB-bestaetigt. Der Ensemble-/Reshuffling-Pilot ist
+vollstaendig abgeschlossen UND aufgeraeumt - nichts mehr offen aus
+dieser gesamten Session-Linie.
 
 **Empfohlener erster Schritt, Stand jetzt**: kein zwingender
-Einstiegspunkt. Falls der Nutzer auf das Aufraeumen der Pilot-Projekte
-zurueckkommt: NICHT dieselbe 3-Optionen-Frage wiederholen, sondern
-direkt fragen, was ihn an der letzten Frage gestoert hat, oder eine
-einzelne, konkretere Vorgehensweise vorschlagen. Sonst: kein offener
-Punkt mehr fuer s6e9, naechster natuerlicher Schritt waere ein neues
-Kaggle-/OpenML-Projekt, falls der Nutzer eines mitbringt.
+Einstiegspunkt, kein offener Punkt mehr. Naechster natuerlicher Schritt
+waere ein neues Kaggle-/OpenML-Projekt, falls der Nutzer eines mitbringt,
+oder eine andere neue Aufgabe.
