@@ -3622,6 +3622,26 @@ zwischen Datensatzgroesse und Ensemble-Gewinn. Keine weitere
 Aenderung an der bereits korrigierten Empfehlung in
 `docs/reference/REFERENZ_ENSEMBLE_SELECTION.md` noetig.
 
+### Ensemble-Pilot weiter erweitert: cmc + ozone-level-8hr (2026-09-06)
+
+Nutzerwunsch "ok dann nochmal 2 Projekte" - `openml-cc18-cmc` (1473
+Zeilen, 3 Klassen) und `openml-cc18-ozone-level-8hr` (2534 Zeilen,
+binaer) ergaenzt.
+
+**Ergebnis, gemischt wie bisher**:
+- `cmc`: bestes Einzelmodell 0.5931, Ensemble 0.5729 -> **-2.02
+  Prozentpunkte** (negativ)
+- `ozone-level-8hr`: bestes Einzelmodell 0.7885, Ensemble 0.7969 ->
+  **+0.84 Prozentpunkte** (positiv)
+
+**Gesamtbild jetzt (8 kleine/mittlere Datensaetze)**: 3 positiv (ilpd
++0.71, blood-transfusion +1.76, ozone-level-8hr +0.84), 3 negativ
+(qsar-biodeg -0.72, eucalyptus -2.77, cmc -2.02), 2 uninformativ/
+Deckeneffekt (analcatdata-authorship, mice-protein). Weiterhin **kein
+erkennbares Muster** - bestaetigt den Befund vom 2026-09-05 robust.
+Keine Aenderung an der Empfehlung in `docs/reference/
+REFERENZ_ENSEMBLE_SELECTION.md` noetig.
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
