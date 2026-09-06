@@ -3683,6 +3683,37 @@ bleibt gueltig, keine weitere Aenderung noetig. **Pilot hiermit
 abgeschlossen**, kein weiterer Ausbau geplant (10 Projekte sind fuer
 diese Fragestellung ausreichend belastbar).
 
+### ADR-003-Eskalationsklausel + neue Skill nach dem Ensemble-Pilot (2026-09-06)
+
+Nutzerfrage "haben wir was gelernt, das wir in Skills speichern
+koennen?" + Vorschlag, die n=2-Mindestschwelle zu erhoehen und
+vergangene Entscheidungen nachzupruefen.
+
+**ADR-003 ergaenzt** (`adr/003-backport-after-confirmation.md`): keine
+starre Erhoehung auf n=4 (Nutzerentscheidung, empfohlene Option), statt-
+dessen eine Eskalationsklausel - die 2-Projekte-Mindestschwelle reicht
+nur bei KONSISTENTEM Ergebnis und nicht-rauschanfaelliger Messgroesse;
+bei knappem/uneindeutigem Befund auf n>=4 erweitern, ohne feste
+Ziel-Zahl (massgeblich ist Stabilitaet ueber wiederholte Erweiterung,
+nicht eine bestimmte Projektanzahl - im eigenen Pilot reichte selbst
+n=4 nicht).
+
+**Rueckwirkende Pruefung durchgefuehrt**: BACKLOG.md nach allen
+bisherigen "ADR-003"/"2 Projekte"/"2 unabhaengige"-Eintraegen
+durchsucht. Ergebnis: KEIN weiterer Nachpruefungsbedarf gefunden -
+Decision-Stability (n=2, widerspruechlich) wurde bereits korrekt nicht
+backported und explizit als offen markiert; Hard-Split-Stresstest (n=2
+zunaechst) wurde ebenfalls erst bei n=7 als Pipeline-Skript backported.
+Der Ensemble-Pool-Fehltritt bleibt ein Einzelfall, kein systematisches
+Muster in der bisherigen Historie - keine weitere Nacharbeit noetig.
+
+**Neue Skill** [`.claude/skills/pilot-external-technique/SKILL.md`](.claude/skills/pilot-external-technique/SKILL.md):
+fasst das Setup-Rezept fuer kleine CC18-Pilot-Projekte (fehlende
+Config-Variablen/Helferfunktionen, bekannte LDA-Fallstricke, die
+Bash-`\\.`-Escape-Falle) UND die Eskalationsdisziplin (ADR-003-Klausel,
+"kein Unterschied" != "negativ", Korrektur statt stillem Ueberschreiben)
+zusammen.
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-

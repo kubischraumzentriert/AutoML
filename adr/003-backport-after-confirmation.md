@@ -65,6 +65,46 @@ Theorie trifft, wird die Schnittmenge extrahiert und als
 projektgebundenen `DIDAKTIK_*.md`-Dokumente bleiben als konkrete Beispiele
 lokal stehen, werden nicht geloescht.
 
+## Erweiterung: Eskalationsklausel bei uneinheitlichem Befund (2026-09-06)
+
+Anlass: ein Ensemble-Pool-Diversitaets-Pilot (siehe `BACKLOG.md`,
+2026-09-05/06) zeigte an den ersten 2 kleinen Testprojekten einen
+konsistent POSITIVEN Effekt (+0.71/+1.76 BAcc-Prozentpunkte) - das
+erfuellte formal die ADR-003-Mindestschwelle, fuehrte aber zu einer
+voreiligen Faustregel ("Ensemble hilft bei kleinen Datensaetzen"). Bei
+Erweiterung auf 4 Projekte kippte das Bild auf 2 positiv/2 negativ; erst
+bei 10 Projekten ergab sich ein stabiles Bild (3 positiv/3 negativ/4
+kein Unterschied = kein systematischer Effekt). **Selbst n=4 war hier
+noch nicht ausreichend fuer eine verlaessliche Aussage.**
+
+**Ergaenzende Regel**: die 2-Projekte-Mindestschwelle aus obiger
+Entscheidung bleibt die FORMALE Untergrenze, ABER sie ist nur dann
+ausreichend, wenn die 2 Bestaetigungen KONSISTENT sind (gleiches
+Vorzeichen, vergleichbare Groessenordnung) UND die zugrundeliegende
+Groesse nicht offensichtlich rausch-/streuungsanfaellig ist (kleine
+Stichproben, Benchmark-Deltas mit bekannt hoher Varianz). Ist eines
+davon nicht gegeben - insbesondere bei einem knappen/uneindeutigen
+Ergebnis oder wenn die Fragestellung selbst eine Rausch-anfaellige
+Messung ist (z.B. ein Score-Unterschied auf einem kleinen Bestaetigungs-
+Split) - gilt NICHT automatisch "Schwelle erfuellt", sondern es wird auf
+n>=4 (und im Zweifel weiter, bis das Ergebnis stabil bleibt oder als
+"kein verlaesslicher Effekt" erkennbar wird) erweitert, BEVOR eine
+Faustregel/ein Backport formuliert wird. Es gibt bewusst keine feste
+Ziel-Zahl (kein starres "n=4 reicht immer") - massgeblich ist die
+STABILITAET des Befundes ueber wiederholte Erweiterung hinweg, nicht
+eine bestimmte Projektanzahl.
+
+**Rueckwirkende Pruefung (2026-09-06)**: BACKLOG.md wurde nach allen
+bisherigen "ADR-003"/"2 Projekte"/"2 unabhaengige"-Eintraegen durchsucht.
+Ergebnis: keine weiteren Faelle gefunden, die eine Nachpruefung
+brauchen - Decision-Stability (n=2, widerspruechlicher Befund) wurde
+korrekt NICHT backported und explizit als noch offen markiert (spaeter
+auf n=6->10->15 erweitert, Nullbefund bestaetigt); Hard-Split-Stresstest
+(n=2 zunaechst) wurde ebenfalls korrekt erst bei n=7 als Pipeline-Skript
+backported, nicht schon bei n=2. Der Ensemble-Pool-Fehltritt scheint ein
+Einzelfall zu sein, kein systematisches Muster in der bisherigen
+Historie.
+
 ## Alternativen erwogen
 
 - **Sofortiges Backporten nach jedem einzelnen Erfolg** - verworfen, hoechstes
