@@ -3592,6 +3592,36 @@ etablierten Lehre aus der Decision-Stability-Forschungslinie
 (Zwischenbefunde immer als vorlaeufig kennzeichnen, siehe
 `statusanker/SESSION_HANDOFF_2026-08-29.md`).
 
+### Ensemble-Pilot weiter erweitert: 2 zusaetzliche kleine Datensaetze (2026-09-06)
+
+Nutzerwunsch "mach nochmal 2 kleinere Projekte" - `openml-cc18-
+analcatdata-authorship` (841 Zeilen, 4 Klassen) und `openml-cc18-mice-
+protein` (1080 Zeilen, 8 Klassen) ergaenzt (identisches Setup wie die
+vorherigen 4).
+
+**Ergebnis: beide DECKENEFFEKT, keine Information fuer die
+Kernfrage**:
+- `analcatdata-authorship`: bestes Einzelmodell 1.0000, Ensemble 1.0000
+  (identisch, Greedy waehlte Ensemblegroesse 1)
+- `mice-protein`: bestes Einzelmodell 1.0000, Ensemble 1.0000
+  (identisch, Greedy waehlte Ensemblegroesse 1)
+
+Beide Datensaetze sind fuer diese Modellklasse zu "einfach" - perfekte
+Bestaetigungs-BAcc laesst keinen Raum fuer einen messbaren Unterschied.
+**Positive Randbeobachtung**: die Greedy-Selection blaeht das Ensemble
+in beiden Faellen NICHT unnoetig auf, sondern waehlt korrekt
+Ensemblegroesse 1, wenn ein Einzelmodell bereits optimal ist - spricht
+fuer die Robustheit des Algorithmus selbst, beantwortet aber nicht die
+Datensatzgroessen-Frage.
+
+**Gesamtbild jetzt (6 kleine Datensaetze)**: 2 positiv (ilpd,
+blood-transfusion), 2 negativ (qsar-biodeg, eucalyptus), 2 uninformativ/
+Deckeneffekt (analcatdata-authorship, mice-protein). Bestaetigt weiterhin
+den Befund vom 2026-09-05: **kein verlaesslicher Nutzen-Zusammenhang**
+zwischen Datensatzgroesse und Ensemble-Gewinn. Keine weitere
+Aenderung an der bereits korrigierten Empfehlung in
+`docs/reference/REFERENZ_ENSEMBLE_SELECTION.md` noetig.
+
 ### Umgebungs-Fund: lokal installiertes `xgboost` war von `renv.lock` abgedriftet (2026-09-01)
 
 Beim `081_xgboost_benchmark.R`-Lauf im neuen `PredictingElectricVehiclePurchases-s6e9`-
