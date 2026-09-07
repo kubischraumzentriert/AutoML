@@ -1,13 +1,19 @@
 # Skript-Index: nicht-nummerierte Root-Skripte ohne bisherige Einzeldokumentation
 
 Ergaenzt die knappe "Skript | Rolle"-Tabelle in `README_DETAILS.md`
-(Abschnitt "Skriptstruktur") um die 15 Root-Skripte, die dort bislang
-GAR NICHT auftauchten - gefunden bei einer Nutzeranfrage ("mir scheint
-das nicht klar zu sein"), die zurecht Unuebersichtlichkeit im
-Root-Verzeichnis bemaengelte. Scope bewusst auf diese 15 begrenzt
-(Nutzerentscheidung, 2026-09-07) - die bereits in `README_DETAILS.md`
-dokumentierten nummerierten Skripte und `analysis/*.R`-Dateien bleiben
-bei ihrer knappen Ein-Zeilen-Rolle.
+(Abschnitt "Skriptstruktur") um Root-Skripte, die dort bislang GAR NICHT
+mit einer EIGENEN Tabellenzeile auftauchten - gefunden bei einer
+Nutzeranfrage ("mir scheint das nicht klar zu sein"), die zurecht
+Unuebersichtlichkeit im Root-Verzeichnis bemaengelte. Urspruenglicher
+Scope: 15 Skripte (Nutzerentscheidung, 2026-09-07), per lockerem
+Substring-Grep gefunden. Der Nutzer wies direkt danach auf eine LUECKE
+in dieser Pruefung hin (`univariate_drift.R` fehlte, obwohl NICHT
+dokumentiert - nur *erwaehnt* in der `115`-Zeile) - eine verschaerfte
+Pruefung (Zeilenanfang `| \`datei.R\`` statt beliebiger Fundstelle)
+foerderte 11 weitere echte Luecken zutage, siehe unten "Nachtrag
+2026-09-07". Die bereits in `README_DETAILS.md` dokumentierten
+nummerierten Skripte und `analysis/*.R`-Dateien bleiben bei ihrer
+knappen Ein-Zeilen-Rolle.
 
 **Warum diese Skripte im Root bleiben (nicht in `analysis/` verschoben)**:
 ADR-007 (flache Struktur) - die meisten hier sind Bibliotheksmodule, die
@@ -41,6 +47,17 @@ Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 | [`outer_workflow_evaluation_v3_level2.R`](../../outer_workflow_evaluation_v3_level2.R) | Eingefrorenes Benchmark-Protokoll v3 (echtes Level-2: Modellwahl+Tuning innerhalb jedes Outer-Splits) |
 | [`provenance.R`](../../provenance.R) | SHA256-/Config-Hashes: was hat sich zwischen zwei Runs geaendert |
 | [`target_leak_audit_helpers.R`](../../target_leak_audit_helpers.R) | Testbare Kernberechnungen aus `015_target_leak_audit.R` extrahiert |
+| [`class_multiplier_tuning.R`](../../class_multiplier_tuning.R) | Metrik-optimale Klassen-Multiplikatoren (Grid + `1/prior` + Nelder-Mead), von `130_threshold_tuning.R` genutzt |
+| [`db_logging.R`](../../db_logging.R) | Zentrale `experiments.db`-Logging-Helfer (EAV-Schema `project`/`workflow`/`run`/...) |
+| [`generalization_gap.R`](../../generalization_gap.R) | Formale Generalisierungsluecke (CV- vs. Bootstrap-Verteilung + Baseline-Referenzbereich), von `136_generalization_gap.R` genutzt |
+| [`learning_curve.R`](../../learning_curve.R) | Lernkurve (Score vs. Trainingsgroesse, algorithmusabhaengig), von `023_learning_curve.R` genutzt |
+| [`merge_project_experiments.R`](../../merge_project_experiments.R) | Konsolidiert lokale Projekt-`experiments.db`-Dateien inkrementell in die zentrale Template-DB |
+| [`multilabel.R`](../../multilabel.R) | Multi-Label-Klassifikation (Binary Relevance), von `021_multilabel_workflow.R` genutzt |
+| [`ordinal_qwk.R`](../../ordinal_qwk.R) | Ordinale Ziele + Quadratic Weighted Kappa (Regression + QWK-optimales Runden), optionales Modul |
+| [`sanity_checks.R`](../../sanity_checks.R) | Drei Modell-Sanity-Checks (Perturbation/Invarianz/Directional Expectation), von `147_error_analysis_ranger_sanity_checks.R` genutzt |
+| [`seed_stability.R`](../../seed_stability.R) | Seed-/Hyperparameter-Rausch-Stabilitaet bei fixem Split, von `092_seed_stability.R` genutzt |
+| [`split_size_sensitivity.R`](../../split_size_sensitivity.R) | Prueft, ob der gewaehlte Split-Anteil selbst stabil ist, von `022_split_size_sensitivity.R` genutzt |
+| [`univariate_drift.R`](../../univariate_drift.R) | Univariate statistische Drift-Tests (KS/Chi², BH-korrigiert), von `115_adversarial_validation.R` genutzt |
 
 ## config_validation.R
 
@@ -351,3 +368,283 @@ Schwelle/Cluster-Erkennung einen Leak anzeigen) ist in `README.md`
 Kernberechnungen.
 
 **Literaturreferenz**: -
+
+## Nachtrag 2026-09-07: 11 weitere Skripte
+
+Der urspruengliche Vollstaendigkeits-Check (`grep -q "\`$f\`" README_
+DETAILS.md`, lockerer Substring-Match "kommt der Dateiname IRGENDWO im
+Text vor") hatte einen systematischen Fehler: er zaehlte ein Skript
+bereits als "dokumentiert", wenn es nur BEILAEUFIG innerhalb der
+Beschreibung eines anderen Skripts erwaehnt wird (z.B. `univariate_
+drift.R` in der `115_adversarial_validation.R`-Zeile), statt eine
+EIGENE Tabellenzeile/einen eigenen Abschnitt zu haben. Ein verschaerfter
+Check (`grep -q "^| \`$f\`"`, Dateiname muss eine Tabellenzeile
+EROEFFNEN) foerderte 11 echte weitere Luecken zutage. (3 weitere
+Alarme des verschaerften Checks - `outer_workflow_evaluation_
+template.R`/`_v2_fair_baselines.R`/`_v3_level2.R` - sind falsch-positiv:
+die 4 Dateien teilen sich bewusst EINE gemeinsame Tabellenzeile/einen
+gemeinsamen Abschnitt, siehe oben. `_targets.R` ist ebenfalls
+falsch-positiv - hat einen eigenen dedizierten Abschnitt "`targets`-
+Pipeline" in `README_DETAILS.md`, keine Tabellenzeile noetig.)
+
+Anders als bei den ersten 15: alle 11 hier sind Bibliotheksmodule, die
+bereits von genau EINEM nummerierten Pipeline-Skript per `source()`
+eingebunden werden UND deren Rolle bereits (knapp, inline) in dessen
+`README_DETAILS.md`-Zeile beschrieben ist - die Luecke ist also eher
+"kein eigener Anker/keine eigene Vertiefung" als "komplett unbekannt".
+
+## class_multiplier_tuning.R
+
+**Beschreibung**: `apply_class_multipliers()`/Such-Routine fuer
+metrik-optimale Klassen-Multiplikatoren bei schwellenwert-ABHAENGIGEN
+Multiklassen-Metriken (v.a. Balanced Accuracy): skaliert vorhergesagte
+Klassen-Wahrscheinlichkeiten mit klassenweisen Faktoren vor `argmax`
+(`argmax(prob * multiplier)`) - Verallgemeinerung des binaeren
+Threshold-Tunings auf K Klassen. Drei Startpunkte kombiniert: GRID
+(`seq(0.5, 6, by=0.5)`, robuster Startpunkt), geschlossene `1/prior`-
+Korrektur (Bayes-optimale Regel bei kalibrierten Wahrscheinlichkeiten,
+tuning-frei) und kontinuierliche Nelder-Mead-Verfeinerung ab dem besten
+der beiden (kann per Konstruktion nie schlechter werden als das
+Grid-/Prior-Optimum).
+
+**Aufrufkontext**: Von `130_threshold_tuning.R` aufgerufen.
+
+**Ergebnis/Nutzen**: Bestaetigt an s6e7/health_condition (3-Klassen/
+BAcc, OOF): raw argmax 0.872 -> Grid 0.936 -> `1/prior` 0.943 ->
+kontinuierlich 0.945 (Grid rannte in seine Obergrenze 6/6). Entstand aus
+der Beobachtung, dass die urspruenglich in `130` fest verdrahtete
+Grid-Suche bei stark unbalancierten Zielen regelmaessig an ihre
+Obergrenze stiess.
+
+**Literaturreferenz**: -
+
+## db_logging.R
+
+**Beschreibung**: Zentrale Logging-Helferfunktionen fuer die
+`experiments.db` (SQLite, EAV-Schema `project` -> `workflow` -> `run`
+-> `model_config` -> `hyperparam`/`metric_result`, siehe
+`db_schema.sql`). Unterscheidet schwellenwertunabhaengige Metriken
+(AUC, LogLoss - Post-hoc-Threshold-Tuning hat KEINEN Effekt darauf) von
+schwellenwertabhaengigen (BAcc, MCC, F1 - profitieren stark davon).
+
+**Aufrufkontext**: Von praktisch allen nummerierten Skripten
+gesourct/genutzt, sobald ein Lauf in die zentrale DB geloggt werden
+soll (opt-in je Skript).
+
+**Ergebnis/Nutzen**: Rein additiv und projektunabhaengig aufgebaut -
+ein neues Kaggle-Projekt braucht nur einen neuen `project_name` in
+`000_config.R`, das Schema/`db_logging.R` selbst bleiben unveraendert.
+Traeger fuer `merge_project_experiments.R`/`db_housekeeping.R`
+(Konsolidierung ueber Projekte hinweg) und `provenance.R` (baut auf der
+`run_config`-Tabelle auf).
+
+**Literaturreferenz**: -
+
+## generalization_gap.R
+
+**Beschreibung**: Formale Quantifizierung der Generalisierungsluecke
+(CV-/Train-Score vs. Score auf unberuehrten Daten): statistischer
+Vergleich (Mann-Whitney U, robust bei kleinem n) + Effektgroesse
+(Cohen's d) gegen einen Referenzbereich aus mehreren UNGETUNTEN
+Baseline-Algorithmen. Getrennt von `target_leak_audit_helpers.R`:
+dort Feature-Target-Leakage, hier Train/Test-Grenz-Optimismus
+("Winner's-Curse"-Effekt einer Hyperparameter-Suche).
+
+**Aufrufkontext**: Von `136_generalization_gap.R` aufgerufen, nach
+`090`/`100` (baut auf deren Tuning-Instanzen als Kandidaten auf).
+
+**Ergebnis/Nutzen**: Formalisiert, was zuvor ad-hoc als "CV<->LB-Luecke
+gross/klein?" beurteilt wurde (siehe `REFERENZ_ENSEMBLE_SELECTION.md`,
+s6e8-Notizen) - liefert einen statistischen Test statt eines
+Bauchgefuehls.
+
+**Literaturreferenz**: Jason Brownlee, "Data Science Diagnostic
+Checklist", Abschnitte 5+6 - siehe `docs/reference/
+REFERENZ_GENERALIZATION_GAP.md` fuer den vollen Abgleich der Checkliste
+gegen den Template-Stand.
+
+## learning_curve.R
+
+**Beschreibung**: Lernkurve - prueft, ob mehr Trainingsdaten den Score
+noch spuerbar verbessern wuerden, oder ob die gewaehlte Stichprobe
+(`subset_fraction`) bereits ausreicht. ANDERS als `split_size_
+sensitivity.R`: das Ergebnis haengt direkt von der KAPAZITAET des
+Algorithmus ab (ein Baum plateaut frueh, ein Ensemble/Boosting kann
+noch steigen) - laeuft deshalb mit dem tatsaechlich eingesetzten
+Algorithmus (Ranger), nicht mit einem billigen Stellvertreter. Je
+Trainingsgroesse: Validierungsscore per einmaliger k-facher CV (Trend,
+nicht Streuung) + Trainingsscore, gemittelt ueber mehrere Wiederholungen
+je Groesse (Rauschunterdrueckung).
+
+**Aufrufkontext**: Von `023_learning_curve.R` aufgerufen, laedt bewusst
+den vollen Datensatz (nicht `task_train_small`), gekappt bei
+`learning_curve_max_rows`.
+
+**Ergebnis/Nutzen**: Meldet "NOCH STEIGEND" als Warnung (kein
+Abbruchgrund), dass Modellvergleiche/Hyperparameter-Entscheidungen
+davor mit dem Vorbehalt zu lesen sind, dass sich die Algorithmen-
+Rangfolge bei mehr Daten theoretisch noch verschieben koennte.
+
+**Literaturreferenz**: Jason Brownlee, "Data Science Diagnostic
+Checklist", Abschnitt 11 ("Learning Curve Tests").
+
+## merge_project_experiments.R
+
+**Beschreibung**: Konsolidiert die projekteigenen `experiments.db`-
+Dateien mehrerer abgeschlossener Kaggle-/OpenML-Projekte in die
+zentrale Template-Datenbank (Auto-Discovery unter `R_Workspace`/
+`ML_Learning`), damit sich projektuebergreifende Muster per SQL
+abfragen lassen statt nur in README-/`TEMPLATE_FRICTION.md`-Prosa.
+Bewusst NUR die AGGREGIERTEN Tabellen (project/workflow/run/
+run_config/model_config/resampling/hyperparam/metric_result) - NICHT
+`prediction`/`prediction_prob` (Zeilenebene ist projektspezifisch,
+nicht sinnvoll uebergreifend vergleichbar). `discover_source_db_paths()`/
+`detect_problem_type()` liegen inzwischen in `db_housekeeping.R` (dort
+gesourct, nicht dupliziert).
+
+**Aufrufkontext**: Manuell, on-demand, INKREMENTELL (neue lokale Runs
+werden bei jedem Aufruf nachgezogen, nicht nur beim ersten Merge eines
+Projekts - siehe `TARGETS.md`, "Merge-Skript-Bug", 2026-08-14).
+Typischerweise nach `db_housekeeping_check()` als Vorab-Diagnose.
+
+**Ergebnis/Nutzen**: Ermoeglicht projektuebergreifende SQL-Abfragen
+(z.B. "wie oft schlaegt Tuning den Default tatsaechlich", "AUC- vs.
+BAcc-Projekte im Vergleich") ueber alle jemals gemergten Projekte
+hinweg.
+
+**Literaturreferenz**: -
+
+## multilabel.R
+
+**Beschreibung**: Generische Bausteine fuer Multi-Label-Klassifikation
+(mehrere nicht-exklusive Zielspalten, anders als Multiclass) per
+Binary Relevance (N unabhaengige Binaerklassifikatoren) - Standardweg,
+da weder mlr3 noch CRAN ein natives Multi-Label-Paket haben (geprueft
+2026-08-13/14). Schwellenwert je Label auf ROHER Accuracy getunt
+(NICHT BAcc - verschlechtert sonst Hamming Loss/Subset Accuracy).
+
+**Aufrufkontext**: Von `021_multilabel_workflow.R` aufgerufen, opt-in
+ueber `label_cols` statt `target_col` in `000_config.R` - Default
+`label_cols <- character(0)` (rueckwirkungsfrei bei leerem Wert).
+
+**Ergebnis/Nutzen**: Verifiziert an 4 unabhaengigen Standalone-Projekten
+(kein Git): `openml-yeast-multilabel` (14 Labels), `openml-scene-
+multilabel` (6 Labels, Bild), `openml-birds-multilabel` (19 Labels,
+gemischte Feature-Typen), `tox21-multilabel` (12 Labels, echte fehlende
+Labels/NA-Maskierung) - Binary Relevance + Accuracy-Threshold 3/3
+bestaetigt bester Ansatz.
+
+**Literaturreferenz**: siehe `docs/reference/
+REFERENZ_METRIC_TARGET_MISMATCH.md` fuer die vollen Zahlen.
+
+## ordinal_qwk.R
+
+**Beschreibung**: Bausteine fuer ordinale Ziele (geordnete Klassen,
+z.B. Ratings) mit der nicht-zerlegbaren, ordnungssensitiven Metrik
+Quadratic Weighted Kappa (QWK): `qwk()` (die Metrik selbst, Cohen,
+quadratische Gewichte), `optimize_ordinal_thresholds()`/`apply_
+ordinal_thresholds()` - das Ziel als REGRESSION vorhersagen und die
+kontinuierliche Ausgabe QWK-optimal in ordinale Klassen runden
+(Schnittpunkte per Nelder-Mead), statt Multiclass (ignoriert die
+Ordnung).
+
+**Aufrufkontext**: Optionales Modul, vom Standard-Workflow NICHT
+gesourct (rueckwirkungsfrei) - manuell fuer Projekte mit ordinalem
+Ziel + QWK-Metrik.
+
+**Ergebnis/Nutzen**: An playground-s3e5 (wine-quality) bestaetigt:
+Regression+QWK-Runden schlug Multiclass (0.526 vs. 0.469). Kernlektion:
+bei nicht-zerlegbaren Metriken auf die ECHTE Metrik optimieren, nicht
+auf einen Proxy - QWK-naiv-gerundetes Tuning, MSE-basierte Lambda-Wahl
+und MSE-Stacking fuehrten alle in die Irre.
+
+**Literaturreferenz**: -
+
+## sanity_checks.R
+
+**Beschreibung**: Drei modell-agnostische Behavioral-Testing-Checks
+(Funktionen nehmen `predict_fn`/`predict_prob_fn` als Parameter):
+Perturbation (Robustheit gegen kleine realistische Stoerungen),
+Invarianz (Modell reagiert NICHT auf kausal bedeutungslose Spalten),
+Directional Expectation (Modell bewegt sich bei bekannter monotoner
+Domainbeziehung in die erwartete Richtung). Ergaenzen eine reine
+Holdout-Metrik, die solche Verhaltensprobleme verstecken kann.
+
+**Aufrufkontext**: Von `147_error_analysis_ranger_sanity_checks.R`
+aufgerufen; Konfiguration (welche Spalten, Richtung, `higher_is_
+better`) projektspezifisch in `000_config.R`. Aufgabentyp-unabhaengig,
+identisch ins Regressions-Template uebernommen (wie `univariate_
+drift.R`).
+
+**Ergebnis/Nutzen**: Verifiziert an synthetischer Ground Truth + 2
+realen Projekten (`health_condition`, `drivendata-pump-it-up`).
+
+**Literaturreferenz**: Huyen (2022) "Designing Machine Learning
+Systems", Kap. 6 "Model Evaluation Methods" - siehe `docs/reference/
+REFERENZ_MODEL_SANITY_CHECKS.md` fuer den vollen theoretischen
+Hintergrund.
+
+## seed_stability.R
+
+**Beschreibung**: Prueft, wie sehr der Score AUF DENSELBEN Daten
+(fixer Train/Test-Split) allein durch den Zufalls-Seed des Lerners
+bzw. leichtes Jitter auf den gewaehlten Hyperparametern schwankt -
+Referenzpunkt ist die normale CV-Fold-zu-Fold-Streuung. Ergaenzt
+`sanity_checks.R` (Streuung durch Feature-Rauschen) und `split_size_
+sensitivity.R` (Streuung durch WELCHE Zeilen im Split landen) um einen
+dritten Rauschkanal: Streuung durch das MODELL selbst bei fixen Daten.
+
+**Aufrufkontext**: Von `092_seed_stability.R` aufgerufen, nach der
+`090`-Tuning-Konfiguration.
+
+**Ergebnis/Nutzen**: Relevant fuer Fragen wie "mehr Baeume vs. mehr
+CV-Folds" oder wie sehr man den gefundenen Hyperparametern vertrauen
+sollte, wenn die reine Seed-/Jitter-Streuung im Vergleich zur
+CV-Fold-Streuung gross ausfaellt.
+
+**Literaturreferenz**: Jason Brownlee, "Data Science Diagnostic
+Checklist", Abschnitt 14.
+
+## split_size_sensitivity.R
+
+**Beschreibung**: Prueft, ob der GEWAEHLTE Train/Test-Split-Anteil
+(`validation_ratio`) selbst stabil ist, BEVOR man einer einzelnen
+Holdout-Bewertung vertraut. Mechanismus: `rsmp("subsampling", repeats,
+ratio)` wiederholt den Split R-mal bei festem `ratio` mit `classif.
+rpart` als billigem, lernverfahren-unabhaengigem Stellvertreter - die
+SD der Scores zeigt, wie sehr "welche Zeilen zufaellig gezogen werden"
+das Ergebnis beeinflusst.
+
+**Aufrufkontext**: Von `022_split_size_sensitivity.R` aufgerufen,
+uebersprungen bei Datensaetzen ueber `split_sensitivity_max_n`.
+
+**Ergebnis/Nutzen**: `report_split_ratio_sensitivity()` meldet
+"AUFFAELLIG" mit drei Reaktionsebenen (von taktisch bis strukturell) -
+ergaenzt (nicht ersetzt) `target_leak_audit_helpers.R`/`univariate_
+drift.R`: dort Verzerrung/Drift EINES Splits, hier Stabilitaet ueber
+viele moegliche Splits desselben Anteils.
+
+**Literaturreferenz**: Jason Brownlee, "Data Science Diagnostic
+Checklist", Abschnitt 3.
+
+## univariate_drift.R
+
+**Beschreibung**: Univariate statistische Drift-Tests je Feature -
+Kolmogorov-Smirnov (stetig) bzw. Chi-Quadrat (kategorial), mit
+Benjamini-Hochberg-Korrektur ueber alle Features (verhindert
+Massensignifikanz bei vielen Features/Zeilen). Effektgroesse (KS-D
+bzw. Cramer's V) zusaetzlich zum p-Wert, da p-Werte bei grossen
+Datensaetzen triviale Abweichungen ueberbetonen. Ergaenzung zur
+Adversarial Validation (Domain-Classifier): die AUC sagt nur
+"trennbar ja/nein/wie stark insgesamt", die univariaten Tests sagen
+WELCHE Features treiben.
+
+**Aufrufkontext**: Von `115_adversarial_validation.R` aufgerufen.
+
+**Ergebnis/Nutzen**: Verifiziert an 2 unabhaengigen OpenML-Datensaetzen
++ 3 Szenarien (echter Zeit-Drift, Zufalls-Kontrolle, konstruierter
+Drift) - siehe `TARGETS.md` fuer Zahlen. Aufgabentyp-unabhaengig,
+identisch ins Regressions-Template uebernommen.
+
+**Literaturreferenz**: "Introducing MLOps" (Treveil/Dataiku 2020),
+Kap. 7.

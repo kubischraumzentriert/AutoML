@@ -113,6 +113,17 @@ Literaturreferenz) in
 | `outer_workflow_evaluation.R` / `_template.R` / `_v2_fair_baselines.R` / `_v3_level2.R` | Eingefrorene Benchmark-Protokolle v1-v3 (ADR-008, NIE inhaltlich aendern) ([Details](docs/reference/SCRIPT_INDEX.md#outer_workflow_evaluationr-4-dateien---adr-008-eingefroren)) |
 | `provenance.R` | SHA256-/Config-Hashes fuer "was hat sich zwischen zwei Runs geaendert?" ([Details](docs/reference/SCRIPT_INDEX.md#provenancer)) |
 | `target_leak_audit_helpers.R` | Testbare Kernberechnungen aus `015_target_leak_audit.R` extrahiert ([Details](docs/reference/SCRIPT_INDEX.md#target_leak_audit_helpersr)) |
+| `class_multiplier_tuning.R` | Metrik-optimale Klassen-Multiplikatoren (Grid + `1/prior` + Nelder-Mead), von `130` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#class_multiplier_tuningr)) |
+| `db_logging.R` | Zentrale `experiments.db`-Logging-Helfer (EAV-Schema), von praktisch allen nummerierten Skripten genutzt ([Details](docs/reference/SCRIPT_INDEX.md#db_loggingr)) |
+| `generalization_gap.R` | Formale Generalisierungsluecke (Mann-Whitney U + Cohen's d gegen Baseline-Referenzbereich), von `136` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#generalization_gapr)) |
+| `learning_curve.R` | Lernkurve (Score vs. Trainingsgroesse, algorithmusabhaengig), von `023` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#learning_curver)) |
+| `merge_project_experiments.R` | Konsolidiert lokale Projekt-`experiments.db`-Dateien inkrementell in die zentrale Template-DB ([Details](docs/reference/SCRIPT_INDEX.md#merge_project_experimentsr)) |
+| `multilabel.R` | Multi-Label-Klassifikation (Binary Relevance + Accuracy-Threshold-Tuning), von `021` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#multilabelr)) |
+| `ordinal_qwk.R` | Ordinale Ziele + QWK (Regression + QWK-optimales Runden), optionales Modul ([Details](docs/reference/SCRIPT_INDEX.md#ordinal_qwkr)) |
+| `sanity_checks.R` | Drei Modell-Sanity-Checks (Perturbation/Invarianz/Directional Expectation, Huyen 2022), von `147` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#sanity_checksr)) |
+| `seed_stability.R` | Seed-/Hyperparameter-Rausch-Stabilitaet bei fixem Split, von `092` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#seed_stabilityr)) |
+| `split_size_sensitivity.R` | Prueft, ob der gewaehlte Split-Anteil selbst stabil ist, von `022` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#split_size_sensitivityr)) |
+| `univariate_drift.R` | Univariate statistische Drift-Tests (KS/Chi², BH-korrigiert), von `115` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#univariate_driftr)) |
 
 ## `targets`-Pipeline (`_targets.R`)
 
