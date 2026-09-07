@@ -22,6 +22,26 @@ Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 (was es bisher gebracht hat, mit Verweis auf `BACKLOG.md` fuer Details)
 - **Literaturreferenz** (falls zutreffend).
 
+## Uebersicht
+
+| Skript | Kurzbeschreibung |
+|---|---|
+| [`config_validation.R`](../../config_validation.R) | Prueft `000_config.R` auf innere Konsistenz (Tippfehler, unpassende Bereiche) |
+| [`db_housekeeping.R`](../../db_housekeeping.R) | Rein lesende Diagnose der zentralen `experiments.db` vor einem Merge |
+| [`decision_stability.R`](../../decision_stability.R) | Generischer Baustein: wie stabil ist eine kategoriale Entscheidung unter variierenden Seeds |
+| [`decision_stability_level2_prototype.R`](../../decision_stability_level2_prototype.R) | Wendet `decision_stability.R` konkret auf die Level-2-Modellwahl an |
+| [`ensemble_selection.R`](../../ensemble_selection.R) | Caruana-Greedy-Ensemble-Selection als eigenstaendige Funktion |
+| [`evidence_registry.R`](../../evidence_registry.R) | Maschinenlesbare Befund-Registry (Ergaenzung zu BACKLOG.md/Statusankern) |
+| [`generate_systematic_evaluation.R`](../../generate_systematic_evaluation.R) | Erzeugt eine Projekt-x-Modul-Ergebnistabelle aus der Evidence Registry |
+| [`group_resampling.R`](../../group_resampling.R) | Group-aware Resampling fuer wiederholte Entitaeten (Patienten/Nutzer/Geraete) |
+| [`hard_split_stress_test.R`](../../hard_split_stress_test.R) | Extrapolations-Stresstest per k-means-Cluster-Split |
+| [`outer_workflow_evaluation.R`](../../outer_workflow_evaluation.R) | Eingefrorenes Benchmark-Protokoll, Ursprung (P1.1-Prototyp, nur health_condition) |
+| [`outer_workflow_evaluation_template.R`](../../outer_workflow_evaluation_template.R) | Eingefrorenes Benchmark-Protokoll v1 (generalisiert fuer beliebige Projekte) |
+| [`outer_workflow_evaluation_v2_fair_baselines.R`](../../outer_workflow_evaluation_v2_fair_baselines.R) | Eingefrorenes Benchmark-Protokoll v2 (+ getunte Baseline-Arme) |
+| [`outer_workflow_evaluation_v3_level2.R`](../../outer_workflow_evaluation_v3_level2.R) | Eingefrorenes Benchmark-Protokoll v3 (echtes Level-2: Modellwahl+Tuning innerhalb jedes Outer-Splits) |
+| [`provenance.R`](../../provenance.R) | SHA256-/Config-Hashes: was hat sich zwischen zwei Runs geaendert |
+| [`target_leak_audit_helpers.R`](../../target_leak_audit_helpers.R) | Testbare Kernberechnungen aus `015_target_leak_audit.R` extrahiert |
+
 ## config_validation.R
 
 **Beschreibung**: `validate_config()` prueft die zentralen
