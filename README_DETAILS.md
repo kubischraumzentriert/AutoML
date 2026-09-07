@@ -32,6 +32,13 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 
 ## Skriptstruktur
 
+Fuer 15 Root-Skripte, die hier nur mit einer Kurzrolle stehen (v.a.
+Bibliotheksmodule ohne eigene Nummer sowie die 4 ADR-008-eingefrorenen
+`outer_workflow_evaluation*.R`-Protokolle), gibt es eine reichhaltigere
+Einzeldokumentation (Beschreibung/Aufrufkontext/Ergebnis-Nutzen/
+Literaturreferenz) in
+[`docs/reference/SCRIPT_INDEX.md`](docs/reference/SCRIPT_INDEX.md).
+
 | Skript | Rolle |
 |---|---|
 | `000_config.R` | Zentrale Pfade, Zielspalte, Seed, Subset-Quote, Metriken, Modellbudgets |
@@ -94,6 +101,18 @@ Die Projektstruktur trennt bewusst mehrere Ebenen:
 | `155_predict_submission.R` | Findet den Pfad des zuletzt trainierten Modells ueber `db_get_latest_model_artifact_path()`, wendet es auf `test.csv` an und schreibt `submission.csv` im Format von `sample_submission.csv`. Metrik-abhaengig: bei schwellenwert-unabhaengiger Zielmetrik (AUC/LogLoss) + binaerer Aufgabe wird `P(positive_class)` geschrieben, sonst Klassen-Labels |
 | `160_plot_roc_curve.R` | ROC-Kurve(n) je Algorithmus aus den in `experiments.db` geloggten Vorhersagen, als PNG gespeichert, AUC-Cross-Check gegen `metric_result` |
 | `161_plot_pr_curve.R` | Precision-Recall-Kurve(n) je Algorithmus, analog zu `160` |
+| `config_validation.R` | `validate_config()` - prueft `000_config.R` auf innere Konsistenz, manuell nach dem Anpassen fuer ein neues Projekt aufgerufen ([Details](docs/reference/SCRIPT_INDEX.md#config_validationr)) |
+| `db_housekeeping.R` | Rein lesende Diagnose der zentralen `experiments.db` (fehlende Projekte, neue Runs, Duplikate) ([Details](docs/reference/SCRIPT_INDEX.md#db_housekeepingr)) |
+| `decision_stability.R` | Generischer Baustein: Stabilitaet einer kategorialen Entscheidung unter variierenden Seeds (VeridicalFlow/PCS-inspiriert) ([Details](docs/reference/SCRIPT_INDEX.md#decision_stabilityr)) |
+| `decision_stability_level2_prototype.R` | Wendet `decision_stability.R` auf die Level-2-Modellwahl an ([Details](docs/reference/SCRIPT_INDEX.md#decision_stability_level2_prototyper)) |
+| `ensemble_selection.R` | `greedy_ensemble_selection()` als eigenstaendige Funktion (Caruana et al. 2004), von `149` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#ensemble_selectionr)) |
+| `evidence_registry.R` | `db_log_evidence()` - maschinenlesbare Befund-Registry, Ergaenzung zu BACKLOG.md/Statusankern ([Details](docs/reference/SCRIPT_INDEX.md#evidence_registryr)) |
+| `generate_systematic_evaluation.R` | Erzeugt eine Projekt-x-Modul-Pivot-Tabelle aus der Evidence Registry ([Details](docs/reference/SCRIPT_INDEX.md#generate_systematic_evaluationr)) |
+| `group_resampling.R` | Group-aware Resampling fuer wiederholte Entitaeten (Patienten/Nutzer/Geraete) ([Details](docs/reference/SCRIPT_INDEX.md#group_resamplingr)) |
+| `hard_split_stress_test.R` | Extrapolations-Stresstest per k-means-Cluster-Split (astartes-inspiriert), von `137` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#hard_split_stress_testr)) |
+| `outer_workflow_evaluation.R` / `_template.R` / `_v2_fair_baselines.R` / `_v3_level2.R` | Eingefrorene Benchmark-Protokolle v1-v3 (ADR-008, NIE inhaltlich aendern) ([Details](docs/reference/SCRIPT_INDEX.md#outer_workflow_evaluationr-4-dateien---adr-008-eingefroren)) |
+| `provenance.R` | SHA256-/Config-Hashes fuer "was hat sich zwischen zwei Runs geaendert?" ([Details](docs/reference/SCRIPT_INDEX.md#provenancer)) |
+| `target_leak_audit_helpers.R` | Testbare Kernberechnungen aus `015_target_leak_audit.R` extrahiert ([Details](docs/reference/SCRIPT_INDEX.md#target_leak_audit_helpersr)) |
 
 ## `targets`-Pipeline (`_targets.R`)
 
