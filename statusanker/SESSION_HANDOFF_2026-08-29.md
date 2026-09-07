@@ -209,7 +209,13 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `3e25390` "BACKLOG: Ensemble-Pilot-Projekte
+- `MLR3_Classifikation` @ `67d6ce1` "docs: 11 weitere Skript-Index-
+  Luecken schliessen (korrigierter Audit)" - gepusht, docs-only, kein
+  CI-Lauf (Workflow pfadgefiltert auf `**.R`). Zwischenstaende: `9fa7b40`
+  "SCRIPT_INDEX.md: Uebersichtstabelle ergaenzt", `8be0f43`
+  "docs/reference/SCRIPT_INDEX.md: 15 undokumentierte Root-Skripte
+  reichhaltig dokumentiert" - beide gepusht, docs-only.
+- Vorheriger Endstand: `3e25390` "BACKLOG: Ensemble-Pilot-Projekte
   aufgeraeumt (git revert, vollstaendige Rueckkehr)" - gepusht,
   docs-only. Zwischenstand: `954ab87`/Statusanker+BACKLOG (Ranger-LB-
   Bestaetigung). Zwischenstand: `b820cbd` "BACKLOG: s6e9
@@ -1691,6 +1697,49 @@ abgeschlossen - beide finalen Submissions (LightGBM 0.94142, Ranger
 0.93854) sind LB-bestaetigt. Der Ensemble-/Reshuffling-Pilot ist
 vollstaendig abgeschlossen UND aufgeraeumt - nichts mehr offen aus
 dieser gesamten Session-Linie.
+
+**46. Aktualisierung (neuer Tag 2026-09-07, "wir haben immer noch sehr
+viele R-Skripte im Rootverzeichnis ohne Praefixnummer - koennen wir
+einen Index erstellen?")**: Root-Verzeichnis hat 83 `.R`-Dateien (56
+nummeriert + 27 nicht-nummeriert), viele davon undokumentiert. Per
+AskUserQuestion Scope geklaert - Nutzer waehlte "nur die 15 komplett
+fehlenden Skripte, reichhaltig". Neue Datei
+[`docs/reference/SCRIPT_INDEX.md`](../docs/reference/SCRIPT_INDEX.md)
+angelegt: je Skript **Beschreibung/Aufrufkontext/Ergebnis-Nutzen/
+Literaturreferenz**. Auf Nutzerwunsch zusaetzlich eine "Uebersicht"-
+Tabelle ganz oben (Link zum `.R`-File + Kurzbeschreibung) ergaenzt.
+`README_DETAILS.md`s bestehende Skriptstruktur-Tabelle bekam 15 neue
+Kurzzeilen mit Link auf die Detail-Abschnitte. Commits `8be0f43`,
+`9fa7b40` (zentral, docs-only).
+
+Direkt danach wies der Nutzer auf eine Luecke im GERADE erledigten
+Audit hin: `univariate_drift.R` fehlte im Index, obwohl der
+Vollstaendigkeits-Check es als "bereits dokumentiert" gewertet hatte.
+Ursache: der Check nutzte einen LOSEN Substring-Grep (Dateiname kommt
+IRGENDWO im Text vor), der ein Skript schon dann als dokumentiert
+zaehlte, wenn es nur BEILAEUFIG in der Beschreibung eines anderen
+Skripts erwaehnt wird (hier: in der `115_adversarial_validation.R`-
+Zeile), statt eine eigene Tabellenzeile/einen eigenen Abschnitt zu
+haben. Ein verschaerfter Check (Dateiname muss eine Tabellenzeile
+EROEFFNEN) foerderte **11 weitere echte Luecken** zutage:
+`class_multiplier_tuning.R`, `db_logging.R`, `generalization_gap.R`,
+`learning_curve.R`, `merge_project_experiments.R`, `multilabel.R`,
+`ordinal_qwk.R`, `sanity_checks.R`, `seed_stability.R`,
+`split_size_sensitivity.R`, `univariate_drift.R` (3 weitere Alarme des
+Checks waren falsch-positiv: die 4 `outer_workflow_evaluation*.R`-
+Protokollvarianten teilen sich bewusst EINEN Abschnitt, `_targets.R`
+hat einen eigenen dedizierten Abschnitt - beide bereits korrekt
+abgedeckt). Alle 11 im gleichen reichhaltigen Format ergaenzt (inkl.
+Uebersichtstabelle + `README_DETAILS.md`-Kurzzeilen). testthat lokal
+359/359 gruen. Commit `67d6ce1` (zentral, docs-only, kein CI-Lauf noetig
+- Workflow ist pfadgefiltert auf `**.R`, reine `.md`-Aenderung loest
+bewusst keinen Smoke-Test aus).
+
+**Stand jetzt: kein offener Blocker, keine offene Nutzerentscheidung.**
+Kein laufender Hintergrundprozess. `SCRIPT_INDEX.md` deckt jetzt 26
+Root-Skripte reichhaltig ab; verbleibende nicht-nummerierte Skripte
+(`analysis/*.R` und bereits ueber ihre numerierten Wrapper-Zeilen in
+`README_DETAILS.md` abgedeckte) waren nicht Teil des Nutzer-Scopes.
 
 **Empfohlener erster Schritt, Stand jetzt**: kein zwingender
 Einstiegspunkt, kein offener Punkt mehr. Naechster natuerlicher Schritt
