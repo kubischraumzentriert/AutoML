@@ -148,6 +148,9 @@ Zeitpunkt des Laufs - `get_git_commit()` in `db_logging.R`), `run_notes`
 `run_finished_at` (Start automatisch bei `db_create_run()`, Ende explizit
 per `db_finish_run()` am Skriptende - ein Run ohne `run_finished_at` bedeutet
 also, dass das Skript abgebrochen ist, bevor es fertig geloggt hat).
+`run_manifest_json` ergaenzt diese festen Spalten um ein strukturiertes,
+projektspezifisches JSON-Manifest, z.B. R-/renv-Umgebung, Daten-Hashes,
+Feature-Provenienz oder andere Run-weite Reproduktionsanker.
 
 ### `run_config`
 
@@ -168,6 +171,7 @@ Die zentrale Tabelle - eine Zeile pro getesteter Konfiguration:
 | `mconf_preprocessing` | Freitext-Label fuer die Preprocessing-Pipeline (`"impute_median_mode"`, `"empty_to_na_onehot"`, `"none"`, ...) - getrennt von `feature_set` (welche Spalten) und `algorithm` (welcher Learner) |
 | `mconf_class_weight_power` | Der `power`-Exponent aus `add_balanced_class_weights()`, `NA` wenn ungewichtet |
 | `mconf_task_id` | Die `mlr3`-Task-`id` (z.B. `"health_condition_10pct_weighted_p1.5"`) - der Rohbezug, aus dem `feature_set`/`class_weight_power` oft erst abgeleitet werden |
+| `mconf_manifest_json` | Strukturiertes JSON fuer variable Modell-Metadaten: Learner-ID, `predict_type`, Hyperparameter, Feature-Hash, Preprocessing, Modellartefakt-Hash, R-/renv-Umgebung |
 
 ### `hyperparam`
 
@@ -222,6 +226,26 @@ Late Submissions (`late_submission`).
 `db_log_submission_result()` legt den Eintrag an oder aktualisiert ihn bei
 einem erneuten Aufruf fuer dieselbe Modell-/Plattform-/Status-Kombination.
 Die Modellreferenz liefert `db_get_latest_model_config_id(con, algorithm)`.
+
+Wichtig fuer Wettbewerbe: Die Submissiondatei muss nicht dauerhaft als Kopie
+archiviert werden. Entscheidend ist, dass sie reproduzierbar bleibt. Der
+empfohlene Ablauf ist deshalb:
+
+1. Finales Modell per `150_train_full_model.R` oder `156_train_full_ensemble.R`
+   trainieren; das Modellartefakt wird run-id-basiert gespeichert und in
+   `experiments.db` referenziert.
+2. Submission per `155_predict_submission.R` oder
+   `157_predict_ensemble_submission.R` erzeugen.
+3. Datei hochladen und danach den Score mit
+   `158_register_submission_result.R` registrieren.
+
+`158_register_submission_result.R` schreibt Score und Datei-Pfad in
+`submission_result`. Die maschinenlesbaren Reproduktionsanker stehen in
+`subm_manifest_json`: `submission_sha256`, Modellartefakt-Pfad/-Hash,
+Git-Commit, R-/renv-Umgebung und der verwendete Trainingsworkflow. `subm_notes`
+bleibt fuer kurze menschliche Hinweise frei. Damit kann eine ueberschriebene
+`submission.csv` wieder aus Code, Config, Modellartefakt und Datenstand erzeugt
+werden, ohne jede Submissiondatei selbst aufheben zu muessen.
 
 ### `literature_source` / `literature_benchmark_result`
 
@@ -387,6 +411,9 @@ die Datenbank: liest `db_schema.sql`, splittet es an `;` und fuehrt jedes
 Statement einzeln aus. Da alle `CREATE TABLE`/`CREATE INDEX`/`CREATE VIEW`
 Anweisungen `IF NOT EXISTS` verwenden, ist das idempotent - jeder Skriptlauf
 kann `db_connect()` unbesorgt aufrufen, auch wenn das Schema schon existiert.
+Bestehende SQLite-Dateien werden dabei fuer die JSON-Manifeste nachmigriert:
+falls `run_manifest_json`, `mconf_manifest_json` oder `subm_manifest_json`
+fehlen, legt `db_connect()` diese Spalten per `ALTER TABLE` nachtraeglich an.
 
 Jedes der Skripte `030`-`145` haengt am Ende einen Block nach demselben
 Muster an:

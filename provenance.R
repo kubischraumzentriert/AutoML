@@ -156,3 +156,77 @@ finalize_run_provenance <- function(con, run_id, ...) {
   db_log_run_config(con, run_id, prov)
   invisible(TRUE)
 }
+
+git_commit_or_na <- function() {
+  if (exists("get_git_commit", mode = "function")) {
+    return(get_git_commit())
+  }
+  result <- tryCatch(
+    system2("git", c("rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE),
+    error = function(e) NA_character_,
+    warning = function(w) NA_character_
+  )
+  if (length(result) == 0 || !is.null(attr(result, "status"))) NA_character_ else result[[1]]
+}
+
+package_versions_list <- function(packages) {
+  versions <- lapply(packages, function(pkg) {
+    value <- tryCatch(as.character(utils::packageVersion(pkg)), error = function(e) NA_character_)
+    if (is.na(value)) NULL else value
+  })
+  names(versions) <- packages
+  versions[!vapply(versions, is.null, logical(1))]
+}
+
+compact_manifest_list <- function(x) {
+  x[!vapply(x, function(value) {
+    is.null(value) || (length(value) == 1 && is.atomic(value) && is.na(value))
+  }, logical(1))]
+}
+
+manifest_safe_value <- function(value) {
+  if (is.null(value)) return(NULL)
+  if (is.atomic(value)) return(unname(value))
+  if (is.data.frame(value)) return(lapply(value, manifest_safe_value))
+  if (is.list(value)) return(compact_manifest_list(lapply(value, manifest_safe_value)))
+
+  tryCatch(
+    paste(capture.output(str(value, max.level = 1)), collapse = " "),
+    error = function(e) paste(class(value), collapse = "/")
+  )
+}
+
+capture_reproducibility_manifest <- function(project_dir = get("project_dir", envir = globalenv()),
+                                             model = list(),
+                                             preprocessing = list(),
+                                             features = list(),
+                                             artifacts = list(),
+                                             submission = list(),
+                                             extra = list(),
+                                             packages = c(
+                                               "mlr3", "mlr3learners", "mlr3extralearners",
+                                               "mlr3pipelines", "ranger", "lightgbm", "data.table"
+                                             )) {
+  renv_lock_path <- file.path(project_dir, "renv.lock")
+
+  manifest_safe_value(compact_manifest_list(list(
+    r = list(
+      version = R.version.string,
+      platform = R.version$platform,
+      major = R.version$major,
+      minor = R.version$minor
+    ),
+    renv = list(
+      lockfile_path = normalizePath(renv_lock_path, winslash = "/", mustWork = FALSE),
+      lockfile_sha256 = sha256_file(renv_lock_path)
+    ),
+    packages = package_versions_list(packages),
+    git = list(commit = git_commit_or_na()),
+    model = model,
+    preprocessing = preprocessing,
+    features = features,
+    artifacts = artifacts,
+    submission = submission,
+    extra = extra
+  )))
+}

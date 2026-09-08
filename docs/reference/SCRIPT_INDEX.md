@@ -45,10 +45,10 @@ Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 | [`outer_workflow_evaluation_template.R`](../../outer_workflow_evaluation_template.R) | Eingefrorenes Benchmark-Protokoll v1 (generalisiert fuer beliebige Projekte) |
 | [`outer_workflow_evaluation_v2_fair_baselines.R`](../../outer_workflow_evaluation_v2_fair_baselines.R) | Eingefrorenes Benchmark-Protokoll v2 (+ getunte Baseline-Arme) |
 | [`outer_workflow_evaluation_v3_level2.R`](../../outer_workflow_evaluation_v3_level2.R) | Eingefrorenes Benchmark-Protokoll v3 (echtes Level-2: Modellwahl+Tuning innerhalb jedes Outer-Splits) |
-| [`provenance.R`](../../provenance.R) | SHA256-/Config-Hashes: was hat sich zwischen zwei Runs geaendert |
+| [`provenance.R`](../../provenance.R) | SHA256-/Config-Hashes und R/renv-JSON-Manifeste: was hat sich zwischen zwei Runs geaendert |
 | [`target_leak_audit_helpers.R`](../../target_leak_audit_helpers.R) | Testbare Kernberechnungen aus `015_target_leak_audit.R` extrahiert |
 | [`class_multiplier_tuning.R`](../../class_multiplier_tuning.R) | Metrik-optimale Klassen-Multiplikatoren (Grid + `1/prior` + Nelder-Mead), von `130_threshold_tuning.R` genutzt |
-| [`db_logging.R`](../../db_logging.R) | Zentrale `experiments.db`-Logging-Helfer (EAV-Schema `project`/`workflow`/`run`/...) |
+| [`db_logging.R`](../../db_logging.R) | Zentrale `experiments.db`-Logging-Helfer (EAV-Schema plus JSON-Manifeste) |
 | [`generalization_gap.R`](../../generalization_gap.R) | Formale Generalisierungsluecke (CV- vs. Bootstrap-Verteilung + Baseline-Referenzbereich), von `136_generalization_gap.R` genutzt |
 | [`learning_curve.R`](../../learning_curve.R) | Lernkurve (Score vs. Trainingsgroesse, algorithmusabhaengig), von `023_learning_curve.R` genutzt |
 | [`merge_project_experiments.R`](../../merge_project_experiments.R) | Konsolidiert lokale Projekt-`experiments.db`-Dateien inkrementell in die zentrale Template-DB |
@@ -325,13 +325,14 @@ Zahlen je Protokoll-Version und Datensatz.
 ## provenance.R
 
 **Beschreibung**: `sha256_file()`/`hash_value()`/
-`capture_run_provenance()`/`finalize_run_provenance()` - Experiment-/
-Daten-Provenienz: SHA256-Hash der Trainings-/Testdaten, Config-Hash
-(gehasht statt Klartext geloggt - kann sensible lokale Pfade
-enthalten), Resampling-Hash, R-Version/Paketreferenz. Baut auf der
-BESTEHENDEN `run_config`-EAV-Tabelle auf (`db_logging.R`) statt eines
-neuen Schemas. Git-Commit ist bereits separat ueber `run_git_commit`
-abgedeckt, hier nicht dupliziert.
+`capture_run_provenance()`/`finalize_run_provenance()` plus
+`capture_reproducibility_manifest()` - Experiment-/Daten-Provenienz:
+SHA256-Hash der Trainings-/Testdaten, Config-Hash (gehasht statt
+Klartext geloggt - kann sensible lokale Pfade enthalten), Resampling-
+Hash, R-Version/Paketreferenz. Die aeltere Provenienz nutzt weiter die
+`run_config`-EAV-Tabelle; fuer variable, projektspezifische Metadaten
+liefert das Modul zusaetzlich JSON-Manifeste fuer `run_manifest_json`,
+`mconf_manifest_json` und `subm_manifest_json`.
 
 **Aufrufkontext**: Opt-in je Skript (`log_baseline_provenance = TRUE`-
 Parameter in `db_logging.R`'s Logging-Helfern) - bislang nur
@@ -426,6 +427,9 @@ Obergrenze stiess.
 `db_schema.sql`). Unterscheidet schwellenwertunabhaengige Metriken
 (AUC, LogLoss - Post-hoc-Threshold-Tuning hat KEINEN Effekt darauf) von
 schwellenwertabhaengigen (BAcc, MCC, F1 - profitieren stark davon).
+Ergaenzend zu festen Spalten und Key-Value-Tabellen serialisiert
+`db_manifest_to_json()` variable R-Listen als valides JSON und migriert
+bestehende SQLite-Dateien automatisch um die Manifest-Spalten.
 
 **Aufrufkontext**: Von praktisch allen nummerierten Skripten
 gesourct/genutzt, sobald ein Lauf in die zentrale DB geloggt werden
@@ -435,8 +439,8 @@ soll (opt-in je Skript).
 ein neues Kaggle-Projekt braucht nur einen neuen `project_name` in
 `000_config.R`, das Schema/`db_logging.R` selbst bleiben unveraendert.
 Traeger fuer `merge_project_experiments.R`/`db_housekeeping.R`
-(Konsolidierung ueber Projekte hinweg) und `provenance.R` (baut auf der
-`run_config`-Tabelle auf).
+(Konsolidierung ueber Projekte hinweg) und `provenance.R` (R-/renv-,
+Daten-, Modell- und Submission-Provenienz).
 
 **Literaturreferenz**: -
 

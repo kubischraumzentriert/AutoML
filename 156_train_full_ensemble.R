@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
+source(file.path(project_dir, "provenance.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -108,10 +109,27 @@ mconf_id <- db_create_model_config(
   db_con, db_run_id,
   task_type = "classif", algorithm = "ensemble", feature_set = "raw",
   preprocessing = "impute_median_mode", class_weight_power = NA_real_, task_id = task_full$id,
-  hyperparams = list(model_artifact_path = model_path, n_members = length(trained_members), composition = composition_str)
+  hyperparams = list(model_artifact_path = model_path, n_members = length(trained_members), composition = composition_str),
+  manifest = capture_reproducibility_manifest(
+    model = list(
+      name = "ensemble",
+      task_type = "classif",
+      composition = composition_str,
+      n_members = length(trained_members)
+    ),
+    preprocessing = list(label = "impute_median_mode", factor_levels_saved = TRUE),
+    features = list(feature_set = "raw", feature_names_hash = hash_value(task_full$feature_names)),
+    artifacts = list(model_artifact_path = model_path, model_artifact_sha256 = sha256_file(model_path)),
+    extra = list(seed = seed, task_id = task_full$id, rows = task_full$nrow, features = length(task_full$feature_names))
+  )
 )
 
-db_finish_run(db_con, db_run_id)
+db_finish_run(
+  db_con, db_run_id,
+  train_data_path = train_path,
+  feature_set = task_full$feature_names,
+  model_artifact_path = model_path
+)
 DBI::dbDisconnect(db_con)
 
 cat("\nZusammensetzung:", composition_str, "\n")

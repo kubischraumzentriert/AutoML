@@ -11,6 +11,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
+source(file.path(project_dir, "provenance.R"))
 # Alle features/*.R laden statt einzelne Familien-Dateien hartzucodieren -
 # bei einem neuen Projekt ohne (oder mit anderen) Feature-Familien sourct das
 # unveraendert genau die vorhandenen Dateien, statt beim Kopieren mit "file
@@ -90,10 +91,29 @@ mconf_full <- db_create_model_config(
   preprocessing = "impute_median_mode",
   class_weight_power = if (!is.null(weight_power)) weight_power else NA_real_,
   task_id = task_full$id,
-  hyperparams = list(model_artifact_path = model_path)
+  hyperparams = list(model_artifact_path = model_path),
+  manifest = capture_reproducibility_manifest(
+    model = list(
+      name = model_name,
+      task_type = "classif",
+      learner_id = learner_full$id,
+      predict_type = learner_full$predict_type,
+      class_weight_power = if (!is.null(weight_power)) weight_power else NA_real_,
+      hyperparams = learner_full$param_set$values
+    ),
+    preprocessing = list(label = "impute_median_mode", factor_levels_saved = TRUE),
+    features = list(feature_set = feature_set, feature_names_hash = hash_value(task_full$feature_names)),
+    artifacts = list(model_artifact_path = model_path, model_artifact_sha256 = sha256_file(model_path)),
+    extra = list(seed = seed, task_id = task_full$id, rows = task_full$nrow, features = length(task_full$feature_names))
+  )
 )
 
-db_finish_run(db_con, db_run_id)
+db_finish_run(
+  db_con, db_run_id,
+  train_data_path = train_path,
+  feature_set = task_full$feature_names,
+  model_artifact_path = model_path
+)
 DBI::dbDisconnect(db_con)
 
 cat("\nGespeichert:", model_path, "\n")

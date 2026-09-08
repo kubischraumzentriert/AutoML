@@ -90,6 +90,55 @@ test_that("capture_run_provenance() loggt installierte Paketversionen im 'name=v
   expect_match(prov[["provenance.packages"]], "^testthat=[0-9.]+$")
 })
 
+test_that("capture_reproducibility_manifest() enthaelt R-/renv- und Projekt-spezifische JSON-Struktur", {
+  project_tmp <- tempfile()
+  dir.create(project_tmp)
+  writeLines("lockfile", file.path(project_tmp, "renv.lock"))
+
+  manifest <- capture_reproducibility_manifest(
+    project_dir = project_tmp,
+    model = list(name = "ranger", params = list(num.trees = 100)),
+    preprocessing = list(label = "impute_median_mode"),
+    features = list(feature_set = "raw", feature_count = 3),
+    artifacts = list(model_artifact_sha256 = paste(rep("b", 64), collapse = "")),
+    submission = list(platform = "drivendata"),
+    extra = list(note = "synthetic"),
+    packages = c("testthat")
+  )
+
+  expect_equal(manifest$r$version, R.version.string)
+  expect_equal(manifest$renv$lockfile_sha256, sha256_file(file.path(project_tmp, "renv.lock")))
+  expect_equal(manifest$model$name, "ranger")
+  expect_equal(manifest$model$params$num.trees, 100)
+  expect_equal(manifest$preprocessing$label, "impute_median_mode")
+  expect_equal(manifest$features$feature_count, 3)
+  expect_equal(manifest$submission$platform, "drivendata")
+  expect_true("testthat" %in% names(manifest$packages))
+})
+
+test_that("capture_reproducibility_manifest() zaehmt komplexe R-Objekte fuer JSON", {
+  skip_if_not_installed("jsonlite")
+  project_tmp <- tempfile()
+  dir.create(project_tmp)
+  on.exit(unlink(project_tmp, recursive = TRUE), add = TRUE)
+
+  env_obj <- new.env(parent = emptyenv())
+  env_obj$value <- 1
+
+  manifest <- capture_reproducibility_manifest(
+    project_dir = project_tmp,
+    model = list(name = "ranger", params = list(num.trees = 100, object = env_obj)),
+    packages = character(0)
+  )
+  json <- jsonlite::toJSON(manifest, auto_unbox = TRUE, null = "null", na = "null")
+
+  expect_true(jsonlite::validate(json))
+  parsed <- jsonlite::fromJSON(json)
+  expect_equal(parsed$model$name, "ranger")
+  expect_equal(parsed$model$params$num.trees, 100)
+  expect_type(parsed$model$params$object, "character")
+})
+
 test_that("finalize_run_provenance() loggt Abschlussfelder, aber NIE r_version/packages (P3)", {
   assign("project_dir", testthat::test_path("..", ".."), envir = globalenv())
   suppressPackageStartupMessages({ library(DBI); library(RSQLite) })

@@ -23,6 +23,44 @@ is_threshold_independent_metric <- function(measure_id) {
   measure_id %in% threshold_independent_measures
 }
 
+db_manifest_to_json <- function(manifest = NULL) {
+  if (is.null(manifest) || length(manifest) == 0) {
+    return(NA_character_)
+  }
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("Paket 'jsonlite' fehlt; JSON-Manifeste koennen nicht serialisiert werden.", call. = FALSE)
+  }
+  if (is.character(manifest) && length(manifest) == 1) {
+    if (!jsonlite::validate(manifest)) {
+      stop("manifest ist ein String, aber kein valides JSON.", call. = FALSE)
+    }
+    return(jsonlite::minify(manifest))
+  }
+  jsonlite::toJSON(
+    manifest,
+    auto_unbox = TRUE,
+    null = "null",
+    na = "null",
+    POSIXt = "ISO8601",
+    digits = NA
+  )
+}
+
+db_ensure_column <- function(con, table, column, ddl) {
+  cols <- DBI::dbGetQuery(con, paste0("PRAGMA table_info(", table, ")"))$name
+  if (!column %in% cols) {
+    DBI::dbExecute(con, paste("ALTER TABLE", table, "ADD COLUMN", ddl))
+  }
+  invisible(NULL)
+}
+
+db_ensure_manifest_columns <- function(con) {
+  db_ensure_column(con, "run", "run_manifest_json", "run_manifest_json TEXT")
+  db_ensure_column(con, "model_config", "mconf_manifest_json", "mconf_manifest_json TEXT")
+  db_ensure_column(con, "submission_result", "subm_manifest_json", "subm_manifest_json TEXT")
+  invisible(NULL)
+}
+
 # Verfeinerung (siehe openml-adult-income/TEMPLATE_FRICTION.md #2, direkt
 # empirisch verifiziert, nicht nur aus dem Metrik-Muster abgeleitet): die
 # obige "schwellenwertunabhaengig ⇒ Klassengewichtung fast egal"-Regel gilt
@@ -102,6 +140,7 @@ db_connect <- function(db_path = experiments_db_path, project_dir = get("project
   for (stmt in statements) {
     dbExecute(con, stmt)
   }
+  db_ensure_manifest_columns(con)
 
   con
 }
@@ -216,12 +255,12 @@ db_get_or_create_workflow <- function(con, proj_id, type, name) {
 # eigentlichen Skriptlauf NICHT zum Absturz bringen - deshalb `tryCatch`
 # mit Warnung statt hartem Fehler.
 db_create_run <- function(con, wf_id, seed = NA_integer_, git_commit = get_git_commit(), notes = NA_character_,
-                           log_baseline_provenance = TRUE) {
+                           log_baseline_provenance = TRUE, manifest = NULL) {
   run_id <- uuid::UUIDgenerate()
   dbExecute(
     con,
-    "INSERT INTO run (run_id, run_wf_id, run_seed, run_git_commit, run_notes) VALUES (?, ?, ?, ?, ?)",
-    params = list(run_id, wf_id, seed, git_commit, notes)
+    "INSERT INTO run (run_id, run_wf_id, run_seed, run_git_commit, run_notes, run_manifest_json) VALUES (?, ?, ?, ?, ?, ?)",
+    params = list(run_id, wf_id, seed, git_commit, notes, db_manifest_to_json(manifest))
   )
   if (isTRUE(log_baseline_provenance)) {
     prov <- tryCatch({
@@ -290,17 +329,20 @@ db_log_run_config <- function(con, run_id, config) {
 # (welcher Learner).
 db_create_model_config <- function(con, run_id, task_type, algorithm, feature_set = NA_character_,
                                     preprocessing = NA_character_, class_weight_power = NA_real_,
-                                    task_id = NA_character_, hyperparams = list()) {
+                                    task_id = NA_character_, hyperparams = list(), manifest = NULL) {
   mconf_id <- uuid::UUIDgenerate()
   dbExecute(
     con,
     paste(
       "INSERT INTO model_config",
       "(mconf_id, mconf_run_id, mconf_task_type, mconf_algorithm, mconf_feature_set,",
-      " mconf_preprocessing, mconf_class_weight_power, mconf_task_id)",
-      "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      " mconf_preprocessing, mconf_class_weight_power, mconf_task_id, mconf_manifest_json)",
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     ),
-    params = list(mconf_id, run_id, task_type, algorithm, feature_set, preprocessing, class_weight_power, task_id)
+    params = list(
+      mconf_id, run_id, task_type, algorithm, feature_set, preprocessing,
+      class_weight_power, task_id, db_manifest_to_json(manifest)
+    )
   )
 
   for (name in names(hyperparams)) {
@@ -329,7 +371,9 @@ db_create_resampling <- function(con, run_id, strategy, folds = NA_integer_, rat
 # Eintrag wird bei erneutem Ausfuehren aktualisiert statt doppelt angelegt.
 db_log_submission_result <- function(con, mconf_id, platform, competition, file_path,
                                      status, metric_name, public_score = NA_real_,
-                                     private_score = NA_real_, notes = NA_character_) {
+                                     private_score = NA_real_, notes = NA_character_,
+                                     manifest = NULL) {
+  manifest_json <- db_manifest_to_json(manifest)
   existing <- dbGetQuery(
     con,
     paste(
@@ -345,10 +389,11 @@ db_log_submission_result <- function(con, mconf_id, platform, competition, file_
       paste(
         "UPDATE submission_result",
         "SET subm_competition = ?, subm_file_path = ?, subm_public_score = ?,",
-        "subm_private_score = ?, subm_recorded_at = datetime('now'), subm_notes = ?",
+        "subm_private_score = ?, subm_recorded_at = datetime('now'), subm_notes = ?,",
+        "subm_manifest_json = ?",
         "WHERE subm_id = ?"
       ),
-      params = list(competition, file_path, public_score, private_score, notes, existing$subm_id[1])
+      params = list(competition, file_path, public_score, private_score, notes, manifest_json, existing$subm_id[1])
     )
     return(invisible(existing$subm_id[1]))
   }
@@ -359,12 +404,12 @@ db_log_submission_result <- function(con, mconf_id, platform, competition, file_
     paste(
       "INSERT INTO submission_result",
       "(subm_id, subm_mconf_id, subm_platform, subm_competition, subm_file_path,",
-      " subm_status, subm_metric_name, subm_public_score, subm_private_score, subm_notes)",
-      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      " subm_status, subm_metric_name, subm_public_score, subm_private_score, subm_notes, subm_manifest_json)",
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     ),
     params = list(
       subm_id, mconf_id, platform, competition, file_path, status,
-      metric_name, public_score, private_score, notes
+      metric_name, public_score, private_score, notes, manifest_json
     )
   )
   invisible(subm_id)

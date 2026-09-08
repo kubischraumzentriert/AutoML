@@ -80,6 +80,9 @@ test_that("db_connect() legt eine funktionsfaehige DB mit dem erwarteten Schema 
   on.exit({ dbDisconnect(db$con); unlink(db$path) })
   tables <- dbListTables(db$con)
   expect_true(all(c("project", "workflow", "run", "model_config", "metric_result") %in% tables))
+  expect_true("run_manifest_json" %in% dbListFields(db$con, "run"))
+  expect_true("mconf_manifest_json" %in% dbListFields(db$con, "model_config"))
+  expect_true("subm_manifest_json" %in% dbListFields(db$con, "submission_result"))
 })
 
 test_that("db_connect() ist idempotent (zweimaliges Verbinden auf denselben Pfad bricht nicht)", {
@@ -89,6 +92,21 @@ test_that("db_connect() ist idempotent (zweimaliges Verbinden auf denselben Pfad
   con2 <- db_connect(path)  # CREATE TABLE IF NOT EXISTS darf nicht scheitern
   on.exit({ dbDisconnect(con2); unlink(path) })
   expect_true("project" %in% dbListTables(con2))
+})
+
+test_that("db_connect() migriert bestehende DBs um Manifest-Spalten", {
+  path <- tempfile(fileext = ".sqlite")
+  con_old <- dbConnect(SQLite(), path)
+  dbExecute(con_old, "CREATE TABLE run (run_seq INTEGER PRIMARY KEY, run_id TEXT NOT NULL UNIQUE, run_wf_id TEXT NOT NULL, run_started_at TEXT, run_finished_at TEXT, run_git_commit TEXT, run_seed INTEGER, run_notes TEXT)")
+  dbExecute(con_old, "CREATE TABLE model_config (mconf_seq INTEGER PRIMARY KEY, mconf_id TEXT NOT NULL UNIQUE, mconf_run_id TEXT NOT NULL, mconf_task_type TEXT NOT NULL, mconf_algorithm TEXT NOT NULL, mconf_feature_set TEXT, mconf_preprocessing TEXT, mconf_class_weight_power REAL, mconf_task_id TEXT, mconf_created_at TEXT)")
+  dbExecute(con_old, "CREATE TABLE submission_result (subm_seq INTEGER PRIMARY KEY, subm_id TEXT NOT NULL UNIQUE, subm_mconf_id TEXT NOT NULL, subm_platform TEXT NOT NULL, subm_competition TEXT, subm_file_path TEXT, subm_status TEXT NOT NULL, subm_metric_name TEXT NOT NULL, subm_public_score REAL, subm_private_score REAL, subm_recorded_at TEXT, subm_notes TEXT)")
+  dbDisconnect(con_old)
+
+  con <- db_connect(path)
+  on.exit({ dbDisconnect(con); unlink(path) })
+  expect_true("run_manifest_json" %in% dbListFields(con, "run"))
+  expect_true("mconf_manifest_json" %in% dbListFields(con, "model_config"))
+  expect_true("subm_manifest_json" %in% dbListFields(con, "submission_result"))
 })
 
 test_that("db_connect() nutzt ein explizit uebergebenes project_dir STATT der globalen Variable (P0.2-Haertung)", {
@@ -345,6 +363,43 @@ test_that("db_log_submission_result() legt beim 1. Aufruf an, aktualisiert beim 
   expect_equal(nrow(rows), 1)
   expect_equal(rows$subm_public_score[1], 0.85)
   expect_equal(rows$subm_file_path[1], "sub_v2.csv")
+})
+
+test_that("JSON-Manifeste werden fuer run/model/submission gespeichert und bleiben parsebar", {
+  skip_if_not_installed("jsonlite")
+  db <- make_test_db()
+  on.exit({ dbDisconnect(db$con); unlink(db$path) })
+  proj_id <- db_get_or_create_project(db$con, "p")
+  wf_id <- db_get_or_create_workflow(db$con, proj_id, "script", "s.R")
+  run_id <- db_create_run(
+    db$con, wf_id,
+    manifest = list(r = list(version = "test-r"), renv = list(lockfile_sha256 = "abc"))
+  )
+  mconf_id <- db_create_model_config(
+    db$con, run_id,
+    task_type = "classif", algorithm = "ranger", feature_set = "raw",
+    preprocessing = "impute_median_mode",
+    manifest = list(model = list(params = list(num.trees = 100)), features = list(feature_count = 3))
+  )
+  db_log_submission_result(
+    db$con, mconf_id, "drivendata", "dat-parkinsons", "submission.csv", "submitted",
+    "classif.logloss", public_score = 0.6724,
+    manifest = list(
+      submission = list(platform = "drivendata", public_score = 0.6724),
+      artifacts = list(submission_sha256 = paste(rep("a", 64), collapse = ""))
+    )
+  )
+
+  run_json <- dbGetQuery(db$con, "SELECT run_manifest_json FROM run WHERE run_id = ?", params = list(run_id))$run_manifest_json
+  model_json <- dbGetQuery(db$con, "SELECT mconf_manifest_json FROM model_config WHERE mconf_id = ?", params = list(mconf_id))$mconf_manifest_json
+  subm_json <- dbGetQuery(db$con, "SELECT subm_manifest_json FROM submission_result WHERE subm_mconf_id = ?", params = list(mconf_id))$subm_manifest_json
+
+  expect_true(jsonlite::validate(run_json))
+  expect_true(jsonlite::validate(model_json))
+  expect_true(jsonlite::validate(subm_json))
+  expect_equal(jsonlite::fromJSON(run_json)$renv$lockfile_sha256, "abc")
+  expect_equal(jsonlite::fromJSON(model_json)$model$params$num.trees, 100)
+  expect_equal(jsonlite::fromJSON(subm_json)$submission$platform, "drivendata")
 })
 
 # --- db_get_latest_model_artifact_path()/db_get_latest_model_config_id() --

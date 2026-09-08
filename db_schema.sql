@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS run (
   run_finished_at TEXT,
   run_git_commit TEXT,
   run_seed INTEGER,
-  run_notes TEXT
+  run_notes TEXT,
+  run_manifest_json TEXT
 );
 
 CREATE TABLE IF NOT EXISTS run_config (
@@ -65,7 +66,8 @@ CREATE TABLE IF NOT EXISTS model_config (
   mconf_preprocessing TEXT,
   mconf_class_weight_power REAL,
   mconf_task_id TEXT,
-  mconf_created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  mconf_created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  mconf_manifest_json TEXT
 );
 
 CREATE TABLE IF NOT EXISTS resampling (
@@ -114,6 +116,7 @@ CREATE TABLE IF NOT EXISTS submission_result (
   subm_private_score REAL,
   subm_recorded_at TEXT NOT NULL DEFAULT (datetime('now')),
   subm_notes TEXT,
+  subm_manifest_json TEXT,
   UNIQUE (subm_mconf_id, subm_platform, subm_status, subm_metric_name)
 );
 
@@ -265,6 +268,7 @@ SELECT
   r.run_id,
   r.run_started_at,
   r.run_git_commit,
+  r.run_manifest_json,
   mc.mconf_id,
   mc.mconf_task_type,
   mc.mconf_algorithm,
@@ -272,6 +276,7 @@ SELECT
   mc.mconf_preprocessing,
   mc.mconf_class_weight_power,
   mc.mconf_task_id,
+  mc.mconf_manifest_json,
   rs.rsmp_strategy,
   rs.rsmp_folds,
   rs.rsmp_ratio,
@@ -303,6 +308,7 @@ SELECT
   r.run_id,
   r.run_started_at,
   r.run_git_commit,
+  r.run_manifest_json,
   mc.mconf_id,
   mc.mconf_task_type,
   mc.mconf_algorithm,
@@ -310,6 +316,7 @@ SELECT
   mc.mconf_preprocessing,
   mc.mconf_class_weight_power,
   mc.mconf_task_id,
+  mc.mconf_manifest_json,
   rs.rsmp_strategy,
   rs.rsmp_folds,
   rs.rsmp_ratio,
@@ -461,7 +468,8 @@ SELECT
   sr.subm_private_score,
   sr.subm_file_path,
   sr.subm_recorded_at,
-  sr.subm_notes
+  sr.subm_notes,
+  sr.subm_manifest_json
 FROM submission_result sr
 JOIN model_config mc ON mc.mconf_id = sr.subm_mconf_id
 JOIN run r ON r.run_id = mc.mconf_run_id
