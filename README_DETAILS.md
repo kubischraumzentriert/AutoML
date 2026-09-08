@@ -54,6 +54,11 @@ Literaturreferenz) in
 | `analysis/build_portfolio_warmstart_evidence.R` | Optionaler Portfolio-Warmstart-Helper: wertet die zentrale `experiments.db` als internes Mini-TabRepo aus (Gewinner, Top-3-Rate, Regret, Laufzeit je Modellfamilie) |
 | `analysis/recommend_portfolio_warmstart.R` | Erzeugt aus der Portfolio-Evidenz eine budget- und groessenabhaengige Startempfehlung fuer neue Klassifikationsprojekte (`lightgbm`/`ranger` frueh, Ensemble spaet optional) |
 | `analysis/validate_portfolio_warmstart_retrospective.R` | Retrospektive und Leave-one-project-out-Pruefung der Portfolio-Warmstart-Linie gegen die zentrale Experiment-DB; Evidenz-/Diagnoseskript, nicht Teil der Produktionspipeline |
+| `analysis/check_native_na_blend.R` | Einmalskript (s6e7): testet native NA-Behandlung (LightGBM ohne Imputation) vs. imputiertem LightGBM/Ranger + Blend bei strukturierter, train/test-identischer Missingness |
+| `analysis/hard_split_stress_test_prototype.R` | Einmalskript (JOSS-Technique-Watch-Prototyp #2): wendet `hard_split_stress_test()` erstmals real auf ein Projekt an (ungetunter klassengewichteter Ranger als Diagnose-Check) |
+| `analysis/log_hard_split_rollout_evidence.R` | Einmalskript: loggt die Hard-Split-Stresstest-Rollout-Befunde (4 CC18-Projekte) nachtraeglich in die Evidence Registry |
+| `analysis/log_n15_evidence.R` | Einmalskript: loggt die Decision-Stability-n=15-Erweiterungsbefunde (Level-2 vs. Baseline, 5 Projekte) nachtraeglich in die Evidence Registry |
+| `analysis/log_weg_b_evidence.R` | Einmalskript: loggt die "Weg B" (mehr Outer-Folds statt mehr Datensaetze)-Erweiterungsbefunde nachtraeglich in die Evidence Registry |
 | `010_eda.R` | Datenueberblick auf 10%-Subset mit `skimr` |
 | `015_target_leak_audit.R` | Prueft eine zu gute Baseline auf Target-Leakage: Feature-Importance-Konzentration, Determinismus-Check (`P(Ziel\|Feature=Wert)`), optionale Within-Stratum-Zieltrennung, Ehrlich-vs-aufgeblasen-Zerlegung (mit/ohne Verdaechtige) - bewusst auf vollen Daten, kein Subset |
 | `020_task.R` | Erzeugt den Rohfeature-`TaskClassif` |
