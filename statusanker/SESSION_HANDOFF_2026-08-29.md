@@ -209,12 +209,18 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `67d6ce1` "docs: 11 weitere Skript-Index-
-  Luecken schliessen (korrigierter Audit)" - gepusht, docs-only, kein
-  CI-Lauf (Workflow pfadgefiltert auf `**.R`). Zwischenstaende: `9fa7b40`
-  "SCRIPT_INDEX.md: Uebersichtstabelle ergaenzt", `8be0f43`
-  "docs/reference/SCRIPT_INDEX.md: 15 undokumentierte Root-Skripte
-  reichhaltig dokumentiert" - beide gepusht, docs-only.
+- `MLR3_Classifikation` @ `794d566` "docs: 5 letzte unerwaehnte
+  analysis/-Einmalskripte knapp dokumentiert" - gepusht, docs-only,
+  kein CI-Lauf. Zwischenstand: `c190774` "Add JSON reproducibility
+  manifests" (Nutzer-Commit, NICHT aus dieser Session - `provenance.R`/
+  `db_logging.R`-Erweiterung um JSON-Manifeste). Zwischenstand:
+  `de02dec` "Statusanker: Punkt 46". Zwischenstand: `67d6ce1` "docs: 11
+  weitere Skript-Index-Luecken schliessen (korrigierter Audit)" -
+  gepusht, docs-only, kein CI-Lauf (Workflow pfadgefiltert auf `**.R`).
+  Zwischenstaende: `9fa7b40` "SCRIPT_INDEX.md: Uebersichtstabelle
+  ergaenzt", `8be0f43` "docs/reference/SCRIPT_INDEX.md: 15
+  undokumentierte Root-Skripte reichhaltig dokumentiert" - beide
+  gepusht, docs-only.
 - Vorheriger Endstand: `3e25390` "BACKLOG: Ensemble-Pilot-Projekte
   aufgeraeumt (git revert, vollstaendige Rueckkehr)" - gepusht,
   docs-only. Zwischenstand: `954ab87`/Statusanker+BACKLOG (Ranger-LB-
@@ -1735,11 +1741,39 @@ Uebersichtstabelle + `README_DETAILS.md`-Kurzzeilen). testthat lokal
 - Workflow ist pfadgefiltert auf `**.R`, reine `.md`-Aenderung loest
 bewusst keinen Smoke-Test aus).
 
+**47. Aktualisierung ("Ja raeumen wir auf")**: nach Punkt 46 als
+naechsten Schritt vorgeschlagen und vom Nutzer bestaetigt - derselbe
+verschaerfte Vollstaendigkeits-Check auf `analysis/` (30 Einmal-/
+Hilfsskripte, separat von den Root-Skripten) angewendet. Ergebnis: 25
+der 30 waren bereits erwaehnt (Tabellenzeile oder Doku-Prosa), aber 5
+tauchten NIRGENDS auf - `check_native_na_blend.R`,
+`hard_split_stress_test_prototype.R`, `log_hard_split_rollout_
+evidence.R`, `log_n15_evidence.R`, `log_weg_b_evidence.R`. Alle 5 sind
+Einmalskripte (ein abgeschlossener Notebook-Idee-Test bzw.
+nachtraegliches Evidence-Registry-Logging bereits dokumentierter
+Befunde) - passend zur bestehenden `analysis/*.R`-Konvention (keine
+SCRIPT_INDEX-Vertiefung, nur knappe Ein-Zeilen-Rolle) je eine
+Kurzzeile in der bestehenden `README_DETAILS.md`-Tabelle ergaenzt, als
+"Einmalskript" markiert. testthat lokal 359/359 gruen. Commit `794d566`
+(zentral, docs-only, kein CI-Lauf noetig).
+
+Waehrend dieses Schritts fiel ein NICHT von dieser Session
+stammender Zwischen-Commit auf: `c190774` "Add JSON reproducibility
+manifests" (Autor: Nutzer direkt, 2026-09-08 08:16) - erweitert
+`provenance.R`/`db_logging.R` um `capture_reproducibility_manifest()`/
+`db_manifest_to_json()` (JSON-Manifeste `run_manifest_json`/
+`mconf_manifest_json`/`subm_manifest_json`), inkl. eigener Anpassung
+der `provenance.R`/`db_logging.R`-Abschnitte in `SCRIPT_INDEX.md`. Der
+Commit `794d566` dieser Session baut sauber darauf auf (kein Konflikt,
+kein Ueberschreiben der Nutzer-Aenderung).
+
 **Stand jetzt: kein offener Blocker, keine offene Nutzerentscheidung.**
-Kein laufender Hintergrundprozess. `SCRIPT_INDEX.md` deckt jetzt 26
-Root-Skripte reichhaltig ab; verbleibende nicht-nummerierte Skripte
-(`analysis/*.R` und bereits ueber ihre numerierten Wrapper-Zeilen in
-`README_DETAILS.md` abgedeckte) waren nicht Teil des Nutzer-Scopes.
+Kein laufender Hintergrundprozess. JEDES `.R`-Skript im Root (26
+reichhaltig in `SCRIPT_INDEX.md`, `_targets.R` + die numerierten
+Pipeline-Skripte ueber ihre bestehenden Abschnitte/Zeilen) UND in
+`analysis/` (30, alle mindestens knapp erwaehnt) ist jetzt dokumentiert
+- der urspruengliche Anlass ("mir scheint das nicht klar zu sein") ist
+damit vollstaendig abgearbeitet.
 
 **Empfohlener erster Schritt, Stand jetzt**: kein zwingender
 Einstiegspunkt, kein offener Punkt mehr. Naechster natuerlicher Schritt
