@@ -32,6 +32,7 @@ Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 
 | Skript | Kurzbeschreibung |
 |---|---|
+| [`composition_reweighting.R`](../../composition_reweighting.R) | Label-freie CV-LB-Kompositionsdiagnose (Test-Segmentverteilung statt Train-/CV-Verteilung), 5-Projekt-bestaetigt |
 | [`config_validation.R`](../../config_validation.R) | Prueft `000_config.R` auf innere Konsistenz (Tippfehler, unpassende Bereiche) |
 | [`db_housekeeping.R`](../../db_housekeeping.R) | Rein lesende Diagnose der zentralen `experiments.db` vor einem Merge |
 | [`decision_stability.R`](../../decision_stability.R) | Generischer Baustein: wie stabil ist eine kategoriale Entscheidung unter variierenden Seeds |
@@ -58,6 +59,42 @@ Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 | [`seed_stability.R`](../../seed_stability.R) | Seed-/Hyperparameter-Rausch-Stabilitaet bei fixem Split, von `092_seed_stability.R` genutzt |
 | [`split_size_sensitivity.R`](../../split_size_sensitivity.R) | Prueft, ob der gewaehlte Split-Anteil selbst stabil ist, von `022_split_size_sensitivity.R` genutzt |
 | [`univariate_drift.R`](../../univariate_drift.R) | Univariate statistische Drift-Tests (KS/Chi², BH-korrigiert), von `115_adversarial_validation.R` genutzt |
+
+## composition_reweighting.R
+
+**Beschreibung**: label-freie CV-LB-/Holdout-Kompositionsdiagnose - beant-
+wortet, ob eine CV<->Leaderboard-Luecke (ganz oder teilweise) ein
+KOMPOSITIONSEFFEKT ist (Train/CV und Test unterschiedlich zusammengesetzt
+in einer Segmentspalte), statt eines Modell-Bugs oder Leaks. Zwei
+Funktionen, bewusst billig->teuer getrennt: `segment_composition_shift()`
+(Vorab-Check per Total-Variation-Distance, ob Train/Test sich in der
+Verteilung einer Segmentspalte ueberhaupt unterscheiden - rein aus
+FEATURES, keine Labels) und `reweight_metric_by_test_composition()` (der
+eigentliche Schritt: eine bereits nach Segment stratifizierte CV-/Holdout-
+Metrik wird mit der ECHTEN Test-Segmentverteilung statt der Train-/CV-
+Verteilung neu gewichtet). `composition_diagnosis_report()` kombiniert
+beide zu einem Gesamtbefund. Ergaenzt `generalization_gap.R` (dort:
+STATISTISCHER Test, ob eine Luecke ungewoehnlich gross ist) um die Frage
+WARUM sie da ist - Komposition oder etwas anderes.
+
+**Aufrufkontext**: Manuell, bei einer spuerbaren CV<->LB-/Holdout-Luecke in
+einem Panel-/Zeitreihen-/Forecasting-Projekt mit strukturell (nicht
+zufaellig) getrenntem Train/Test - der billige Vorab-Check zuerst, Stufe 2
+nur bei auffaelligem Ergebnis.
+
+**Ergebnis/Nutzen**: Backportiert aus `AStepAheadOfdrought` (`ML_Learning`,
+lokal, Phase 9) nach Bestaetigung an 5 unabhaengigen Projekten (ADR-003
+klar erfuellt): 3 Panel-/Zeitreihen-Projekte mit strukturierter Test-
+Verschiebung zeigten einen ECHTEN, aber unterschiedlich grossen
+Kompositionsbeitrag (Drought >90% der Luecke, Rossmann +1.21% RMSE,
+geoai-aquaculture nur ~0.4% - dort dominierte ein Werte-Shift, den die
+Methode korrekt NICHT als Komposition fehlinterpretierte). 2 generische
+IID-Tabellenwettbewerbe (PumpItUp, drivendata_richter, zufaelliger Split)
+zeigten korrekt KEINEN nennenswerten Kompositionsunterschied - der billige
+Vorab-Check allein reichte, um das festzustellen. Klare Anwendungsbedingung:
+wertvoll bei strukturell getrenntem Train/Test, nicht bei echtem IID-Split.
+
+**Literaturreferenz**: -
 
 ## config_validation.R
 

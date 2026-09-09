@@ -3818,6 +3818,47 @@ Betrifft die ganze Maschine, nicht nur dieses Projekt - falls derselbe
 Fehler in einem anderen Projekt wieder auftaucht, ist die Ursache
 bereits bekannt.
 
+### Backport: label-freie CV-LB-Kompositionsdiagnose, `composition_reweighting.R` (2026-09-09)
+
+Neuer zentraler Baustein, entstanden aus `AStepAheadOfdrought` (`ML_Learning`,
+lokal) Phase 9 (`PHASE9_REPORT.md`): beantwortet label-frei, ob eine
+CV<->Leaderboard-Luecke (ganz oder teilweise) ein KOMPOSITIONSEFFEKT ist
+(Train/CV und Test unterschiedlich zusammengesetzt in einer Segmentspalte,
+z.B. Missingness-Fensterlaenge, Verfuegbarkeits-Flag, Zeit-seit-Ereignis-
+Bin), statt eines Modell-Bugs. Zwei Funktionen, billig -> teuer getrennt:
+`segment_composition_shift()` (Vorab-Check per Total-Variation-Distance,
+rein aus Test-FEATURES) und `reweight_metric_by_test_composition()` (die
+eigentliche Neugewichtung einer bereits segmentierten CV-/Holdout-Metrik
+mit der echten Test-Segmentverteilung). `composition_diagnosis_report()`
+kombiniert beide. Ergaenzt `generalization_gap.R` (dort: ist die Luecke
+ungewoehnlich gross) um die Frage WARUM sie da ist.
+
+**ADR-003 mit n=5 klar erfuellt** (nicht nur dem Minimum n=2): 3 Panel-/
+Zeitreihen-Projekte mit strukturell getrenntem Train/Test zeigten einen
+ECHTEN, aber unterschiedlich grossen Kompositionsbeitrag (Drought >90% der
+Luecke, Rossmann +1.21% RMSE, geoai-aquaculture nur ~0.4% - dort dominierte
+ein Werte-Shift, den die Methode korrekt NICHT als Komposition
+fehlinterpretierte). 2 generische IID-Tabellenwettbewerbe (PumpItUp,
+drivendata_richter, zufaelliger Split) zeigten korrekt KEINEN nennenswerten
+Kompositionsunterschied - der billige Vorab-Check allein reichte. Klare
+Anwendungsbedingung fuer kuenftige Projekte: wertvoll bei strukturell (nicht
+zufaellig) getrenntem Train/Test, nicht bei echtem IID-Split - dort liefert
+schon der billige Vorab-Check korrekt "nichts zu erklaeren", ohne dass die
+teurere Stufe 2 gebraucht wird.
+
+Details, volle Herleitung und Projekt-Einzelbefunde: `docs/reference/
+SCRIPT_INDEX.md#composition_reweightingr`,
+`ML_Learning/AStepAheadOfdrought/TEMPLATE_FRICTION.md` (Kandidat 15 + beide
+Updates), `ML_Learning/geoai-aquaculture-pond-identification-challenge/
+TEMPLATE_FRICTION.md`, `ML_Learning/rossmann-store-sales-forecasting/
+README.md`, `ML_Learning/PumpItUp/TEMPLATE_FRICTION.md`,
+`ML_Learning/drivendata_richter/TEMPLATE_FRICTION.md` (Uebersichtstabelle
+ueber alle 5 Projekte). 12 neue testthat-Tests
+(`tests/testthat/test-composition_reweighting.R`), synthetisch auf
+konstruierten Faellen mit bekanntem Verhalten (identische Verteilung -> TVD
+0/unauffaellig, stark verschoben -> auffaellig, segmentabhaengige vs.
+-unabhaengige Metrik, unvollstaendige Test-Deckung, `force`-Parameter).
+
 ### Zwei weitere echte Bugs im Template, gefunden im s6e9-Projekt (2026-09-01)
 
 **Bug 1 - `025_feature_engineering.R` setzte die positive Klasse nicht.**

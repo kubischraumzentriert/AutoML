@@ -107,6 +107,7 @@ Literaturreferenz) in
 | `158_register_submission_result.R` | Registriert nach dem Upload den externen Public-/Private-Score in `submission_result` und speichert Reproduktionsanker (`submission_sha256`, Modellartefakt-Hash, Git-Commit, Pfade) strukturiert in `subm_manifest_json`. Die Submissiondatei selbst wird nicht archiviert; sie muss aus Code/Config/Modell reproduzierbar sein |
 | `160_plot_roc_curve.R` | ROC-Kurve(n) je Algorithmus aus den in `experiments.db` geloggten Vorhersagen, als PNG gespeichert, AUC-Cross-Check gegen `metric_result` |
 | `161_plot_pr_curve.R` | Precision-Recall-Kurve(n) je Algorithmus, analog zu `160` |
+| `composition_reweighting.R` | Label-freie CV-LB-Kompositionsdiagnose (Test-Segmentverteilung statt Train-/CV-Verteilung), 5-Projekt-bestaetigt ([Details](docs/reference/SCRIPT_INDEX.md#composition_reweightingr)) |
 | `config_validation.R` | `validate_config()` - prueft `000_config.R` auf innere Konsistenz, manuell nach dem Anpassen fuer ein neues Projekt aufgerufen ([Details](docs/reference/SCRIPT_INDEX.md#config_validationr)) |
 | `db_housekeeping.R` | Rein lesende Diagnose der zentralen `experiments.db` (fehlende Projekte, neue Runs, Duplikate) ([Details](docs/reference/SCRIPT_INDEX.md#db_housekeepingr)) |
 | `decision_stability.R` | Generischer Baustein: Stabilitaet einer kategorialen Entscheidung unter variierenden Seeds (VeridicalFlow/PCS-inspiriert) ([Details](docs/reference/SCRIPT_INDEX.md#decision_stabilityr)) |
