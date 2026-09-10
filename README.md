@@ -1,3 +1,9 @@
+---
+title: "MLR3 Classification AutoML Template"
+author: "Andre Endress"
+date: "2026-09-10"
+---
+
 # MLR3 Classification AutoML Template
 
 [![CI Smoke Test](https://github.com/kubischraumzentriert/AutoML/actions/workflows/ci-smoke-test.yml/badge.svg)](https://github.com/kubischraumzentriert/AutoML/actions/workflows/ci-smoke-test.yml)

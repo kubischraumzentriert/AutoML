@@ -1,3 +1,9 @@
+---
+title: "MLR3 Classification AutoML Template - Details"
+author: "Andre Endress"
+date: "2026-09-10"
+---
+
 # MLR3 Classification AutoML Prototype
 
 Dieses Unterprojekt entwickelt eine wiederverwendbare AutoML-Struktur fuer Kaggle-Klassifikationsaufgaben mit `mlr3`.

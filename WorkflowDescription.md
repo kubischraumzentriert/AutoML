@@ -1,3 +1,9 @@
+---
+title: "MLR3 Classification - Workflow ohne KI (R-Konsolen-Kochbuch)"
+author: "Andre Endress"
+date: "2026-09-10"
+---
+
 # Anleitung: Kompletter Workflow ohne KI, nur mit der R-Konsole
 
 Diese Datei ist ein **Kochbuch**, kein Nachschlagewerk. Ziel: ein Mensch kann
