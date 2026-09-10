@@ -1,3 +1,10 @@
+---
+title: "007: Flaches Skript-Template statt eines installierbaren R-Pakets"
+status: Accepted
+date: 2026-08-30
+adr: 7
+---
+
 # 007: Flaches Skript-Template statt eines installierbaren R-Pakets
 
 Status: Accepted

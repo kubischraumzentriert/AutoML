@@ -1,3 +1,10 @@
+---
+title: "009: Evidence Registry und `SYSTEMATIC_EVALUATION.md` bewusst als zwei getrennte Quellen, keine vollstaendige Migration"
+status: Accepted
+date: 2026-08-30
+adr: 9
+---
+
 # 009: Evidence Registry und `SYSTEMATIC_EVALUATION.md` bewusst als zwei getrennte Quellen, keine vollstaendige Migration
 
 Status: Accepted

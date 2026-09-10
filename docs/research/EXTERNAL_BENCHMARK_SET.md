@@ -1,3 +1,11 @@
+---
+title: "Externes Benchmark-Set"
+status: frozen
+frozen_since: 2026-08-29
+governed_by: ADR-008
+note: "Vor jeder Ergebnisberechnung festgelegt (Benchmark Selection Bias ausschliessen). Datensatzliste und Auswahlregeln nicht nachtraeglich aendern."
+---
+
 # Externes Benchmark-Set (eingefroren, Stand 2026-08-29)
 
 P1 aus der 2026-08-29-Bewertung: "Datensaetze vorab festlegen -&gt;

@@ -1,3 +1,11 @@
+---
+title: "003: Template-Aenderungen erst nach ≥2-Projekt-Bestaetigung oder Null-Ergebnis-Beleg backporten"
+status: Accepted
+date: 2026-08-08
+amended: 2026-09-06
+adr: 3
+---
+
 # 003: Template-Aenderungen erst nach ≥2-Projekt-Bestaetigung oder Null-Ergebnis-Beleg backporten
 
 Status: Accepted

@@ -209,9 +209,17 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `794d566` "docs: 5 letzte unerwaehnte
-  analysis/-Einmalskripte knapp dokumentiert" - gepusht, docs-only,
-  kein CI-Lauf. Zwischenstand: `c190774` "Add JSON reproducibility
+- `MLR3_Classifikation` @ (nach Punkt 48) YAML-Header-Commit fuer ADRs +
+  Frozen-Docs + Statusanker Punkt 48 - siehe Punkt 48 unten. Davor:
+  `845a622` "Backport: composition_reweighting.R (label-freie
+  CV-LB-Kompositionsdiagnose)" - gepusht, **CI gruen** (371/371 Tests).
+  `MLR3_Regression` @ `e236f4b` "Backport: composition_reweighting.R" -
+  gepusht (kein CI im Regr-Repo), `test_composition_reweighting.R` (13
+  Checks) lokal gruen. `ML_Learning` (lokal, kein Remote) zuletzt bei
+  `74f2968`/`e1afa5e` (Kandidat-15-Projektbefunde + Nutzerentscheidung).
+- Vorheriger Stand: `MLR3_Classifikation` @ `794d566` "docs: 5 letzte
+  unerwaehnte analysis/-Einmalskripte knapp dokumentiert" - gepusht,
+  docs-only, kein CI-Lauf. Zwischenstand: `c190774` "Add JSON reproducibility
   manifests" (Nutzer-Commit, NICHT aus dieser Session - `provenance.R`/
   `db_logging.R`-Erweiterung um JSON-Manifeste). Zwischenstand:
   `de02dec` "Statusanker: Punkt 46". Zwischenstand: `67d6ce1` "docs: 11
@@ -1775,7 +1783,73 @@ Pipeline-Skripte ueber ihre bestehenden Abschnitte/Zeilen) UND in
 - der urspruengliche Anlass ("mir scheint das nicht klar zu sein") ist
 damit vollstaendig abgearbeitet.
 
+**48. Aktualisierung (AStepAheadOfdrought -> Kandidat 15 -> Backport
+`composition_reweighting.R` -> YAML-Header, 2026-09-07 bis 2026-09-10)**:
+
+- **AStepAheadOfdrought** (`ML_Learning`, lokal): "weitermachen mit
+  offenem Punkt 1" ergab, dass der Punkt bereits erledigt war - Phase 9
+  (`140`/`145`/`150_phase9_*.R`) hatte die CV-LB-Luecke schon
+  beantwortet: zu >90% ein KOMPOSITIONSEFFEKT (Test hat mehr kurze
+  Missingness-Fenster + einen 19-Monats-Block), kein Modell-Bug -
+  belegt durch eine label-freie Neugewichtung der Fehlerkurve auf die
+  Test-Segmentverteilung. Das `README.md` war nur nicht nachgezogen -
+  jetzt aktualisiert (Phase 9 in die Phasentabelle, "Naechste faire
+  Hebel" durch die Antworten ersetzt). Der `TRUSTWORTHINESS_REPORT.md`
+  (der von Phase 9 empfohlene letzte Hebel) war bereits vollstaendig
+  geschrieben. Projekt inhaltlich abgeschlossen. Commit `5959373`
+  (`ML_Learning`, lokal - kein Remote).
+
+- **Kandidat 15** (`AStepAheadOfdrought/TEMPLATE_FRICTION.md`): die
+  label-freie CV-LB-Kompositionsdiagnose als generisch wertvolle,
+  bisher nicht festgehaltene Methode dokumentiert.
+
+- **5-Projekt-Bestaetigung** (ADR-003 mit n=5 klar erfuellt, weit ueber
+  n=2-Minimum): `geoai-aquaculture-pond-identification-challenge`
+  (Missingness-Fensterlaenge, `160_composition_diagnosis_window_
+  length.R`) - Methode erkannte KORREKT, dass Komposition dort nur
+  ~0.4% erklaert (Werte-Shift dominiert), statt faelschlich
+  "Komposition" zu behaupten. `rossmann-store-sales-forecasting`
+  (+1.21% RMSE, echter kleiner Beitrag). `PumpItUp` und
+  `drivendata_richter` (beide generische IID-Zufalls-Splits: KEIN
+  nennenswerter Kompositionsunterschied - der billige Features-only-
+  Vorab-Check reichte). Uebersichtstabelle in
+  `drivendata_richter/TEMPLATE_FRICTION.md`. Commits `9cdc0f4`,
+  `74f2968`, `e1afa5e` (`ML_Learning`, lokal).
+
+- **Zentraler Backport** `composition_reweighting.R` (auf Nutzer-
+  Freigabe): `segment_composition_shift()` (Vorab-Check per
+  Total-Variation-Distance) + `reweight_metric_by_test_composition()`
+  (Neugewichtung einer segmentierten CV-Metrik) +
+  `composition_diagnosis_report()` (Kombinierer). Ergaenzt
+  `generalization_gap.R` (dort: ist die Luecke gross; hier: warum).
+  12 neue testthat-Tests, volle Suite 371/371 gruen, CI gruen.
+  Dokumentiert in `SCRIPT_INDEX.md`/`README_DETAILS.md`/`BACKLOG.md`.
+  **MLR3_Classifikation** Commit `845a622` (gepusht, CI gruen).
+  Cross-Template-Spiegelung ins **MLR3_Regression** (metrik-agnostisch,
+  Kopfkommentar an Regr-Kontext angepasst, Partner ist
+  `125_segment_metrics.R`) - `test_composition_reweighting.R` (13
+  Checks) gruen, dokumentiert in `WorkflowDescription.md`/`BACKLOG.md`
+  (Punkt 24). **MLR3_Regression** Commit `e236f4b` (gepusht, kein CI im
+  Regr-Repo).
+
+- **YAML-Header** in beiden Repos (Nutzerwunsch): minimaler,
+  maschinenlesbarer Kopf fuer alle ADR-Dateien (`title`/`status`/
+  `date`/`adr`/ggf. `amended`, KEIN `author` - Git kennt die
+  Autorschaft) und fuer die eingefrorenen Dokumente
+  (`docs/research/BENCHMARK_PROTOCOL.md`, `EXTERNAL_BENCHMARK_SET.md` -
+  `status: frozen`, `governed_by: ADR-008`). Die "kein YAML-Header"-
+  Zeile in beiden `adr/README.md` entsprechend umgeschrieben (der
+  Body-Text jeder ADR bleibt unberuehrt - die Prosa-Status/Datumszeile
+  mit ihren Zusatznuancen steht weiter im Text). Alle 19 Front-Matter-
+  Bloecke via `rmarkdown::yaml_front_matter()` als valide verifiziert.
+
+**Stand jetzt: kein offener Blocker, keine offene Nutzerentscheidung.**
+Kandidat 15 ist vollstaendig durch (5 Projekte, beide Templates,
+dokumentiert, CI gruen). Kein laufender Hintergrundprozess.
+
 **Empfohlener erster Schritt, Stand jetzt**: kein zwingender
-Einstiegspunkt, kein offener Punkt mehr. Naechster natuerlicher Schritt
-waere ein neues Kaggle-/OpenML-Projekt, falls der Nutzer eines mitbringt,
-oder eine andere neue Aufgabe.
+Einstiegspunkt, kein offener Punkt mehr. Denkbar: die knit-freundliche
+YAML-Variante (`title`/`author`/`date` fuer RStudio -> PDF-Export) auf
+die nutzer-zugewandten Docs (READMEs, Reports) ausrollen - der Nutzer
+knittet solche `.md` gelegentlich in RStudio mit manuell ergaenztem
+`output: pdf_document`. Sonst ein neues Kaggle-/OpenML-Projekt.

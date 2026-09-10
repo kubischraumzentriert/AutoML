@@ -1,3 +1,10 @@
+---
+title: "008: Benchmark-Protokolle werden eingefroren und versioniert, nie in-place veraendert"
+status: Accepted
+date: 2026-08-30
+adr: 8
+---
+
 # 008: Benchmark-Protokolle werden eingefroren und versioniert, nie in-place veraendert
 
 Status: Accepted

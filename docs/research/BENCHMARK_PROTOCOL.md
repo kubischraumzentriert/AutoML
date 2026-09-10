@@ -1,3 +1,11 @@
+---
+title: "Benchmark-Protokoll"
+status: frozen
+frozen_since: 2026-08-28
+governed_by: ADR-008
+note: "Nie in-place aendern - jede neue Protokollversion bekommt eine neue Datei/einen neuen Abschnitt. Berichtete Deltas haengen als feste Zahlen daran (BACKLOG.md, PAPER_DRAFT.md, joss/paper.md)."
+---
+
 # Benchmark-Protokoll (eingefroren, Stand 2026-08-28, v2/v3 seit 2026-08-29)
 
 ## Version 3 (2026-08-29): Level-2-Prototyp (Modellwahl+Tuning+Ensemble im Outer-Fold)
