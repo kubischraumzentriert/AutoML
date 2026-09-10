@@ -1850,20 +1850,37 @@ damit vollstaendig abgearbeitet.
      Statusanker Punkt 48), **MLR3_Regression** Commit `cde53a8`.
   2. **Knit-freundlich** (rmarkdown-Standard `title`/`author: "Andre
      Endress"`/`date: "2026-09-10"` statisch, KEIN `output:` - der
-     Nutzer ergaenzt `output: pdf_document` beim Knitten in RStudio)
-     fuer die 6 Kern-Docs: `README.md`/`README_DETAILS.md`/
-     `WorkflowDescription.md` in BEIDEN Repos. **MLR3_Classifikation**
-     Commit `98d4923`, **MLR3_Regression** Commit `651d963`. Weitere
-     grosse Einzeldokumente (`TARGETS.md`, `DEVIANCE_MEASURES.md`,
-     `NEURAL_DEPLOY.md`, `DATABASE.md`, ...) haben ihn noch NICHT - auf
-     Zuruf nachziehbar.
+     Nutzer ergaenzt `output: pdf_document` beim Knitten in RStudio).
+     Erste Runde: die 6 Kern-Docs `README.md`/`README_DETAILS.md`/
+     `WorkflowDescription.md` in BEIDEN Repos (`98d4923` / `651d963`).
+     Zweite Runde: `TARGETS.md`/`NEURAL_DEPLOY.md`/`EXPERIMENTS_DB.md`
+     (Classif, Commit `6e16b92`) + `NEURAL_DEPLOY.md`/
+     `DEVIANCE_MEASURES.md`/`DATABASE.md` (Regr, Commit `911791b`).
+     Kleinere `REFERENZ_*.md`/`WORKFLOW_GUARDS.md` etc. bewusst ohne -
+     die sind Nachschlage-Fragmente, kein Knit-/Teilen-Ziel.
+
+- **BACKLOG.md-Aufraeumung** (`MLR3_Classifikation`, Commit `6e16b92`):
+  der P0-P3-"Zielbild"-Abschnitt am Ende (urspruenglicher Codex-Agent-
+  Arbeitsplan) hat jetzt einen Status-Kopf "ERLEDIGT (Stand 2026-09-10)"
+  mit Umsetzungsnachweis je Prioritaetsstufe. Text bleibt als
+  historischer Beleg stehen, ist aber klar als nicht mehr aktiver Plan
+  markiert - kuenftige offene Arbeit kommt als datierter `###`-Eintrag
+  ins chronologische Journal, nicht in die P0-P3-Struktur.
 
 **Stand jetzt: kein offener Blocker, keine offene Nutzerentscheidung.**
 Kandidat 15 ist vollstaendig durch (5 Projekte, beide Templates,
-dokumentiert, CI gruen). YAML-Header (beide Auspraegungen) erledigt und
-gepusht. Kein laufender Hintergrundprozess.
+dokumentiert, CI gruen). YAML-Header (beide Auspraegungen, 2 Runden) und
+die BACKLOG-Aufraeumung erledigt und gepusht. Kein laufender
+Hintergrundprozess.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte** (aus dem
+BACKLOG-Review 2026-09-10): `MLR3_Regression` Kandidaten 6-9
+(Workflow-Konventionen aus dem Drought-Projekt, je nur 1x belegt -
+brauchen ein 2. Forecasting-/Panel-Projekt vor dem Backport); JOSS-
+Einreichung (pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage
+~Nov 2026).
 
 **Empfohlener erster Schritt, Stand jetzt**: kein zwingender
-Einstiegspunkt, kein offener Punkt mehr. Denkbar: den knit-freundlichen
-Header auf weitere grosse Einzeldokumente ausrollen (s.o.), sonst ein
-neues Kaggle-/OpenML-Projekt.
+Einstiegspunkt, kein offener Punkt mehr. Naechster natuerlicher Schritt
+waere ein neues Kaggle-/OpenML-Projekt (deckt nebenbei die
+Regr-Kandidaten 6-9 ab, falls es Panel-/Forecasting-Struktur hat).
