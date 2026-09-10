@@ -4052,6 +4052,49 @@ geloggt (`db_log_submission_result()`, `mconf_id
 f0c17d04-28db-404f-b525-28cf5ad2dce5`, Plattform "kaggle", Competition
 "playground-series-s6e9").
 
+---
+
+# ⓘ Status des P0-P3-Plans unten: ERLEDIGT (Stand 2026-09-10)
+
+Der folgende Abschnitt (`## Zielbild` bis `## Kurzfassung`) ist der
+**urspruengliche Codex-Agent-Arbeitsplan** (P0 Stabilisieren, P1 Kernlogik
+testbar, P2 Evaluation/Nachvollziehbarkeit, P3 Aufraeumen/Dokumentieren).
+Er ist ueber viele Sessions abgearbeitet worden und wird hier nur noch als
+**historischer Beleg** aufbewahrt - er ist NICHT mehr der aktive Plan.
+
+Umsetzungsnachweis:
+
+- **P0 (Stabilisieren)**: `tests/testthat/` mit einer eigenstaendigen
+  fachlichen Unit-Test-Suite (371 Tests, Stand 2026-09-10), im CI
+  (`.github/workflows/ci-smoke-test.yml`) getrennt vom Smoke-Test als
+  eigener `unit-tests`-Job. Deterministische Tests mit festen Seeds +
+  synthetischen Fixtures fuer u.a. `class_multiplier_tuning.R`,
+  `ensemble_selection.R`, `generalization_gap.R`, `group_resampling.R`,
+  `target_leak_audit_helpers.R`, `hard_split_stress_test.R`,
+  `composition_reweighting.R`.
+- **P1 (Kernlogik testbar)**: die fachlichen Kernberechnungen sind aus
+  den nummerierten Skripten in testbare, eigenstaendige Module extrahiert
+  (`target_leak_audit_helpers.R` aus `015`, `ensemble_selection.R` aus
+  `149`, `class_multiplier_tuning.R` aus `130`, ...). Kein Monolith mehr.
+- **P2 (Evaluation/Nachvollziehbarkeit)**: `evidence_registry.R` +
+  `generate_systematic_evaluation.R` + `docs/research/SYSTEMATIC_
+  EVALUATION.md`; eingefrorene, versionierte Benchmark-Protokolle v1-v3
+  (ADR-008, `docs/research/BENCHMARK_PROTOCOL.md`); `provenance.R` +
+  DB-Schema mit Fold-Ebene und Provenienz.
+- **P3 (Aufraeumen/Dokumentieren)**: `docs/reference/SCRIPT_INDEX.md`
+  (jedes nicht-nummerierte Root-Skript dokumentiert),
+  `README_DETAILS.md`-Skripttabelle, `adr/*.md` (9 ADRs), `_targets.R`.
+  Die P3-Unterpunkte zu `NAMESPACE`/`DESCRIPTION`/`examples/` fuer eine
+  **Paketierung** sind BEWUSST nicht umgesetzt - ADR-007 haelt fest, dass
+  das Template eine flache Skriptsammlung bleibt, kein installierbares
+  R-Paket.
+
+Neue, noch offene Arbeit wird ab hier als eigener datierter `###`-
+Eintrag im chronologischen Journal oben gefuehrt, nicht mehr in diese
+P0-P3-Struktur eingehaengt.
+
+---
+
 ## Zielbild
 
 Das Template soll nicht nur starke ML-Ergebnisse liefern, sondern als wiederverwendbare, überprüfbare und wartbare Basis für neue Classification-Projekte dienen.

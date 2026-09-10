@@ -1,3 +1,9 @@
+---
+title: "MLR3 Classification - targets-Pipeline (Anleitung & Uebertragungs-Leitfaden)"
+author: "Andre Endress"
+date: "2026-09-10"
+---
+
 # Anleitung: `targets`-Pipeline
 
 Diese Datei erklärt, wie unsere `targets`-Pipeline (`_targets.R`) funktioniert,

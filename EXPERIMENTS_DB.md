@@ -1,3 +1,9 @@
+---
+title: "MLR3 Classification - Experiment-Tracking-Datenbank (experiments.db)"
+author: "Andre Endress"
+date: "2026-09-10"
+---
+
 # Anleitung: Experiment-Tracking-Datenbank (`experiments.db`)
 
 Diese Datei erklärt Aufbau und Konzept der SQLite-Datenbank, in die alle
