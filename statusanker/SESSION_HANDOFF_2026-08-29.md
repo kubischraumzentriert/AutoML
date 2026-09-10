@@ -209,12 +209,16 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ (nach Punkt 48) YAML-Header-Commit fuer ADRs +
-  Frozen-Docs + Statusanker Punkt 48 - siehe Punkt 48 unten. Davor:
+- `MLR3_Classifikation` @ `98d4923` "docs: knit-freundlicher YAML-Header
+  (title/author/date) fuer die Kern-Docs" - gepusht, docs-only (kein
+  CI-Lauf). Zwischenstand: `ccd7ff5` "docs: YAML-Front-Matter fuer ADRs
+  + Frozen-Docs, Statusanker Punkt 48" - gepusht, docs-only. Davor:
   `845a622` "Backport: composition_reweighting.R (label-freie
   CV-LB-Kompositionsdiagnose)" - gepusht, **CI gruen** (371/371 Tests).
-  `MLR3_Regression` @ `e236f4b` "Backport: composition_reweighting.R" -
-  gepusht (kein CI im Regr-Repo), `test_composition_reweighting.R` (13
+  `MLR3_Regression` @ `651d963` "docs: knit-freundlicher YAML-Header ..."
+  - gepusht (kein CI im Regr-Repo). Zwischenstand: `cde53a8` "docs:
+  YAML-Front-Matter fuer ADRs". Davor: `e236f4b` "Backport:
+  composition_reweighting.R", `test_composition_reweighting.R` (13
   Checks) lokal gruen. `ML_Learning` (lokal, kein Remote) zuletzt bei
   `74f2968`/`e1afa5e` (Kandidat-15-Projektbefunde + Nutzerentscheidung).
 - Vorheriger Stand: `MLR3_Classifikation` @ `794d566` "docs: 5 letzte
@@ -1832,24 +1836,34 @@ damit vollstaendig abgearbeitet.
   (Punkt 24). **MLR3_Regression** Commit `e236f4b` (gepusht, kein CI im
   Regr-Repo).
 
-- **YAML-Header** in beiden Repos (Nutzerwunsch): minimaler,
-  maschinenlesbarer Kopf fuer alle ADR-Dateien (`title`/`status`/
-  `date`/`adr`/ggf. `amended`, KEIN `author` - Git kennt die
-  Autorschaft) und fuer die eingefrorenen Dokumente
-  (`docs/research/BENCHMARK_PROTOCOL.md`, `EXTERNAL_BENCHMARK_SET.md` -
-  `status: frozen`, `governed_by: ADR-008`). Die "kein YAML-Header"-
-  Zeile in beiden `adr/README.md` entsprechend umgeschrieben (der
-  Body-Text jeder ADR bleibt unberuehrt - die Prosa-Status/Datumszeile
-  mit ihren Zusatznuancen steht weiter im Text). Alle 19 Front-Matter-
-  Bloecke via `rmarkdown::yaml_front_matter()` als valide verifiziert.
+- **YAML-Header** in beiden Repos (Nutzerwunsch), zwei Auspraegungen:
+  1. **Maschinenlesbar** fuer alle ADR-Dateien (`title`/`status`/
+     `date`/`adr`/ggf. `amended`, KEIN `author` - Git kennt die
+     Autorschaft) und fuer die eingefrorenen Dokumente
+     (`docs/research/BENCHMARK_PROTOCOL.md`, `EXTERNAL_BENCHMARK_SET.md` -
+     `status: frozen`, `governed_by: ADR-008`). Die "kein YAML-Header"-
+     Zeile in beiden `adr/README.md` entsprechend umgeschrieben (der
+     Body-Text jeder ADR bleibt unberuehrt - die Prosa-Status/
+     Datumszeile mit ihren Zusatznuancen steht weiter im Text). Alle 19
+     Front-Matter-Bloecke via `rmarkdown::yaml_front_matter()` als
+     valide verifiziert. **MLR3_Classifikation** Commit `ccd7ff5` (mit
+     Statusanker Punkt 48), **MLR3_Regression** Commit `cde53a8`.
+  2. **Knit-freundlich** (rmarkdown-Standard `title`/`author: "Andre
+     Endress"`/`date: "2026-09-10"` statisch, KEIN `output:` - der
+     Nutzer ergaenzt `output: pdf_document` beim Knitten in RStudio)
+     fuer die 6 Kern-Docs: `README.md`/`README_DETAILS.md`/
+     `WorkflowDescription.md` in BEIDEN Repos. **MLR3_Classifikation**
+     Commit `98d4923`, **MLR3_Regression** Commit `651d963`. Weitere
+     grosse Einzeldokumente (`TARGETS.md`, `DEVIANCE_MEASURES.md`,
+     `NEURAL_DEPLOY.md`, `DATABASE.md`, ...) haben ihn noch NICHT - auf
+     Zuruf nachziehbar.
 
 **Stand jetzt: kein offener Blocker, keine offene Nutzerentscheidung.**
 Kandidat 15 ist vollstaendig durch (5 Projekte, beide Templates,
-dokumentiert, CI gruen). Kein laufender Hintergrundprozess.
+dokumentiert, CI gruen). YAML-Header (beide Auspraegungen) erledigt und
+gepusht. Kein laufender Hintergrundprozess.
 
 **Empfohlener erster Schritt, Stand jetzt**: kein zwingender
-Einstiegspunkt, kein offener Punkt mehr. Denkbar: die knit-freundliche
-YAML-Variante (`title`/`author`/`date` fuer RStudio -> PDF-Export) auf
-die nutzer-zugewandten Docs (READMEs, Reports) ausrollen - der Nutzer
-knittet solche `.md` gelegentlich in RStudio mit manuell ergaenztem
-`output: pdf_document`. Sonst ein neues Kaggle-/OpenML-Projekt.
+Einstiegspunkt, kein offener Punkt mehr. Denkbar: den knit-freundlichen
+Header auf weitere grosse Einzeldokumente ausrollen (s.o.), sonst ein
+neues Kaggle-/OpenML-Projekt.
