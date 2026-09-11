@@ -2036,8 +2036,69 @@ Panel-Projekt aufsetzen (loest Kandidat 25 UND liefert mehr Cross-
 Projekt-Evidenz fuer die Panel-Skill-Generalisierung) oder einen der P3-
 Punkte konkretisieren. Nutzerentscheidung dazu noch offen.
 
+**26. Aktualisierung:** auf Nutzerwunsch "können wir etwas von den
+Projekten ins Template bringen" ein eigener Backport-Fund abseits der
+Kandidatenliste identifiziert: die mlr3-Falle "different column info
+during train and predict" war seit Kandidat 8 nur als Prosa in
+`WORKFLOW_GUARDS.md` #8 dokumentiert und trotzdem 3x wieder aufgetreten
+(Beijing: `026`, `029` zweimal) - Lehre, dass dokumentiertes Wissen das
+erneute Hineinlaufen nicht verhindert. Neuer Code-Baustein
+`combined_task_helper.R` (**Kandidat 26**, `build_combined_task_regr()`)
+zurueckgefuehrt, `test_combined_task_helper.R` 5 Checks gruen, `026`/`029`
+im Beijing-Projekt darauf umgestellt (identische Ergebnisse bestaetigt).
+(`MLR3_Regression` `c986e4a`, `ML_Learning` `a48716b`.)
+
+**27. Aktualisierung:** Nutzeranweisung "ja, dann das 2. Panel-Projekt" -
+nach kurzer Unterbrechung ("026 und 029 auf den neuen Helfer umstellen",
+s.o.) **UCI "ElectricityLoadDiagrams20112014"** (ID 321) als 2.
+Panel-Projekt vorgeschlagen und aufgesetzt: 12 von 370 Kunden
+(deterministisch gezogen, seed 20260911), stuendlich aggregiert aus
+15-Minuten-Werten, 2011-01 bis Ende 2014, Ziel `load_kw`. Andere Domaene
+als Beijing (Energie statt Luftqualitaet) - echte Gegenprobe statt
+Wiederholungsfall. Pipeline `001`/`020`/`030` end-to-end verifiziert.
+Reibungsfund: `download.file(..., method="libcurl")` brach beim ~250-MB-
+Zip nach dem R-Default von 60s ab - `curl` als Workaround genutzt,
+`options(timeout=1200)` in `001_fetch.R` ergaenzt. `_raw/` neu in
+`ML_Learning/.gitignore` (679-MB-Rohdatendatei, kein *.csv/*.zip-Muster).
+(`ML_Learning` `c79943e`.)
+
+Diagnose (012/013/018) auf dem neuen Projekt gefahren: 012 unauffaellig,
+013 flaggt `client` (86,8% Gain-Importance) als Verdacht, Schritt-5-Urteil
+kein Leak (Entity-Identitaet, ex-ante bekannt, Lastniveau-Unterschied bis
+Faktor 400 zwischen Kunden - analog Beijings `station`), 018 Adversarial-
+AUC=1,0 trivial (Zeitsplit, wie bei Beijing). Danach `025_forecast_
+features.R` + `026_forecast_reference.R` gebaut (LightGBM haelt-out RMSE
+112,47 schlaegt beide Persistence-Baselines 210/222 deutlich - echter
+Modellierungsspielraum schon im 1h-Horizont, anders als bei Beijing).
+(`ML_Learning` `2909daf`.)
+
+**28. Aktualisierung:** direkt im Anschluss **Kandidat 25**
+(`add_regular_lags()`) bearbeitet - generischer Helfer
+`regular_lags_helper.R` (`add_regular_lags(dt, entity, time, value, lags,
+roll_windows)`) in `MLR3_Regression` zurueckgefuehrt, 7 synthetische
+Checks gruen (`test_regular_lags_helper.R`), ADR-003 ueber 2 unabhaengige
+Projekte erfuellt: `electricity-load-panel` nutzte ihn nativ (s.o.),
+`beijing-air-quality-panel`s `025_forecast_features.R` rueckwirkend
+darauf umgestellt (Generalitaets-Nachweis statt nur Behauptung) -
+Ergebnisse bis auf Run-zu-Run-LightGBM-Rauschen identisch (`027`-RMSE
+64,11 vs. vorher 64,22, R² 0,579 vs. 0,578; `029`s weichstes Segment
+kippte zwischen zwei fast gleich schwachen Monaten, qualitatives Ergebnis
+unveraendert). `WORKFLOW_GUARDS.md` Abschnitt 6 und `BACKLOG.md`
+entsprechend nachgezogen. (`MLR3_Regression` `ebbbb46`, `ML_Learning`
+`4cbcbc3` fuer den Beijing-Retrofit.)
+
+**Stand jetzt: `MLR3_Regression`-BACKLOG ist vollstaendig leer** - beide
+zuvor offenen Kandidaten (25, 26) sind jetzt an 2 unabhaengigen Panel-
+Projekten bestaetigt und im Template verankert. Kein laufender
+Hintergrundprozess, keine offene Nutzerentscheidung.
+
 **Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
 (pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+`MLR3_Classifikation`-BACKLOG hat weiterhin nur die 2 nicht naeher
+spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
+Reproduzierbarkeit).
 
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-2. Panel-Projekt vs. P3-Punkt konkretisieren vs. etwas Neues.
+`electricity-load-panel` weiter vertiefen (Kandidaten 6-9 als 3.
+Domaenen-Bestaetigung, 24h-Horizont-Variante) vs. einen der Klassifikation-
+P3-Punkte konkretisieren vs. etwas Neues.
