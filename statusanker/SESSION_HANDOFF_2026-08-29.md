@@ -2092,13 +2092,53 @@ zuvor offenen Kandidaten (25, 26) sind jetzt an 2 unabhaengigen Panel-
 Projekten bestaetigt und im Template verankert. Kein laufender
 Hintergrundprozess, keine offene Nutzerentscheidung.
 
+**29. Aktualisierung:** Nutzeranweisung "electricity-load-panel weiter
+vertiefen mit Kandidaten 6-9" - alle 4 auf dem 1h-Horizont durchgefuehrt
+(genug Modellierungsspielraum vorhanden, keine 24h-Variante noetig):
+Kandidat 6 (`028_feature_blocks.R`) bestaetigt `lag`-Block klar
+signifikant (Ratio 3,73), `rolling`/`delta` vernachlaessigbar; Kandidat 7
+(`029_segment_blend.R`) Negativergebnis (schwaechstes Segment month==7,
+Blend w=0 optimal), wie bei Beijing; Kandidat 9 (`032_composition_
+diagnosis.R`) Segmentbelegung bestaetigt (16,8% Testzeilen),
+Kompositionsanteil an der CV<->Test-Luecke **98,0%** - fast identisches
+Muster wie Beijing (126%). (`ML_Learning` `5c6f126`.)
+
+**Wichtiger Zwischenfund bei Kandidat 8** (`031_residualization.R`):
+beim Bauen des Electricity-Skripts (von Anfang an MIT `sort = FALSE` im
+Klimatologie-Merge) fiel auf, dass Beijings BEREITS COMMITTETES
+`031_residualization.R` denselben Merge OHNE `sort = FALSE` nutzte -
+`merge(x, y, by=...)` sortiert per Default (`sort = TRUE`) nach den
+Merge-Spalten um; der danach extrahierte `clim`-Vektor war dadurch
+POSITIONELL gegen `truth`/`pred` verschoben, betraf sogar das Residual-
+TRAININGSZIEL selbst. Das hatte Beijings bereits ins Template
+zurueckgespielten Kandidat-8-Befund verfaelscht: urspruenglich
+dokumentiert als "klar schlechter, Ratio 2,59" (Basis fuer einen bereits
+bestehenden `WORKFLOW_GUARDS.md`-Warnhinweis), nach dem Fix **Ratio
+1,04**, Held-out-Test sogar minimal BESSER mit Residualisierung (Delta
+-0,36 statt vorher +2,45 - die Richtung dreht sich um). Sofort behoben:
+Bugfix in Beijings `031` (`ML_Learning` `d051ff3`), `WORKFLOW_GUARDS.md`
+Abschnitt 6 (Kandidat-8-Aussage von "klar schlechter" auf "kein
+verlaesslicher Effekt in beide Richtungen" abgeschwaecht - die
+praktische Kernaussage "kein Default-Hebel, immer messen" bleibt
+richtig) UND neuer Abschnitt-8-Eintrag fuer die generische `merge()`-
+`sort=FALSE`-Falle (jede positionelle Vektor-Extraktion nach einem
+Merge ist betroffen, nicht nur dieser Fall), `BACKLOG.md` Kandidat 8
+korrigiert (`MLR3_Regression` `8101d72`). Electricitys eigene, von
+Anfang an korrekte Messung (Ratio 0,86) bestaetigt direkt die
+korrigierte, schwaechere Aussage - **3 Projekte (GeoAI-Drought, Beijing
+korrigiert, Electricity), kein einziges mit einem verlaesslichen Effekt
+in beide Richtungen.**
+
+**Stand jetzt: alle 4 Kandidaten (6-9) sind jetzt an 2 strukturell
+verschiedenen Domaenen (Luftqualitaet, Energie) bestaetigt.** Kein
+laufender Hintergrundprozess, keine offene Nutzerentscheidung.
+
 **Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
 (pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
 `MLR3_Classifikation`-BACKLOG hat weiterhin nur die 2 nicht naeher
 spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
-Reproduzierbarkeit).
+Reproduzierbarkeit). `MLR3_Regression`-BACKLOG bleibt vollstaendig leer.
 
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-`electricity-load-panel` weiter vertiefen (Kandidaten 6-9 als 3.
-Domaenen-Bestaetigung, 24h-Horizont-Variante) vs. einen der Klassifikation-
-P3-Punkte konkretisieren vs. etwas Neues.
+etwas Neues vs. einen der Klassifikation-P3-Punkte konkretisieren vs.
+optionale 24h-Horizont-Variante an Electricity.
