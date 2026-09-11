@@ -209,18 +209,26 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
 
 ## Repo-Zustand am Ende dieser Session
 
-- `MLR3_Classifikation` @ `98d4923` "docs: knit-freundlicher YAML-Header
-  (title/author/date) fuer die Kern-Docs" - gepusht, docs-only (kein
-  CI-Lauf). Zwischenstand: `ccd7ff5` "docs: YAML-Front-Matter fuer ADRs
-  + Frozen-Docs, Statusanker Punkt 48" - gepusht, docs-only. Davor:
-  `845a622` "Backport: composition_reweighting.R (label-freie
-  CV-LB-Kompositionsdiagnose)" - gepusht, **CI gruen** (371/371 Tests).
-  `MLR3_Regression` @ `651d963` "docs: knit-freundlicher YAML-Header ..."
-  - gepusht (kein CI im Regr-Repo). Zwischenstand: `cde53a8` "docs:
-  YAML-Front-Matter fuer ADRs". Davor: `e236f4b` "Backport:
-  composition_reweighting.R", `test_composition_reweighting.R` (13
-  Checks) lokal gruen. `ML_Learning` (lokal, kein Remote) zuletzt bei
-  `74f2968`/`e1afa5e` (Kandidat-15-Projektbefunde + Nutzerentscheidung).
+- `MLR3_Classifikation` @ (nach Punkt 49) Statusanker-Commit - siehe
+  Punkt 49 unten. Davor: `4da4218` "Statusanker: knit-Header Runde 2 +
+  BACKLOG-P0-P3-Aufraeumung", `6e16b92` "docs: P0-P3-Plan als erledigt
+  markiert + knit-Header fuer 3 grosse Docs", `98d4923` "docs:
+  knit-freundlicher YAML-Header ... Kern-Docs", `ccd7ff5` "docs:
+  YAML-Front-Matter fuer ADRs + Frozen-Docs", `845a622` "Backport:
+  composition_reweighting.R" (**CI gruen**, 371/371). Alles docs-only
+  ausser 845a622, alles gepusht.
+- `MLR3_Regression` @ `911791b` "docs: knit-freundlicher YAML-Header fuer
+  3 grosse Einzeldokumente", davor `651d963` (knit-Header Kern-Docs),
+  `cde53a8` (YAML ADRs), `e236f4b` "Backport: composition_reweighting.R"
+  (`test_composition_reweighting.R` 13 Checks lokal gruen). Gepusht,
+  kein CI im Regr-Repo.
+- `ML_Learning` (lokal, kein Remote) @ `96abf51` "beijing-air-quality-
+  panel: 012 + 018 gelaufen". Davor `a901a6e` (013-Leak-Audit),
+  `d008822` (Projekt-Setup), `74f2968`/`e1afa5e` (Kandidat-15-Befunde).
+  **Uncommitted im Beijing-Projekt**: `025_forecast_features.R`,
+  `026_forecast_reference.R`, `000_config.R`-Aenderung (`forecast_
+  variant`), README-Aktualisierung - warten auf das Ergebnis des
+  laufenden `026`-Laufs.
 - Vorheriger Stand: `MLR3_Classifikation` @ `794d566` "docs: 5 letzte
   unerwaehnte analysis/-Einmalskripte knapp dokumentiert" - gepusht,
   docs-only, kein CI-Lauf. Zwischenstand: `c190774` "Add JSON reproducibility
@@ -1867,20 +1875,62 @@ damit vollstaendig abgearbeitet.
   markiert - kuenftige offene Arbeit kommt als datierter `###`-Eintrag
   ins chronologische Journal, nicht in die P0-P3-Struktur.
 
-**Stand jetzt: kein offener Blocker, keine offene Nutzerentscheidung.**
-Kandidat 15 ist vollstaendig durch (5 Projekte, beide Templates,
-dokumentiert, CI gruen). YAML-Header (beide Auspraegungen, 2 Runden) und
-die BACKLOG-Aufraeumung erledigt und gepusht. Kein laufender
-Hintergrundprozess.
+**49. Aktualisierung ("schlag ein neues OpenML-Panel-Projekt vor" ->
+"setz das Beijing Air-Quality Projekt auf" -> "mach weiter mit 013" ->
+"012 und 018" -> "Forecast-Neuaufsatz", 2026-09-10/11)**:
 
-**Verbleibende, NICHT jetzt handlungsrelevante Punkte** (aus dem
-BACKLOG-Review 2026-09-10): `MLR3_Regression` Kandidaten 6-9
-(Workflow-Konventionen aus dem Drought-Projekt, je nur 1x belegt -
-brauchen ein 2. Forecasting-/Panel-Projekt vor dem Backport); JOSS-
-Einreichung (pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage
-~Nov 2026).
+Neues lokales Panel-Regressionsprojekt **`beijing-air-quality-panel`**
+(`ML_Learning`, kein Remote) als 2. Zeuge fuer die offenen
+`MLR3_Regression`-BACKLOG-Kandidaten 6-9 und 3. Panel-Beleg fuer
+`time_blocked_resampling.R`/`entity_history.R`/`availability_masking.R`/
+`group_resampling.R`/`composition_reweighting.R`. Datensatz: UCI ID 501
+"Beijing Multi-Site Air-Quality", 12 Stationen stuendlich 2013-03..
+2017-02, ~412k Zeilen, Ziel `pm25` (PM2.5), RMSE. Zeitgeblockter Split
+(Test = letzte 6 Monate). Eigenes Gedaechtnis:
+`project_beijing_air_quality_panel.md`.
 
-**Empfohlener erster Schritt, Stand jetzt**: kein zwingender
-Einstiegspunkt, kein offener Punkt mehr. Naechster natuerlicher Schritt
-waere ein neues Kaggle-/OpenML-Projekt (deckt nebenbei die
-Regr-Kandidaten 6-9 ab, falls es Panel-/Forecasting-Struktur hat).
+- **Setup** (Commit `d008822`): `001_fetch.R` (reproduzierbarer Download +
+  Zusammenfuegen + Split, datetime bewusst kein Feature -> `_artifacts/
+  time_index.csv`), Template-Skripte kopiert, `000_config.R` angepasst.
+  Pipeline end-to-end verifiziert. Reibungsfund: `030_baseline.R` bricht
+  bei fehlendem `task_train_small.rds` ab (nachgeladenes `020_task.R` mit
+  `rm(list=ls())` loescht `make_imputed_learner`) - `020` zuerst separat
+  laufen. Template-Haertungskandidat.
+- **`013_target_leak_audit.R`** (Commit `a901a6e`): `pm10` (80,9 % Gain)
+  + Cluster `pm10`/`CO`/`NO2` (93,2 %, RMSE-Effekt 13,4) als Quasi-Leak
+  fuer einen Forecast geflaggt (Schritt 1 UND 1b). Schritt-5-Urteil: die
+  ko-gemessenen Schadstoffe sind fuer einen Nowcast legitim, fuer einen
+  Forecast ex-post. **Framing-Entscheidung: Forecast**, Schadstoffe raus.
+- **`012` + `018`** (Commit `96abf51`): 012 kein ernstes
+  Verfuegbarkeitsproblem (Kleinigkeiten: numeric-vs-integer-Typinferenz
+  Train/Test, `pm25` als "test-only feature", `PRES`=999-Sentinel-Falsch-
+  Positiv). 018 Adversarial-AUC = 1,000 aber TRIVIAL (`year`/`month`
+  trennen den Zeitsplit per Konstruktion) - kein Werte-Shift, ein
+  **Kompositionseffekt**: Test-Zeitraum = nur Herbst+Winter, `pm25`
+  saisonal nach oben verschoben. Anwendungsfall fuer `composition_
+  reweighting.R` nach `month` + Kandidat 7.
+- **Forecast-Neuaufsatz** (noch NICHT committet): `025_forecast_
+  features.R` (pm25-Lags 1h/24h/168h + Rolling-Mittel je Station,
+  Schadstoffe raus, gelaggter Schadstoff-Block separat fuer Kandidat 6 ->
+  `train_fc.csv`/`test_fc.csv`), `000_config.R`-Schalter `forecast_variant
+  <- TRUE`, `026_forecast_reference.R` (LightGBM zeitgeblockte CV vs.
+  Zufalls-CV vs. echter Held-out-Test, gegen Persistence-Baselines).
+  **026 laeuft gerade im Hintergrund** (2 Anlaeufe an mlr3-Faktor-Level-
+  Mismatch gescheitert, jetzt Single-Task-Fix per `row_ids`). Reibungs-
+  fund: `entity_history.R` (Kandidat 5) deckt regelmaessige hochfrequente
+  Lags nicht ab (nur "Zeit seit Ereignis" + Lag-1) - Kandidat fuer einen
+  `add_regular_lags()`-Template-Helfer.
+
+**Stand jetzt: 1 laufender Hintergrundprozess** (`026_forecast_
+reference.R`, Beijing-Projekt). Keine offene Nutzerentscheidung.
+Kandidat 15 vollstaendig durch, YAML-Header + BACKLOG-Aufraeumung
+erledigt.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026). Die
+`MLR3_Regression`-Kandidaten 6-9 sind jetzt im Beijing-Projekt in Arbeit.
+
+**Empfohlener erster Schritt, Stand jetzt**: den `026_forecast_
+reference.R`-Lauf des Beijing-Projekts auswerten (ehrliche zeitgeblockte
+RMSE-Referenz), `025`/`026` + README committen, dann Kandidaten 6-9 der
+Reihe nach.
