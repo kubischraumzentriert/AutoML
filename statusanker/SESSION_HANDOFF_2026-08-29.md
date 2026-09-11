@@ -1942,15 +1942,102 @@ Neues lokales Panel-Regressionsprojekt **`beijing-air-quality-panel`**
   schlaegt LightGBM auf 24h-Horizont die `pm25_lag_24h`-Persistenz
   spuerbar (dann haben Kandidaten 6-9 Spielraum)?
 
-**Stand jetzt: 1 laufender Hintergrundprozess** (`027_forecast_24h_
-reference.R`, Beijing-Projekt). Keine offene Nutzerentscheidung.
-Kandidat 15 vollstaendig durch, YAML-Header + BACKLOG-Aufraeumung
-erledigt.
+**25. Aktualisierung:** der `027`-Lauf ausgewertet - **das Modell schlaegt
+die 24h-Persistenz klar** (Held-out-Test RMSE 64,22 / R² 0,578 vs.
+`pm25_lag_24h`-Persistenz RMSE 105,83 / R² -0,15; `pm25_lag_168h`-
+Persistenz RMSE 136,43 / R² -0,90). Zeitgeblockte CV (56,86) faengt ~77 %
+der CV-Optimismus-Luecke, Faktor-2-Untertreibung durch Zufalls-CV
+(32,09). Damit hat der 24h-Horizont genug Spielraum fuer Kandidaten 6-9 -
+`025`/`027`/Config/README committet (`ML_Learning` Commit `1c0fbd3`,
+lokal, kein Remote).
+
+Danach alle 4 urspruenglich offenen `MLR3_Regression`-BACKLOG-Kandidaten
+(6-9) am Beijing-Projekt der Reihe nach abgearbeitet (Nutzeranweisungen
+"mach weiter mit Kandidat N" fuer jeden einzeln):
+
+- **Kandidat 6 (Feature-Bloecke, paarweiser Same-Folds-Vergleich)**:
+  Methodik bestaetigt, KEIN neues Modul - `028_feature_blocks.R` teilt
+  Features in Bloecke (station/calendar/meteo/lag/rolling/poll),
+  kumulativ + Leave-one-block-out auf identischen zeitgeblockten Folds
+  (manueller Loop ueber `train_set(i)`/`test_set(i)`, um mlr3-Task-Hash-
+  Probleme bei Feature-gefilterten Klonen zu umgehen). Ergebnis zeigt
+  genau den Wert der Methodik: meteo klar signifikant (Ratio -3,37), lag
+  grenzwertig (-1,51), rolling/poll Nulleffekt (~0) - eine naive
+  getrennte Lauf-fuer-Lauf-Bewertung haette hier in die Irre gefuehrt.
+  (`ML_Learning` `833ccc8`, `MLR3_Regression` `0411139`.)
+- **Kandidat 7 (Segment-Blends, Klimatologie-Blend nach schwachem OOF-
+  Segment)**: Negativergebnis, dokumentiert, kein Backport. OOF-Diagnose
+  (leckagefrei, Klimatologie NUR aus Fold-Trainingszeilen) findet
+  `month==12` als schwaechstes Segment, Blend-Gewichts-Grid-Search auf
+  OOF findet optimales Gewicht w=0 (Blend hilft nirgends). (`ML_Learning`
+  `67d59d1`, `MLR3_Regression` `74df4ff`.)
+- **Kandidat 8 (Residualisierung: `pm25 - clim(station,month,hour)`
+  statt direktem Ziel)**: klares Negativergebnis (Ratio 2,59 ueber 5
+  Folds, Residualisierung durchgehend schlechter), **Backport** - 2.
+  Projekt-Bestaetigung nach Drought (dort "nicht stabil besser"), ADR-003
+  ueber den "proven no-op"-Pfad erfuellt. Als Warnhinweis in
+  `WORKFLOW_GUARDS.md` (Panel-Helfer-Abschnitt) zurueckgefuehrt: kein
+  Default-Hebel. (`ML_Learning` `610839f`, `MLR3_Regression` `9722a4f` +
+  Backport-Commit `9c7f016`.)
+- **Kandidat 9 (Segmentbelegungs-Check + Kompositionsdiagnose)**: Teil A
+  bestaetigt, dass `month==12` im echten Test spuerbar belegt ist (8852
+  Zeilen, 17,3 %) - Kandidat 7s Negativbefund ist also ein echter Befund,
+  kein verdeckter No-op (Drought-Phase-8-Lehre gezielt geprueft). Teil B
+  wendet das bereits zentral zurueckgefuehrte `composition_reweighting.R`
+  auf die zeitgeblockte-CV-vs.-Test-Luecke an: Monats-Komposition-TVD
+  0,469 (auffaellig), Kompositionsanteil an der Gesamtluecke **126 %** -
+  die Luecke ist vollstaendig (und etwas mehr) ein reiner Saison-
+  Kompositionseffekt, kein zusaetzlicher Werte-/Modell-Anteil. Kein neuer
+  Backport noetig, bestehendes Modul erfolgreich wiederverwendet.
+  (`ML_Learning` `4082a8d`, `MLR3_Regression` `709fa3d`.)
+
+**Wiederkehrender Bugfund waehrend dieser 4 Kandidaten**: mlr3s
+"different column info during train and predict" trat trotz bereits
+dokumentierter Falle (WORKFLOW_GUARDS.md #8) noch 2x auf (`026`- und
+`029`-Skript), weil jeweils zwei GETRENNTE Tasks aus Train/Test gebaut
+wurden. Lehre explizit im Projekt-README festgehalten: Wissen ueber eine
+Falle verhindert das Hineinlaufen nicht zuverlaessig, nur ein
+wiederverwendbarer Code-Baustein (EIN gemeinsamer Task + `row_ids`) tut
+das.
+
+**Zwischenzeitliche Nutzeranfrage "haben wir wieder was gelernt fuer
+einen Skill?"** fuehrte zu einer Skill-Ueberarbeitung: erst
+`.claude/skills/setup-panel-forecast-project/SKILL.md` um die generischen
+Fallen erweitert, dann auf Nutzerpushback ("sind diese Skill nicht zu
+sehr projektspezifisch?") ehrlich reassessiert - die 3 generischen (jedes
+Projekt betreffenden) Fallen (`030_baseline.R`-Load-Order, mlr3-
+"different column info", `mlr3measures::rsq()` deprecated) in
+`WORKFLOW_GUARDS.md` Abschnitt 8 verschoben, der Skill selbst auf
+panel-/forecast-spezifische Orchestrierung verschlankt (Header nennt sich
+explizit "vorlaeufig, noch nicht an einem zweiten Panel-Projekt
+gegengeprueft"). (`MLR3_Regression` `08a706e`.)
+
+**Zwischenzeitliche Nutzeranfrage "haben wir eigentlich schon was - das
+wir ins Template zurueckspielen koennen?"** ergab eine saubere
+Vier-Wege-Unterscheidung: Kandidat 6 = Methodik bestaetigt, kein Code-
+Backport noetig; Kandidat 7 = Negativergebnis, nur 1 Projekt, damals noch
+nicht ADR-003-reif; Kandidat 8 = 2-Projekt-Negativbestaetigung, Backport
+als Doku-Warnhinweis; Kandidat 9 = wendet bereits bestehendes Modul an,
+kein neuer Backport-Bedarf.
+
+**Stand jetzt: alle 4 urspruenglich offenen `MLR3_Regression`-BACKLOG-
+Kandidaten (6-9) sind abgearbeitet.** Beide BACKLOG.md (Regression) und
+das Beijing-Projekt-README sind vollstaendig nachgezogen. Kein laufender
+Hintergrundprozess, keine offene Nutzerentscheidung.
+
+Auf Nutzerfrage "wie machen wir weiter?" eine Bestandsaufnahme gemacht:
+`MLR3_Regression`-BACKLOG hat nur noch Kandidat 25 offen
+(`add_regular_lags()` - regelmaessige hochfrequente Lag-/Rolling-Helfer,
+braucht ein 2. Panel-Projekt fuer ADR-003-Reife). `MLR3_Classifikation`-
+BACKLOG hat nur noch 2 nicht naeher spezifizierte P3-Punkte offen
+(Versionierung/Releases, Environment-Reproduzierbarkeit). Empfehlung: erst
+diesen Statusanker nachziehen (dieser Schritt), dann entweder ein 2.
+Panel-Projekt aufsetzen (loest Kandidat 25 UND liefert mehr Cross-
+Projekt-Evidenz fuer die Panel-Skill-Generalisierung) oder einen der P3-
+Punkte konkretisieren. Nutzerentscheidung dazu noch offen.
 
 **Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
-(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026). Die
-`MLR3_Regression`-Kandidaten 6-9 sind jetzt im Beijing-Projekt in Arbeit.
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
 
-**Empfohlener erster Schritt, Stand jetzt**: den `027`-Lauf auswerten
-(schlaegt das Modell die 24h-Persistenz?), `025`/`027` + Config + README
-committen, dann Kandidaten 6-9 der Reihe nach am 24h-Horizont.
+**Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
+2. Panel-Projekt vs. P3-Punkt konkretisieren vs. etwas Neues.
