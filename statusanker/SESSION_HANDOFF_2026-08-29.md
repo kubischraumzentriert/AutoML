@@ -222,13 +222,15 @@ Projekt mit ausreichend grossem/redundantem Kandidatenpool.
   `cde53a8` (YAML ADRs), `e236f4b` "Backport: composition_reweighting.R"
   (`test_composition_reweighting.R` 13 Checks lokal gruen). Gepusht,
   kein CI im Regr-Repo.
-- `ML_Learning` (lokal, kein Remote) @ `96abf51` "beijing-air-quality-
-  panel: 012 + 018 gelaufen". Davor `a901a6e` (013-Leak-Audit),
-  `d008822` (Projekt-Setup), `74f2968`/`e1afa5e` (Kandidat-15-Befunde).
-  **Uncommitted im Beijing-Projekt**: `025_forecast_features.R`,
-  `026_forecast_reference.R`, `000_config.R`-Aenderung (`forecast_
-  variant`), README-Aktualisierung - warten auf das Ergebnis des
-  laufenden `026`-Laufs.
+- `ML_Learning` (lokal, kein Remote) @ `5bf7443` "beijing-air-quality-
+  panel: Forecast-Neuaufsatz + zeitgeblockte Referenz". Davor `96abf51`
+  (012+018), `a901a6e` (013), `d008822` (Setup). **Uncommitted im
+  Beijing-Projekt**: `025_forecast_features.R`-Erweiterung (24h-sichere
+  Features), `027_forecast_24h_reference.R` (neu), `000_config.R`
+  (`forecast_horizon`), README - warten auf das Ergebnis des laufenden
+  `027`-Laufs.
+- `MLR3_Regression` @ `716492a` "skill: setup-panel-forecast-project"
+  (gepusht, kein CI im Regr-Repo).
 - Vorheriger Stand: `MLR3_Classifikation` @ `794d566` "docs: 5 letzte
   unerwaehnte analysis/-Einmalskripte knapp dokumentiert" - gepusht,
   docs-only, kein CI-Lauf. Zwischenstand: `c190774` "Add JSON reproducibility
@@ -1909,19 +1911,38 @@ Neues lokales Panel-Regressionsprojekt **`beijing-air-quality-panel`**
   **Kompositionseffekt**: Test-Zeitraum = nur Herbst+Winter, `pm25`
   saisonal nach oben verschoben. Anwendungsfall fuer `composition_
   reweighting.R` nach `month` + Kandidat 7.
-- **Forecast-Neuaufsatz** (noch NICHT committet): `025_forecast_
-  features.R` (pm25-Lags 1h/24h/168h + Rolling-Mittel je Station,
-  Schadstoffe raus, gelaggter Schadstoff-Block separat fuer Kandidat 6 ->
-  `train_fc.csv`/`test_fc.csv`), `000_config.R`-Schalter `forecast_variant
-  <- TRUE`, `026_forecast_reference.R` (LightGBM zeitgeblockte CV vs.
-  Zufalls-CV vs. echter Held-out-Test, gegen Persistence-Baselines).
-  **026 laeuft gerade im Hintergrund** (2 Anlaeufe an mlr3-Faktor-Level-
-  Mismatch gescheitert, jetzt Single-Task-Fix per `row_ids`). Reibungs-
-  fund: `entity_history.R` (Kandidat 5) deckt regelmaessige hochfrequente
-  Lags nicht ab (nur "Zeit seit Ereignis" + Lag-1) - Kandidat fuer einen
-  `add_regular_lags()`-Template-Helfer.
+- **Forecast-Neuaufsatz** (Commit `5bf7443`): `025_forecast_features.R`
+  (pm25-Lags + Rolling-Mittel je Station, Schadstoffe raus, gelaggter
+  Schadstoff-Block separat fuer Kandidat 6 -> `train_fc.csv`/
+  `test_fc.csv`), `000_config.R`-Schalter `forecast_variant <- TRUE`,
+  `026_forecast_reference.R`. 2 Anlaeufe an mlr3s "different column info
+  during train and predict" gescheitert (fread-Typinferenz je Datei +
+  Faktor-Level) - **Fix: EIN gemeinsamer Task Train+Test, per `row_ids`
+  getrennt**. Ergebnis (Held-out-Test): LightGBM RMSE **22,27** / R²
+  0,949. `pm25_lag_1h`-Persistenz allein RMSE 23,16 (mit lag_1h ist die
+  Aufgabe Nowcast+1h). `pm25_lag_24h`-Persistenz RMSE 105,83 / R² -0,15
+  (kollabiert am saisonalen Test). Zeitgeblockte CV (20,24) naeher am
+  Test als Zufalls-CV (17,61) - faengt ~57 % des CV-Optimismus,
+  Restluecke 2,03 = Saison-Kompositionsanteil. Reibungsfund:
+  `entity_history.R` (Kandidat 5) deckt regelmaessige hochfrequente Lags
+  nicht ab - Kandidat fuer einen `add_regular_lags()`-Template-Helfer.
+- **Skill extrahiert** (`MLR3_Regression` Commit `716492a`):
+  `.claude/skills/setup-panel-forecast-project/SKILL.md` - erstes
+  `.claude/skills/` im Regr-Repo. Wiederholbares Verfahren zum Aufsetzen
+  eines Panel-/Forecasting-Regressionsprojekts (Fetch + zeitgeblockter
+  Split, Config-Vars, Diagnose-Reihenfolge, Nowcast-vs-Forecast-Framing,
+  die mlr3-/030-Fallen, `025`/`026`-Lag-+Referenz-Muster, Horizont-Wahl).
+- **24h-Horizont-Variante** (noch NICHT committet): `025` erweitert
+  (`pm25_lag_48h`/`_72h`, 24h-sichere Rolling-Features `pm25_roll_mean_
+  24to168h`/`pm25_roll_sd_24to168h` = Fenster t-24h..t-168h,
+  `pm25_delta_24h_vs_48h`), `000_config.R` `forecast_horizon <- "24h"` +
+  `forecast_horizon_24h_drop_cols`, neues `027_forecast_24h_reference.R`
+  (wie 026, aber alle Features die bei 24h Vorlauf noch nicht bekannt
+  sind fallen weg). **027 laeuft gerade im Hintergrund.** Kernfrage:
+  schlaegt LightGBM auf 24h-Horizont die `pm25_lag_24h`-Persistenz
+  spuerbar (dann haben Kandidaten 6-9 Spielraum)?
 
-**Stand jetzt: 1 laufender Hintergrundprozess** (`026_forecast_
+**Stand jetzt: 1 laufender Hintergrundprozess** (`027_forecast_24h_
 reference.R`, Beijing-Projekt). Keine offene Nutzerentscheidung.
 Kandidat 15 vollstaendig durch, YAML-Header + BACKLOG-Aufraeumung
 erledigt.
@@ -1930,7 +1951,6 @@ erledigt.
 (pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026). Die
 `MLR3_Regression`-Kandidaten 6-9 sind jetzt im Beijing-Projekt in Arbeit.
 
-**Empfohlener erster Schritt, Stand jetzt**: den `026_forecast_
-reference.R`-Lauf des Beijing-Projekts auswerten (ehrliche zeitgeblockte
-RMSE-Referenz), `025`/`026` + README committen, dann Kandidaten 6-9 der
-Reihe nach.
+**Empfohlener erster Schritt, Stand jetzt**: den `027`-Lauf auswerten
+(schlaegt das Modell die 24h-Persistenz?), `025`/`027` + Config + README
+committen, dann Kandidaten 6-9 der Reihe nach am 24h-Horizont.
