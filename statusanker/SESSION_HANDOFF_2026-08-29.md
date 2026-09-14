@@ -2292,5 +2292,45 @@ keine offene Nutzerentscheidung.
 spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
 Reproduzierbarkeit).
 
-**Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-Kandidat 29 vs. einen der Klassifikation-P3-Punkte vs. etwas Neues.
+**34. Aktualisierung:** Nutzerfrage "haben wir Erkenntnisse gewonnen,
+die wir ins Template schieben koennen?" - identifiziert: `028_feature_
+blocks.R` (Kandidat 6), `031_residualization.R` (Kandidat 8) und
+`034_robust_loss_functions.R` (Kandidat 30) schrieben je einen fast
+identischen "gleiche Folds, mehrere Varianten, Delta+SD+Ratio"-Loop von
+Hand - dieselbe Lehre wie beim `combined_task_helper.R`-Fund (Kandidat
+26): wiederholter Code ist eine Falle, nur ein Baustein verhindert das
+zuverlaessig. Nutzerbestaetigung "ja, mach das so".
+
+Neues `paired_fold_comparison.R` (`extract_folds()`/`run_variant_on_
+folds()`/`paired_fold_delta()`) in `MLR3_Regression` gebaut -
+`variant_fn` traegt bewusst die GESAMTE Fold-Logik statt nur
+task+learner zu erzwingen, damit auch komplexere Varianten wie
+Residualisierung (eigenes Fold-Target, eigene Vorhersage-Rekonstruktion)
+hineinpassen. 13 Checks gruen (synthetisch + ein echter mlr3-
+Integrationscheck). (`MLR3_Regression` `8bb7d2c`.)
+
+Alle 3 Ursprungsskripte in `electricity-load-panel` darauf umgestellt -
+Generalitaets-Nachweis wie beim letzten Mal. `028` und `031` erneut
+gelaufen: Ergebnisse **byte-identisch** zum Original (028: alle 6
+Ratios exakt gleich inkl. 3,73; 031: Ratio 0,86, Held-out-Delta 57,538
+exakt gleich). `034` (teuerster Lauf, 1500 Iterationen x 4 Objectives x
+5 Folds) laeuft zum Zeitpunkt dieser Aktualisierung noch im Hintergrund
+- bisher sichtbare Zwischenwerte (L2-Referenz, Huber-Default,
+Huber-skaliert) bereits byte-identisch zum vorherigen Lauf. Ergebnis
+wird nachgetragen, sobald der Lauf durch ist.
+
+**Stand jetzt**: `paired_fold_comparison.R` im Template verankert, 2 von
+3 Retrofits vollstaendig verifiziert, 3. Retrofit (034) laeuft noch im
+Hintergrund (kein Zweifel am Ausgang - bisherige Zwischenwerte stimmen
+exakt). Kandidat 29 bleibt weiterhin offen im Backlog.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+`MLR3_Classifikation`-BACKLOG hat weiterhin nur die 2 nicht naeher
+spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
+Reproduzierbarkeit).
+
+**Empfohlener erster Schritt, Stand jetzt**: `034`-Lauf abwarten, Retrofit-
+Commit fuer `electricity-load-panel` abschliessen, dann Nutzerentscheidung
+einholen - Kandidat 29 vs. einen der Klassifikation-P3-Punkte vs. etwas
+Neues.
