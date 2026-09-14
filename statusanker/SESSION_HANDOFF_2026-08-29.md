@@ -2349,5 +2349,40 @@ offene Nutzerentscheidung. Nur Kandidat 29 (negative Stacking-Gewichte,
 spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
 Reproduzierbarkeit).
 
+**36. Aktualisierung:** Nutzeranweisung "mach weiter mit Kandidat 29" -
+kein Regressions-Projekt hatte bereits einen Ensemble-Kandidatenpool
+(die generische `120`/`127`-Pipeline wurde in Beijing/Electricity nie
+durchlaufen, nur die massgeschneiderten Forecast-Skripte 025-034) - statt
+die komplette generische Pipeline nachzuholen, ein eigenstaendiges
+`035_negative_stacking_weights.R` in `electricity-load-panel` gebaut:
+15-Modelle-Pool (5 Ranger/5 LightGBM/5 CatBoost, analog `127_ensemble_
+candidate_pool.R`, inkl. der dortigen `ensemble_pool_train_sample_n`-
+Stichprobe - ein erster Lauf OHNE diese Stichprobe brauchte pro
+Ranger-Kandidat ~13 Minuten und wurde abgebrochen, mit 50k-Stichprobe
+~100-190s), `glmnet::cv.glmnet(lower.limits=0 vs. -Inf)` als Mechanik-
+Nachbau von `stacks::blend_predictions()`s `non_negative`-Argument -
+exakt dieselbe Methodik wie der 1. Test (Klassifikation, s6e9).
+
+**Erneuter, identischer Nullbefund**: 0 von 15 negative Koeffizienten
+trotz Erlaubnis, RMSE 122,53 fuer beide Stacking-Varianten identisch,
+bestes Einzelmodell (`lightgbm_9`, RMSE 120,20) schlaegt sogar beide
+Stacking-Varianten - dasselbe Muster wie bei der Klassifikation.
+**ADR-003-Schwelle erreicht** (2 unabhaengige Projekte, Klassifikation
+UND Regression, beide negativ) - `JOSS_TECHNIQUE_WATCH.md` Kandidat #8
+im Klassifikations-Template final auf niedrige Prioritaet gesetzt, kein
+Backport. (`MLR3_Regression` `846a44e`, `MLR3_Classifikation` `c21c989`,
+`ML_Learning` `d1bcdfa`.)
+
+**Stand jetzt: Kandidat 29 abgeschlossen, `MLR3_Regression`-BACKLOG ist
+wieder vollstaendig leer.** Kein laufender Hintergrundprozess, keine
+offene Nutzerentscheidung.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+`MLR3_Classifikation`-BACKLOG hat weiterhin nur die 2 nicht naeher
+spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
+Reproduzierbarkeit).
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-Kandidat 29 vs. einen der Klassifikation-P3-Punkte vs. etwas Neues.
+einen der Klassifikation-P3-Punkte konkretisieren vs. etwas komplett
+Neues (kein Regressions-Backlog-Kandidat mehr offen).
