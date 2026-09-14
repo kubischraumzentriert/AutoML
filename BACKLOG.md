@@ -805,6 +805,30 @@ Trust-Check fuer kuenftige Projekte bereit, v.a. wenn ein verdaechtiges
 Feature NICHT so klar dominant ist wie hier (share=0,429) - dort waere
 eine Stabilitaetspruefung informativer.
 
+## Vier neue Backlog-Kandidaten (2026-09-14, Nutzeranfrage "schlag noch ein neues Backlog-Thema vor")
+
+Nach Bestandsaufnahme vorgeschlagen, Nutzerbestaetigung "ja, mach das
+so, 1 bis 4":
+
+1. **Wahrscheinlichkeitskalibrierung** (Platt/Isotonic, Expected
+   Calibration Error) - `predict_type="prob"` wird im gesamten
+   Klassifikations-Template durchgaengig genutzt (Schwellenwerte,
+   Kostenmatrizen, Ensemble-Blends), nie geprueft, ob die
+   Wahrscheinlichkeiten selbst kalibriert sind. Wird direkt im Anschluss
+   umgesetzt (siehe naechster Abschnitt).
+2. **Multi-Horizont-Forecasting** (`MLR3_Regression`) - ein Modell fuer
+   mehrere Vorlaufzeiten gleichzeitig statt separater Modelle je
+   Horizont, Erweiterung der Panel-Arbeit (Beijing/Electricity). Als
+   Kandidat 31 in `MLR3_Regression/BACKLOG.md` eingetragen.
+3. **Concept-Drift ueber mehrere Zeitperioden** (`MLR3_Regression`) -
+   `composition_reweighting.R`/`univariate_drift.R` auf rollierende
+   Fenster statt einen einzigen Train/Test-Split ausweiten. Als
+   Kandidat 32 in `MLR3_Regression/BACKLOG.md` eingetragen.
+4. **Subgruppen-Fairness-Disparitaet** - prueft, ob ein Modell ueber
+   sensible Untergruppen hinweg systematisch unterschiedlich gut
+   performt (anders als `segment_metrics.R`, das diagnose-, nicht
+   fairness-fokussiert ist). Noch offen.
+
 ## P1.2 Schritt 2 - Status (2026-08-27): historisches Nachtragen
 
 **Nutzeranfrage**: "wir sollten die Historie nachtragen d.h. migrieren"
