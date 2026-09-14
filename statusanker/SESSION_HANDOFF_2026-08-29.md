@@ -2182,6 +2182,42 @@ laufender Hintergrundprozess, keine offene Nutzerentscheidung.
 spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
 Reproduzierbarkeit).
 
+**31. Aktualisierung:** Nutzeranweisung "Kandidat 27 verfeinern -
+Effektgroessen-Schwellenwert einbauen" - neuer optionaler Parameter
+`min_effect_size` in `diagnose_missingness_mechanism()`/
+`missingness_mechanism_report()` (beide Templates, identisch): verlangt
+ZUSAETZLICH zu `p_adj_BH < alpha` eine Mindest-Effektgroesse (KS-D/
+Cramers V, aus dem bereits vorhandenen `effect_size`-String von
+`univariate_drift.R` geparst - neue `target_effect_value`/`top_feature_
+effect_value`-Felder als numerische statt String-Werte). Default `NULL`
+= altes Verhalten, rueckwirkungskompatibel. 4 neue Checks (winziger-
+aber-signifikanter Effekt wird unterdrueckt, echter grosser Effekt
+bleibt erhalten, numerischer Effekt-Typ) - 24 Checks (Klassifikation) /
+20 Checks (Regression) insgesamt gruen, volle Klassifikations-Testsuite
+weiterhin gruen. (`MLR3_Classifikation` `60304b5`, `MLR3_Regression`
+`5abb08a`.)
+
+Direkt am Beijing-Reibungsfund verifiziert: erneuter Lauf mit
+`min_effect_size=0.1` differenziert jetzt klar zwischen 7 Spalten mit
+echtem Ziel-Effekt (Meteorologie + pm10 + O3, D>=0,14 - blieben "Ziel-
+UND Feature-Hinweis") und 3 Spalten mit nur statistischem, keinem
+praktisch relevanten Signal (CO/SO2/NO2, D<=0,065 - fielen auf reinen
+Feature-Hinweis zurueck). Der urspruenglich dokumentierte Reibungsfund
+ist damit geloest, Kandidat 27 in `BACKLOG.md` von "in Arbeit" auf
+"erledigt" gehoben. (`MLR3_Regression` `8e1dbc4`, `ML_Learning`
+`5bc7fb5`.)
+
+**Stand jetzt**: Kandidaten 28-30 stehen weiterhin offen im Backlog
+bereit. Kein laufender Hintergrundprozess, keine offene
+Nutzerentscheidung.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+`MLR3_Classifikation`-BACKLOG hat weiterhin nur die 2 nicht naeher
+spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
+Reproduzierbarkeit).
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-Kandidat 27 verfeinern (Effektgroessen-Schwellenwert) vs. einen der
-Kandidaten 28-30 angehen vs. etwas Neues.
+einen der Kandidaten 28-30 angehen (Quantilregression, negative
+Stacking-Gewichte 2. Test, robuste Loss-Funktionen) vs. einen der
+Klassifikation-P3-Punkte vs. etwas Neues.
