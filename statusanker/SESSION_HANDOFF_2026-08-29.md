@@ -2253,7 +2253,44 @@ Hintergrundprozess, keine offene Nutzerentscheidung.
 spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
 Reproduzierbarkeit).
 
+**33. Aktualisierung:** Nutzeranweisung "mach weiter mit Kandidat 30" -
+`electricity-load-panel/034_robust_loss_functions.R`: paarweiser
+Vergleich (5 zeitgeblockte Folds, wie Kandidat 6/8) von LightGBM
+`objective="huber"`/`"quantile"` gegen Standard-L2/RMSE, Testfall
+extreme Kunden-Heteroskedastizitaet (Faktor >400).
+
+Erster naiver Lauf (Default-`alpha=0.9`, dasselbe Iterationsbudget wie
+L2, 250) taeuschte einen katastrophalen Huber-Ausfall vor (RMSE 1738
+statt 96). Diagnose per Extra-Skript fand die Ursache: bei einem Ziel
+bis in die Tausende ist `alpha=0.9` praktisch immer unterschritten -
+Huber wird zu fast reinem linearem Loss mit KONSTANTEM statt
+fehlerproportionalem Gradienten, braucht fuer die wenigen extremen
+Hochlast-Kunden vielfach mehr Baeume als L2 (bestaetigt: bei 3000
+Iterationen RMSE 96, praktisch identisch zu L2 - reine
+Konvergenzgeschwindigkeit).
+
+Fairer Vergleich (alpha auf ~96 skaliert, alle Objectives mit
+identischem, ausreichendem Iterationsbudget [1500]): **sauberer
+Negativbefund** - Huber (Ratio 0,72) und Quantile-Median (Ratio 0,65)
+unterscheiden sich praktisch NICHT von L2/RMSE, auch nicht bei
+Worst-Case-Fehlern (`p99_abs_err`/`max_abs_err`). Die generische
+LightGBM-Falle (Default-alpha + L2-kalibriertes Budget taeuscht ein
+katastrophales Ergebnis vor) als Warnhinweis in `WORKFLOW_GUARDS.md`
+zurueckgefuehrt - trifft jeden, der `objective="huber"`/`"quantile"`
+naiv einsetzt, nicht nur dieses Projekt. (`MLR3_Regression` `c3c6d1b`,
+`ML_Learning` `628851d`.)
+
+**Stand jetzt: alle 4 Kandidaten der letzten Backlog-Runde (27-30) sind
+abgearbeitet.** Nur noch Kandidat 29 (negative Stacking-Gewichte, 2.
+unabhaengiger Test - braucht ein Projekt mit grossem/redundantem
+Ensemble-Kandidatenpool) steht offen. Kein laufender Hintergrundprozess,
+keine offene Nutzerentscheidung.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+`MLR3_Classifikation`-BACKLOG hat weiterhin nur die 2 nicht naeher
+spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
+Reproduzierbarkeit).
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-Kandidat 29 (braucht ein Projekt mit grossem/redundantem Ensemble-Pool)
-vs. Kandidat 30 (electricity-load-panel bietet sich als Testfall an) vs.
-einen der Klassifikation-P3-Punkte vs. etwas Neues.
+Kandidat 29 vs. einen der Klassifikation-P3-Punkte vs. etwas Neues.
