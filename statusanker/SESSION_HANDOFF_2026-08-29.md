@@ -2447,7 +2447,46 @@ keine offene Nutzerentscheidung.
 **Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
 (pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
 
+**39. Aktualisierung:** Nutzeranweisung "schlag ein neues Backlog-Thema
+vor" -> 4 Kandidaten vorgeschlagen (Feature-Importance-Stabilitaet,
+Wahrscheinlichkeitskalibrierung, Multi-Horizont-Forecasting, Concept-
+Drift ueber mehrere Zeitperioden), Empfehlung "Feature-Importance-
+Stabilitaet" (schliesst eine Luecke in einem bereits vielfach genutzten
+Trust-Modul, direkte Fortsetzung der Kandidat-27-Lehre). Nutzer-
+bestaetigung "ja, mach das so".
+
+Neues `feature_importance_stability.R` (beide Templates, identisch):
+`collect_importance_across_folds()` (nutzt `paired_fold_comparison.R`s
+Fold-Struktur), `pairwise_rank_correlation()` (Spearman),
+`pairwise_topk_overlap()` (Jaccard), `feature_importance_stability_
+report()`. 15 Checks (Klassifikation, testthat) / 14 Checks (Regression,
+manuell) gruen - synthetisch + je ein echter mlr3-Integrationscheck.
+Dabei ein reales methodisches Detail entdeckt: CV-Folds ueberlappen sich
+stark (80% bei 5-fach-CV) und koennen dadurch selbst Rauschen-Features
+scheinbar stabil erscheinen lassen - im Test durch Aggregat-Pruefung
+ueber 10 statt 3 Rauschen-Features abgefedert. (`MLR3_Classifikation`
+`ad05e69`, `MLR3_Regression` `84e570c`.)
+
+**Erste Realprojekt-Anwendung** (`016_feature_importance_stability.R`,
+am Template-eigenen `health_condition`-Projekt, direkt gegen `015`s
+Einzellauf verglichen): mittlere Spearman-Rangkorrelation 0,946,
+Top-5-Jaccard-Overlap 0,771. Die 3 fuehrenden Features sind ueber ALLE
+5 Folds PERFEKT stabil (sd_rank=0) - das in `015` als staerkstes
+Feature geflaggte `stress_level` (share=0,429) ist damit bestaetigt
+KEIN Zufallsartefakt eines Einzellaufs. **Ergebnis: die Sorge war fuer
+dieses Projekt unbegruendet, aber jetzt empirisch statt nur
+angenommen** - kein Backport-Bedarf am Leak-Audit selbst, das Modul
+steht aber fuer kuenftige Projekte bereit (v.a. bei weniger klar
+dominanten Verdaechtigen). (`MLR3_Classifikation` `2db3fe8`.)
+
+**Stand jetzt**: neuer Trust-Check erfolgreich gebaut und real
+verifiziert. Kein laufender Hintergrundprozess, keine offene
+Nutzerentscheidung.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-kein offener Backlog-Punkt mehr in beiden Templates, also etwas komplett
-Neues vorschlagen/erfragen, oder abwarten bis zur JOSS-Wiedervorlage
-(~Nov 2026).
+kein konkret offener Backlog-Punkt mehr in beiden Templates, also
+etwas komplett Neues vorschlagen/erfragen, oder abwarten bis zur
+JOSS-Wiedervorlage (~Nov 2026).
