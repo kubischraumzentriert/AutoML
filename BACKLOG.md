@@ -760,6 +760,51 @@ noch nicht faelligen, einreichungszeitpunktabhaengigen Formal-Punkte
 [Manuskript-Checkliste, Broader-Impact-Statement] bleiben offen, siehe
 `REPRODUCIBILITY_CHECKLIST.md`).
 
+## Feature-Importance-Stabilitaet - Status (2026-09-14)
+
+Neuer Backlog-Vorschlag (Nutzerfrage "schlag ein neues Backlog-Thema
+vor", nach Bestandsaufnahme): `015_target_leak_audit.R` (und viele
+andere Diagnosen) verlassen sich auf `learner$importance()` aus EINEM
+einzigen Trainingslauf auf dem vollen Task - nie geprueft, ob diese
+Rangfolge selbst robust ist. Direkte Uebertragung der Kandidat-27-Lehre
+(bei grossem n wird fast alles "signifikant") auf Feature-Importance:
+eine einzelne Zahl kann Rauschen sein, auch wenn sie plausibel aussieht.
+
+Neues `feature_importance_stability.R` (beide Templates, identisch):
+`collect_importance_across_folds()` (nutzt `paired_fold_comparison.R`s
+Fold-Struktur), `pairwise_rank_correlation()` (Spearman),
+`pairwise_topk_overlap()` (Jaccard), `feature_importance_stability_
+report()` (Report je Feature: mittlerer Rang, Rang-SD, Top-k-Anteil).
+15 Checks gruen (Klassifikation, testthat) / 14 Checks gruen (Regression,
+manueller Teststil) - synthetisch + je ein echter mlr3-Integrationscheck
+(starkes Signal-Feature vs. 10 Rauschen-Features). Dabei ein reales
+methodisches Detail entdeckt: CV-Folds ueberlappen sich stark (80% bei
+5-fach-CV) und koennen dadurch selbst Rauschen-Features scheinbar
+stabil erscheinen lassen - im Test dokumentiert (Aggregat-Pruefung ueber
+10 Rauschen-Features statt 3, um Einzelausreisser abzufedern), keine
+Fehlerquelle im Modul selbst.
+
+**Erste Realprojekt-Anwendung** (`016_feature_importance_stability.R`,
+am Template-eigenen `health_condition`-Projekt, direkt gegen 015s
+Einzellauf-Ergebnis verglichen): 5-fache stratifizierte CV, `classif.
+lightgbm`. Mittlere paarweise Spearman-Rangkorrelation **0,946**,
+mittlerer Top-5-Jaccard-Overlap **0,771** - insgesamt hohe Stabilitaet.
+Die 3 fuehrenden Features (`stress_level`, `sleep_duration`,
+`physical_activity_level`) sind ueber ALLE 5 Folds hinweg PERFEKT
+stabil (sd_rank=0, topk_share=1.0) - das in 015 als staerkstes Feature
+geflaggte `stress_level` (share=0,429) ist damit **bestaetigt kein
+Zufallsartefakt eines Einzellaufs**. Schwaechere/hintere Features
+(`heart_rate`, `id`, `water_intake`) zeigen dagegen spuerbare Rang-
+Streuung - erwartbar, dort geht es um marginale Unterschiede.
+
+**Ergebnis: die Sorge war fuer dieses Projekt unbegruendet, aber jetzt
+EMPIRISCH statt nur angenommen** - `015`s Vertrauen in einen Einzellauf
+war hier gerechtfertigt. Kein Backport-Bedarf am Leak-Audit selbst
+(keine Aenderung noetig), aber das neue Modul steht als eigenstaendiger
+Trust-Check fuer kuenftige Projekte bereit, v.a. wenn ein verdaechtiges
+Feature NICHT so klar dominant ist wie hier (share=0,429) - dort waere
+eine Stabilitaetspruefung informativer.
+
 ## P1.2 Schritt 2 - Status (2026-08-27): historisches Nachtragen
 
 **Nutzeranfrage**: "wir sollten die Historie nachtragen d.h. migrieren"
