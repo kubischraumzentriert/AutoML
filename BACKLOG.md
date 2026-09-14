@@ -829,6 +829,34 @@ so, 1 bis 4":
    performt (anders als `segment_metrics.R`, das diagnose-, nicht
    fairness-fokussiert ist). Noch offen.
 
+### Kandidat 1 (Wahrscheinlichkeitskalibrierung) - erledigt (2026-09-14)
+
+Neues `probability_calibration.R`: `expected_calibration_error()` (ECE,
+gebinnt), `brier_score()`, `fit_platt_scaling()`/`fit_isotonic_
+calibration()` (beide NUR auf Kalibrierungsmenge fitten),
+`calibration_report()` (voller Workflow). 11 Checks gruen (synthetischer
+Overconfidence-Fall mit bekannter Ground Truth), volle Testsuite
+weiterhin gruen. Binaer only (Multiclass bewusst nicht Teil dieses
+ersten Moduls).
+
+**Erste Realprojekt-Anwendung** (`017_probability_calibration.R`, am
+Template-eigenen `health_condition`-Projekt, One-vs-Rest "unhealthy"
+[~8,4%] vs. Rest - Standard-Praxis fuer Multiclass-Kalibrierung, das
+Projekt selbst ist 3-klassig): `classif.lightgbm`, echter Held-out-Test
+(n=69.009 Bestaetigungsmenge nach Kalibrierung/Bestaetigung-Split).
+
+**Ergebnis, ehrlich**: die rohen Wahrscheinlichkeiten waren bereits SEHR
+gut kalibriert (ECE 0,0019 - `LightGBM` mit genuegend Daten und
+moderater Klassenimbalance hier offenbar kein Overconfidence-Problem).
+Isotonic verbessert marginal (ECE 0,0015), **Platt-Scaling macht es
+sogar leicht SCHLECHTER** (ECE 0,0040) - ein echter, uebertragbarer
+Fund: Post-hoc-Kalibrierung ist NICHT automatisch kostenlos, auf einer
+endlichen Kalibrierungsmenge gefittet kann sie zusaetzliches Rauschen
+einfuehren, wenn das Basismodell bereits gut kalibriert ist. Praktische
+Konsequenz: IMMER erst den Roh-ECE pruefen, bevor man reflexhaft eine
+Kalibrierungsmethode anwendet - "kalibrieren, weil man es kann" ist
+kein Automatismus.
+
 ## P1.2 Schritt 2 - Status (2026-08-27): historisches Nachtragen
 
 **Nutzeranfrage**: "wir sollten die Historie nachtragen d.h. migrieren"
