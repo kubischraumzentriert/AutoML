@@ -2217,7 +2217,43 @@ Nutzerentscheidung.
 spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
 Reproduzierbarkeit).
 
+**32. Aktualisierung:** Nutzeranweisung "mach weiter mit Kandidat 28" -
+neues `quantile_regression.R` (Pinball-Loss-Quantilregression per
+`regr.lightgbm objective="quantile"`) als Ergaenzung zu `conformal_
+prediction.R` gebaut, 8 synthetische Checks gruen (konstruierter
+heteroskedastischer Fall mit bekannter Ground Truth bestaetigt die
+Kernhypothese: lokal adaptive Intervallbreite statt Conformals
+konstanter Marge). Neues Template-Skript `132_quantile_prediction_
+intervals.R` (Ergaenzung zu `128`, teilt denselben `120`-Holdout-Split
+fuer direkte Vergleichbarkeit). (`MLR3_Regression` `c9f7ed0`.)
+
+Direkt an `electricity-load-panel` angewendet (`033_quantile_vs_
+conformal_intervals.R`) - dieses Projekt ist wegen der extremen
+Kunden-Heteroskedastizitaet (Lastniveau-Faktor >400, MT_223 ~0 kW bis
+MT_208 ~6614 kW) ein idealer Testfall. **Eindeutiges Ergebnis**:
+Conformals konstante Marge (173,76) ueberdeckt kleine Kunden massiv
+(MT_223: 100% statt 90% Ziel-Coverage) UND unterdeckt grosse Kunden
+drastisch (MT_208: nur 33,4% statt 90%) - Quantilregressions lokal
+adaptive Breite (0,0003 bis 1136,92, korrekt mit dem Lastniveau
+wachsend) haelt die Coverage pro Kunde durchgehend nah am Ziel. Dabei
+einen kleinen Indexierungsbug im eigenen Vergleichsskript gefunden und
+sofort korrigiert (`test$client[test_rows]` verwechselte Task-Row-IDs
+mit Positionen). Kandidat 28 in `BACKLOG.md` als erledigt markiert
+(additive Ergaenzung, kein Backport-Gate noetig). (`ML_Learning`
+`f081f3e`.)
+
+**Stand jetzt**: Kandidaten 29 (negative Stacking-Gewichte, 2.
+unabhaengiger Test) und 30 (robuste Loss-Funktionen bei Ziel-
+Ausreissern) stehen offen im Backlog bereit. Kein laufender
+Hintergrundprozess, keine offene Nutzerentscheidung.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+`MLR3_Classifikation`-BACKLOG hat weiterhin nur die 2 nicht naeher
+spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
+Reproduzierbarkeit).
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-einen der Kandidaten 28-30 angehen (Quantilregression, negative
-Stacking-Gewichte 2. Test, robuste Loss-Funktionen) vs. einen der
-Klassifikation-P3-Punkte vs. etwas Neues.
+Kandidat 29 (braucht ein Projekt mit grossem/redundantem Ensemble-Pool)
+vs. Kandidat 30 (electricity-load-panel bietet sich als Testfall an) vs.
+einen der Klassifikation-P3-Punkte vs. etwas Neues.
