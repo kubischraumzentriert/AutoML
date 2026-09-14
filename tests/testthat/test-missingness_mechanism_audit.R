@@ -94,3 +94,48 @@ test_that("missingness_mechanism_report() ohne fehlende Werte gibt leere Tabelle
   res <- missingness_mechanism_report(dt, target_col = "y")
   expect_equal(nrow(res), 0L)
 })
+
+test_that("min_effect_size unterdrueckt einen signifikanten, aber winzigen Effekt (grosses n)", {
+  # Grosses n + winzige Mittelwertverschiebung -> p_adj sehr klein, aber
+  # KS-D nahe 0 (der reale Beijing-Reibungsfund, hier synthetisch nachgebaut).
+  set.seed(6)
+  n <- 200000
+  y <- rnorm(n)
+  dt <- data.table::data.table(x_other = rnorm(n), y = y, z = rnorm(n))
+  # Winzige Verschiebung: nur die obersten 0.05% der y-Werte fehlen haeufiger,
+  # aber der Effekt auf die Gesamtverteilung ist klein.
+  miss_idx <- sample(seq_len(n), 20000)
+  miss_idx <- c(miss_idx, order(y, decreasing = TRUE)[1:500])  # kleiner Zielbias obendrauf
+  dt[unique(miss_idx), z := NA]
+
+  res_no_threshold <- diagnose_missingness_mechanism(dt, feature = "z", target_col = "y")
+  res_with_threshold <- diagnose_missingness_mechanism(dt, feature = "z", target_col = "y",
+                                                        min_effect_size = 0.1)
+  expect_lt(res_no_threshold$target_p_adj, 0.05)
+  expect_lt(res_no_threshold$target_effect_value, 0.1)  # winziger Effekt trotz Signifikanz
+  expect_match(res_with_threshold$verdict, "kein Hinweis")
+})
+
+test_that("min_effect_size laesst einen ECHTEN grossen Effekt weiterhin durch", {
+  set.seed(7)
+  n <- 5000
+  y <- rnorm(n)
+  dt <- data.table::data.table(x_other = rnorm(n), y = y, z = rnorm(n))
+  miss_idx <- order(y, decreasing = TRUE)[1:1250]  # starker, echter MNAR-Effekt
+  dt[miss_idx, z := NA]
+  res <- diagnose_missingness_mechanism(dt, feature = "z", target_col = "y", min_effect_size = 0.1)
+  expect_gte(res$target_effect_value, 0.1)
+  expect_match(res$verdict, "Ziel-Hinweis")
+})
+
+test_that("target_effect_value/top_feature_effect_value sind numerisch geparst (kein String mehr)", {
+  set.seed(8)
+  n <- 500
+  y <- rnorm(n)
+  dt <- data.table::data.table(x_other = rnorm(n), y = y, z = rnorm(n))
+  miss_idx <- order(y, decreasing = TRUE)[1:125]
+  dt[miss_idx, z := NA]
+  res <- diagnose_missingness_mechanism(dt, feature = "z", target_col = "y")
+  expect_true(is.numeric(res$target_effect_value))
+  expect_true(res$target_effect_value >= 0 && res$target_effect_value <= 1)
+})
