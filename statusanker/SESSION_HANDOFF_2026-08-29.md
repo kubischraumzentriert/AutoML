@@ -2486,7 +2486,49 @@ Nutzerentscheidung.
 **Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
 (pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
 
+**40. Aktualisierung:** Nutzeranweisung "schlag noch ein neues Backlog-
+Thema vor" -> 4 weitere Kandidaten vorgeschlagen (Wahrscheinlichkeits-
+kalibrierung, Multi-Horizont-Forecasting, Concept-Drift ueber mehrere
+Zeitperioden, Subgruppen-Fairness-Disparitaet), Empfehlung
+"Wahrscheinlichkeitskalibrierung" (dasselbe Muster wie zuvor: ein
+staendig genutztes, nie validiertes Artefakt). Nutzerbestaetigung "ja,
+mach das so, 1 bis 4" - alle 4 ins Backlog eingetragen (1+4 in
+`MLR3_Classifikation/BACKLOG.md`, 2+3 als Kandidaten 31/32 in
+`MLR3_Regression/BACKLOG.md`, dort noch offen), Kandidat 1 direkt
+umgesetzt.
+
+Neues `probability_calibration.R`: `expected_calibration_error()` (ECE,
+gebinnt), `brier_score()`, `fit_platt_scaling()`/`fit_isotonic_
+calibration()` (beide NUR auf Kalibrierungsmenge fitten),
+`calibration_report()` (voller Workflow: Kalibrierung/Bestaetigung-
+Split, ECE/Brier vorher/nachher). 11 Checks gruen (synthetischer
+Overconfidence-Fall mit bekannter Ground Truth), volle Testsuite
+weiterhin gruen. Binaer only (Multiclass-Kalibrierung bewusst nicht
+Teil dieses ersten Moduls). (`MLR3_Classifikation` `30f9991`.)
+
+**Erste Realprojekt-Anwendung** (`017_probability_calibration.R`, am
+Template-eigenen `health_condition`-Projekt, One-vs-Rest "unhealthy"
+[~8,4%] vs. Rest, da das Projekt selbst 3-klassig ist): `classif.
+lightgbm`, echter Held-out-Test. **Ergebnis, ehrlich**: rohe
+Wahrscheinlichkeiten bereits SEHR gut kalibriert (ECE 0,0019). Isotonic
+verbessert marginal (0,0015), **Platt-Scaling macht es sogar leicht
+SCHLECHTER** (0,0040) - ein echter, uebertragbarer Fund: Post-hoc-
+Kalibrierung ist NICHT automatisch kostenlos, kann bei einem bereits
+gut kalibrierten Modell zusaetzliches Rauschen einfuehren. Praktische
+Lehre: immer erst den Roh-ECE pruefen, bevor man reflexhaft kalibriert.
+(`MLR3_Classifikation` `dec0729`.)
+
+**Stand jetzt**: Kandidat 1 abgeschlossen und real verifiziert.
+Kandidaten 2+3 (Multi-Horizont-Forecasting, Concept-Drift rollierend)
+offen in `MLR3_Regression/BACKLOG.md` (dort als 31/32), Kandidat 4
+(Subgruppen-Fairness-Disparitaet) offen in `MLR3_Classifikation/
+BACKLOG.md`. Kein laufender Hintergrundprozess, keine offene
+Nutzerentscheidung.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-kein konkret offener Backlog-Punkt mehr in beiden Templates, also
-etwas komplett Neues vorschlagen/erfragen, oder abwarten bis zur
-JOSS-Wiedervorlage (~Nov 2026).
+Kandidat 2 (Multi-Horizont-Forecasting), 3 (Concept-Drift rollierend)
+oder 4 (Subgruppen-Fairness-Disparitaet) angehen, oder etwas komplett
+Neues.
