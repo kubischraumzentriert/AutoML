@@ -712,6 +712,34 @@ Backlog-Meilenstein wird direkt nach dem finalen Commit (vor dem naechsten
 Punkt) ein neuer annotierter Tag gesetzt und gepusht - Teil des
 `backlog-item-workflow`-Skills, nicht ein separat anzustossender Schritt.
 
+## Publikationsbenchmark standardisieren - Status (2026-09-14)
+
+Der zweite bislang unspezifizierte P3-Punkt. Nutzeranfrage "einen der
+Klassifikation-P3-Punkte konkretisieren" -> Nutzerhinweis "eventuell hat
+es was mit dem geplanten JOSS-Publication zu tun oder AutoML
+Conference" -> Recherche ergab den **AutoML-Conference ABCD-Track**
+(Applications-Kategorie) als konkreten, zitierfaehigen Anforderungs-
+katalog: Daten+Code+Verfahren muessen oeffentlich zugaenglich UND
+unabhaengig reproduzierbar sein, plus dediziertes Reproducibility-
+Review.
+
+Neue Datei [`docs/research/REPRODUCIBILITY_CHECKLIST.md`](docs/research/REPRODUCIBILITY_CHECKLIST.md)
+prueft den aktuellen Stand gegen diesen Katalog: **3 von 4 inhaltlichen
+Anforderungen bereits erfuellt** (Datensaetze via `EXTERNAL_BENCHMARK_
+SET.md`, Verfahren via `BENCHMARK_PROTOCOL.md`, Code oeffentlich im
+Repo) - **1 echte Luecke gefunden**: die 6 tatsaechlichen Datensatz-
+Laeufe fanden in `ML_Learning` statt, das KEIN Git-Remote hat (rein
+lokal) - eine dritte Person koennte die berichteten Zahlen nicht ohne
+privaten Zugriff nachvollziehen. Auf Nutzerwunsch ("baue erstmal die
+Checkliste, das Skript spaeter") bewusst NUR die Checkliste gebaut, der
+konkrete Fix (eigenstaendiges Reproduktions-Skript im Repo, ohne
+`ML_Learning`-Abhaengigkeit) als naechster Schritt vorgemerkt, nicht
+jetzt umgesetzt.
+
+**Damit ist dieser P3-Punkt konkret PRUEFBAR statt vage** - nicht
+vollstaendig abgeschlossen (die eine Luecke bleibt offen), aber nicht
+mehr "unspezifiziert".
+
 ## P1.2 Schritt 2 - Status (2026-08-27): historisches Nachtragen
 
 **Nutzeranfrage**: "wir sollten die Historie nachtragen d.h. migrieren"
