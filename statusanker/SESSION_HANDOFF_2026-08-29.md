@@ -2377,12 +2377,77 @@ Backport. (`MLR3_Regression` `846a44e`, `MLR3_Classifikation` `c21c989`,
 wieder vollstaendig leer.** Kein laufender Hintergrundprozess, keine
 offene Nutzerentscheidung.
 
+**Korrektur (2026-09-14, war bis hierher in diesem Anker faelschlich
+wiederholt worden)**: "Versionierung/Releases" und "Environment-
+Reproduzierbarkeit" sind NICHT die offenen P3-Punkte - beide waren
+laengst erledigt (Versionierung/Releases per Git-Tags-Konkretisierung
+2026-08-27, Environment-Reproduzierbarkeit als Teil von P2.3). Der
+tatsaechlich einzige unspezifizierte P3-Punkt war/ist "Publikations-
+benchmark standardisieren" - siehe naechster Punkt.
+
+**37. Aktualisierung:** Nutzeranweisung "einen der Klassifikation-P3-
+Punkte konkretisieren" -> beim Nachschauen im `BACKLOG.md` den obigen
+Fehler gefunden und offengelegt (mehrfach in frueheren Aktualisierungen
+dieses Ankers unueberprueft wiederholt) statt ihn weiter fortzuschreiben.
+Tatsaechlich offener P3-Punkt: "Publikationsbenchmark standardisieren"
+(im Original-Bewertungsdokument nur als Stichwort ohne Ausfuehrung).
+
+Nutzerhinweis "eventuell hat es was mit dem geplanten JOSS-Publication
+zu tun oder AutoML Conference" -> Recherche (WebSearch) ergab einen
+konkreten, zitierfaehigen Anforderungskatalog: **AutoML-Conference
+ABCD-Track, Kategorie "Applications"** - "all benchmarking data and
+tools must be easily accessible, and all benchmarking results must be
+easily reproducible, with all necessary datasets, code, and evaluation
+procedures accessible and well-documented", plus dediziertes
+Reproducibility-Review.
+
+Neue Datei `docs/research/REPRODUCIBILITY_CHECKLIST.md` prueft den
+Stand gegen diesen Katalog: 3 von 4 Anforderungen bereits erfuellt
+(Datensaetze via `EXTERNAL_BENCHMARK_SET.md`, Verfahren via
+`BENCHMARK_PROTOCOL.md`, Code oeffentlich im Repo) - **1 echte Luecke
+gefunden**: die 6 tatsaechlichen Benchmark-Laeufe fanden in
+`ML_Learning` statt (kein Git-Remote, rein lokal) - eine dritte Person
+koennte die berichteten Zahlen nicht unabhaengig nachvollziehen. Auf
+Nutzerwunsch ("baue erstmal die Checkliste, das Skript spaeter")
+zunaechst NUR die Checkliste gebaut. (`MLR3_Classifikation` `cab9aa8`.)
+
+**38. Aktualisierung:** Nutzeranweisung "ja, mach das so" (Skript
+nachholen) - neues `reproduce_publication_benchmark.R`: eigenstaendiges
+Skript, laedt alle 6 `EXTERNAL_BENCHMARK_SET.md`-Datensaetze per
+`mlr3oml` direkt (kein `ML_Learning`-Zugriff), fuehrt Protokoll v2
+("faire getunte Baselines") durch. Erst an 1 kleinem Datensatz (ilpd)
+als Smoke-Test verifiziert (funktioniert, plausible Zahlen), dann
+voller Lauf ueber alle 6 (~30 Minuten).
+
+**Ehrliches Ergebnis**: 4 von 6 Datensaetzen reproduzieren Richtung UND
+Groessenordnung des Originalbefunds (`ilpd`/`sick`/`blood-transfusion`/
+`optdigits`), bei 2 von 6 (`cmc`/`analcatdata_authorship`) kippt das
+Vorzeichen - beide Differenzen liegen aber UNTER der Fold-zu-Fold-
+Streuung (SD 0,01-0,03) der beteiligten Arme, also im Rauschbereich,
+kein Bug im Skript. Kernaussage ("workflow_ranger hilft bei kleineren/
+unausgeglicheneren Datensaetzen, ist bei groesseren/ausgeglicheneren
+ungefaehr gleichauf") reproduziert sich robust - exakte Zahlen nicht
+byte-genau, was bei stochastischen Tunern (Random-Search/MBO) erwartbar
+ist und auch nicht das ist, was die ABCD-Anforderung tatsaechlich
+verlangt ("easily reproducible", nicht "identical"). Ergebnis ehrlich
+dokumentiert statt beschoenigt. (`MLR3_Classifikation` `b3ecf65`.)
+
+**Damit sind jetzt ALLE 4 inhaltlichen AutoML-Conf-ABCD-Anforderungen
+erfuellt** - der P3-Punkt "Publikationsbenchmark standardisieren" ist
+inhaltlich abgeschlossen. Nur 2 noch nicht faellige, einreichungs-
+zeitpunktabhaengige Formal-Punkte bleiben offen (Manuskript-Checkliste,
+Broader-Impact-Statement) - nicht dringend, keine Einreichung aktuell
+geplant.
+
+**Stand jetzt: BEIDE Klassifikation-Templates (`MLR3_Classifikation`
+UND `MLR3_Regression`) haben keinen konkret offenen Backlog-Punkt
+mehr** - der P3-Punkt war der letzte. Kein laufender Hintergrundprozess,
+keine offene Nutzerentscheidung.
+
 **Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
 (pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
-`MLR3_Classifikation`-BACKLOG hat weiterhin nur die 2 nicht naeher
-spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
-Reproduzierbarkeit).
 
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-einen der Klassifikation-P3-Punkte konkretisieren vs. etwas komplett
-Neues (kein Regressions-Backlog-Kandidat mehr offen).
+kein offener Backlog-Punkt mehr in beiden Templates, also etwas komplett
+Neues vorschlagen/erfragen, oder abwarten bis zur JOSS-Wiedervorlage
+(~Nov 2026).
