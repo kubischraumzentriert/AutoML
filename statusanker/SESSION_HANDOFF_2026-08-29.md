@@ -2139,6 +2139,49 @@ laufender Hintergrundprozess, keine offene Nutzerentscheidung.
 spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
 Reproduzierbarkeit). `MLR3_Regression`-BACKLOG bleibt vollstaendig leer.
 
+**30. Aktualisierung:** Nutzerfrage "was koennen wir hier noch tun" ->
+"ja neues Backlog-Thema, hast du Vorschlaege?" - 4 neue, von den Panel-
+Projekten unabhaengige Kandidaten vorgeschlagen und (nach Nutzerwunsch
+"alle 4 Punkte ins Backlog, anfangen mit 1") als Kandidaten 27-30 in
+`MLR3_Regression/BACKLOG.md` aufgenommen: 27 Missing-Data-Mechanismus-
+Audit, 28 Quantil-/Verteilungsregression (Ergaenzung zu `conformal_
+prediction.R`), 29 negative Stacking-Gewichte (2. unabhaengiger Test -
+bisher nur 1 Projekt, Klassifikation s6e9, Nullbefund), 30 robuste
+Loss-Funktionen bei Ziel-Ausreissern. (`MLR3_Regression` `633ffa4`.)
+
+**Kandidat 27 umgesetzt**: neues `missingness_mechanism_audit.R` in
+BEIDEN Templates (identisch) - prueft pro Feature mit fehlenden Werten,
+ob das Fehlen mit dem ZIEL (MNAR-Hinweis) oder mit ANDEREN Features
+(MAR-Hinweis) zusammenhaengt. Elegante Wiederverwendung: baut direkt auf
+dem bereits bestehenden `univariate_drift.R` auf, da "missing vs.
+nicht-missing" strukturell derselbe Vergleich ist wie "Train vs. Test".
+13 synthetische Checks je Template gruen (3 konstruierte Faelle: MCAR,
+MNAR bzgl. Ziel numerisch+kategorial, MAR), volle Klassifikations-
+Testsuite weiterhin gruen. (`MLR3_Classifikation` `573de07`,
+`MLR3_Regression` `1c5ae2e`.)
+
+Direkt danach an einem echten Projekt angewendet (`beijing-air-quality-
+panel`, `014_missingness_mechanism_audit.R`, 10 Spalten mit echten NAs
+aus Meteorologie/Schadstoffen): durchgehend Ziel- UND Feature-Hinweise,
+plausibel (Sensorausfaelle haengen vermutlich mit Wetter/Verschmutzung
+zusammen). **Wichtiger, ehrlich dokumentierter Reibungsfund**: bei
+n=360k wird fast jede Spalte "signifikant" (CO: KS-D=0,02, aber
+p_adj=2,9e-05 - winziger Effekt, trotzdem "signifikant") - das Modul
+braucht noch einen optionalen Mindest-Effektgroessen-Schwellenwert, um
+bei grossen Datensaetzen "statistisch nachweisbar" von "praktisch
+relevant" zu trennen. Kandidat 27 bewusst noch als "in Arbeit" statt
+"erledigt" markiert (nur 1 reales Projekt, Verfeinerung offen, nicht
+ADR-003-reif). (`MLR3_Regression` `f90b147`, `ML_Learning` `874ee96`.)
+
+**Stand jetzt**: Kandidaten 28-30 stehen offen im Backlog bereit. Kein
+laufender Hintergrundprozess, keine offene Nutzerentscheidung.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+`MLR3_Classifikation`-BACKLOG hat weiterhin nur die 2 nicht naeher
+spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
+Reproduzierbarkeit).
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-etwas Neues vs. einen der Klassifikation-P3-Punkte konkretisieren vs.
-optionale 24h-Horizont-Variante an Electricity.
+Kandidat 27 verfeinern (Effektgroessen-Schwellenwert) vs. einen der
+Kandidaten 28-30 angehen vs. etwas Neues.
