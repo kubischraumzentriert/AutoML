@@ -740,6 +740,26 @@ jetzt umgesetzt.
 vollstaendig abgeschlossen (die eine Luecke bleibt offen), aber nicht
 mehr "unspezifiziert".
 
+**Fortsetzung (2026-09-14, Nutzeranweisung "ja, mach das so")**: neues
+[`reproduce_publication_benchmark.R`](reproduce_publication_benchmark.R) -
+eigenstaendiges Skript, laedt alle 6 `EXTERNAL_BENCHMARK_SET.md`-
+Datensaetze per `mlr3oml` direkt, OHNE `ML_Learning`-Abhaengigkeit,
+fuehrt Protokoll v2 durch. Voller Verifikationslauf (~30 Min): 4 von 6
+Datensaetzen reproduzieren Richtung UND Groessenordnung des
+Originalbefunds (`ilpd`/`sick`/`blood-transfusion`/`optdigits`), bei
+2 von 6 (`cmc`/`analcatdata_authorship`) kippt das Vorzeichen - beide
+Differenzen liegen aber unter der Fold-zu-Fold-Streuung (SD 0,01-0,03),
+also im Rauschbereich, kein Bug. Kernaussage ("workflow_ranger hilft
+bei kleineren/unausgeglicheneren Datensaetzen") reproduziert sich
+robust, exakte Zahlen nicht byte-genau (erwartbar bei stochastischen
+Tunern). Volle Tabelle in `docs/research/REPRODUCIBILITY_CHECKLIST.md`.
+
+**Damit sind jetzt ALLE 4 inhaltlichen AutoML-Conf-ABCD-Anforderungen
+erfuellt** - dieser P3-Punkt ist inhaltlich abgeschlossen (nur die 2
+noch nicht faelligen, einreichungszeitpunktabhaengigen Formal-Punkte
+[Manuskript-Checkliste, Broader-Impact-Statement] bleiben offen, siehe
+`REPRODUCIBILITY_CHECKLIST.md`).
+
 ## P1.2 Schritt 2 - Status (2026-08-27): historisches Nachtragen
 
 **Nutzeranfrage**: "wir sollten die Historie nachtragen d.h. migrieren"
