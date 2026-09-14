@@ -308,19 +308,31 @@ begutachteten R-Paket.
   Varianten UND den gleichgewichteten Blend - konsistent mit dem
   durchgehenden Nullbefund-Muster dieses Projekts (Feature Engineering,
   Klassengewichtung, CatBoost-Einzelmodell, AUC-Blend - siehe
-  BACKLOG.md, 2026-09-02/03). **Einordnung**: n=1-Bestaetigung, deckt
-  sich mit der im Kopf-Kommentar oben schon vermuteten Unsicherheit
-  ("unklar, ob die Situation bei unserer Pool-Groesse ueberhaupt
-  auftritt") - hier trat sie nicht auf. Kein Backport, ADR-003-Schwelle
-  (>=2 unabhaengige Projektbestaetigungen) bei weitem nicht erreicht,
-  und die einzige bisherige Bestaetigung ist negativ.
-- **Backport**: nein/offen (nach obigem Nullbefund noch unwahrscheinlicher
-  als zuvor). Prioritaet: **mittel -> niedrig** - kein Bewertungs-
-  dokument-Ursprung, daher nicht in der urspruenglichen Priorisierungs-
-  tabelle, aber ein konkreter, extern gemessener Befund (nicht nur eine
-  theoretische Idee) macht ihn einen ernsthaften Kandidaten fuer den
-  naechsten JOSS-inspirierten Prototyp, sobald ein Projekt mit
-  ausreichend grossem/redundantem Kandidatenpool vorliegt.
+  BACKLOG.md, 2026-09-02/03). **Einordnung (damals)**: n=1-Bestaetigung,
+  ADR-003-Schwelle (>=2 unabhaengige Projektbestaetigungen) noch nicht
+  erreicht.
+- **2. Test (2026-09-14, `MLR3_Regression`-BACKLOG Kandidat 29)**:
+  `electricity-load-panel/035_negative_stacking_weights.R` - erste
+  Anwendung in einem REGRESSIONS-Projekt (RMSE statt AUC), 15-Modelle-
+  Pool (5 Ranger/5 LightGBM/5 CatBoost, analog `127_ensemble_candidate_
+  pool.R`). **Ergebnis: erneuter Nullbefund, identisches Muster** - 0
+  von 15 negative Koeffizienten trotz erlaubter negativer Gewichte,
+  beide Stacking-Varianten identisch (RMSE 122,53), UND das beste
+  Einzelmodell im Pool (`lightgbm_9`, RMSE 120,20) schlug wieder BEIDE
+  Stacking-Varianten. **ADR-003-Schwelle jetzt erreicht: 2 unabhaengige
+  Projekte (Klassifikation UND Regression), beide negativ, beide mit
+  demselben "bestes Einzelmodell schlaegt Stacking"-Muster.** Kein
+  Backport - negative Stacking-Gewichte helfen bei unseren
+  Kandidatenpool-Groessen (15-25 Modelle) offenbar grundsaetzlich nicht,
+  unabhaengig von Aufgabentyp.
+- **Backport**: nein - nach 2 unabhaengigen negativen Bestaetigungen
+  (Klassifikation + Regression) ADR-003-reif als GESCHLOSSENER
+  Negativbefund, nicht als "noch zu bestaetigende Hypothese". Prioritaet
+  auf **niedrig** final gesetzt - kein weiterer Prototyp geplant, ausser
+  ein zukuenftiges Projekt hat einen deutlich groesseren/staerker
+  korrelierten Kandidatenpool als die bisher getesteten 15-25 Modelle
+  (dort koennte die "ueberbenutzte Fehlerrichtung"-Situation aus dem
+  Kaggle-Befund eher auftreten).
 
 ---
 
