@@ -2330,7 +2330,24 @@ exakt). Kandidat 29 bleibt weiterhin offen im Backlog.
 spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
 Reproduzierbarkeit).
 
-**Empfohlener erster Schritt, Stand jetzt**: `034`-Lauf abwarten, Retrofit-
-Commit fuer `electricity-load-panel` abschliessen, dann Nutzerentscheidung
-einholen - Kandidat 29 vs. einen der Klassifikation-P3-Punkte vs. etwas
-Neues.
+**35. Aktualisierung:** `034`-Hintergrundlauf fertig - Ergebnis **byte-
+identisch** zum Original (alle 12 Ratios exakt gleich, inkl.
+11,67/0,72/0,65). Damit alle 3 Retrofits (`028`/`031`/`034`) vollstaendig
+verifiziert. Commit `electricity-load-panel` `1c7a424` ("028/031/034 auf
+paired_fold_comparison.R umgestellt").
+
+**Stand jetzt: `paired_fold_comparison.R`-Backport vollstaendig
+abgeschlossen** - Baustein im Template verankert (`MLR3_Regression`
+`8bb7d2c`), alle 3 bestehenden Anwendungsfaelle darauf umgestellt und
+Ergebnisidentitaet bestaetigt. Kein laufender Hintergrundprozess, keine
+offene Nutzerentscheidung. Nur Kandidat 29 (negative Stacking-Gewichte,
+2. unabhaengiger Test) bleibt offen im Backlog.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+`MLR3_Classifikation`-BACKLOG hat weiterhin nur die 2 nicht naeher
+spezifizierten P3-Punkte offen (Versionierung/Releases, Environment-
+Reproduzierbarkeit).
+
+**Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
+Kandidat 29 vs. einen der Klassifikation-P3-Punkte vs. etwas Neues.
