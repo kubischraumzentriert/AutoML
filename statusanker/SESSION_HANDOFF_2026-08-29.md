@@ -2635,11 +2635,44 @@ aenderung). `outer_workflow_evaluation.R` (der urspruengliche, per
 BACKLOG.md dokumentierte P1.1-Prototyp mit eigener hartkodierter BAcc-
 Scoring-Logik) bewusst UNVERAENDERT gelassen - historisches Original,
 kein aktiv weiterentwickeltes Protokoll. Volle testthat-Suite nach dem
-Umbau erneut gruen. (`MLR3_Classifikation` `869f207`.) Punkt 2
-(Ordnerstruktur) bislang nicht umgesetzt - nur vorgeschlagen.
+Umbau erneut gruen. (`MLR3_Classifikation` `869f207`.)
+
+**45. Aktualisierung:** Nutzeranweisung "ja, mach Punkt 2 auch"
+(Root-Unterordner). Vor der Umsetzung Referenz-Impact-Analyse: `db_
+logging.R` (62 Referenzstellen), `class_multiplier_tuning.R` (8),
+`evidence_registry.R` (6), `provenance.R` (5) sind Kern-Infrastruktur,
+quer durch fast alle ~130 Root-Skripte genutzt - Verschieben waere
+unverhaeltnismaessig riskant fuer den kosmetischen Nutzen. Bewusst
+KLEINER Scope gewaehlt: nur die 4 `outer_workflow_evaluation*.R` +
+`outer_workflow_helpers.R` (0-3 R-interne Referenzstellen, aber 40+
+Doku-Links in ADRs/SCRIPT_INDEX.md/BENCHMARK_PROTOCOL.md/
+EVALUATION_LEVELS.md/README_DETAILS.md/BACKLOG.md/Skills) nach neuem
+`protocols/`-Ordner verschoben. Vorab verifiziert: CI-Workflow,
+`TARGETS.md`, `WorkflowDescription.md` referenzieren diese Dateien
+NICHT (liegen ausserhalb der automatisierten Pipeline) - kein
+CI-Risiko. `joss/paper.md` referenziert sie ebenfalls nicht.
+
+**Ein echter Fehler dabei unterwegs, sofort gefunden+behoben**: der
+erste Commit (`6a69dbb`) enthielt durch einen fehlgeschlagenen `git add`
+(ungueltige Pathspecs - die bereits per `git mv` verschobenen alten
+Root-Pfade erneut referenziert) NUR die reinen Umbenennungen, NICHT die
+eigentlichen Inhaltsaenderungen (die 3 gefixten `source()`-Zeilen +
+alle Doku-Link-Updates) - blieb kurzzeitig als gebrochener Zwischen-
+stand auf dem Remote stehen (der neue `protocols`-Pfadteil in
+`source(file.path(project_dir, "outer_workflow_helpers.R"))` fehlte
+noch). Bei der Abschlussverifikation (`git status` zeigte die Dateien
+weiterhin als ungestaged modifiziert) bemerkt, mit Folgecommit
+(`9d6be22`) sofort korrigiert und erneut verifiziert (`exists()`-Check
+der `ow_*`-Funktionen aus dem korrekten Pfad + volle testthat-Suite
+gruen). Lehre: nach einem `git mv` + nachtraeglichen Content-Edits das
+finale `git status`/`git diff --cached` IMMER pruefen, bevor man einem
+"5 files changed, 0 insertions" -Commit-Output traut.
+
+**Damit ist die per Codebase-Review (44.) vorgeschlagene Struktur-
+Verbesserung vollstaendig umgesetzt** - beide identifizierten Punkte
+(1: Plumbing-Duplikation, 2: Root-Unordnung) sind jetzt erledigt.
 
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-kein offener fachlicher Backlog-Punkt mehr in beiden Templates. Optionen:
-Struktur-Punkt 2 (Root-Unterordner) umsetzen, etwas komplett Neues
-vorschlagen/erfragen, oder abwarten bis zur JOSS-Wiedervorlage
-(~Nov 2026).
+kein offener fachlicher oder struktureller Punkt mehr in
+`MLR3_Classifikation`. Etwas komplett Neues vorschlagen/erfragen, oder
+abwarten bis zur JOSS-Wiedervorlage (~Nov 2026).
