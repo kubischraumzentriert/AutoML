@@ -2578,6 +2578,39 @@ Hintergrundprozess, keine offene Nutzerentscheidung.
 **Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
 (pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
 
+**43. Aktualisierung:** Nutzeranweisung "mach weiter mit Kandidat 3" -
+neues `rolling_drift_diagnosis.R` (beide Templates, identisch, baut auf
+`univariate_drift.R` auf): `assign_time_windows()` (K aufeinander-
+folgende Zeitfenster), `rolling_univariate_drift()` (jedes Fenster
+gegen Fenster 1 als Referenz), `drift_trend_test()` (Spearman-
+Korrelation Fenster-Index vs. Drift-Staerke - unterscheidet
+systematischen Trend von einmaligem Fenster-Rauschen). 11 Checks
+(Regression, manuell) / 13 Checks (Klassifikation, testthat) gruen -
+je 3 konstruierte Faelle: kein Drift, echter monotoner Trend, einmaliger
+Fenster-Ausreisser OHNE Trend (die Kernunterscheidung des Moduls). Volle
+Klassifikations-Testsuite weiterhin gruen. (`MLR3_Regression` `029cb82`,
+`MLR3_Classifikation` `b2d1073`.)
+
+**Erste Realprojekt-Anwendung** (`037_rolling_drift_diagnosis.R`, an
+`beijing-air-quality-panel`, 8 Zeitfenster ueber die gesamte 4-Jahres-
+Spanne 2013-03 bis 2017-02, Meteorologie+Schadstoffe+`pm25`): die
+Drift-Staerke oszilliert deutlich zwischen Sommer (~0,08-0,14) und
+Winter (~0,23-0,24) - auf den ersten Blick eine unruhige Zahlenreihe.
+Trend-Test findet aber exakt **rho=0,000, p=1,0** - KEIN systematischer
+Klimatrend, reine Saisonalitaet. Demonstriert genau die Unterscheidung,
+fuer die das Modul gebaut wurde - eine naive Betrachtung ohne Fenster-
+Struktur haette hier leicht in die Irre gefuehrt. (`MLR3_Regression`
+`20b0661`, `ML_Learning` `53b70a4`.)
+
+**Stand jetzt: ALLE 4 Kandidaten dieser Backlog-Runde (1, 2, 3, 4) sind
+abgeschlossen** - kein konkret offener Backlog-Punkt mehr in beiden
+Templates. Kein laufender Hintergrundprozess, keine offene
+Nutzerentscheidung.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-Kandidat 3 (Concept-Drift rollierend) angehen, oder etwas komplett
-Neues.
+kein offener Backlog-Punkt mehr in beiden Templates, also etwas
+komplett Neues vorschlagen/erfragen, oder abwarten bis zur
+JOSS-Wiedervorlage (~Nov 2026).
