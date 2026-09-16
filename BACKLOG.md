@@ -857,6 +857,33 @@ Konsequenz: IMMER erst den Roh-ECE pruefen, bevor man reflexhaft eine
 Kalibrierungsmethode anwendet - "kalibrieren, weil man es kann" ist
 kein Automatismus.
 
+### Kandidat 4 (Subgruppen-Fairness-Disparitaet) - erledigt (2026-09-16)
+
+Neues `subgroup_fairness_disparity.R`: Standard-Fairness-Metriken (Hardt
+et al. 2016) - demografische Paritaet (Rate positiver Vorhersagen),
+Equal Opportunity (TPR), FPR-Paritaet, Predictive Parity (PPV), je
+Subgruppen-Paar mit absoluter Differenz UND "4/5-Regel"-Ratio geflaggt.
+Unterscheidet sich von `segment_metrics.R` (dortiger Fokus: Diagnose,
+nicht Fairness-Framing mit Standardmetriken/-schwellenwerten). Bewusster
+Vorbehalt im Modul-Kopfkommentar: prueft nur OB eine Disparitaet
+vorliegt, nicht OB sie im rechtlichen/ethischen Sinn "ungerecht" ist.
+18 Checks gruen (bekannte 2x2-Tabellen-Zahlen, NA-Handling, faires vs.
+konstruiert-unfaires Modell), volle Testsuite weiterhin gruen. Binaer
+only (wie `probability_calibration.R`).
+
+**Erste Realprojekt-Anwendung** (`018_subgroup_fairness_disparity.R`,
+am Template-eigenen `health_condition`-Projekt, sensible Subgruppe
+`gender` [female/male/other/leer], One-vs-Rest "unhealthy" vs. Rest wie
+bei Kandidat 1): `classif.lightgbm`, echter Held-out-Test.
+
+**Ergebnis, sauber**: 0 von 24 Paar-Metrik-Kombinationen ueberschreiten
+die Schwelle (abs_diff>0,1 oder ratio<0,8) - groesste beobachtete
+Differenz nur 2,7 Prozentpunkte (TPR zwischen `other` und der leeren
+Gruppe), alle Ratios >0,86. Keine auffaellige Disparitaet zwischen den
+gender-Subgruppen gefunden - eine weitere empirische Bestaetigung
+(analog Kandidat 1/Feature-Importance-Stabilitaet) statt einer blinden
+Annahme.
+
 ## P1.2 Schritt 2 - Status (2026-08-27): historisches Nachtragen
 
 **Nutzeranfrage**: "wir sollten die Historie nachtragen d.h. migrieren"
