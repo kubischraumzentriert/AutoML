@@ -43,7 +43,7 @@ vorentschiedener Lernalgorithmus).
 
 **Prototyp durchgefuehrt und auf alle 6 externen Datensaetze ausgerollt
 (2026-08-29, P2)**:
-[`outer_workflow_evaluation_v3_level2.R`](outer_workflow_evaluation_v3_level2.R)
+[`outer_workflow_evaluation_v3_level2.R`](protocols/outer_workflow_evaluation_v3_level2.R)
 (Protokoll v3) - Ergebnis GEMISCHT, 3 von 6 Siegen (`sick`,
 `blood-transfusion`, `optdigits`), 3 von 6 Niederlagen (`ilpd`, `cmc`,
 `analcatdata-authorship`) gegenueber dem jeweils bisher besten Wert.

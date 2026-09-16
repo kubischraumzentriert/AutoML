@@ -123,7 +123,7 @@ Literaturreferenz) in
 | `generate_systematic_evaluation.R` | Erzeugt eine Projekt-x-Modul-Pivot-Tabelle aus der Evidence Registry ([Details](docs/reference/SCRIPT_INDEX.md#generate_systematic_evaluationr)) |
 | `group_resampling.R` | Group-aware Resampling fuer wiederholte Entitaeten (Patienten/Nutzer/Geraete) ([Details](docs/reference/SCRIPT_INDEX.md#group_resamplingr)) |
 | `hard_split_stress_test.R` | Extrapolations-Stresstest per k-means-Cluster-Split (astartes-inspiriert), von `137` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#hard_split_stress_testr)) |
-| `outer_workflow_evaluation.R` / `_template.R` / `_v2_fair_baselines.R` / `_v3_level2.R` | Eingefrorene Benchmark-Protokolle v1-v3 (ADR-008, NIE inhaltlich aendern) ([Details](docs/reference/SCRIPT_INDEX.md#outer_workflow_evaluationr-4-dateien---adr-008-eingefroren)) |
+| `protocols/outer_workflow_evaluation.R` / `_template.R` / `_v2_fair_baselines.R` / `_v3_level2.R` (+ `outer_workflow_helpers.R`) | Eingefrorene Benchmark-Protokolle v1-v3 (ADR-008, NIE inhaltlich aendern) ([Details](docs/reference/SCRIPT_INDEX.md#outer_workflow_evaluationr-4-dateien---adr-008-eingefroren)) |
 | `provenance.R` | SHA256-/Config-Hashes und R/renv-Reproduktionsmanifeste fuer "was hat sich zwischen zwei Runs geaendert?" ([Details](docs/reference/SCRIPT_INDEX.md#provenancer)) |
 | `target_leak_audit_helpers.R` | Testbare Kernberechnungen aus `015_target_leak_audit.R` extrahiert ([Details](docs/reference/SCRIPT_INDEX.md#target_leak_audit_helpersr)) |
 | `class_multiplier_tuning.R` | Metrik-optimale Klassen-Multiplikatoren (Grid + `1/prior` + Nelder-Mead), von `130` genutzt ([Details](docs/reference/SCRIPT_INDEX.md#class_multiplier_tuningr)) |

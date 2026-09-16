@@ -52,7 +52,7 @@ lgr::get_logger("bbotk")$set_threshold("warn")
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
-source(file.path(project_dir, "outer_workflow_helpers.R"))
+source(file.path(project_dir, "protocols", "outer_workflow_helpers.R"))
 has_multiplier_tuning <- file.exists(file.path(project_dir, "class_multiplier_tuning.R"))
 if (has_multiplier_tuning) source(file.path(project_dir, "class_multiplier_tuning.R"))
 

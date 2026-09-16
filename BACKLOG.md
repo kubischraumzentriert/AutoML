@@ -1575,7 +1575,7 @@ Evidence Registry geloggt.**
 ~~tuned Ranger~~/~~tuned LightGBM~~/~~ggf. Best Single Tuned Model~~/
 ~~Compute-Budget dokumentieren~~/~~Workflow gegen diese Baselines
 vergleichen~~ **ERLEDIGT** - siehe `docs/research/BENCHMARK_PROTOCOL.md` Version 2 und
-[`outer_workflow_evaluation_v2_fair_baselines.R`](outer_workflow_evaluation_v2_fair_baselines.R).
+[`outer_workflow_evaluation_v2_fair_baselines.R`](protocols/outer_workflow_evaluation_v2_fair_baselines.R).
 3 neue Arme (`tuned_ranger`, `tuned_lightgbm`, `best_single_tuned_model`,
 je 15 Random-Search-/MBO-Evals, Inner-Holdout(0.75) INNERHALB des
 Outer-Train), angewendet auf alle 6 externen P1-Datensaetze.
@@ -1636,7 +1636,7 @@ lief, inkl. Phase C und P1/v1/v2). Level 2 = Model-Selection Workflow
 Outer-Train-Splits). Level 3 = volle Trust-zentrierte AutoML-Entscheidungskette
 (Leak-Audit/Drift als aktive Inloop-Entscheidungen) - noch nicht geplant.
 
-Neues Skript [`outer_workflow_evaluation_v3_level2.R`](outer_workflow_evaluation_v3_level2.R)
+Neues Skript [`outer_workflow_evaluation_v3_level2.R`](protocols/outer_workflow_evaluation_v3_level2.R)
 (Protokoll v3): pro Outer-Fold wird der Outer-Train nochmal in
 Inner-Train/Inner-Tune gesplittet (0.75/0.25), darauf `auto_tuner()` fuer
 Ranger (Random-Search) und LightGBM (MBO), je 10 Evals, plus ein

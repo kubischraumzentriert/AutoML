@@ -79,8 +79,12 @@ Ordner:
   reproduziert, siehe BACKLOG.md 2026-09-01).
 - Zu kopieren: `db_logging.R`, `db_schema.sql`, `class_multiplier_
   tuning.R`, `decision_stability.R`, `hard_split_stress_test.R`,
-  `outer_workflow_evaluation.R`, `outer_workflow_evaluation_v2_fair_
-  baselines.R`, `outer_workflow_evaluation_v3_level2.R`,
+  `protocols/outer_workflow_evaluation.R`, `protocols/outer_workflow_
+  evaluation_v2_fair_baselines.R`, `protocols/outer_workflow_evaluation_
+  v3_level2.R`, `protocols/outer_workflow_helpers.R` (seit 2026-09-16 im
+  Template-Repo in `protocols/`, siehe SCRIPT_INDEX.md - Ziel-
+  Projektordner bleiben weiterhin flach, alle 5 landen dort wie bisher
+  auf oberster Ebene, keine `protocols/`-Unterordner in den Kopien),
   `decision_stability_level2_prototype.R`, `hard_split_stress_test_
   prototype.R`.
 - Neu schreiben: `000_config.R` (seed=42, target_col als grobe Schaetzung

@@ -42,10 +42,10 @@ Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 | [`generate_systematic_evaluation.R`](../../generate_systematic_evaluation.R) | Erzeugt eine Projekt-x-Modul-Ergebnistabelle aus der Evidence Registry |
 | [`group_resampling.R`](../../group_resampling.R) | Group-aware Resampling fuer wiederholte Entitaeten (Patienten/Nutzer/Geraete) |
 | [`hard_split_stress_test.R`](../../hard_split_stress_test.R) | Extrapolations-Stresstest per k-means-Cluster-Split |
-| [`outer_workflow_evaluation.R`](../../outer_workflow_evaluation.R) | Eingefrorenes Benchmark-Protokoll, Ursprung (P1.1-Prototyp, nur health_condition) |
-| [`outer_workflow_evaluation_template.R`](../../outer_workflow_evaluation_template.R) | Eingefrorenes Benchmark-Protokoll v1 (generalisiert fuer beliebige Projekte) |
-| [`outer_workflow_evaluation_v2_fair_baselines.R`](../../outer_workflow_evaluation_v2_fair_baselines.R) | Eingefrorenes Benchmark-Protokoll v2 (+ getunte Baseline-Arme) |
-| [`outer_workflow_evaluation_v3_level2.R`](../../outer_workflow_evaluation_v3_level2.R) | Eingefrorenes Benchmark-Protokoll v3 (echtes Level-2: Modellwahl+Tuning innerhalb jedes Outer-Splits) |
+| [`outer_workflow_evaluation.R`](../../protocols/outer_workflow_evaluation.R) | Eingefrorenes Benchmark-Protokoll, Ursprung (P1.1-Prototyp, nur health_condition) |
+| [`outer_workflow_evaluation_template.R`](../../protocols/outer_workflow_evaluation_template.R) | Eingefrorenes Benchmark-Protokoll v1 (generalisiert fuer beliebige Projekte) |
+| [`outer_workflow_evaluation_v2_fair_baselines.R`](../../protocols/outer_workflow_evaluation_v2_fair_baselines.R) | Eingefrorenes Benchmark-Protokoll v2 (+ getunte Baseline-Arme) |
+| [`outer_workflow_evaluation_v3_level2.R`](../../protocols/outer_workflow_evaluation_v3_level2.R) | Eingefrorenes Benchmark-Protokoll v3 (echtes Level-2: Modellwahl+Tuning innerhalb jedes Outer-Splits) |
 | [`provenance.R`](../../provenance.R) | SHA256-/Config-Hashes und R/renv-JSON-Manifeste: was hat sich zwischen zwei Runs geaendert |
 | [`target_leak_audit_helpers.R`](../../target_leak_audit_helpers.R) | Testbare Kernberechnungen aus `015_target_leak_audit.R` extrahiert |
 | [`class_multiplier_tuning.R`](../../class_multiplier_tuning.R) | Metrik-optimale Klassen-Multiplikatoren (Grid + `1/prior` + Nelder-Mead), von `130_threshold_tuning.R` genutzt |
@@ -317,6 +317,11 @@ Kundensegmenten.
 [10.21105/joss.05996](https://doi.org/10.21105/joss.05996).
 
 ## outer_workflow_evaluation*.R (4 Dateien - ADR-008-eingefroren)
+
+Liegen seit 2026-09-16 in [`protocols/`](../../protocols/) (zusammen mit
+`outer_workflow_helpers.R`, der gemeinsamen, unversionierten Plumbing-
+Logik der 3 aktiven Protokolle) - reine Verschiebung zur besseren
+Root-Uebersicht, kein inhaltlicher Eingriff (ADR-008 bleibt unberuehrt).
 
 **WICHTIG**: diese 4 Dateien duerfen NIE inhaltlich veraendert werden
 (ADR-008) - bereits berichtete Deltas (z.B. "+4.9 BAcc-Punkte gegenueber
