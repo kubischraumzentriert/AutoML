@@ -2528,7 +2528,56 @@ Nutzerentscheidung.
 **Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
 (pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
 
+**41. Aktualisierung:** Nutzeranweisung "mach weiter mit Kandidat 2" -
+`beijing-air-quality-panel/036_multi_horizon_forecasting.R`:
+"horizon-as-feature"-Ansatz (jede Zeile 2x gestapelt - horizon=1 mit
+allen Features wie `026`, horizon=24 mit den bei 24h Vorlauf nicht
+bekannten Spalten NA-maskiert wie `027`), EIN LightGBM-Modell,
+getrennte Auswertung je Horizont auf dem echten Held-out-Test.
+
+**Sauberer, plausibler Trade-off**: 1h-Horizont RMSE 23,63 (+1,41
+schlechter als das separate `026`-Modell, 22,22) - Kapazitaetsteilung
+mit dem 24h-Fall kostet Praezision beim einfacheren, lag-dominierten
+Fall. 24h-Horizont RMSE 63,42 (-0,69 besser als `027`s 64,11) -
+vermutlich Transfer-/Regularisierungseffekt durch mehr effektive
+Trainingsdaten. Kein klarer Gewinner in Summe - Entscheidung haengt vom
+Betriebsvorteil (1 statt 2 deploybare Modelle) ab. Nur 1 Projekt bisher
+(nicht ADR-003-reif). (`MLR3_Regression` `48560be`, `ML_Learning`
+`d6f63d0`.)
+
+**42. Aktualisierung:** Nutzerfrage "wie machen wir weiter" -> Status +
+Empfehlung "Kandidat 4" gegeben (echte neue Trust-Layer-Luecke statt
+Erweiterung bereits 2x bestaetigter Module), Nutzerbestaetigung "ja mach
+das".
+
+Neues `subgroup_fairness_disparity.R`: Standard-Fairness-Metriken
+(Hardt et al. 2016) - demografische Paritaet (Rate positiver
+Vorhersagen), Equal Opportunity (TPR), FPR-Paritaet, Predictive Parity
+(PPV), je Subgruppen-Paar mit absoluter Differenz UND "4/5-Regel"-Ratio
+geflaggt. Unterscheidet sich bewusst von `segment_metrics.R`
+(Diagnose-Fokus, nicht Fairness-Framing mit Standardmetriken/
+-schwellenwerten). Vorbehalt im Modul-Kopfkommentar: prueft nur OB eine
+Disparitaet vorliegt, nicht OB sie "ungerecht" ist. 18 Checks gruen
+(bekannte 2x2-Tabellen-Zahlen, faires vs. konstruiert-unfaires Modell),
+volle Testsuite weiterhin gruen. Binaer only. (`MLR3_Classifikation`
+`312e5e8`.)
+
+**Erste Realprojekt-Anwendung** (`018_subgroup_fairness_disparity.R`,
+`health_condition`, sensible Subgruppe `gender`, One-vs-Rest "unhealthy"
+vs. Rest wie bei Kandidat 1): **0 von 24 Paar-Metrik-Kombinationen**
+ueberschreiten die Schwelle - groesste Differenz nur 2,7 Prozentpunkte,
+alle Ratios >0,86. Keine auffaellige Disparitaet gefunden - weitere
+empirische Bestaetigung (analog Kandidat 1/Feature-Importance-
+Stabilitaet) statt blinder Annahme. (`MLR3_Classifikation` `3e99034`.)
+
+**Stand jetzt**: Kandidaten 1, 2 und 4 aus dieser Backlog-Runde
+abgeschlossen. Nur noch **Kandidat 3** (Concept-Drift ueber mehrere
+Zeitperioden, `MLR3_Regression/BACKLOG.md`) steht offen. Kein laufender
+Hintergrundprozess, keine offene Nutzerentscheidung.
+
+**Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
+(pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-Kandidat 2 (Multi-Horizont-Forecasting), 3 (Concept-Drift rollierend)
-oder 4 (Subgruppen-Fairness-Disparitaet) angehen, oder etwas komplett
+Kandidat 3 (Concept-Drift rollierend) angehen, oder etwas komplett
 Neues.
