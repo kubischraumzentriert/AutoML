@@ -2610,7 +2610,36 @@ Nutzerentscheidung.
 **Verbleibende, NICHT jetzt handlungsrelevante Punkte**: JOSS-Einreichung
 (pausiert bis Repo-Alters-Gate ~2027-01, Wiedervorlage ~Nov 2026).
 
+**44. Aktualisierung:** Nutzeranfrage "Skripte in MLR3_Classifikation
+durchschauen, Verbesserungspotential am Workflow?" - Codebase-Review
+(130+ Root-Skripte, README/WorkflowDescription, BACKLOG-Historie).
+Ergebnis: 2 Struktur-/Aufraeum-Themen identifiziert, KEIN neuer
+fachlicher Backlog-Kandidat (Backport-Gate/Negativbefund-Doku/CI-Tests
+bleiben sauber durchgehalten):
+1. Duplizierte Plumbing-Logik in den 4 versionierten
+   `outer_workflow_evaluation*.R`-Protokollen (Fallback-Shims,
+   `make_imputed_learner`, Default-Ranger/LightGBM-Arme, direction_max-
+   Zusammenfassung) - Risiko, dass ein Fix in einer Kopie die anderen
+   nicht erreicht (vgl. `merge()`-sort=FALSE-Bug in MLR3_Regression).
+2. Flache Root-Struktur (130+ Skripte ohne Unterordner) erschwert
+   Neueinsteigern die Orientierung trotz `README_DETAILS.md`-Index.
+
+Nutzerentscheidung "ja, mach 1" -> neues `outer_workflow_helpers.R`
+extrahiert `ow_enable_class_stratification_fallback()`,
+`ow_add_balanced_class_weights_fallback()`, `ow_make_imputed_learner()`,
+`ow_run_ranger_default()`/`ow_run_lightgbm_default()`,
+`ow_summarize_results()`. Eingebunden in `outer_workflow_evaluation_
+template.R`, `_v2_fair_baselines.R`, `_v3_level2.R` (142 Zeilen
+duplizierter Code entfernt, reine Umstrukturierung ohne Verhaltens-
+aenderung). `outer_workflow_evaluation.R` (der urspruengliche, per
+BACKLOG.md dokumentierte P1.1-Prototyp mit eigener hartkodierter BAcc-
+Scoring-Logik) bewusst UNVERAENDERT gelassen - historisches Original,
+kein aktiv weiterentwickeltes Protokoll. Volle testthat-Suite nach dem
+Umbau erneut gruen. (`MLR3_Classifikation` `869f207`.) Punkt 2
+(Ordnerstruktur) bislang nicht umgesetzt - nur vorgeschlagen.
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-kein offener Backlog-Punkt mehr in beiden Templates, also etwas
-komplett Neues vorschlagen/erfragen, oder abwarten bis zur
-JOSS-Wiedervorlage (~Nov 2026).
+kein offener fachlicher Backlog-Punkt mehr in beiden Templates. Optionen:
+Struktur-Punkt 2 (Root-Unterordner) umsetzen, etwas komplett Neues
+vorschlagen/erfragen, oder abwarten bis zur JOSS-Wiedervorlage
+(~Nov 2026).
