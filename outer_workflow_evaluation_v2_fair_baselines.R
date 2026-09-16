@@ -52,33 +52,12 @@ lgr::get_logger("bbotk")$set_threshold("warn")
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
+source(file.path(project_dir, "outer_workflow_helpers.R"))
 has_multiplier_tuning <- file.exists(file.path(project_dir, "class_multiplier_tuning.R"))
 if (has_multiplier_tuning) source(file.path(project_dir, "class_multiplier_tuning.R"))
 
-if (!exists("enable_class_stratification")) {
-  enable_class_stratification <- function(task) {
-    if (!inherits(task, "TaskClassif")) return(task)
-    roles <- task$col_roles
-    if (!all(task$target_names %in% roles$stratum)) {
-      roles$stratum <- unique(c(roles$stratum, task$target_names))
-      task$col_roles <- roles
-    }
-    task
-  }
-}
-if (!exists("add_balanced_class_weights")) {
-  add_balanced_class_weights <- function(task, power) {
-    target_values <- task$data(cols = task$target_names)[[task$target_names]]
-    class_counts <- table(target_values)
-    base_weights <- length(target_values) / (length(class_counts) * class_counts)
-    weights <- base_weights^power
-    task_weighted <- task$clone(deep = TRUE)
-    task_weighted$id <- paste0(task$id, "_weighted_p", power)
-    task_weighted$cbind(data.table(weight = as.numeric(weights[as.character(target_values)])))
-    task_weighted$set_col_roles("weight", roles = "weights_learner")
-    task_weighted
-  }
-}
+if (!exists("enable_class_stratification")) enable_class_stratification <- ow_enable_class_stratification_fallback
+if (!exists("add_balanced_class_weights")) add_balanced_class_weights <- ow_add_balanced_class_weights_fallback
 if (!exists("class_weight_power")) class_weight_power <- 1.5
 
 set.seed(seed)
@@ -107,26 +86,12 @@ cat(sprintf(
 n_outer_folds <- 3
 inner_split_ratio <- 0.75
 
-make_imputed_learner <- function(base_learner, id = NULL) {
-  graph <- po("imputemedian") %>>% po("imputemode") %>>% base_learner
-  learner <- as_learner(graph)
-  if (!is.null(id)) learner$id <- id
-  learner
-}
-
+make_imputed_learner <- ow_make_imputed_learner
 score_prediction <- function(pred) pred$score(tuning_measure)
 
 # --- Arm 1+2: Default Ranger/LightGBM (unveraendert aus v1) -------------
-run_ranger_default <- function(outer_train, outer_test) {
-  learner <- make_imputed_learner(lrn("classif.ranger", predict_type = "prob", seed = seed))
-  learner$train(outer_train)
-  score_prediction(learner$predict(outer_test))
-}
-run_lightgbm_default <- function(outer_train, outer_test) {
-  learner <- make_imputed_learner(lrn("classif.lightgbm", num_iterations = lightgbm_default_iterations, predict_type = "prob"))
-  learner$train(outer_train)
-  score_prediction(learner$predict(outer_test))
-}
+run_ranger_default <- function(outer_train, outer_test) ow_run_ranger_default(outer_train, outer_test, tuning_measure, seed)
+run_lightgbm_default <- function(outer_train, outer_test) ow_run_lightgbm_default(outer_train, outer_test, tuning_measure, lightgbm_default_iterations)
 
 # --- Arm 3: Tuned Ranger (NEU in v2) -------------------------------------
 run_tuned_ranger <- function(outer_train, outer_test) {
@@ -242,12 +207,7 @@ for (fold in seq_len(n_outer_folds)) {
   cat(sprintf("  workflow_ranger       %s = %.4f\n", tuning_measure_id, s_wf))
 }
 
-direction_max <- !(tuning_measure_id %in% c("classif.logloss", "classif.ce", "classif.bbrier", "classif.mbrier"))
-summary_dt <- results[, .(
-  mean_score = mean(score), sd_score = sd(score),
-  worst_fold_score = if (direction_max) min(score) else max(score),
-  mean_runtime_sec = mean(runtime_sec, na.rm = TRUE)
-), by = arm][order(if (direction_max) -mean_score else mean_score)]
+summary_dt <- ow_summarize_results(results, tuning_measure_id)
 
 cat("\n=== Protokoll v2 (faire Baselines): Zusammenfassung ueber", n_outer_folds, "Outer Folds (Metrik:", tuning_measure_id, ") ===\n")
 print(summary_dt)
