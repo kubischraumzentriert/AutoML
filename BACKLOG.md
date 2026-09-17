@@ -4539,3 +4539,21 @@ Wenn Codex nur eine Sache zuerst tun soll, dann diese:
 1. Die fachlich wichtigsten Classification-Bausteine mit deterministischen Tests absichern.
 2. Danach die Kernlogik aus dem Template-Monolithen in testbare Funktionen herauslösen.
 3. Erst dann Evaluation und Dokumentation auf den finalen Stand bringen.
+
+## Optionaler Agrardaten-Pilot: `agridatasets` (2026-09-17)
+
+**Status: Pilot umgesetzt, kein generischer Backport.** Das optionale Paket
+`agridatasets` 0.1.1 wurde temporär installiert und mit dem Adapter
+`modules/agridatasets_adapter.R` geprüft. Der echte Pilot mit
+`idn_rice_farms` lief erfolgreich durch (1.026 Beobachtungen, 20 Variablen,
+Classification-Ziel `status`, Klassen `owner`/`share`/`mixed`).
+
+Der Adapter erzwingt vollständige Join-Schlüssel, lehnt fehlende Werte,
+doppelte externe Schlüssel und Feature-Spaltenkollisionen ab. Damit ist eine
+spätere Anreicherung möglich, ohne stille many-to-many-Joins zuzulassen.
+`agridatasets` bleibt zunächst optionale Domain-Fixture und Hypothesenquelle;
+es ist keine allgemeine Wetterdatenquelle. Eine echte Wetteranreicherung
+bleibt ein separater, versionierter Pilot mit raumzeitlichem Schlüssel,
+As-of-Regel, Provenienz und Baseline-vs.-Enrichment-Vergleich.
+
+Details: [`docs/research/AGRIDATASETS_PILOT.md`](docs/research/AGRIDATASETS_PILOT.md)
