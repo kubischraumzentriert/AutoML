@@ -26,12 +26,19 @@ statt bare `source("datei.R")` nutzen (ortsunabhaengig, siehe
 Treiber-Skripte + Tests wurden entsprechend angepasst, volle
 testthat-Suite verifiziert.
 
-**Warum die restlichen Skripte weiterhin im Root bleiben**: das sind
-entweder echte Kern-Infrastruktur mit breiter Nutzung ueber viele
-Pipeline-Skripte hinweg (`db_logging.R`, `evidence_registry.R`,
-`provenance.R`, `class_multiplier_tuning.R`) oder noch nicht
-kategorisierte Kandidaten fuer einen kuenftigen "Schnitt 2/3" (siehe
-BACKLOG.md). Die 4 `outer_workflow_evaluation*.R`-Dateien liegen
+**Update 2026-09-17 ("Schnitt 2")**: weitere 4 Module nach `modules/`
+verschoben (`ensemble_selection.R`, `class_multiplier_tuning.R`,
+`config_validation.R`, `generate_systematic_evaluation.R`) - je
+guenstig gepruefte, klar abgrenzbare Referenzstellen, keine
+Kern-Infrastruktur mehr.
+
+**Warum die restlichen Skripte weiterhin im Root bleiben**: echte
+Kern-Infrastruktur mit sehr breiter Nutzung ueber fast alle
+Pipeline-Skripte hinweg (`db_logging.R` allein 60+ Referenzstellen,
+`evidence_registry.R`, `provenance.R`) sowie 4 Standalone-Utility-
+Skripte ohne jeden nummerierten Treiber (`db_housekeeping.R`,
+`merge_project_experiments.R`, `ordinal_qwk.R`) - moeglicher "Schnitt 3"
+(siehe BACKLOG.md). Die 4 `outer_workflow_evaluation*.R`-Dateien liegen
 bereits seit 2026-09-16 in [`protocols/`](../../protocols/) (ADR-008-
 eingefroren, siehe eigener Abschnitt unten).
 
@@ -45,13 +52,13 @@ Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 | Skript | Kurzbeschreibung |
 |---|---|
 | [`composition_reweighting.R`](../../modules/composition_reweighting.R) | Label-freie CV-LB-Kompositionsdiagnose (Test-Segmentverteilung statt Train-/CV-Verteilung), 5-Projekt-bestaetigt |
-| [`config_validation.R`](../../config_validation.R) | Prueft `000_config.R` auf innere Konsistenz (Tippfehler, unpassende Bereiche) |
+| [`config_validation.R`](../../modules/config_validation.R) | Prueft `000_config.R` auf innere Konsistenz (Tippfehler, unpassende Bereiche) |
 | [`db_housekeeping.R`](../../db_housekeeping.R) | Rein lesende Diagnose der zentralen `experiments.db` vor einem Merge |
 | [`decision_stability.R`](../../modules/decision_stability.R) | Generischer Baustein: wie stabil ist eine kategoriale Entscheidung unter variierenden Seeds |
 | [`decision_stability_level2_prototype.R`](../../modules/decision_stability_level2_prototype.R) | Wendet `decision_stability.R` konkret auf die Level-2-Modellwahl an |
-| [`ensemble_selection.R`](../../ensemble_selection.R) | Caruana-Greedy-Ensemble-Selection als eigenstaendige Funktion |
+| [`ensemble_selection.R`](../../modules/ensemble_selection.R) | Caruana-Greedy-Ensemble-Selection als eigenstaendige Funktion |
 | [`evidence_registry.R`](../../evidence_registry.R) | Maschinenlesbare Befund-Registry (Ergaenzung zu BACKLOG.md/Statusankern) |
-| [`generate_systematic_evaluation.R`](../../generate_systematic_evaluation.R) | Erzeugt eine Projekt-x-Modul-Ergebnistabelle aus der Evidence Registry |
+| [`generate_systematic_evaluation.R`](../../modules/generate_systematic_evaluation.R) | Erzeugt eine Projekt-x-Modul-Ergebnistabelle aus der Evidence Registry |
 | [`group_resampling.R`](../../modules/group_resampling.R) | Group-aware Resampling fuer wiederholte Entitaeten (Patienten/Nutzer/Geraete) |
 | [`hard_split_stress_test.R`](../../modules/hard_split_stress_test.R) | Extrapolations-Stresstest per k-means-Cluster-Split |
 | [`outer_workflow_evaluation.R`](../../protocols/outer_workflow_evaluation.R) | Eingefrorenes Benchmark-Protokoll, Ursprung (P1.1-Prototyp, nur health_condition) |
@@ -60,7 +67,7 @@ Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 | [`outer_workflow_evaluation_v3_level2.R`](../../protocols/outer_workflow_evaluation_v3_level2.R) | Eingefrorenes Benchmark-Protokoll v3 (echtes Level-2: Modellwahl+Tuning innerhalb jedes Outer-Splits) |
 | [`provenance.R`](../../provenance.R) | SHA256-/Config-Hashes und R/renv-JSON-Manifeste: was hat sich zwischen zwei Runs geaendert |
 | [`target_leak_audit_helpers.R`](../../modules/target_leak_audit_helpers.R) | Testbare Kernberechnungen aus `015_target_leak_audit.R` extrahiert |
-| [`class_multiplier_tuning.R`](../../class_multiplier_tuning.R) | Metrik-optimale Klassen-Multiplikatoren (Grid + `1/prior` + Nelder-Mead), von `130_threshold_tuning.R` genutzt |
+| [`class_multiplier_tuning.R`](../../modules/class_multiplier_tuning.R) | Metrik-optimale Klassen-Multiplikatoren (Grid + `1/prior` + Nelder-Mead), von `130_threshold_tuning.R` genutzt |
 | [`db_logging.R`](../../db_logging.R) | Zentrale `experiments.db`-Logging-Helfer (EAV-Schema plus JSON-Manifeste) |
 | [`generalization_gap.R`](../../modules/generalization_gap.R) | Formale Generalisierungsluecke (CV- vs. Bootstrap-Verteilung + Baseline-Referenzbereich), von `136_generalization_gap.R` genutzt |
 | [`learning_curve.R`](../../modules/learning_curve.R) | Lernkurve (Score vs. Trainingsgroesse, algorithmusabhaengig), von `023_learning_curve.R` genutzt |

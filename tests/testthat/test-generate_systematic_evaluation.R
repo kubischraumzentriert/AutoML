@@ -7,7 +7,7 @@ assign("project_dir", testthat::test_path("..", ".."), envir = globalenv())
 suppressPackageStartupMessages({ library(DBI); library(RSQLite); library(data.table) })
 source(testthat::test_path("..", "..", "db_logging.R"))
 source(testthat::test_path("..", "..", "evidence_registry.R"))
-source(testthat::test_path("..", "..", "generate_systematic_evaluation.R"))
+source(testthat::test_path("..", "..", "modules", "generate_systematic_evaluation.R"))
 
 make_test_db <- function() {
   path <- tempfile(fileext = ".sqlite")

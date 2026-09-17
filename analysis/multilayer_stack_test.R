@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
-source(file.path(project_dir, "ensemble_selection.R"))
+source(file.path(project_dir, "modules", "ensemble_selection.R"))
 
 # =====================================================================
 # multilayer_stack_test.R -- Test: echtes Multi-Layer-Stacking (AutoGluon-

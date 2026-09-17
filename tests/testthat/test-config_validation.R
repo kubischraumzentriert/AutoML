@@ -7,7 +7,7 @@
 # echten, geladenen 000_config.R dieses Repos (das per E2E-Test unten
 # separat als Spezifitaetskontrolle geprueft wird: die ECHTE Config muss
 # fehlerfrei durchgehen).
-source(testthat::test_path("..", "..", "config_validation.R"))
+source(testthat::test_path("..", "..", "modules", "config_validation.R"))
 
 base_valid_env <- function(overrides = list()) {
   defaults <- list(

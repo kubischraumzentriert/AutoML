@@ -46,8 +46,8 @@ lgr::get_logger("bbotk")$set_threshold("warn")
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
 source(file.path(project_dir, "protocols", "outer_workflow_helpers.R"))
-has_multiplier_tuning <- file.exists(file.path(project_dir, "class_multiplier_tuning.R"))
-if (has_multiplier_tuning) source(file.path(project_dir, "class_multiplier_tuning.R"))
+has_multiplier_tuning <- file.exists(file.path(project_dir, "modules", "class_multiplier_tuning.R"))
+if (has_multiplier_tuning) source(file.path(project_dir, "modules", "class_multiplier_tuning.R"))
 stopifnot("Level-2-Skript braucht class_multiplier_tuning.R im Projektordner" = has_multiplier_tuning)
 
 if (!exists("enable_class_stratification")) enable_class_stratification <- ow_enable_class_stratification_fallback

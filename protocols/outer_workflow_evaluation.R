@@ -49,7 +49,7 @@ suppressPackageStartupMessages({
 })
 
 source("000_config.R")
-source(file.path(project_dir, "class_multiplier_tuning.R"))
+source(file.path(project_dir, "modules", "class_multiplier_tuning.R"))
 source(file.path(project_dir, "db_logging.R"))
 
 set.seed(seed)

@@ -29,7 +29,7 @@ lgr::get_logger("bbotk")$set_threshold("warn")
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
-source(file.path(project_dir, "class_multiplier_tuning.R"))
+source(file.path(project_dir, "modules", "class_multiplier_tuning.R"))
 source(file.path(project_dir, "modules", "decision_stability.R"))
 
 if (!exists("add_balanced_class_weights")) {

@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
-source(file.path(project_dir, "class_multiplier_tuning.R"))
+source(file.path(project_dir, "modules", "class_multiplier_tuning.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)

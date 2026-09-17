@@ -6,7 +6,7 @@
 # Kandidat A stark, B schwaecher aber komplementaer, C reines Rauschen ->
 # A/B sollen gewaehlt werden, C soll (praktisch) kein Gewicht bekommen.
 suppressPackageStartupMessages(library(mlr3measures))
-source(testthat::test_path("..", "..", "ensemble_selection.R"))
+source(testthat::test_path("..", "..", "modules", "ensemble_selection.R"))
 
 class_names <- c("pos", "neg")
 

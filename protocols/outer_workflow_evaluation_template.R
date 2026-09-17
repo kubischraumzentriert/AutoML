@@ -56,8 +56,8 @@ suppressPackageStartupMessages({
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
 source(file.path(project_dir, "protocols", "outer_workflow_helpers.R"))
-has_multiplier_tuning <- file.exists(file.path(project_dir, "class_multiplier_tuning.R"))
-if (has_multiplier_tuning) source(file.path(project_dir, "class_multiplier_tuning.R"))
+has_multiplier_tuning <- file.exists(file.path(project_dir, "modules", "class_multiplier_tuning.R"))
+if (has_multiplier_tuning) source(file.path(project_dir, "modules", "class_multiplier_tuning.R"))
 
 # Fallbacks fuer aeltere Projekte, die noch vor
 # `enable_class_stratification()`/`add_balanced_class_weights()`/

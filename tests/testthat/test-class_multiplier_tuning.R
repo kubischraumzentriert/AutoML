@@ -3,7 +3,7 @@
 # apply_class_multipliers()/prior_correction_multipliers()/
 # tune_class_multipliers() (class_multiplier_tuning.R).
 # =====================================================================
-source(testthat::test_path("..", "..", "class_multiplier_tuning.R"))
+source(testthat::test_path("..", "..", "modules", "class_multiplier_tuning.R"))
 
 test_that("apply_class_multipliers() reproduziert argmax(prob * multiplier) von Hand", {
   probs <- matrix(

@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
-source(file.path(project_dir, "ensemble_selection.R"))
+source(file.path(project_dir, "modules", "ensemble_selection.R"))
 
 # Caruana-Greedy-Ensemble-Selection (Caruana et al. 2004, wie in Auto-
 # sklearn) - verifiziert an 2 unabhaengigen OpenML-Datensaetzen
