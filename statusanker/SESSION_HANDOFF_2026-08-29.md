@@ -2672,7 +2672,53 @@ finale `git status`/`git diff --cached` IMMER pruefen, bevor man einem
 Verbesserung vollstaendig umgesetzt** - beide identifizierten Punkte
 (1: Plumbing-Duplikation, 2: Root-Unordnung) sind jetzt erledigt.
 
+**46. Aktualisierung:** Nutzeranfrage "Verbesserungspotential auch bei
+MLR3_Regression pruefen" - analoger Codebase-Review dort. Wichtigster
+Fund, deutlich gewichtiger als die kosmetischen Klassifikations-Punkte:
+**keine CI, keine automatisierte Testausfuehrung**, im Gegensatz zum
+Schwesterprojekt (2 CI-Jobs, testthat-Badge). 9 `test_*.R`-Dateien im
+Root liefen bisher nur manuell vor einem Commit - kein Runner, kein
+Workflow, BACKLOG.md erwaehnte die Luecke nie. Nutzerbestaetigung "ja,
+mach das so" -> neues `run_all_tests.R` (fuehrt alle 9 als eigene
+Rscript-Unterprozesse aus, sammelt Exit-Codes) + neuer Workflow
+`.github/workflows/ci-tests.yml`, CI-Badge im README, kurzer Hinweis
+zum lokalen Testlauf.
+
+**5 Iterationen bis der erste CI-Lauf gruen war** (alle einzeln
+committed+gepusht, `65c111f`..`57549d3`) - jeder Fund echt beim Live-
+Debuggen entdeckt, nicht vorab antizipiert:
+1. `DESCRIPTION`s `Additional_repositories`-Feld (fuer `mlr3extralearners`,
+   liegt nicht auf CRAN, nur mlr-org R-Universe) wird von `pak` NICHT
+   automatisch gelesen - identischer Fund wie bereits in
+   `MLR3_Classifikation/.Rprofile` dokumentiert, dort geloest via
+   `.Rprofile`-`options(repos=...)`. 1:1 uebertragen.
+2. Der Action-Default `dependencies="all"` zog probeweise ALLE
+   `Suggests` von `mlr3extralearners` (dutzende ungenutzte Lerner-
+   Backends: catboost, xgboost, keras, ...) - nach 10+ Minuten ohne
+   Fortschritt abgebrochen, auf `Depends`/`Imports`/`LinkingTo`
+   eingeschraenkt.
+3. Syntax-Fehler bei der `dependencies`-Eingabe (Action wrapt den Wert
+   intern bereits in `c(needs, (...))` - musste selbst schon `c(...)`
+   sein).
+4. 2 tatsaechlich fehlende Pakete (`lightgbm`, `ranger` - von
+   `lrn("regr.lightgbm")`/`lrn("regr.ranger")` in `test_*.R` gebraucht,
+   aber von keinem sichtbaren `library()`-Aufruf erfasst) ergaenzt.
+5. Danach gruen (`57549d3`, 14m34s Cold-Start-Laufzeit - legitime
+   Kompilierzeit ohne Cache-Treffer, kuenftige Laeufe werden per
+   Actions-Cache deutlich schneller).
+
+**Auf Nutzerfrage "haben wir was gelernt, das wir in Skills geben
+koennen?"**: 2 Lehren als wiederverwendbare Skills festgehalten
+(`cca6b2f`):
+- Neue Skill `setup-r-ci-tests`: die komplette 5-Punkte-Checkliste oben,
+  fuer's naechste Mal (z.B. falls `ML_Learning` mal eigene CI bekommt).
+- Ergaenzung in `declutter-flat-scripts`: die `git mv`+`git add -A`-mit-
+  alten-Pfaden-Staging-Falle aus Punkt 45 als neuer Stolperstein-Eintrag.
+
+**Stand jetzt**: kein offener fachlicher oder struktureller Punkt mehr in
+`MLR3_Classifikation` ODER `MLR3_Regression`. `MLR3_Regression` hat jetzt
+erstmals eine gruene CI (`AutoML_Regression`-Repo).
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-kein offener fachlicher oder struktureller Punkt mehr in
-`MLR3_Classifikation`. Etwas komplett Neues vorschlagen/erfragen, oder
-abwarten bis zur JOSS-Wiedervorlage (~Nov 2026).
+etwas komplett Neues vorschlagen/erfragen, oder abwarten bis zur
+JOSS-Wiedervorlage (~Nov 2026).
