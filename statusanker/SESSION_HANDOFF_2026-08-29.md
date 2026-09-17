@@ -2904,8 +2904,39 @@ Dateien (`db_logging.R`, `evidence_registry.R`, `provenance.R`,
 sauber in `modules/` (27 Dateien) bzw. `protocols/` (5 Dateien,
 ADR-008-eingefroren).
 
+**54. Aktualisierung:** Nutzeranfrage "schau auch bei MLR3_Regression,
+ob ein aehnliches Schnitt-Aufraeumen sinnvoll ist" - Referenz-Scan
+analog zu Klassifikation. Ergebnis: kleinerer, einfacherer Fall (59
+statt urspruenglich 92 R-Dateien, max. 3 statt bis zu 62 Referenzstellen
+je Modul, KEIN `tests/testthat/` hier - root-level `test_*.R`-Konvention
+stattdessen, kein CI-Smoke-Test-Fixture-Kopierschritt zum Nachziehen).
+Deshalb Vorschlag "in einem Rutsch statt 3 Schnitten" gemacht,
+Nutzerbestaetigung "ja, mach das so".
+
+19 Module nach `modules/` verschoben: `combined_task_helper.R`,
+`composition_reweighting.R`, `deviance_measures.R`, `feature_
+importance_stability.R`, `missingness_mechanism_audit.R`, `paired_fold_
+comparison.R`, `regular_lags_helper.R`, `rolling_drift_diagnosis.R`,
+`sanity_checks.R`, `conformal_prediction.R`, `quantile_regression.R`,
+`univariate_drift.R` (1-3 Referenzstellen je), plus 7 aktuell im Repo
+unreferenzierte, aber wiederverwendbare Bausteine (primaer fuer
+`ML_Learning`-Projektkopien gedacht): `availability_masking.R`,
+`entity_history.R`, `group_resampling.R`, `merge_project_experiments.R`,
+`multilayer_stack_test.R`, `oracle_feasible_baseline.R`, `time_blocked_
+resampling.R`. Angepasst: 4 nummerierte Treiber (018/126/128/132), alle
+9 `test_*.R`-Dateien, 2 Markdown-Links in `WORKFLOW_GUARDS.md`.
+`db_logging.R` (13 Referenzstellen, Kern-Infrastruktur) bewusst NICHT
+verschoben. Verifiziert: alle Dateien syntaxgeprueft, `run_all_tests.R`
+9/9 gruen (~30s lokal), CI gruen (schneller Cache-Treffer).
+(`MLR3_Regression` `a9bdd76`.) Root dort jetzt bei 28 nummerierten +
+`db_logging.R` + 9 `test_*.R` + Konfigurationsdateien.
+
 **Stand jetzt**: kein offener fachlicher oder struktureller Punkt mehr
-in `MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning`.
+in `MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning`. Beide
+Templates jetzt einheitlich nach demselben Muster strukturiert
+(nummerierte Pipeline flach im Root, wiederverwendbare Module in
+`modules/`, ADR-008-eingefrorene Benchmark-Protokolle in `protocols/`
+bei Klassifikation).
 
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
 etwas komplett Neues vorschlagen/erfragen, oder abwarten bis zur
