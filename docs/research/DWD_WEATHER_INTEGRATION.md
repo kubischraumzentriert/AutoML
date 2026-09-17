@@ -132,9 +132,12 @@ Regionsrobustheitspruefung der Technik, nicht als zweiter Backport-Beleg.
   Wetterwerte).
 - Train/Test: 204/61 Zeilen (vs. 200/61 bei Brandenburg - Bayern hat 265 statt
   261 Rohzeilen).
-- Metrikdelta (Wetter minus Baseline): BAcc 0.9491 -> 0.9313 (-0.0179), MCC
-  0.9012 -> 0.8692 (-0.0320). Beide Metriken verschlechtern sich hier leicht -
-  Gegenrichtung zum Brandenburg-Befund.
+- Metrikdelta (Wetter minus Baseline, Einzelseed 42): BAcc 0.9491 -> 0.9313
+  (-0.0179), MCC 0.9012 -> 0.8692 (-0.0320). Beide Metriken verschlechtern
+  sich hier leicht - Gegenrichtung zum Brandenburg-Befund. **Korrektur nach
+  Seed-Stabilitaetspruefung weiter unten: ueber 25 Modell-Seeds gemittelt
+  liegt das Delta bei +0.012 mit nur 44 % positiven Seeds - Rauschen, kein
+  robuster negativer Effekt.**
 - Baseline-Niveau bereits sehr hoch (BAcc 0.949 ohne Wetter) - fuer Bayern
   bleibt wenig Verbesserungsspielraum, in den Wetterfeatures ueberhaupt
   eingreifen koennten.
@@ -144,11 +147,15 @@ Regionsrobustheitspruefung der Technik, nicht als zweiter Backport-Beleg.
   (Brandenburg), `pilot_comparison_results_bayern.csv` (Bayern),
   `pilot_comparison_results_all.csv` (beide).
 - Git-Stand zum Erweiterungslauf: `5b76334`.
-- Einordnung: gemischter Befund innerhalb derselben Datenquelle - Wetter hilft
-  in einem Bundesland, schadet leicht in einem anderen. Staerkt die
-  Notwendigkeit von Scheibe 2 (Leakage-Gates) und Scheibe 5 (echte
-  unabhaengige Projekte) vor jeder generischen Regel; ein Automatismus "DWD
-  immer anreichern" ist durch diesen Pilot nicht gedeckt.
+- Einordnung (Einzelseed 42): auf den ersten Blick ein gemischter Befund
+  innerhalb derselben Datenquelle - Wetter hilft in einem Bundesland,
+  schadet leicht in einem anderen. **Korrektur nach Seed-Stabilitaetspruefung
+  weiter unten: der Bayern-Fall ist bei Seed-Mittelung kein negativer
+  Befund, sondern Rauschen (Delta nahe null, Vorzeichen instabil).** Bleibt
+  aber weiterhin ein Beleg dafuer, dass ein einzelner Einzelseed-Vergleich
+  nicht ausreicht und Scheibe 2 (Leakage-Gates) sowie Scheibe 5 (echte
+  unabhaengige Projekte plus Seed-Stabilitaet) vor jeder generischen Regel
+  noetig sind.
 
 #### Erweiterung: drei unabhaengige Destatis/DWD-Projekte (2026-09-17)
 
@@ -180,8 +187,10 @@ Seed 42, `classif.ranger`, Schwelle nur auf dem Trainingszeitraum bestimmt.
 - Ziel: high/low Sterbefallzahl im Folgemonat (Mechanismus:
   Winterexzess-Mortalitaet), Split `2022-01-01`, 179 Baseline-Zeilen
   (132 Train/47 Test), 100 % Wettermatch.
-- Metrikdelta: BAcc 0.8396 -> 0.8157 (-0.0240), MCC 0.6289 -> 0.5406
-  (-0.0883). Wetter schadet.
+- Metrikdelta (Einzelseed 42): BAcc 0.8396 -> 0.8157 (-0.0240), MCC 0.6289
+  -> 0.5406 (-0.0883). **Korrektur nach Seed-Stabilitaetspruefung weiter
+  unten: ueber 25 Modell-Seeds gemittelt liegt das Delta bei +0.019 mit nur
+  52 % positiven Seeds - Rauschen, kein robuster negativer Effekt.**
 
 **Baugewerblicher Umsatz (Baden-Wuerttemberg/Stuttgart)** -
 [`ML_Learning/openml-destatis-construction-dwd/`](../../ML_Learning/openml-destatis-construction-dwd/)
@@ -195,8 +204,10 @@ Seed 42, `classif.ranger`, Schwelle nur auf dem Trainingszeitraum bestimmt.
 - Ziel: high/low Bauumsatz im Folgemonat (Mechanismus: Frost/Schnee legen
   Aussenbaustellen lahm), Split `2011-01-01`, 263 Baseline-Zeilen
   (192 Train/71 Test), 100 % Wettermatch.
-- Metrikdelta: BAcc 0.8246 -> 0.7888 (-0.0357), MCC 0.5170 -> 0.4608
-  (-0.0562). Wetter schadet.
+- Metrikdelta (Einzelseed 42): BAcc 0.8246 -> 0.7888 (-0.0357), MCC 0.5170
+  -> 0.4608 (-0.0562). **Korrektur nach Seed-Stabilitaetspruefung weiter
+  unten: ueber 25 Modell-Seeds gemittelt liegt das Delta bei +0.002 mit nur
+  40 % positiven Seeds - praktisch null, kein robuster negativer Effekt.**
 
 **Zusammenfassung ueber alle 5 Faelle** (2 Camping-Bundeslaender + 3 neue
 unabhaengige Projekte):
@@ -210,21 +221,63 @@ unabhaengige Projekte):
 | Baugewerbe | Destatis 44111-0003 | Baden-Wuerttemberg/Stuttgart | -0.036 | -0.056 |
 
 2 von 5 Faellen zeigen eine Verbesserung durch Wetteranreicherung, 3 von 5
-eine Verschlechterung - kein konsistenter Effekt, weder Richtung noch
-Groessenordnung. Skripte: je Projektordner `prepare_pilot.R` (Datenaufbereitung
-inkl. JSON-Stat-Parsing der GENESIS-Antwort) und `compare_pilot.R`
-(Vergleich). Laufzeit je Projekt < 5 s. Git-Stand zum Erweiterungslauf: wird
-beim Commit dieser Aenderung gesetzt.
+eine Verschlechterung - auf den ersten Blick kein konsistenter Effekt, weder
+Richtung noch Groessenordnung. Skripte: je Projektordner `prepare_pilot.R`
+(Datenaufbereitung inkl. JSON-Stat-Parsing der GENESIS-Antwort) und
+`compare_pilot.R` (Vergleich). Laufzeit je Projekt < 5 s. Git-Stand zum
+Erweiterungslauf: `2e0fcfd`.
 
-- Einordnung: erfuellt jetzt die in Scheibe 5 geforderte
-  "mindestens zwei unabhaengige Projekte"-Schwelle (hier: drei), aber mit
-  gemischtem statt konsistent positivem Befund. Das spricht gegen einen
-  generischen Backport ("DWD immer anreichern"), nicht dafuer - siehe
-  aktualisierte Bewertung unter Scheibe 5 unten. Naechster sinnvoller
-  Schritt waere eher zu verstehen, WARUM einfache Monats-Mittel/-Summen in
-  manchen Domaenen helfen und in anderen schaden (z. B. Tagesgranularitaet,
-  Lag-Fenster, Interaktion mit vorhandenen Lag-Features), als weitere
-  Faelle blind hinzuzufuegen.
+#### Ursachenanalyse: Seed-Stabilitaet statt Domaenenerklaerung (2026-09-17)
+
+Die obigen Deltas beruhen je Fall auf EINEM einzelnen Ranger-Modell-Seed
+(42) bei fixem chronologischem Split - bei nur 47-71 Testzeilen genau die
+Situation, vor der `092_seed_stability.R` im Template-Root warnt: einzelne
+Holdout-Vergleiche koennen von Modellrauschen dominiert werden. Test: 25
+verschiedene Ranger-Seeds je Fall, Datensplit und Trainingsdaten bleiben
+fix, nur der Lerner-Seed variiert. Skript:
+[`ML_Learning/dwd_weather_seed_stability_check.R`](../../ML_Learning/dwd_weather_seed_stability_check.R)
+(liest die bestehenden `pilot_baseline.csv`/`pilot_weather.csv` aller fuenf
+Projektordner, keine erneute Datenaufbereitung noetig).
+
+| Fall | Delta-Mittel (25 Seeds) | Streuung | Anteil Seeds positiv | Vorzeichen stabil? |
+|---|---|---|---|---|
+| Camping Brandenburg | +0.052 | 0.015 | 100 % | ja - robust positiv |
+| Verkehrsunfaelle NRW | +0.051 | 0.023 | 96 % | ja - robust positiv |
+| Camping Bayern | +0.012 | 0.025 | 44 % | nein - Rauschen |
+| Sterbefaelle Sachsen | +0.019 | 0.051 | 52 % | nein - Rauschen |
+| Baugewerbe BW | +0.002 | 0.032 | 40 % | nein - Rauschen |
+
+Zentraler Befund: unter Seed-Mittelung zeigt KEIN einziger Fall einen
+robust NEGATIVEN Effekt. Die urspruenglich als "Wetter schadet" gelesenen
+Faelle (Bayern, Sachsen, Baugewerbe) liegen im Mittel nahe null mit einer
+Vorzeichenverteilung nahe 50/50 ueber die Seeds - das ist Modellrauschen bei
+kleinen Testmengen, keine reale Verschlechterung durch Wetteranreicherung.
+Nur Brandenburg und NRW zeigen einen ueber Seeds hinweg konsistenten,
+positiven Effekt.
+
+Eine erste Pruefung auf einen erklaerenden Faktor (Korrelation von
+`bacc_delta` mit Feature-Wachstumsfaktor, Redundanz der Wettervariablen mit
+der ohnehin vorhandenen Monatsspalte, Punktbiseriale Korrelation
+Wetter-Ziel, Ranger-Wetter-Importanceanteil) lieferte bei n=5 keinen klar
+dominanten Treiber - am ehesten noch eine schwache Tendenz, dass ein
+hoeherer maximaler Korrelationsbetrag einzelner Wettervariablen mit dem
+Ziel mit einem groesseren Delta einhergeht (r=0.58 ueber die 5 Einzel-Seed-
+Deltas), aber nicht robust genug fuer eine Domaenenregel.
+
+- Einordnung: erfuellt weiterhin die in Scheibe 5 geforderte "mindestens
+  zwei unabhaengige Projekte"-Schwelle (hier: drei), aber die vermeintlich
+  gemischte Evidenz aus Einzel-Seed-Vergleichen war selbst nicht robust.
+  Korrigierte Lesart: Wetteranreicherung hilft manchmal deutlich und
+  reproduzierbar (Brandenburg, NRW), schadet aber in dieser Evidenz
+  NIRGENDS nachweisbar - in den restlichen drei Faellen ist schlicht kein
+  verlaesslicher Effekt vorhanden. Das rechtfertigt weiterhin KEINEN
+  generischen Automatismus ("DWD immer anreichern" wuerde in 3 von 5
+  Faellen nichts bringen, ohne dass man das vorher wissen konnte), aber es
+  entkraeftet auch die staerkere Behauptung "Wetter kann aktiv schaden".
+  Naechster sinnvoller Schritt waere ein Leck-/Trust-Gate, das vor jeder
+  Wetteranreicherung automatisch eine Seed-Stabilitaetspruefung wie diese
+  verlangt, statt einem einzelnen Holdout-Vergleich zu vertrauen - eher als
+  weitere Faelle blind hinzuzufuegen.
 
 ### Scheibe 2: Zeit- und Leakage-Gates
 
@@ -266,16 +319,23 @@ automatischer Wechsel auf Rasterdaten.
 - Erst danach entscheiden, ob ein generischer Hook in die Orchestrierung
   aufgenommen wird.
 
-**Stand 2026-09-17:** die Mindestanzahl unabhaengiger Projekte ist mit drei
-Destatis/DWD-Piloten (Verkehrsunfaelle, Sterbefaelle, Baugewerbe - siehe
-Evidenz unter Scheibe 1) erreicht. Der Befund ist jedoch gemischt (2 von 5
-Faellen insgesamt positiv, 3 negativ, keine erkennbare Regelmaessigkeit nach
-Domaene oder Region). Damit ist die Bedingung "positive, neutrale und
-negative Befunde dokumentiert" erfuellt, aber nicht die inhaltliche
+**Stand 2026-09-17 (nach Seed-Stabilitaetskorrektur):** die Mindestanzahl
+unabhaengiger Projekte ist mit drei Destatis/DWD-Piloten (Verkehrsunfaelle,
+Sterbefaelle, Baugewerbe - siehe Evidenz unter Scheibe 1) erreicht. Der
+anfaenglich gemischte Einzelseed-Befund (2 von 5 Faellen positiv, 3 negativ)
+erwies sich bei Pruefung ueber 25 Modell-Seeds als teilweise Artefakt: 3 der
+"negativen" Faelle (Bayern, Sachsen, Baugewerbe) liegen im Seed-Mittel nahe
+null mit instabilem Vorzeichen (Rauschen), nur 2 Faelle (Brandenburg, NRW)
+zeigen einen robusten positiven Effekt. Kein einziger Fall zeigt einen
+robusten negativen Effekt. Damit ist die Bedingung "positive, neutrale und
+negative Befunde dokumentiert" weiterhin erfuellt (jetzt: positiv vs.
+neutral/Rauschen, nicht positiv vs. negativ), aber nicht die inhaltliche
 Voraussetzung fuer einen generischen Hook: ein Automatismus "reichere jedes
 Projekt mit passendem Datum/Ort automatisch mit DWD-Monatsmittelwerten an"
-waere durch diese Evidenz nicht gedeckt und wuerde in ca. jedem zweiten Fall
-den Score verschlechtern. Kein Backport.
+waere durch diese Evidenz nicht gedeckt, wuerde aber - anders als zunaechst
+angenommen - im schlechtesten Fall wohl eher nichts bringen als aktiv
+schaden. Kein Backport, aber aus einem schwaecheren Grund als zunaechst
+dokumentiert.
 
 Bis dahin bleibt der Adapter optional und wird nicht in `_targets.R` oder die
 nummerierte Standardreihenfolge eingebaut. Dadurch ist keine Aenderung am

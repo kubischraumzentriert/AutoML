@@ -4561,10 +4561,11 @@ Details: [`docs/research/AGRIDATASETS_PILOT.md`](docs/research/AGRIDATASETS_PILO
 ## DWD-Wetterdaten als optionale Zweitquelle (2026-09-17)
 
 **Status: Umsetzungsscheiben und Adapter angelegt, Stationspilot auf 5 Faelle
-(1 OpenML- + 3 unabhaengige Destatis-Projekte, je mit 1-2 Bundesland/
-Station-Varianten) erweitert - gemischter Befund (2 von 5 positiv, 3 von 5
-negativ), Mindestanzahl unabhaengiger Projekte fuer Scheibe 5 erreicht, aber
-kein Backport wegen fehlender Konsistenz.**
+erweitert und per Seed-Stabilitaetspruefung (25 Modell-Seeds je Fall)
+korrigiert - nur 2 von 5 Faellen zeigen einen robusten POSITIVEN Effekt, die
+uebrigen 3 sind Rauschen nahe null (kein robuster negativer Fall). Damit ist
+die Mindestanzahl unabhaengiger Projekte fuer Scheibe 5 erreicht, aber kein
+Backport wegen fehlender Konsistenz.**
 DWD Climate Data Center wird als bevorzugte reale Wetterquelle vorgemerkt;
 `rdwd` dient als optionaler R-Zugriff. `modules/dwd_weather_adapter.R`
 implementiert Quellenkatalog, Stationsauswahl per Distanz und einen
@@ -4573,25 +4574,29 @@ reproduzierbaren rueckblickenden (`as-of`) Wetterjoin.
 Stationspilot, Teil 1 (`ML_Learning/openml-weather-campsite-dwd/`):
 identischer chronologischer Split/Seed/Learner fuer Baseline vs.
 DWD-Anreicherung, zwei Bundesland/Station-Faelle aus derselben OpenML-Quelle
-(Camping-/Tourismusdaten). Brandenburg/Potsdam: BAcc +0.054, MCC +0.089.
-Bayern/Muenchen-Stadt: BAcc -0.018, MCC -0.032. Beide Faelle stammen aus
+(Camping-/Tourismusdaten). Brandenburg/Potsdam: BAcc +0.054 (Einzelseed).
+Bayern/Muenchen-Stadt: BAcc -0.018 (Einzelseed). Beide Faelle stammen aus
 demselben Datensatz, zaehlen also nicht als unabhaengige Projekte.
 
 Stationspilot, Teil 2: drei ECHTE unabhaengige Projekte aus GENESIS-Online
 (Destatis), abgerufen ueber den oeffentlichen, unauthentifizierten REST-
 Endpunkt (kein Login/API-Key noetig) - je andere Statistik, anderer
-Zielmechanismus, anderes Bundesland/Station:
-- Verkehrsunfaelle NRW/Koeln (`ML_Learning/openml-destatis-accidents-dwd/`):
-  BAcc +0.037, MCC +0.065 (Wetter hilft).
-- Sterbefaelle Sachsen/Dresden (`ML_Learning/openml-destatis-deaths-dwd/`):
-  BAcc -0.024, MCC -0.088 (Wetter schadet).
-- Baugewerblicher Umsatz Baden-Wuerttemberg/Stuttgart
-  (`ML_Learning/openml-destatis-construction-dwd/`): BAcc -0.036, MCC -0.056
-  (Wetter schadet).
+Zielmechanismus, anderes Bundesland/Station: Verkehrsunfaelle NRW/Koeln,
+Sterbefaelle Sachsen/Dresden, Baugewerblicher Umsatz Baden-Wuerttemberg/
+Stuttgart (Ordner `ML_Learning/openml-destatis-*-dwd/`).
 
-Damit ist die Scheibe-5-Mindestanzahl unabhaengiger Projekte erreicht, aber
-der Befund bleibt uneinheitlich (2/5 positiv, 3/5 negativ) - kein
-Automatismus "DWD immer anreichern", siehe
+**Seed-Stabilitaetskorrektur (25 Modell-Seeds je Fall, fixer Datensplit,
+Skript `ML_Learning/dwd_weather_seed_stability_check.R`):** die anfaengliche
+Einzelseed-Auswertung (2/5 positiv, 3/5 negativ) haelt der Pruefung nicht
+stand. Nur Brandenburg/Potsdam und Verkehrsunfaelle NRW/Koeln zeigen einen
+ueber Seeds hinweg robusten POSITIVEN Effekt (Delta-Mittel +0.05, >95 %
+positive Seeds). Bayern, Sachsen und Baugewerbe liegen im Seed-Mittel nahe
+null (Delta-Mittel +0.00 bis +0.02) mit einer Vorzeichenverteilung nahe
+50/50 - Modellrauschen bei kleinen Testmengen (47-71 Zeilen), kein
+nachweisbarer negativer Effekt. Korrigierte Lesart: Wetter hilft manchmal
+robust, schadet aber in dieser Evidenz nirgends nachweisbar - weiterhin kein
+Automatismus "DWD immer anreichern" (kein verlaesslicher Nutzen in 3 von 5
+Faellen), aber auch keine Evidenz fuer "Wetter kann aktiv schaden". Siehe
 [`docs/research/DWD_WEATHER_INTEGRATION.md`](docs/research/DWD_WEATHER_INTEGRATION.md)
 fuer die vollstaendige Tabelle und Einordnung.
 
