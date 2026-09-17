@@ -137,3 +137,25 @@ Dateien durchgehen.
   oft erst beim tatsaechlichen `ls`/`git mv` auf - kein Problem, einfach
   in der BACKLOG.md-Dokumentation richtigstellen, nicht die urspruengliche
   Vorab-Notiz nachtraeglich unbemerkt "korrigieren".
+- **`git mv` + anschliessende Edit-Tool-Aenderungen (Pfad-Fixes in den
+  verschobenen Dateien, Link-Updates) NICHT in einem einzigen `git add -A
+  -- <liste>` buendeln, wenn die Liste auch die ALTEN (durch `git mv`
+  bereits verschwundenen) Pfade enthaelt** - `git add` mit einem nicht
+  mehr existierenden Pathspec schlaegt komplett fehl (`fatal: pathspec
+  ... did not match any files`) und staged dann GAR NICHTS aus diesem
+  Aufruf, auch nicht die anderen, gueltigen Pfade in derselben Liste. Die
+  `git mv`-Umbenennung selbst bleibt trotzdem bereits gestaged (von
+  `git mv` selbst), wodurch ein direkt folgender `git commit` nur die
+  reine Umbenennung committet ("N files changed, 0 insertions(+), 0
+  deletions(-)") - die eigentlichen Inhaltsaenderungen bleiben
+  unbemerkt ungestaged auf der Platte, der gepushte Commit ist dadurch
+  im schlimmsten Fall gebrochen (z.B. ein `source()`-Pfad, der auf den
+  neuen Ordner haette zeigen muessen). Passiert real in
+  `MLR3_Classifikation` `6a69dbb` (2026-09-16), erst durch ein
+  abschliessendes `git status`/`git diff --cached` bemerkt, mit
+  Folgecommit `9d6be22` korrigiert. **Gegenmittel**: nach JEDEM
+  `git mv`+Edit-Block immer `git status --short` VOR dem Commit ansehen
+  und explizit pruefen, dass geaenderte Dateien mit `M ` (gestaged) statt
+  ` M` (nur im Arbeitsverzeichnis) markiert sind - ein Commit-Output wie
+  "N files changed, 0 insertions" bei mehreren erwarteten Aenderungen ist
+  ein Warnsignal, kein Erfolg.
