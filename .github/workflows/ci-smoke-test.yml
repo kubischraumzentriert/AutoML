@@ -64,13 +64,23 @@ jobs:
         run: |
           cd ci_smoke_test
           for f in db_logging.R db_schema.sql 005_benchmark_runtime.R 006_tuning_diagnostics.R \
-                   class_multiplier_tuning.R split_size_sensitivity.R learning_curve.R \
-                   seed_stability.R generalization_gap.R hard_split_stress_test.R \
-                   015_target_leak_audit.R target_leak_audit_helpers.R 020_task.R 022_split_size_sensitivity.R \
+                   class_multiplier_tuning.R \
+                   015_target_leak_audit.R 020_task.R 022_split_size_sensitivity.R \
                    023_learning_curve.R 030_baseline.R 080_boosting_benchmark.R \
                    090_ranger_tuning.R 100_lightgbm_tuning.R 092_seed_stability.R \
                    136_generalization_gap.R 137_hard_split_stress_test.R; do
             cp "../$f" "./$f"
+          done
+          # Seit "Schnitt 1" der Root-Aufraeumung (2026-09-17) liegen diese
+          # 6 Diagnose-Module in modules/ statt flach im Root - die oben
+          # kopierten nummerierten Treiber sourcen sie ueber
+          # file.path(project_dir, "modules", "X.R"), project_dir zeigt in
+          # der Fixture auf ci_smoke_test/ selbst - deshalb hier denselben
+          # Unterordner nachbilden.
+          mkdir -p modules
+          for f in split_size_sensitivity.R learning_curve.R seed_stability.R \
+                   generalization_gap.R hard_split_stress_test.R target_leak_audit_helpers.R; do
+            cp "../modules/$f" "modules/$f"
           done
 
       - name: Fixture erzeugen
