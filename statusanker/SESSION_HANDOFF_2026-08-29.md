@@ -2719,6 +2719,38 @@ koennen?"**: 2 Lehren als wiederverwendbare Skills festgehalten
 `MLR3_Classifikation` ODER `MLR3_Regression`. `MLR3_Regression` hat jetzt
 erstmals eine gruene CI (`AutoML_Regression`-Repo).
 
+**47. Aktualisierung:** Nutzeranfrage "Verbesserungspotential auch bei
+ML_Learning pruefen" - Codebase-Audit ueber alle 65 lokalen Projektordner
+(kein Remote, rein lokales Git). Gezielt nach demselben Muster gesucht,
+das in dieser Session bereits zweimal echten Schaden angerichtet hat:
+Template-Bugfixes, die nie in bereits bestehende lokale Kopien
+nachgezogen wurden. Fund: **7 von 23 `class_multiplier_tuning.R`-Kopien
+hatten den am 2026-08-31 gefundenen OOM-Kombinatorik-Fix
+("cannot allocate vector of size 38.4 Gb" bei vielen Klassen,
+`openml-cc18-optdigits`) noch NICHT** - `CreditScoringChallenge`,
+`openml-credit-g`, `openml-eeg-eye-state-timeseries`,
+`openml-steel-plates-fault` (7 Klassen, hoechstes reales Risiko),
+`openml-synthetic-control-timeseries` (6 Klassen, ebenfalls real),
+`predictingsmartphoneAddiction_s6e8`, `PumpItUp`. Ein zweiter, unschaerferer
+Befund (viele `merge()`-Aufrufe ohne sichtbares `sort=FALSE` repo-weit)
+bewusst NICHT als Bug gemeldet - das eigentliche Risiko-Pattern
+(positionale Extraktion nach `merge()`) traf nur auf einen Teil davon
+zu, eine automatisierte Meldung haette zu viele falsche Positive
+produziert.
+
+Nutzerbestaetigung "ja, mach das so" -> chirurgischer Patch (nur der
+betroffene Grid-Suche-Block, identisch zur Fix-Version aus
+`MLR3_Classifikation/class_multiplier_tuning.R`) in allen 7 Kopien -
+bewusst KEIN Komplett-Ueberschreiben (die Kopien sind gewollt gefrorene
+Punkt-in-Zeit-Snapshots, andere Diffs zum aktuellen Template sind
+normale, akzeptierte Drift, kein Bug). Alle 7 syntaxgeprueft, 1
+funktionaler Smoke-Test (`openml-steel-plates-fault`, 7 synthetische
+Klassen, kein Crash mehr). Lokal committed (`ML_Learning` `87a8f5c`) -
+gezielt NUR die 7 Dateien gestaged, andere im `git status` sichtbare,
+unabhaengige Nutzer-Aenderungen (`DAT_Parkinsons/*`,
+`predictingsmartphoneAddiction_s6e8/catboost_info/*`) bewusst
+unangetastet gelassen. Damit haben jetzt alle 23 Kopien im Repo den Fix.
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
 etwas komplett Neues vorschlagen/erfragen, oder abwarten bis zur
 JOSS-Wiedervorlage (~Nov 2026).
