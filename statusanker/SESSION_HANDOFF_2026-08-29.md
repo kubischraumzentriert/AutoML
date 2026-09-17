@@ -2880,13 +2880,33 @@ alle 4 Module funktional aus `modules/` ladbar verifiziert.
 (`MLR3_Classifikation` `14a79c1`.) Root jetzt bei 61 nummerierten + 8
 verbleibenden Kern-/Standalone-Skripten (von urspruenglich 92).
 
+**53. Aktualisierung:** Nutzeranweisung "mach Schnitt 3" - letzte 4
+Standalone-Utility-Skripte ohne jeden nummerierten Treiber nach
+`modules/` verschoben: `db_housekeeping.R`, `merge_project_experiments.R`,
+`ordinal_qwk.R`, `reproduce_publication_benchmark.R`. Echter Fund dabei:
+`merge_project_experiments.R` hatte als einziges der bisher 27
+verschobenen Module einen BARE `source("db_housekeeping.R")`-Aufruf
+statt `file.path(project_dir, ...)` - dieses Skript laedt kein
+`000_config.R` und kennt daher kein `project_dir`. Auf `source("modules/
+db_housekeeping.R")` umgestellt (funktioniert, weil Skripte immer mit
+Repo-Root als Arbeitsverzeichnis gestartet werden, unabhaengig vom
+eigenen Skript-Pfad) - isoliert verifiziert (nur der `source()`-Aufruf,
+NICHT der eigentliche DB-mutierende Merge-Lauf, bewusst ausserhalb des
+Scopes). Markdown-Links in `docs/reference/SCRIPT_INDEX.md`/BACKLOG.md/
+`docs/research/REPRODUCIBILITY_CHECKLIST.md` korrigiert, keine
+CI-Workflow-Referenzen betroffen. Volle testthat-Suite + beide CI-Jobs
+gruen. (`MLR3_Classifikation` `90f6f01`.)
+
+**Damit ist die komplette 3-Schnitt-Root-Aufraeumung abgeschlossen**:
+Root jetzt bei 61 nummerierten + nur noch 4 echten Kern-Infrastruktur-
+Dateien (`db_logging.R`, `evidence_registry.R`, `provenance.R`,
+`000_config.R`) - von urspruenglich 92 R-Dateien. Alles andere liegt
+sauber in `modules/` (27 Dateien) bzw. `protocols/` (5 Dateien,
+ADR-008-eingefroren).
+
 **Stand jetzt**: kein offener fachlicher oder struktureller Punkt mehr
-in `MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning`. Schnitt
-1+2 der Root-Aufraeumung abgeschlossen, nur noch Schnitt 3 (4 Standalone-
-Utility-Skripte ohne nummerierten Treiber: `db_housekeeping.R`,
-`merge_project_experiments.R`, `ordinal_qwk.R`, `reproduce_publication_
-benchmark.R`) als moeglicher Folgeschritt offen.
+in `MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning`.
 
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-Schnitt 3 der Root-Aufraeumung, etwas komplett Neues vorschlagen/
-erfragen, oder abwarten bis zur JOSS-Wiedervorlage (~Nov 2026).
+etwas komplett Neues vorschlagen/erfragen, oder abwarten bis zur
+JOSS-Wiedervorlage (~Nov 2026).
