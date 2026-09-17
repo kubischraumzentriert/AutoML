@@ -2931,12 +2931,44 @@ verschoben. Verifiziert: alle Dateien syntaxgeprueft, `run_all_tests.R`
 (`MLR3_Regression` `a9bdd76`.) Root dort jetzt bei 28 nummerierten +
 `db_logging.R` + 9 `test_*.R` + Konfigurationsdateien.
 
+**55. Aktualisierung:** Nutzeranfrage "schau auch bei ML_Learning, ob
+ein aehnliches Aufraeumen sinnvoll ist" - Ergebnis: NEIN, die
+`modules/`-Umstrukturierung passt hier strukturell nicht. Root bereits
+sauber (5 lose Dateien, 69 Projektordner, kein flaches Skript-Wirrwarr),
+und jeder Projektordner ist eine bewusst eingefrorene Punkt-in-Zeit-
+Kopie aus dem jeweiligen Template - kein lebendes, fortlaufend
+synchronisiertes Repo. Ein Nachziehen der neuen `modules/`-Struktur in
+65+ fertige, abgeschlossene Projektordner waere reine Kosmetik ohne
+funktionalen Nutzen (dieselbe akzeptierte Drift-Logik wie schon mehrfach
+in dieser Session bestaetigt).
+
+Einzige echte, kleine Fundsache: `SESSION_HANDOFF_2026-08-05.md`, lose
+im Root, in README.md noch als "offene Stände" referenziert, aber ueber
+einen Monat alt und inhaltlich vollstaendig ueberholt (alle 5 dort
+gelisteten Punkte laengst erledigt: s6e8 abgeschlossen, Regressions-
+Leak-Audit seither mehrfach extern bestaetigt, Backlog-Kandidat #13
+erledigt, CreditScoringChallenges nested/gepooltes Threshold-Tuning
+laengst als `class_multiplier_tuning.R` zurueckgefuehrt, R-only-Policy
+inzwischen auch regressionsseitig bestaetigt). Nutzerbestaetigung "ja,
+raeum das kurz auf" -> Datei entfernt, README-Verweis geloescht.
+
+**Dabei real in die selbst dokumentierte Falle getappt** (declutter-
+flat-scripts/SKILL.md, Stolperstein "git mv/git rm + git add mit
+bereits verschwundenem Pfad in derselben Pathspec-Liste"): `git add
+README.md SESSION_HANDOFF_2026-08-05.md` (Letztere bereits per `git rm`
+entfernt) schlug komplett fehl, README.md blieb unstaged, der erste
+Commit enthielt nur die Datei-Loeschung. Beim `git status`-Check danach
+bemerkt (Skill-Instinkt griff), sofort mit sauberem Folgecommit
+korrigiert. (`ML_Learning` `3549d14` + `89d9a3c`, beide lokal - kein
+Remote in diesem Repo.)
+
 **Stand jetzt**: kein offener fachlicher oder struktureller Punkt mehr
 in `MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning`. Beide
-Templates jetzt einheitlich nach demselben Muster strukturiert
-(nummerierte Pipeline flach im Root, wiederverwendbare Module in
-`modules/`, ADR-008-eingefrorene Benchmark-Protokolle in `protocols/`
-bei Klassifikation).
+Templates einheitlich nach demselben Muster strukturiert (nummerierte
+Pipeline flach im Root, wiederverwendbare Module in `modules/`,
+ADR-008-eingefrorene Benchmark-Protokolle in `protocols/` bei
+Klassifikation). `ML_Learning` bewusst NICHT mit-umstrukturiert
+(begruendet, siehe oben).
 
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
 etwas komplett Neues vorschlagen/erfragen, oder abwarten bis zur
