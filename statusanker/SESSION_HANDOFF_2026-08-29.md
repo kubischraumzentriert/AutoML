@@ -2781,6 +2781,87 @@ gruen nach dem Push. (`MLR3_Classifikation` `91c44ea`.)
 **Stand jetzt**: kein offener fachlicher oder struktureller Punkt mehr in
 `MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning`.
 
+**49. Aktualisierung:** Nutzeranfrage "immer noch sehr unuebersichtlich,
+Vorschlaege in Scheiben abzuarbeiten?" - Referenz-Scan aller 31
+unnummerierten Root-Module (welche nummerierten Treiber sourcen sie
+per `file.path(project_dir, ...)` - ortsunabhaengig, also sicher
+verschiebbar). Ergebnis: fast alle 1:1 an genau einen Treiber gekoppelt,
+sauber in 3 Risikostufen zerlegbar. Vorschlag: Schnitt 1 (19 reine
+Diagnose-/Trust-Layer-Module, niedrigstes Risiko) -> `modules/`,
+Schnitt 2 (4 kernnahe Module), Schnitt 3 (4 Standalone-Utilities ohne
+Treiber) -> spaeter. Nutzerbestaetigung "ja, mach Schnitt 1" ->
+`bootstrap_metric_ci.R`, `composition_reweighting.R`, `decision_
+stability.R`, `decision_stability_level2_prototype.R`, `feature_
+importance_stability.R`, `generalization_gap.R`, `group_resampling.R`,
+`hard_split_stress_test.R`, `learning_curve.R`, `missingness_mechanism_
+audit.R`, `multilabel.R`, `probability_calibration.R`, `rolling_drift_
+diagnosis.R`, `sanity_checks.R`, `seed_stability.R`, `split_size_
+sensitivity.R`, `subgroup_fairness_disparity.R`, `target_leak_audit_
+helpers.R`, `univariate_drift.R` (19 Dateien) nach `modules/`
+verschoben - 12 nummerierte Treiber + 1 `analysis/`-Skript + 17
+testthat-Dateien + Markdown-Links in BACKLOG.md/SCRIPT_INDEX.md
+entsprechend angepasst. Core-Infrastruktur (`db_logging.R` 62
+Referenzen, `evidence_registry.R`, `provenance.R`, `class_multiplier_
+tuning.R`) bewusst nicht verschoben. Volle testthat-Suite gruen, 1
+Treiber real ausgefuehrt (korrekter Skip, kein Pfadfehler).
+(`MLR3_Classifikation` `758a10f`.)
+
+Der erste CI-Lauf brach danach - `ci-smoke-test.yml`s "Kernskripte in
+die Fixture kopieren"-Schritt kopierte 6 der verschobenen Module noch
+vom alten Root-Pfad ("cp: cannot stat '../split_size_sensitivity.R'").
+Sofort gefixt: diese 6 werden jetzt in einen `ci_smoke_test/modules/`-
+Unterordner kopiert (project_dir zeigt in der Fixture auf sich selbst).
+Beide CI-Jobs danach gruen. (`MLR3_Classifikation` `c459dc0`.) Root ist
+damit von 92 auf 73 R-Dateien geschrumpft (61 nummerierte + 12
+verbleibende Kern-Module).
+
+**50. Aktualisierung:** Nutzerhinweis "ich denke ein Pull ist
+notwendig" - `git fetch` zeigte `MLR3_Classifikation` 6 Commits hinter
+`origin/main`. Eine externe Session (andere Commit-Konvention: "feat:"/
+"fix:", vermutlich ein paralleler Codex-/Claude-Lauf) hatte direkt auf
+GitHub gepusht: 3 neue DWD-/Destatis-Wetter-Pilotprojekte,
+`modules/dwd_weather_adapter.R`/`agridatasets_adapter.R`/`weather_
+enrichment_trust_gate.R` samt Tests. Reiner Fast-Forward (kein
+Merge-Konflikt, sauberes Arbeitsverzeichnis vorher verifiziert) ->
+gepullt (`20ed198`). Bemerkenswert: die externe Session hatte ihre
+neuen Module bereits selbst in `modules/` abgelegt - baute also schon
+auf unserem Schnitt-1-Umzug auf. Volle testthat-Suite (inkl. neuer
+`weather_enrichment_trust_gate`-Tests) weiterhin gruen.
+
+**51. Aktualisierung:** Nutzerfund beim Pruefen des Pull-Ergebnisses -
+die externe Session hatte dabei versehentlich einen `ML_Learning/`-
+Unterordner (4 Projektordner + `dwd_weather_seed_stability_check.R`,
+28MB inkl. Zips) INS Template-Repo committet, obwohl `ML_Learning` ein
+eigenstaendiges, rein lokales Repo ist (`C:\Users\HP\ML_Learning`, kein
+Remote). Echter Beleg fuer die Fehlplatzierung: das Skript hatte einen
+fremden Rechnerpfad fest verdrahtet (`C:/Users/Andre/Documents/AutoML/
+ML_Learning`). Nutzerfrage "Bist Du einverstanden?" -> Zustimmung +
+2 Rueckfragen per AskUserQuestion (Push der Entfernung? Historie
+tilgen?): Nutzerentscheidung "pushen, aber sicherstellen dass der
+Inhalt lokal in ML_Learning liegt" + "Historie so lassen" (kein
+riskantes History-Rewrite auf einem oeffentlichen Repo).
+
+Ablauf: Inhalt VOR jedem Entfernen nach `C:\Users\HP\ML_Learning`
+kopiert, Datei-/Groessenverifikation (112 Dateien in 4 Ordnern + 1
+Skript, exakte Uebereinstimmung), dort lokal committed (`ML_Learning`
+`6457e38`). Verifiziert, dass kein Modul/Test im Template von den
+Dateien abhaengt (keine echten Code-Referenzen, nur 2 Doku-Erwaehnungen
+gefunden). Danach in `MLR3_Classifikation` per `git rm -r` entfernt,
+`ML_Learning/` neu in `.gitignore` aufgenommen (Nutzervorschlag mitten
+im Turn - "sollten wir das in gitignore aufnehmen, damit das nicht
+wieder passiert?", direkt umgesetzt) um ein erneutes versehentliches
+Hinzufuegen zu verhindern, kaputte Markdown-Links in BACKLOG.md/
+docs/research/DWD_WEATHER_INTEGRATION.md korrigiert (+ Hinweis, dass
+diese Pfade jetzt im separaten Repo liegen). Volle testthat-Suite +
+beide CI-Jobs gruen, gepusht. (`MLR3_Classifikation` `55abfd6`.) Die
+28MB bleiben bewusst in der GitHub-Historie erhalten (einfache
+Entfernung, kein Force-Push/History-Rewrite).
+
+**Stand jetzt**: kein offener fachlicher oder struktureller Punkt mehr
+in `MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning`. Root
+von `MLR3_Classifikation` deutlich aufgeraeumt (Schnitt 1 abgeschlossen,
+Schnitt 2/3 als moegliche Folgeschritte in BACKLOG.md notiert).
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-etwas komplett Neues vorschlagen/erfragen, oder abwarten bis zur
-JOSS-Wiedervorlage (~Nov 2026).
+Schnitt 2/3 der Root-Aufraeumung, etwas komplett Neues vorschlagen/
+erfragen, oder abwarten bis zur JOSS-Wiedervorlage (~Nov 2026).
