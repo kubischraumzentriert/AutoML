@@ -4557,3 +4557,18 @@ bleibt ein separater, versionierter Pilot mit raumzeitlichem Schlüssel,
 As-of-Regel, Provenienz und Baseline-vs.-Enrichment-Vergleich.
 
 Details: [`docs/research/AGRIDATASETS_PILOT.md`](docs/research/AGRIDATASETS_PILOT.md)
+
+## DWD-Wetterdaten als optionale Zweitquelle (2026-09-17)
+
+**Status: Umsetzungsscheiben und Adapter angelegt, Stationspilot offen.**
+DWD Climate Data Center wird als bevorzugte reale Wetterquelle vorgemerkt;
+`rdwd` dient als optionaler R-Zugriff. `modules/dwd_weather_adapter.R`
+implementiert Quellenkatalog, Stationsauswahl per Distanz und einen
+reproduzierbaren rueckblickenden (`as-of`) Wetterjoin.
+
+Umsetzung in Scheiben: (1) Stationspilot mit lokal eingefrorenen Tagesdaten,
+(2) Zeit-/Leakage-Gates, (3) Daten-Provenienz und Datenvertrag, (4) separater
+Rasterpilot, (5) generischer Template-Backport erst nach stabiler Evidenz aus
+mindestens zwei unabhaengigen Projekten. Live-Downloads innerhalb von CV oder
+`_targets.R` sind ausgeschlossen. Details und Quellen:
+[`docs/research/DWD_WEATHER_INTEGRATION.md`](docs/research/DWD_WEATHER_INTEGRATION.md).

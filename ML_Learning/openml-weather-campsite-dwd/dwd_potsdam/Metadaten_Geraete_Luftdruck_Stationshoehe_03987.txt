@@ -1,0 +1,9 @@
+Stations_ID;Stationsname;Geo. Laenge [Grad];Geo. Breite [Grad];Stationshoehe [m];Barometerhoehe ueber NN [m];Von_Datum;Bis_Datum;Geraetetyp Name;Messverfahren;eor;
+3987;Potsdam;13.06;52.38;80.86;84.9;18930101;19661231;Stationsbarometer;Luftdruckmessung, konv.;eor;
+3987;Potsdam;13.06;52.38;80.86;94.2;19670101;19841231;Stationsbarometer;Luftdruckmessung, konv.;eor;
+3987;Potsdam;13.06;52.38;80.86;99.6;19850101;19920811;Stationsbarometer;Luftdruckmessung, konv.;eor;
+3987;Potsdam;13.06;52.38;80.86;99.6;19860401;19920811;Absolutdruckwandler (ADMW);Luftdruckmessung, elektr.;eor;
+3987;Potsdam;13.06;52.38;80.86;99.6;19920812;20151119;Digitalbarometer AIR-DB;Luftdruckmessung, elektr.;eor;
+3987;Potsdam;13.06;52.38;80.86;99.6;20151120;20230705;Digitalbarometer PTB 330 (ohne Anzeige, einfach);Luftdruckmessung, elektr.;eor;
+3987;Potsdam;13.06;52.38;80.86;96.64;20230706;20260419;Digitalbarometer PTB 330 (ohne Anzeige, einfach);Luftdruckmessung, elektr.;eor;
+generiert: 17.06.2026 --  Deutscher Wetterdienst  --
