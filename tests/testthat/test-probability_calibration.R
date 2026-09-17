@@ -5,7 +5,7 @@
 # (probability_calibration.R, BACKLOG.md-Vorschlag "Wahrscheinlichkeits-
 # kalibrierung").
 # =====================================================================
-source(testthat::test_path("..", "..", "probability_calibration.R"))
+source(testthat::test_path("..", "..", "modules", "probability_calibration.R"))
 
 test_that("expected_calibration_error(): perfekt kalibrierte Wahrscheinlichkeiten -> ECE nahe 0", {
   set.seed(1)

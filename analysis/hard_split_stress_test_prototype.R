@@ -16,7 +16,7 @@ suppressPackageStartupMessages({
 lgr::get_logger("mlr3")$set_threshold("warn")
 
 source("000_config.R")
-source(file.path(project_dir, "hard_split_stress_test.R"))
+source(file.path(project_dir, "modules", "hard_split_stress_test.R"))
 
 if (!exists("enable_class_stratification")) {
   enable_class_stratification <- function(task) task

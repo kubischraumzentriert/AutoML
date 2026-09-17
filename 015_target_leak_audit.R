@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
-source(file.path(project_dir, "target_leak_audit_helpers.R"))
+source(file.path(project_dir, "modules", "target_leak_audit_helpers.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)

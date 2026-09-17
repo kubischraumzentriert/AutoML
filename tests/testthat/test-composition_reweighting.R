@@ -6,7 +6,7 @@
 # reale Anwendungsfall (AStepAheadOfdrought Phase 9, 5-Projekt-Bestaetigung,
 # siehe Kopfkommentar composition_reweighting.R) als gegeben angenommen wird.
 # =====================================================================
-source(testthat::test_path("..", "..", "composition_reweighting.R"))
+source(testthat::test_path("..", "..", "modules", "composition_reweighting.R"))
 
 test_that("segment_composition_shift() erkennt IDENTISCHE Verteilung als unauffaellig (TVD=0)", {
   set.seed(1)

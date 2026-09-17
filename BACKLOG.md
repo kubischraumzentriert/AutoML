@@ -2408,7 +2408,7 @@ Pipeline aus `docs/research/JOSS_TECHNIQUE_WATCH.md` befolgt: Problem identifizi
 Hypothese -> Komplexitaetskosten -> kleiner Prototyp -> synthetischer
 Test -> 1-2 reale Projekte.
 
-**Neues, generisches Modul** [`decision_stability.R`](decision_stability.R):
+**Neues, generisches Modul** [`decision_stability.R`](modules/decision_stability.R):
 `decision_stability_report(decision_fn, n_repeats, seed_start, label,
 flag_threshold)` - wiederholt eine beliebige kategoriale Entscheidungs-
 funktion unter variierenden Seeds, meldet Verteilung/Mehrheitsentscheidung/
@@ -2432,7 +2432,7 @@ geseedeter `decision_fn`, Fehlerfall `n_repeats<2`). Gesamtsuite jetzt
 **Angewendet auf 1. reales Projekt**: `openml-cc18-ilpd`, Outer-Fold 1
 (Outer-Train FIX wie im eingefrorenen Protokoll v3, NUR der Inner-
 Split-Seed variiert 10x) - via neues
-[`decision_stability_level2_prototype.R`](decision_stability_level2_prototype.R)
+[`decision_stability_level2_prototype.R`](modules/decision_stability_level2_prototype.R)
 (root-Template, wiederverwendet die Modellwahl-Logik aus `outer_
 workflow_evaluation_v3_level2.R`, aber nur den inneren Teil - kein
 finales Refit/Outer-Test-Scoring, das waere fuer die Stabilitaetsfrage
@@ -2666,7 +2666,7 @@ Clusterung statt Zufall getrennt) prueft dagegen Extrapolation - ob ein
 Modell auch auf eine strukturell andere Region des Feature-Raums
 generalisiert, die es nie gesehen hat.
 
-**Neues Modul** [`hard_split_stress_test.R`](hard_split_stress_test.R):
+**Neues Modul** [`hard_split_stress_test.R`](modules/hard_split_stress_test.R):
 `cluster_based_hard_split()` (k-means auf numerischen Features,
 kleinstes Cluster = Test-Set) + `hard_split_stress_test()` (Score auf
 dem harten Split vs. Referenzbereich aus 10 zufaelligen Splits gleicher

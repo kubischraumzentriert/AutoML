@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
   library(mlr3)
   library(mlr3learners)
 })
-source(testthat::test_path("..", "..", "seed_stability.R"))
+source(testthat::test_path("..", "..", "modules", "seed_stability.R"))
 
 # --- report_stability(): reine Statistik, kein mlr3-Training noetig --------
 

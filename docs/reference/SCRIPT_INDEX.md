@@ -15,13 +15,25 @@ foerderte 11 weitere echte Luecken zutage, siehe unten "Nachtrag
 nummerierten Skripte und `analysis/*.R`-Dateien bleiben bei ihrer
 knappen Ein-Zeilen-Rolle.
 
-**Warum diese Skripte im Root bleiben (nicht in `analysis/` verschoben)**:
-ADR-007 (flache Struktur) - die meisten hier sind Bibliotheksmodule, die
-von nummerierten Pipeline-Skripten per `source("datei.R")`
-(arbeitsverzeichnis-relativ) eingebunden werden; ein Verschieben wuerde
-das ohne Anpassung jedes einzelnen aufrufenden Skripts brechen. Die 4
-`outer_workflow_evaluation*.R`-Dateien sind zusaetzlich per ADR-008
-eingefroren (siehe eigener Abschnitt unten).
+**Update 2026-09-17 ("Schnitt 1" der Root-Aufraeumung)**: 19 reine
+Diagnose-/Trust-Layer-Module mit je genau einem nummerierten
+Anwendungs-Skript (z.B. `feature_importance_stability.R` <->
+`016_feature_importance_stability.R`) liegen jetzt in
+[`modules/`](../../modules/) - sicher verschiebbar, weil alle
+`source()`-Aufrufe im Repo bereits `file.path(project_dir, ...)`
+statt bare `source("datei.R")` nutzen (ortsunabhaengig, siehe
+`.claude/skills/declutter-flat-scripts/SKILL.md`). Referenzierende
+Treiber-Skripte + Tests wurden entsprechend angepasst, volle
+testthat-Suite verifiziert.
+
+**Warum die restlichen Skripte weiterhin im Root bleiben**: das sind
+entweder echte Kern-Infrastruktur mit breiter Nutzung ueber viele
+Pipeline-Skripte hinweg (`db_logging.R`, `evidence_registry.R`,
+`provenance.R`, `class_multiplier_tuning.R`) oder noch nicht
+kategorisierte Kandidaten fuer einen kuenftigen "Schnitt 2/3" (siehe
+BACKLOG.md). Die 4 `outer_workflow_evaluation*.R`-Dateien liegen
+bereits seit 2026-09-16 in [`protocols/`](../../protocols/) (ADR-008-
+eingefroren, siehe eigener Abschnitt unten).
 
 Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 **Aufrufkontext** (wann/von wem es genutzt wird) - **Ergebnis/Nutzen**
@@ -32,33 +44,33 @@ Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 
 | Skript | Kurzbeschreibung |
 |---|---|
-| [`composition_reweighting.R`](../../composition_reweighting.R) | Label-freie CV-LB-Kompositionsdiagnose (Test-Segmentverteilung statt Train-/CV-Verteilung), 5-Projekt-bestaetigt |
+| [`composition_reweighting.R`](../../modules/composition_reweighting.R) | Label-freie CV-LB-Kompositionsdiagnose (Test-Segmentverteilung statt Train-/CV-Verteilung), 5-Projekt-bestaetigt |
 | [`config_validation.R`](../../config_validation.R) | Prueft `000_config.R` auf innere Konsistenz (Tippfehler, unpassende Bereiche) |
 | [`db_housekeeping.R`](../../db_housekeeping.R) | Rein lesende Diagnose der zentralen `experiments.db` vor einem Merge |
-| [`decision_stability.R`](../../decision_stability.R) | Generischer Baustein: wie stabil ist eine kategoriale Entscheidung unter variierenden Seeds |
-| [`decision_stability_level2_prototype.R`](../../decision_stability_level2_prototype.R) | Wendet `decision_stability.R` konkret auf die Level-2-Modellwahl an |
+| [`decision_stability.R`](../../modules/decision_stability.R) | Generischer Baustein: wie stabil ist eine kategoriale Entscheidung unter variierenden Seeds |
+| [`decision_stability_level2_prototype.R`](../../modules/decision_stability_level2_prototype.R) | Wendet `decision_stability.R` konkret auf die Level-2-Modellwahl an |
 | [`ensemble_selection.R`](../../ensemble_selection.R) | Caruana-Greedy-Ensemble-Selection als eigenstaendige Funktion |
 | [`evidence_registry.R`](../../evidence_registry.R) | Maschinenlesbare Befund-Registry (Ergaenzung zu BACKLOG.md/Statusankern) |
 | [`generate_systematic_evaluation.R`](../../generate_systematic_evaluation.R) | Erzeugt eine Projekt-x-Modul-Ergebnistabelle aus der Evidence Registry |
-| [`group_resampling.R`](../../group_resampling.R) | Group-aware Resampling fuer wiederholte Entitaeten (Patienten/Nutzer/Geraete) |
-| [`hard_split_stress_test.R`](../../hard_split_stress_test.R) | Extrapolations-Stresstest per k-means-Cluster-Split |
+| [`group_resampling.R`](../../modules/group_resampling.R) | Group-aware Resampling fuer wiederholte Entitaeten (Patienten/Nutzer/Geraete) |
+| [`hard_split_stress_test.R`](../../modules/hard_split_stress_test.R) | Extrapolations-Stresstest per k-means-Cluster-Split |
 | [`outer_workflow_evaluation.R`](../../protocols/outer_workflow_evaluation.R) | Eingefrorenes Benchmark-Protokoll, Ursprung (P1.1-Prototyp, nur health_condition) |
 | [`outer_workflow_evaluation_template.R`](../../protocols/outer_workflow_evaluation_template.R) | Eingefrorenes Benchmark-Protokoll v1 (generalisiert fuer beliebige Projekte) |
 | [`outer_workflow_evaluation_v2_fair_baselines.R`](../../protocols/outer_workflow_evaluation_v2_fair_baselines.R) | Eingefrorenes Benchmark-Protokoll v2 (+ getunte Baseline-Arme) |
 | [`outer_workflow_evaluation_v3_level2.R`](../../protocols/outer_workflow_evaluation_v3_level2.R) | Eingefrorenes Benchmark-Protokoll v3 (echtes Level-2: Modellwahl+Tuning innerhalb jedes Outer-Splits) |
 | [`provenance.R`](../../provenance.R) | SHA256-/Config-Hashes und R/renv-JSON-Manifeste: was hat sich zwischen zwei Runs geaendert |
-| [`target_leak_audit_helpers.R`](../../target_leak_audit_helpers.R) | Testbare Kernberechnungen aus `015_target_leak_audit.R` extrahiert |
+| [`target_leak_audit_helpers.R`](../../modules/target_leak_audit_helpers.R) | Testbare Kernberechnungen aus `015_target_leak_audit.R` extrahiert |
 | [`class_multiplier_tuning.R`](../../class_multiplier_tuning.R) | Metrik-optimale Klassen-Multiplikatoren (Grid + `1/prior` + Nelder-Mead), von `130_threshold_tuning.R` genutzt |
 | [`db_logging.R`](../../db_logging.R) | Zentrale `experiments.db`-Logging-Helfer (EAV-Schema plus JSON-Manifeste) |
-| [`generalization_gap.R`](../../generalization_gap.R) | Formale Generalisierungsluecke (CV- vs. Bootstrap-Verteilung + Baseline-Referenzbereich), von `136_generalization_gap.R` genutzt |
-| [`learning_curve.R`](../../learning_curve.R) | Lernkurve (Score vs. Trainingsgroesse, algorithmusabhaengig), von `023_learning_curve.R` genutzt |
+| [`generalization_gap.R`](../../modules/generalization_gap.R) | Formale Generalisierungsluecke (CV- vs. Bootstrap-Verteilung + Baseline-Referenzbereich), von `136_generalization_gap.R` genutzt |
+| [`learning_curve.R`](../../modules/learning_curve.R) | Lernkurve (Score vs. Trainingsgroesse, algorithmusabhaengig), von `023_learning_curve.R` genutzt |
 | [`merge_project_experiments.R`](../../merge_project_experiments.R) | Konsolidiert lokale Projekt-`experiments.db`-Dateien inkrementell in die zentrale Template-DB |
-| [`multilabel.R`](../../multilabel.R) | Multi-Label-Klassifikation (Binary Relevance), von `021_multilabel_workflow.R` genutzt |
+| [`multilabel.R`](../../modules/multilabel.R) | Multi-Label-Klassifikation (Binary Relevance), von `021_multilabel_workflow.R` genutzt |
 | [`ordinal_qwk.R`](../../ordinal_qwk.R) | Ordinale Ziele + Quadratic Weighted Kappa (Regression + QWK-optimales Runden), optionales Modul |
-| [`sanity_checks.R`](../../sanity_checks.R) | Drei Modell-Sanity-Checks (Perturbation/Invarianz/Directional Expectation), von `147_error_analysis_ranger_sanity_checks.R` genutzt |
-| [`seed_stability.R`](../../seed_stability.R) | Seed-/Hyperparameter-Rausch-Stabilitaet bei fixem Split, von `092_seed_stability.R` genutzt |
-| [`split_size_sensitivity.R`](../../split_size_sensitivity.R) | Prueft, ob der gewaehlte Split-Anteil selbst stabil ist, von `022_split_size_sensitivity.R` genutzt |
-| [`univariate_drift.R`](../../univariate_drift.R) | Univariate statistische Drift-Tests (KS/Chi², BH-korrigiert), von `115_adversarial_validation.R` genutzt |
+| [`sanity_checks.R`](../../modules/sanity_checks.R) | Drei Modell-Sanity-Checks (Perturbation/Invarianz/Directional Expectation), von `147_error_analysis_ranger_sanity_checks.R` genutzt |
+| [`seed_stability.R`](../../modules/seed_stability.R) | Seed-/Hyperparameter-Rausch-Stabilitaet bei fixem Split, von `092_seed_stability.R` genutzt |
+| [`split_size_sensitivity.R`](../../modules/split_size_sensitivity.R) | Prueft, ob der gewaehlte Split-Anteil selbst stabil ist, von `022_split_size_sensitivity.R` genutzt |
+| [`univariate_drift.R`](../../modules/univariate_drift.R) | Univariate statistische Drift-Tests (KS/Chi², BH-korrigiert), von `115_adversarial_validation.R` genutzt |
 
 ## composition_reweighting.R
 

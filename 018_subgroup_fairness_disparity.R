@@ -15,7 +15,7 @@ suppressPackageStartupMessages({
 # =====================================================================
 
 source("000_config.R")
-source(file.path(project_dir, "subgroup_fairness_disparity.R"))
+source(file.path(project_dir, "modules", "subgroup_fairness_disparity.R"))
 
 train <- fread(train_path)
 date_cols <- names(train)[vapply(train, function(x) inherits(x, c("Date", "IDate", "POSIXct")), logical(1))]

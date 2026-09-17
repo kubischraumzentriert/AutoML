@@ -11,7 +11,7 @@ suppressPackageStartupMessages({
 source("000_config.R")
 source(file.path(project_dir, "005_benchmark_runtime.R"))
 source(file.path(project_dir, "db_logging.R"))
-source(file.path(project_dir, "univariate_drift.R"))
+source(file.path(project_dir, "modules", "univariate_drift.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)

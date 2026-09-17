@@ -5,7 +5,7 @@
 # Positiv-/Negativ-Faelle spiegeln die bereits dokumentierten realen
 # Bestaetigungen wider (siehe TARGETS.md: 2 OpenML-Datensaetze, 3 Szenarien -
 # echter Zeit-Drift, Zufalls-Kontrolle, konstruierter Drift).
-source(testthat::test_path("..", "..", "univariate_drift.R"))
+source(testthat::test_path("..", "..", "modules", "univariate_drift.R"))
 
 test_that("run_univariate_drift_tests() erkennt echten numerischen Drift (Mittelwert-Verschiebung)", {
   set.seed(1)

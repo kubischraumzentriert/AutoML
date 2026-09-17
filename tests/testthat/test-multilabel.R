@@ -4,7 +4,7 @@
 # =====================================================================
 suppressPackageStartupMessages({ library(mlr3); library(mlr3learners) })
 lgr::get_logger("mlr3")$set_threshold("warn")
-source(testthat::test_path("..", "..", "multilabel.R"))
+source(testthat::test_path("..", "..", "modules", "multilabel.R"))
 
 # --- Multi-Label-Metriken: reine Funktionen, Ground Truth von Hand -------
 

@@ -27,7 +27,7 @@ suppressPackageStartupMessages({
 # Outer-CV-Protokoll).
 
 source("000_config.R")
-source(file.path(project_dir, "bootstrap_metric_ci.R"))
+source(file.path(project_dir, "modules", "bootstrap_metric_ci.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)

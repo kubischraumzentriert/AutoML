@@ -6,8 +6,8 @@
 # Drei konstruierte Faelle mit BEKANNTEM Mechanismus (MCAR/MAR/MNAR-bzgl.-
 # Ziel), je einmal mit numerischem und einmal mit kategorialem Ziel -
 # "nachrechnen" statt vertrauen, wie bei test-composition_reweighting.R.
-source(testthat::test_path("..", "..", "univariate_drift.R"))
-source(testthat::test_path("..", "..", "missingness_mechanism_audit.R"))
+source(testthat::test_path("..", "..", "modules", "univariate_drift.R"))
+source(testthat::test_path("..", "..", "modules", "missingness_mechanism_audit.R"))
 
 test_that("MCAR: Fehlen unabhaengig von Ziel UND anderen Features -> kein Hinweis", {
   set.seed(1)

@@ -7,7 +7,7 @@
 # WATCH.md, "kleiner Prototyp -> synthetischer Test -> 1-2 reale
 # Projekte").
 # =====================================================================
-source(testthat::test_path("..", "..", "hard_split_stress_test.R"))
+source(testthat::test_path("..", "..", "modules", "hard_split_stress_test.R"))
 
 suppressPackageStartupMessages(library(mlr3))
 

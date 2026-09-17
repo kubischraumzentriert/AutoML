@@ -18,7 +18,7 @@ suppressPackageStartupMessages({
 # EINZELLAUF-Ergebnis aus 015 (leak_audit_importance_path).
 
 source("000_config.R")
-source(file.path(project_dir, "feature_importance_stability.R"))
+source(file.path(project_dir, "modules", "feature_importance_stability.R"))
 
 if (!file.exists(leak_audit_importance_path)) {
   stop("Einzellauf-Importance fehlt. Erst 015_target_leak_audit.R ausfuehren.")

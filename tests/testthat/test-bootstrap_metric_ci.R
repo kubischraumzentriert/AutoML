@@ -4,7 +4,7 @@
 # (bootstrap_metric_ci.R, Backlog-Kandidat "Bootstrap-CI fuer die finale
 # Metrik", 2026-09-17).
 # =====================================================================
-source(testthat::test_path("..", "..", "bootstrap_metric_ci.R"))
+source(testthat::test_path("..", "..", "modules", "bootstrap_metric_ci.R"))
 
 accuracy_fn <- function(truth, pred) mean(truth == pred)
 

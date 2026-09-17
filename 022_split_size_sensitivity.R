@@ -12,7 +12,7 @@ rm(list = ls())
 suppressPackageStartupMessages({ library(data.table); library(mlr3) })
 
 source("000_config.R")
-source(file.path(project_dir, "split_size_sensitivity.R"))
+source(file.path(project_dir, "modules", "split_size_sensitivity.R"))
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
 

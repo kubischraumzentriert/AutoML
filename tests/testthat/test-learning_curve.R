@@ -9,7 +9,7 @@
 # openml-credit-g/wdbc-plateau-test).
 suppressPackageStartupMessages(library(mlr3))
 lgr::get_logger("mlr3")$set_threshold("warn")
-source(testthat::test_path("..", "..", "learning_curve.R"))
+source(testthat::test_path("..", "..", "modules", "learning_curve.R"))
 
 # --- report_learning_curve(): reine Logik, kein mlr3-Training noetig -------
 

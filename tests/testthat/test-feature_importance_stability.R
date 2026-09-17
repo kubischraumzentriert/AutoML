@@ -5,7 +5,7 @@
 # (feature_importance_stability.R, BACKLOG.md-Kandidat "Feature-
 # Importance-Stabilitaet").
 # =====================================================================
-source(testthat::test_path("..", "..", "feature_importance_stability.R"))
+source(testthat::test_path("..", "..", "modules", "feature_importance_stability.R"))
 
 test_that("collect_importance_across_folds() baut eine Features x Folds-Matrix", {
   imp_list <- list(c(a = 5, b = 3, c = 1), c(a = 6, b = 2, c = 0), c(a = 4, b = 4))

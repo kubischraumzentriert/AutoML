@@ -5,7 +5,7 @@
 # Positiv-/Negativ-Kontrollen nach demselben Muster, mit dem diese Groesse
 # diese Session bereits mehrfach manuell (und wieder verworfen) verifiziert
 # wurde - siehe REFERENZ_GROUP_AWARE_CV.md.
-source(testthat::test_path("..", "..", "group_resampling.R"))
+source(testthat::test_path("..", "..", "modules", "group_resampling.R"))
 
 test_that(".eta_squared() erkennt eine Gruppe, die den Zielwert exakt festlegt", {
   # Jede Gruppe hat einen konstanten Zielwert -> between_ss == total_ss -> eta^2 == 1.

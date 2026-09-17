@@ -3,7 +3,7 @@
 # bootstrap_score_distribution()/compare_score_distributions()
 # (generalization_gap.R).
 # =====================================================================
-source(testthat::test_path("..", "..", "generalization_gap.R"))
+source(testthat::test_path("..", "..", "modules", "generalization_gap.R"))
 
 test_that("cohens_d() reproduziert die gepoolte-SD-Formel von Hand", {
   a <- c(1, 2, 3, 4, 5)

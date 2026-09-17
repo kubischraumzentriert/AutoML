@@ -8,7 +8,7 @@ suppressPackageStartupMessages({
 })
 
 source("000_config.R")
-source(file.path(project_dir, "sanity_checks.R"))
+source(file.path(project_dir, "modules", "sanity_checks.R"))
 
 # Modell-Sanity-Checks (siehe WorkflowDescription.md Phase 11, sanity_checks.R,
 # TARGETS.md): Perturbation-/Invarianz-/Directional-Expectation-Tests nach

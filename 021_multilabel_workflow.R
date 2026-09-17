@@ -28,7 +28,7 @@ suppressPackageStartupMessages({
 })
 
 source("000_config.R")
-source(file.path(project_dir, "multilabel.R"))
+source(file.path(project_dir, "modules", "multilabel.R"))
 
 if (!length(label_cols)) {
   cat("Keine label_cols in 000_config.R gesetzt. Multi-Label-Workflow uebersprungen.\n")

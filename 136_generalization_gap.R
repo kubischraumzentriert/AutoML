@@ -22,7 +22,7 @@ suppressPackageStartupMessages({
 })
 
 source("000_config.R")
-source(file.path(project_dir, "generalization_gap.R"))
+source(file.path(project_dir, "modules", "generalization_gap.R"))
 source(file.path(project_dir, "db_logging.R"))
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)

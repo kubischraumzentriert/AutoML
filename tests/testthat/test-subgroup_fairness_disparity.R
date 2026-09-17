@@ -4,7 +4,7 @@
 # fairness_disparity_report() (subgroup_fairness_disparity.R,
 # BACKLOG.md-Kandidat 4).
 # =====================================================================
-source(testthat::test_path("..", "..", "subgroup_fairness_disparity.R"))
+source(testthat::test_path("..", "..", "modules", "subgroup_fairness_disparity.R"))
 
 test_that("subgroup_fairness_metrics(): bekannte Zahlen aus einer konstruierten 2x2-Tabelle", {
   # Gruppe A: 10 Faelle - 6 TP, 2 FN (8 echte Pos), 1 FP, 1 TN (2 echte Neg).

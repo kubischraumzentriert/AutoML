@@ -9,7 +9,7 @@
 # tragen zusammen 88%, OHNE Einzelverdaechtigen, duerfen NICHT geflaggt
 # werden), lending-club (redundanter Leak-Cluster ueber viele Features).
 suppressPackageStartupMessages(library(data.table))
-source(testthat::test_path("..", "..", "target_leak_audit_helpers.R"))
+source(testthat::test_path("..", "..", "modules", "target_leak_audit_helpers.R"))
 
 # --- compute_determinism() --------------------------------------------------
 

@@ -5,7 +5,7 @@
 # =====================================================================
 suppressPackageStartupMessages(library(mlr3))
 lgr::get_logger("mlr3")$set_threshold("warn")
-source(testthat::test_path("..", "..", "split_size_sensitivity.R"))
+source(testthat::test_path("..", "..", "modules", "split_size_sensitivity.R"))
 
 # --- report_split_ratio_sensitivity(): reine Logik, kein mlr3-Training ------
 

@@ -6,7 +6,7 @@
 # JOSS_TECHNIQUE_WATCH.md, "kleiner Prototyp -> synthetischer Test ->
 # 1-2 reale Projekte").
 # =====================================================================
-source(testthat::test_path("..", "..", "decision_stability.R"))
+source(testthat::test_path("..", "..", "modules", "decision_stability.R"))
 
 test_that("decision_stability_report() erkennt eine IMMER STABILE Entscheidung (Stabilitaet = 1, nicht geflaggt)", {
   always_a <- function(seed) "A"

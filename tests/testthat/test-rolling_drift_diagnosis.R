@@ -5,8 +5,8 @@
 # manuellen Faellen im Regression-Template (test_rolling_drift_
 # diagnosis.R), nur im hiesigen testthat-Stil.
 # =====================================================================
-source(testthat::test_path("..", "..", "univariate_drift.R"))
-source(testthat::test_path("..", "..", "rolling_drift_diagnosis.R"))
+source(testthat::test_path("..", "..", "modules", "univariate_drift.R"))
+source(testthat::test_path("..", "..", "modules", "rolling_drift_diagnosis.R"))
 
 test_that("assign_time_windows() teilt chronologisch korrekt und etwa gleich gross", {
   set.seed(1)

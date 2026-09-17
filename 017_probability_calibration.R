@@ -16,7 +16,7 @@ suppressPackageStartupMessages({
 # =====================================================================
 
 source("000_config.R")
-source(file.path(project_dir, "probability_calibration.R"))
+source(file.path(project_dir, "modules", "probability_calibration.R"))
 
 train <- fread(train_path)
 date_cols <- names(train)[vapply(train, function(x) inherits(x, c("Date", "IDate", "POSIXct")), logical(1))]
