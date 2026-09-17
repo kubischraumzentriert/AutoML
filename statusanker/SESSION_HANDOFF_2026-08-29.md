@@ -2751,6 +2751,36 @@ unabhaengige Nutzer-Aenderungen (`DAT_Parkinsons/*`,
 `predictingsmartphoneAddiction_s6e8/catboost_info/*`) bewusst
 unangetastet gelassen. Damit haben jetzt alle 23 Kopien im Repo den Fix.
 
+**48. Aktualisierung:** Nutzeranfrage "schlag ein neues Backlog-Thema
+vor" - Luecke gefunden: jedes bisherige Endergebnis wird als nackte
+Punktschaetzung berichtet (z.B. `joss/paper.md`: "Balanced Accuracy
+0.9482", ohne Unsicherheitsangabe) - `generalization_gap.R` nutzt
+Bootstrap bereits, aber nur zur CV-Methodik-Pruefung, nicht zur Streuung
+der finalen Zahl selbst. Nutzerbestaetigung "ja, mach das so" -> neues
+`bootstrap_metric_ci.R`: `bootstrap_metric_ci()` (Perzentil-Bootstrap
+ueber einen fixen Vorhersage-Datensatz), `bootstrap_paired_comparison()`
+(gepaarter Modellvergleich auf demselben Holdout), `format_metric_ci()`.
+21 Checks gruen, inkl. echtem Bootstrap-Coverage-Test (Bernoulli(p=0.8)-
+DGP, 200 Wiederholungen, Deckung im erwarteten ~90%-Band). Volle
+Testsuite weiterhin gruen.
+
+**Erste Realprojekt-Anwendung** (`159_bootstrap_metric_ci.R`,
+`health_condition`): die bisherige 0.9482-Zahl ist eine Kaggle-LB-Score
+ohne lokale Ground Truth (kein Bootstrap moeglich) - stattdessen ehrlich
+an gepoolten 5-fach-OOF-Vorhersagen demonstriert (klassengewichteter
+Ranger vs. Default). **Ergebnis**: workflow_ranger BAcc 0.9452
+[90%-CI: 0.9426, 0.9478] vs. ranger_default 0.8640 [90%-CI: 0.8595,
+0.8685], gepaarter Unterschied +0.0812 [90%-CI: 0.0771, 0.0852],
+p<0.0001 - bestaetigt den Klassengewichtungs-Effekt erstmals MIT
+Unsicherheitsmass statt nur als Punktschaetzung. `joss/paper.md`
+entsprechend ergaenzt (Klarstellung zur 0.9482-LB-Zahl + die neue,
+CI-abgesicherte Aussage), weiterhin im JOSS-Wortlimit (1624/1750).
+Beide CI-Jobs (`ci-smoke-test.yml` unit-tests+smoke-test, `draft-pdf.yml`)
+gruen nach dem Push. (`MLR3_Classifikation` `91c44ea`.)
+
+**Stand jetzt**: kein offener fachlicher oder struktureller Punkt mehr in
+`MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning`.
+
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
 etwas komplett Neues vorschlagen/erfragen, oder abwarten bis zur
 JOSS-Wiedervorlage (~Nov 2026).
