@@ -1,4 +1,0 @@
-Stations_ID;Stationsname;Geo. Laenge [Grad];Geo. Breite [Grad];Stationshoehe [m];Geberhoehe ueber Grund [m];Von_Datum;Bis_Datum;Geraetetyp Name;Messverfahren;eor;
-3987;Potsdam;13.06;52.38;80.86;2.1;18930101;19780228;Psychrometerthermometer (trocken);Temperatur/Feuchtemessung, konv.;eor;
-3987;Potsdam;13.06;52.38;80.86;2;19780301;20260419;PT 100 (Luft);Temperaturmessung, elektr.;eor;
-generiert: 17.06.2026 --  Deutscher Wetterdienst  --

@@ -1,9 +1,0 @@
-Stations_ID;Stationsname;Von_Datum;Bis_Datum
-  1048;Dresden-Heller;19260501;19350710
-  1048;Dresden-Klotzsche;19350711;
-
-Stations_ID;Betreibername;Von_Datum;Bis_Datum
-  1048;Wetterdienst;19260501;19491231
-  1048;Meteorologischer Dienst der DDR;19500101;19901231
-  1048;DWD;19910101;
-generiert: 17.06.2026 --  Deutscher Wetterdienst  --

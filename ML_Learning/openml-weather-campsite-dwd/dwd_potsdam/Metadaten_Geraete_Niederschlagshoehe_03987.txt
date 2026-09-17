@@ -1,8 +1,0 @@
-Stations_ID;Stationsname;Geo. Laenge [Grad];Geo. Breite [Grad];Stationshoehe [m];Geberhoehe ueber Grund [m];Von_Datum;Bis_Datum;Geraetetyp Name;Messverfahren;eor;
-3987;Potsdam;13.06;52.38;80.86;1;18930101;19780228;Hellmann;Niederschlagsmenge, konv.;eor;
-3987;Potsdam;13.06;52.38;80.86;1;19780301;19860331;Niederschlagsgeber / Ombrometer, Wippfunktion;Niederschlagsmenge, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;1;19860401;20090310;NG 200, Tröpfchenzähler;Niederschlagsdauer, -menge, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;1;20090311;20090810;PLUVIO;Niederschlagsmenge, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;1;20090813;20171112;PLUVIO;Niederschlagsmenge, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;1;20171113;20260419;rain[e]H3, Wägetechnologie;Niederschlagsmenge, elektr.;eor;
-generiert: 17.06.2026 --  Deutscher Wetterdienst  --

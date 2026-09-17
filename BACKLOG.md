@@ -4573,7 +4573,7 @@ DWD Climate Data Center wird als bevorzugte reale Wetterquelle vorgemerkt;
 implementiert Quellenkatalog, Stationsauswahl per Distanz und einen
 reproduzierbaren rueckblickenden (`as-of`) Wetterjoin.
 
-Stationspilot, Teil 1 (`ML_Learning/openml-weather-campsite-dwd/`):
+Stationspilot, Teil 1 (`openml-weather-campsite-dwd/` (separates lokales `ML_Learning`-Repo, nicht Teil dieses Template-Repos)):
 identischer chronologischer Split/Seed/Learner fuer Baseline vs.
 DWD-Anreicherung, zwei Bundesland/Station-Faelle aus derselben OpenML-Quelle
 (Camping-/Tourismusdaten). Brandenburg/Potsdam: BAcc +0.054 (Einzelseed).
@@ -4585,10 +4585,10 @@ Stationspilot, Teil 2: drei ECHTE unabhaengige Projekte aus GENESIS-Online
 Endpunkt (kein Login/API-Key noetig) - je andere Statistik, anderer
 Zielmechanismus, anderes Bundesland/Station: Verkehrsunfaelle NRW/Koeln,
 Sterbefaelle Sachsen/Dresden, Baugewerblicher Umsatz Baden-Wuerttemberg/
-Stuttgart (Ordner `ML_Learning/openml-destatis-*-dwd/`).
+Stuttgart (Ordner `openml-destatis-*-dwd/` im separaten lokalen `ML_Learning`-Repo).
 
 **Seed-Stabilitaetskorrektur (25 Modell-Seeds je Fall, fixer Datensplit,
-Skript `ML_Learning/dwd_weather_seed_stability_check.R`):** die anfaengliche
+Skript `dwd_weather_seed_stability_check.R` im separaten lokalen `ML_Learning`-Repo):** die anfaengliche
 Einzelseed-Auswertung (2/5 positiv, 3/5 negativ) haelt der Pruefung nicht
 stand. Nur Brandenburg/Potsdam und Verkehrsunfaelle NRW/Koeln zeigen einen
 ueber Seeds hinweg robusten POSITIVEN Effekt (Delta-Mittel +0.05, >95 %

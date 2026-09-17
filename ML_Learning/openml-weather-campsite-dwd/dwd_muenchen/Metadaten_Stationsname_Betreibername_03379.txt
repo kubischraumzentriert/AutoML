@@ -1,7 +1,0 @@
-Stations_ID;Stationsname;Von_Datum;Bis_Datum
-  3379;München (Bavariaring);19540520;19970707
-  3379;München-Stadt;19970708;
-
-Stations_ID;Betreibername;Von_Datum;Bis_Datum
-  3379;DWD;19540520;
-generiert: 17.06.2026 --  Deutscher Wetterdienst  --

@@ -1,5 +1,12 @@
 # DWD-Wetterdaten im Classification-Template
 
+**Hinweis (2026-09-17)**: alle unten genannten Pfade unter `ML_Learning/`
+liegen im SEPARATEN lokalen `ML_Learning`-Repo (`C:\Users\HP\ML_Learning`,
+kein Remote), nicht in diesem Template-Repo - versehentlich hier
+committete Kopien wurden entfernt (siehe `.gitignore`). Nur die
+wiederverwendbaren Module (`modules/dwd_weather_adapter.R`,
+`modules/weather_enrichment_trust_gate.R`) gehoeren zum Template selbst.
+
 ## Ziel
 
 Das Template soll Wetterdaten bei passenden Projekten optional als externe
@@ -170,7 +177,7 @@ Identisches Vergleichsschema wie die Camping-Piloten: chronologischer Split,
 Seed 42, `classif.ranger`, Schwelle nur auf dem Trainingszeitraum bestimmt.
 
 **Verkehrsunfaelle (Nordrhein-Westfalen/Koeln)** -
-[`ML_Learning/openml-destatis-accidents-dwd/`](../../ML_Learning/openml-destatis-accidents-dwd/)
+`openml-destatis-accidents-dwd/`
 
 - Quelle: GENESIS-Tabelle `46241-0021` (Unfaelle mit Personenschaden,
   Bundeslaender, Monate), DWD-Station Koeln-Bonn (`02667`).
@@ -180,7 +187,7 @@ Seed 42, `classif.ranger`, Schwelle nur auf dem Trainingszeitraum bestimmt.
   (+0.0650). Wetter hilft - plausibler Mechanismus (Naesse/Glaette).
 
 **Sterbefaelle (Sachsen/Dresden)** -
-[`ML_Learning/openml-destatis-deaths-dwd/`](../../ML_Learning/openml-destatis-deaths-dwd/)
+`openml-destatis-deaths-dwd/`
 
 - Quelle: GENESIS-Tabelle `12613-0012` (Gestorbene, Bundeslaender, Monate),
   DWD-Station Dresden-Klotzsche (`01048`).
@@ -193,7 +200,7 @@ Seed 42, `classif.ranger`, Schwelle nur auf dem Trainingszeitraum bestimmt.
   52 % positiven Seeds - Rauschen, kein robuster negativer Effekt.**
 
 **Baugewerblicher Umsatz (Baden-Wuerttemberg/Stuttgart)** -
-[`ML_Learning/openml-destatis-construction-dwd/`](../../ML_Learning/openml-destatis-construction-dwd/)
+`openml-destatis-construction-dwd/`
 
 - Quelle: GENESIS-Tabelle `44111-0003` (Baugewerblicher Umsatz im
   Bauhauptgewerbe, Bundeslaender, Monate bis 2016, Bauarten - Bauarten ohne
@@ -235,7 +242,7 @@ Situation, vor der `092_seed_stability.R` im Template-Root warnt: einzelne
 Holdout-Vergleiche koennen von Modellrauschen dominiert werden. Test: 25
 verschiedene Ranger-Seeds je Fall, Datensplit und Trainingsdaten bleiben
 fix, nur der Lerner-Seed variiert. Skript:
-[`ML_Learning/dwd_weather_seed_stability_check.R`](../../ML_Learning/dwd_weather_seed_stability_check.R)
+`dwd_weather_seed_stability_check.R`
 (liest die bestehenden `pilot_baseline.csv`/`pilot_weather.csv` aller fuenf
 Projektordner, keine erneute Datenaufbereitung noetig).
 

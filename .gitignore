@@ -6,3 +6,12 @@ _targets/
 .RData
 .Rhistory
 .Rproj.user/
+
+# ML_Learning ist ein eigenstaendiges, lokales Repo (C:\Users\HP\ML_Learning,
+# kein Remote) fuer Einzelprojekte/Piloten - gehoert NIE in dieses
+# Template-Repo. 2026-09-17: eine externe Session hatte versehentlich
+# 4 Projektordner + ein Skript unter ML_Learning/ hier committet und
+# gepusht (28MB, fremder Rechnerpfad im Code) - nach C:\Users\HP\ML_Learning
+# verschoben, hier entfernt. Dieser Eintrag verhindert ein erneutes
+# versehentliches Hinzufuegen.
+ML_Learning/

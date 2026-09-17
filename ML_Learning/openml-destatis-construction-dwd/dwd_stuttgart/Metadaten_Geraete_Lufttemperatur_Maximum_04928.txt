@@ -1,5 +1,0 @@
-Stations_ID;Stationsname;Geo. Laenge [Grad];Geo. Breite [Grad];Stationshoehe [m];Geberhoehe ueber Grund [m];Von_Datum;Bis_Datum;Geraetetyp Name;Messverfahren;eor;
-4928;Stuttgart (Schnarrenberg);9.2;48.83;314;2.2;19580101;19980630;Maximumthermometer;Temperaturmessung, konv.;eor;
-4928;Stuttgart (Schnarrenberg);9.2;48.83;314;2;19980701;20061016;PT 100 (Luft);Temperaturmessung, elektr.;eor;
-4928;Stuttgart (Schnarrenberg);9.2;48.83;314.28;2;20061017;20260419;PT 100 (Luft);Temperaturmessung, elektr.;eor;
-generiert: 17.06.2026 --  Deutscher Wetterdienst  --

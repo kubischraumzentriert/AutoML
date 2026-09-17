@@ -1,8 +1,0 @@
-Stations_ID;Stationsname;Geo. Laenge [Grad];Geo. Breite [Grad];Stationshoehe [m];Geberhoehe ueber Grund [m];Von_Datum;Bis_Datum;Geraetetyp Name;Messverfahren;eor;
-1048;Dresden-Klotzsche;13.77;51.13;222;17;19730101;19731231;Universal-Windschreiber 90;Windmessung, elektromechanisch;eor;
-1048;Dresden-Klotzsche;13.77;51.13;222;10;19740101;19920610;Windmessanlage Junkalor;Windmessung, elektromechanisch;eor;
-1048;Dresden-Klotzsche;13.77;51.13;222;10;19920611;19950831;Universal-Windschreiber 90;Windmessung, elektromechanisch;eor;
-1048;Dresden-Klotzsche;13.75;51.13;227;10;19950901;20170612;Windsensor Classic 4.3303;Windmessung, elektr.;eor;
-1048;Dresden-Klotzsche;13.75;51.13;227;10;20170613;20190813;Windsensor Classic 4.3303 (DWDSYN);Windmessung, elektr.;eor;
-1048;Dresden-Klotzsche;13.75;51.13;227.57;10;20190814;20260419;Windsensor Classic 4.3303 (DWDSYN);Windmessung, elektr.;eor;
-generiert: 17.06.2026 --  Deutscher Wetterdienst  --

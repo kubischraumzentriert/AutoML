@@ -1,9 +1,0 @@
-Stations_ID;Stationsname;Geo. Laenge [Grad];Geo. Breite [Grad];Stationshoehe [m];Geberhoehe ueber Grund [m];Von_Datum;Bis_Datum;Geraetetyp Name;Messverfahren;eor;
-3379;München (Bavariaring);11.55;48.14;520;23;19550401;19970707;Sonnenscheinschreiber nach Campbell-Stokes;Sonnenscheinregistrierung, konv.;eor;
-3379;München-Stadt;11.54;48.16;515.37;21.1;19970708;20040824;SONIe Sonnenenergie-Sensor;Sonnenscheindauer, elektr.;eor;
-3379;München-Stadt;11.54;48.16;515.37;28.5;20040825;20061205;SONIe Sonnenenergie-Sensor;Sonnenscheindauer, elektr.;eor;
-3379;München-Stadt;11.54;48.16;515.37;21.54;20061206;20171009;SONIe Sonnenenergie-Sensor;Sonnenscheindauer, elektr.;eor;
-3379;München-Stadt;11.54;48.16;515.37;21.54;20171010;20190820;SONIe Sonnenenergie-Sensor e3;Sonnenscheindauer, elektr.;eor;
-3379;München-Stadt;11.54;48.16;515.37;21.54;20190821;20210825;SONIe Sonnenenergie-Sensor e2;Sonnenscheindauer, elektr.;eor;
-3379;München-Stadt;11.54;48.16;515.37;21.54;20210830;20260419;SONIe Sonnenenergie-Sensor e2;Sonnenscheindauer, elektr.;eor;
-generiert: 17.06.2026 --  Deutscher Wetterdienst  --

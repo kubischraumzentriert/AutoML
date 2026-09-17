@@ -1,8 +1,0 @@
-Stations_ID;Stationsname;Geo. Laenge [Grad];Geo. Breite [Grad];Stationshoehe [m];Geberhoehe ueber Grund [m];Von_Datum;Bis_Datum;Geraetetyp Name;Messverfahren;eor;
-3987;Potsdam;13.06;52.38;80.86;2;18930101;20190101;Hygrograph nach Frankenberg;Feuchteregistrierung, konv.;eor;
-3987;Potsdam;13.06;52.38;80.86;2;19780301;19920811;Lithium_Chlorid-Taupunktfühler;Feuchtemessung, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;2;19920812;20090310;HYGROMER MP300;Feuchtemessung, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;2;20090311;20151103;Feuchtesonde HMP45D;Feuchtemessung, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;2;20151104;20220930;EE33;Feuchtemessung, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;2;20221005;20260419;EE33;Feuchtemessung, elektr.;eor;
-generiert: 17.06.2026 --  Deutscher Wetterdienst  --

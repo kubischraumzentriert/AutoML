@@ -1,6 +1,0 @@
-Stations_ID;Stationsname;Geo. Laenge [Grad];Geo. Breite [Grad];Stationshoehe [m];Geberhoehe ueber Grund [m];Von_Datum;Bis_Datum;Geraetetyp Name;Messverfahren;eor;
-3987;Potsdam;13.06;52.38;80.86;;18930101;20201130;Schneepegel;Schneehöhenmessung, manuell;eor;
-3987;Potsdam;13.06;52.38;80.86;2;20090311;20100414;Ultraschall-Schneehöhenmesser SR50-G1;Schneehöhenmessung, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;2.3;20190911;20240916;Schneehöhensensor SHM 30;Schneehöhenmessung, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;2.3;20240917;20260419;Schneehöhensensor SHM 31;Schneehöhenmessung, elektr.;eor;
-generiert: 17.06.2026 --  Deutscher Wetterdienst  --

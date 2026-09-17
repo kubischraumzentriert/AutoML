@@ -1,6 +1,0 @@
-Stations_ID;Stationsname;Geo. Laenge [Grad];Geo. Breite [Grad];Stationshoehe [m];Geberhoehe ueber Grund [m];Von_Datum;Bis_Datum;Geraetetyp Name;Messverfahren;eor;
-3987;Potsdam;13.06;52.38;80.86;1;19860401;20090310;NG 200;Niederschlagsdauer, -menge, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;1;19951019;20140620;Niederschlags-Detektor;Niederschlagsdauer, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;1;20140625;20160725;Niederschlags-Detektor;Niederschlagsdauer, elektr.;eor;
-3987;Potsdam;13.06;52.38;80.86;1;20160726;20260419;Niederschlagswächter;Niederschlagsdauer, elektr.;eor;
-generiert: 17.06.2026 --  Deutscher Wetterdienst  --
