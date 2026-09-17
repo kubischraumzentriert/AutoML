@@ -4560,11 +4560,21 @@ Details: [`docs/research/AGRIDATASETS_PILOT.md`](docs/research/AGRIDATASETS_PILO
 
 ## DWD-Wetterdaten als optionale Zweitquelle (2026-09-17)
 
-**Status: Umsetzungsscheiben und Adapter angelegt, Stationspilot offen.**
+**Status: Umsetzungsscheiben und Adapter angelegt, Stationspilot mit zwei
+Faellen (Brandenburg/Potsdam, Bayern/Muenchen-Stadt) abgeschlossen - gemischter
+Befund, kein Backport.**
 DWD Climate Data Center wird als bevorzugte reale Wetterquelle vorgemerkt;
 `rdwd` dient als optionaler R-Zugriff. `modules/dwd_weather_adapter.R`
 implementiert Quellenkatalog, Stationsauswahl per Distanz und einen
 reproduzierbaren rueckblickenden (`as-of`) Wetterjoin.
+
+Stationspilot (`ML_Learning/openml-weather-campsite-dwd/`): identischer
+chronologischer Split/Seed/Learner fuer Baseline vs. DWD-Anreicherung, zwei
+Bundesland/Station-Faelle aus derselben OpenML-Quelle. Brandenburg/Potsdam:
+BAcc +0.054, MCC +0.089. Bayern/Muenchen-Stadt: BAcc -0.018, MCC -0.032 -
+Gegenrichtung, vermutlich weil die Bayern-Baseline bereits sehr hoch liegt
+(BAcc 0.949 ohne Wetter). Beide Faelle stammen aus demselben Datensatz, zaehlen
+also nicht als die fuer Scheibe 5 verlangten zwei unabhaengigen Projekte.
 
 Umsetzung in Scheiben: (1) Stationspilot mit lokal eingefrorenen Tagesdaten,
 (2) Zeit-/Leakage-Gates, (3) Daten-Provenienz und Datenvertrag, (4) separater

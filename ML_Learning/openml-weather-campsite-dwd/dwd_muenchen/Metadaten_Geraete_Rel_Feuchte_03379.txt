@@ -1,0 +1,6 @@
+Stations_ID;Stationsname;Geo. Laenge [Grad];Geo. Breite [Grad];Stationshoehe [m];Geberhoehe ueber Grund [m];Von_Datum;Bis_Datum;Geraetetyp Name;Messverfahren;eor;
+3379;München (Bavariaring);11.55;48.14;520;2;19850101;19970707;Thermohygrograph;Temperatur- und Feuchtereg., konv.;eor;
+3379;München-Stadt;11.54;48.16;515.37;2;19970708;20061205;HYGROMER MP100;Feuchtemessung, elektr.;eor;
+3379;München-Stadt;11.54;48.16;515.37;2;20061206;20141022;Feuchtesonde HMP45D;Feuchtemessung, elektr.;eor;
+3379;München-Stadt;11.54;48.16;515.37;2;20141023;20260419;EE33;Feuchtemessung, elektr.;eor;
+generiert: 17.06.2026 --  Deutscher Wetterdienst  --

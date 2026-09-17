@@ -13,18 +13,30 @@ Camping-Nachfrage in Brandenburg verbessern.
 
 ## Vergleich
 
-`prepare_pilot.R` erzeugt zwei identische Tabellen:
+`prepare_pilot.R` erzeugt fuer zwei Bundesland/Station-Faelle je zwei
+identische Tabellen:
 
-- `pilot_baseline.csv`: Kalender- und Camping-/Nachfrage-Lags, ohne Wetter
-- `pilot_weather.csv`: dieselben Merkmale plus monatlich aggregierte DWD-
-  Wetterwerte
+- Brandenburg/Potsdam (Station `03987`): `pilot_baseline.csv` /
+  `pilot_weather.csv`
+- Bayern/Muenchen-Stadt (Station `03379`): `pilot_baseline_bayern.csv` /
+  `pilot_weather_bayern.csv`
+
+Je Fall: eine Tabelle mit Kalender- und Camping-/Nachfrage-Lags ohne Wetter,
+eine mit denselben Merkmalen plus monatlich aggregierten DWD-Wetterwerten.
 
 Das Ziel ist `high`/`low` fuer die Uebernachtungszahl des Folgemonats. Die
 Schwelle wird nur auf dem Zeitraum vor `2019-01-01` bestimmt. Der Split ist
-chronologisch, nicht zufaellig.
+chronologisch, nicht zufaellig - identisch fuer beide Faelle.
 
 Die Dateien sind vorbereitete, eingefrorene Snapshots. Es gibt keinen Live-
 DWD-Download innerhalb von Resampling oder Cross-Validation.
+
+Beide Faelle stammen aus derselben OpenML-Quelle (nur Bundesland/Station
+unterscheiden sich) und pruefen damit Regionsrobustheit, nicht Uebertragbarkeit
+auf ein unabhaengiges Projekt. Ergebnis: Wetter hilft in Brandenburg, schadet
+leicht in Bayern - siehe
+[`docs/research/DWD_WEATHER_INTEGRATION.md`](../../docs/research/DWD_WEATHER_INTEGRATION.md)
+fuer die vollstaendige Evidenz.
 
 ## Ausfuehrung
 

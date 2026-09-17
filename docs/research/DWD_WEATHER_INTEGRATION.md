@@ -115,6 +115,41 @@ Laufzeit und Daten-/Git-Hashes sind dokumentiert.
   Scheibe 5 noch nicht fuer einen generischen Template-Backport (dafuer sind
   mindestens zwei unabhaengige Projekte mit stabiler Importstrecke noetig).
 
+#### Erweiterung: zweiter Fall Bayern/Muenchen-Stadt (2026-09-17)
+
+Kein zweites unabhaengiges Projekt im Sinne von Scheibe 5 (derselbe OpenML-
+Datensatz, nur ein anderes Bundesland/eine andere Station) - dient hier als
+Regionsrobustheitspruefung der Technik, nicht als zweiter Backport-Beleg.
+
+- Datensatz: dieselbe OpenML-Quelle wie oben, gefiltert auf
+  `land == "Bayern"`.
+- DWD-Quelle: CDC-Tagesstation Muenchen-Stadt (`03379`), lokal entpackt unter
+  `ML_Learning/openml-weather-campsite-dwd/dwd_muenchen/`, identische
+  monatliche Aggregation wie beim Potsdam-Fall.
+- Split/Modell: identischer chronologischer Split (`2019-01-01`), identischer
+  Seed 42, identischer `classif.ranger`-Learner wie beim Brandenburg-Fall.
+- Matchrate Wetterjoin: 100 % (265 Baseline-Zeilen, keine fehlenden
+  Wetterwerte).
+- Train/Test: 204/61 Zeilen (vs. 200/61 bei Brandenburg - Bayern hat 265 statt
+  261 Rohzeilen).
+- Metrikdelta (Wetter minus Baseline): BAcc 0.9491 -> 0.9313 (-0.0179), MCC
+  0.9012 -> 0.8692 (-0.0320). Beide Metriken verschlechtern sich hier leicht -
+  Gegenrichtung zum Brandenburg-Befund.
+- Baseline-Niveau bereits sehr hoch (BAcc 0.949 ohne Wetter) - fuer Bayern
+  bleibt wenig Verbesserungsspielraum, in den Wetterfeatures ueberhaupt
+  eingreifen koennten.
+- Laufzeit: beide Faelle zusammen (4 Modelltrainings) ca. 4 s.
+- Skripte: dieselben `prepare_pilot.R`/`compare_pilot.R`, jetzt fuer beide
+  Faelle parametrisiert. Ergebnis-CSVs: `pilot_comparison_results.csv`
+  (Brandenburg), `pilot_comparison_results_bayern.csv` (Bayern),
+  `pilot_comparison_results_all.csv` (beide).
+- Git-Stand zum Erweiterungslauf: `5b76334`.
+- Einordnung: gemischter Befund innerhalb derselben Datenquelle - Wetter hilft
+  in einem Bundesland, schadet leicht in einem anderen. Staerkt die
+  Notwendigkeit von Scheibe 2 (Leakage-Gates) und Scheibe 5 (echte
+  unabhaengige Projekte) vor jeder generischen Regel; ein Automatismus "DWD
+  immer anreichern" ist durch diesen Pilot nicht gedeckt.
+
 ### Scheibe 2: Zeit- und Leakage-Gates
 
 - Eventdatum und Wetterdatum explizit definieren.

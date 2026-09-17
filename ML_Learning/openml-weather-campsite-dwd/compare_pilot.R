@@ -1,5 +1,6 @@
 # Compares baseline vs. weather-enriched features on the chronological
-# high/low next-month overnight-demand target. Deliberately standalone
+# high/low next-month overnight-demand target, for each (Bundesland,
+# DWD-station) case produced by prepare_pilot.R. Deliberately standalone
 # instead of sourcing the repo-root 000_config.R pipeline: that config is
 # hardwired to the health_condition project (random stratified subsampling),
 # which conflicts with this pilot's chronological, no-shuffle split
@@ -55,18 +56,33 @@ evaluate_table <- function(path, label) {
   )
 }
 
-baseline_result <- evaluate_table(
-  file.path(project_dir, "pilot_baseline.csv"), "baseline"
+run_case <- function(case_label, output_suffix) {
+  baseline_result <- evaluate_table(
+    file.path(project_dir, paste0("pilot_baseline", output_suffix, ".csv")), "baseline"
+  )
+  weather_result <- evaluate_table(
+    file.path(project_dir, paste0("pilot_weather", output_suffix, ".csv")), "weather"
+  )
+
+  results <- rbind(baseline_result, weather_result)
+  results[, case := case_label]
+  results[, bacc_diff_vs_baseline := bacc - baseline_result$bacc]
+  results[, mcc_diff_vs_baseline := mcc - baseline_result$mcc]
+  setcolorder(results, c("case", setdiff(names(results), "case")))
+
+  fwrite(results, file.path(project_dir, paste0("pilot_comparison_results", output_suffix, ".csv")))
+
+  cat("=== Baseline vs. Wetter-Vergleich (", case_label, ") ===\n", sep = "")
+  print(results)
+  cat("\n")
+
+  results
+}
+
+brandenburg_results <- run_case("Brandenburg/Potsdam", "")
+bayern_results <- run_case("Bayern/Muenchen-Stadt", "_bayern")
+
+fwrite(
+  rbind(brandenburg_results, bayern_results),
+  file.path(project_dir, "pilot_comparison_results_all.csv")
 )
-weather_result <- evaluate_table(
-  file.path(project_dir, "pilot_weather.csv"), "weather"
-)
-
-results <- rbind(baseline_result, weather_result)
-results[, bacc_diff_vs_baseline := bacc - baseline_result$bacc]
-results[, mcc_diff_vs_baseline := mcc - baseline_result$mcc]
-
-fwrite(results, file.path(project_dir, "pilot_comparison_results.csv"))
-
-cat("=== Baseline vs. Wetter-Vergleich ===\n")
-print(results)
