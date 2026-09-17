@@ -15,6 +15,8 @@ project_dir <- if (length(script_arg)) {
 } else {
   normalizePath(getwd())
 }
+repo_root <- normalizePath(file.path(project_dir, "..", ".."))
+source(file.path(repo_root, "modules", "weather_enrichment_trust_gate.R"))
 
 seed <- 42
 split_date <- as.IDate("2022-01-01")
@@ -64,5 +66,40 @@ results[, mcc_diff_vs_baseline := mcc - baseline_result$mcc]
 
 fwrite(results, file.path(project_dir, "pilot_comparison_results.csv"))
 
-cat("=== Baseline vs. Wetter-Vergleich (Sachsen/Dresden, Sterbefaelle) ===\n")
+cat(sprintf("=== Baseline vs. Wetter-Vergleich (Sachsen/Dresden, Sterbefaelle, Einzelseed %d) ===\n", seed))
 print(results)
+
+# Trust-Gate (siehe docs/research/DWD_WEATHER_INTEGRATION.md): der
+# Einzelseed-Vergleich oben darf NICHT als "hilft"/"schadet"-Befund
+# berichtet werden, ohne dass die Richtung ueber mehrere Modell-Seeds
+# stabil ist.
+baseline_dt <- fread(file.path(project_dir, "pilot_baseline.csv"))
+weather_dt <- fread(file.path(project_dir, "pilot_weather.csv"))
+gate <- weather_enrichment_seed_stability_gate(
+  baseline_dt, weather_dt, split_date,
+  learner_constructor = function(s) {
+    l <- lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = s)
+    l$predict_type <- "prob"
+    l
+  },
+  measure = msr("classif.bacc")
+)
+cat(sprintf(
+  "Trust-Gate (%d Seeds): Delta-Mittel %.4f, %.0f%% positiv, %.0f%% negativ -> %s\n",
+  gate$n_seeds, gate$delta_mean, gate$share_positive * 100, gate$share_negative * 100, gate$decision
+))
+fwrite(
+  data.table(decision = gate$decision, delta_mean = gate$delta_mean, delta_sd = gate$delta_sd,
+             share_positive = gate$share_positive, share_negative = gate$share_negative,
+             n_seeds = gate$n_seeds),
+  file.path(project_dir, "pilot_trust_gate_results.csv")
+)
+
+if (gate$decision == "inconclusive") {
+  cat("KEIN gerichteter Befund berichtbar (Trust-Gate: inconclusive).\n")
+} else {
+  direction <- if (gate$decision == "robust_improvement") "improvement" else "regression"
+  assert_weather_enrichment_finding(gate, direction)
+  verb <- if (direction == "improvement") "hilft" else "schadet"
+  cat(sprintf("Wetter %s robust (Trust-Gate bestanden).\n", verb))
+}

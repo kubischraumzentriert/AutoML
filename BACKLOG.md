@@ -4565,7 +4565,9 @@ erweitert und per Seed-Stabilitaetspruefung (25 Modell-Seeds je Fall)
 korrigiert - nur 2 von 5 Faellen zeigen einen robusten POSITIVEN Effekt, die
 uebrigen 3 sind Rauschen nahe null (kein robuster negativer Fall). Damit ist
 die Mindestanzahl unabhaengiger Projekte fuer Scheibe 5 erreicht, aber kein
-Backport wegen fehlender Konsistenz.**
+Backport wegen fehlender Konsistenz. Seed-Stabilitaetspruefung jetzt als
+Trust-Gate (`modules/weather_enrichment_trust_gate.R`) verpflichtend in
+alle vier `compare_pilot.R`-Skripte verdrahtet, mit Testabdeckung.**
 DWD Climate Data Center wird als bevorzugte reale Wetterquelle vorgemerkt;
 `rdwd` dient als optionaler R-Zugriff. `modules/dwd_weather_adapter.R`
 implementiert Quellenkatalog, Stationsauswahl per Distanz und einen

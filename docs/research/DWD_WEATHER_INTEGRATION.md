@@ -274,10 +274,40 @@ Deltas), aber nicht robust genug fuer eine Domaenenregel.
   generischen Automatismus ("DWD immer anreichern" wuerde in 3 von 5
   Faellen nichts bringen, ohne dass man das vorher wissen konnte), aber es
   entkraeftet auch die staerkere Behauptung "Wetter kann aktiv schaden".
-  Naechster sinnvoller Schritt waere ein Leck-/Trust-Gate, das vor jeder
-  Wetteranreicherung automatisch eine Seed-Stabilitaetspruefung wie diese
-  verlangt, statt einem einzelnen Holdout-Vergleich zu vertrauen - eher als
-  weitere Faelle blind hinzuzufuegen.
+
+#### Trust-Gate: Seed-Stabilitaetspruefung ist jetzt Pflicht (2026-09-17)
+
+Damit derselbe Fehlschluss (Einzelseed-Delta faelschlich als "hilft"/
+"schadet" berichten) nicht erneut passiert, ist die Seed-Stabilitaetspruefung
+jetzt kein manueller Nachtrag mehr, sondern ein Pflichtschritt:
+[`modules/weather_enrichment_trust_gate.R`](../../modules/weather_enrichment_trust_gate.R)
+stellt zwei Funktionen bereit:
+
+- `weather_enrichment_seed_stability_gate()` - fixer Datensplit, 25
+  Ranger-Seeds (Default), klassifiziert das Delta als `robust_improvement`,
+  `robust_regression` oder `inconclusive` (Schwelle: `min_share_for_verdict`
+  = 0.9, empirisch zwischen den beobachteten Clustern 96-100% [robust] und
+  40-52% [Rauschen] kalibriert - siehe Kopfkommentar der Datei).
+- `assert_weather_enrichment_finding()` - bricht mit `stop()` ab, wenn ein
+  Skript versucht, eine Richtung ("improvement"/"regression") zu behaupten,
+  die nicht zur Gate-Entscheidung passt. Macht die Pruefung nicht optional.
+
+Alle vier `compare_pilot.R`-Skripte (Camping, Verkehrsunfaelle, Sterbefaelle,
+Baugewerbe) rufen das Gate jetzt nach dem Einzelseed-Vergleich automatisch
+auf und schreiben `pilot_trust_gate_results*.csv`. Der Einzelseed-Vergleich
+bleibt als Detail sichtbar, aber die abschliessende Textzeile ("Wetter hilft/
+schadet robust" vs. "KEIN gerichteter Befund berichtbar") kommt ausschliesslich
+aus der Gate-Entscheidung. Erneuter Lauf mit dem Gate bestaetigt exakt die
+obige Korrektur: Brandenburg und NRW `robust_improvement`, Bayern/Sachsen/
+Baugewerbe `inconclusive`.
+
+Tests: [`tests/testthat/test-weather_enrichment_trust_gate.R`](../../tests/testthat/test-weather_enrichment_trust_gate.R)
+mit synthetischer Ground Truth (informatives vs. nicht-informatives
+Wetterfeature) - laeuft automatisch in der `unit-tests`-CI-Job (kein
+Workflow-Eintrag noetig, `test_dir()` findet neue `test-*.R`-Dateien
+selbststaendig). Wie der DWD-Adapter selbst bleibt das Gate optional und
+NICHT in `_targets.R`/die nummerierte Standardreihenfolge eingebaut - es
+gilt nur fuer die DWD-Piloten in `ML_Learning/`, nicht global.
 
 ### Scheibe 2: Zeit- und Leakage-Gates
 

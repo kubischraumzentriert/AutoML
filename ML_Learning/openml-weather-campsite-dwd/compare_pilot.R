@@ -20,6 +20,8 @@ project_dir <- if (length(script_arg)) {
 } else {
   normalizePath(getwd())
 }
+repo_root <- normalizePath(file.path(project_dir, "..", ".."))
+source(file.path(repo_root, "modules", "weather_enrichment_trust_gate.R"))
 
 seed <- 42
 split_date <- as.IDate("2019-01-01")
@@ -72,10 +74,37 @@ run_case <- function(case_label, output_suffix) {
 
   fwrite(results, file.path(project_dir, paste0("pilot_comparison_results", output_suffix, ".csv")))
 
-  cat("=== Baseline vs. Wetter-Vergleich (", case_label, ") ===\n", sep = "")
+  cat("=== Baseline vs. Wetter-Vergleich (", case_label, ", Einzelseed ", seed, ") ===\n", sep = "")
   print(results)
-  cat("\n")
 
+  # Trust-Gate (siehe docs/research/DWD_WEATHER_INTEGRATION.md): der
+  # Einzelseed-Vergleich oben darf NICHT als "hilft"/"schadet"-Befund
+  # berichtet werden, ohne dass die Richtung ueber mehrere Modell-Seeds
+  # stabil ist - genau dieser Fehlschluss (Bayern/Sachsen/Baugewerbe im
+  # ersten Anlauf) hat dieses Gate ausgeloest.
+  baseline_dt <- fread(file.path(project_dir, paste0("pilot_baseline", output_suffix, ".csv")))
+  weather_dt <- fread(file.path(project_dir, paste0("pilot_weather", output_suffix, ".csv")))
+  gate <- weather_enrichment_seed_stability_gate(
+    baseline_dt, weather_dt, split_date,
+    learner_constructor = function(s) {
+      l <- lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = s)
+      l$predict_type <- "prob"
+      l
+    },
+    measure = msr("classif.bacc")
+  )
+  cat(sprintf(
+    "Trust-Gate (%d Seeds): Delta-Mittel %.4f, %.0f%% positiv, %.0f%% negativ -> %s\n\n",
+    gate$n_seeds, gate$delta_mean, gate$share_positive * 100, gate$share_negative * 100, gate$decision
+  ))
+  fwrite(
+    data.table(case = case_label, decision = gate$decision, delta_mean = gate$delta_mean,
+               delta_sd = gate$delta_sd, share_positive = gate$share_positive,
+               share_negative = gate$share_negative, n_seeds = gate$n_seeds),
+    file.path(project_dir, paste0("pilot_trust_gate_results", output_suffix, ".csv"))
+  )
+
+  attr(results, "gate") <- gate
   results
 }
 
@@ -86,3 +115,16 @@ fwrite(
   rbind(brandenburg_results, bayern_results),
   file.path(project_dir, "pilot_comparison_results_all.csv")
 )
+
+for (res in list(brandenburg_results, bayern_results)) {
+  gate <- attr(res, "gate")
+  case_label <- res$case[1]
+  if (gate$decision == "inconclusive") {
+    cat(sprintf("%s: KEIN gerichteter Befund berichtbar (Trust-Gate: inconclusive).\n", case_label))
+  } else {
+    direction <- if (gate$decision == "robust_improvement") "improvement" else "regression"
+    assert_weather_enrichment_finding(gate, direction)
+    verb <- if (direction == "improvement") "hilft" else "schadet"
+    cat(sprintf("%s: Wetter %s robust (Trust-Gate bestanden).\n", case_label, verb))
+  }
+}
