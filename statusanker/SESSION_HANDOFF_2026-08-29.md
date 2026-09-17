@@ -2857,11 +2857,36 @@ beide CI-Jobs gruen, gepusht. (`MLR3_Classifikation` `55abfd6`.) Die
 28MB bleiben bewusst in der GitHub-Historie erhalten (einfache
 Entfernung, kein Force-Push/History-Rewrite).
 
+**52. Aktualisierung:** Nutzeranweisung "mach Schnitt 2" - 4 weitere,
+kernnahe aber klar abgrenzbare Module nach `modules/` verschoben:
+`ensemble_selection.R`, `class_multiplier_tuning.R`, `config_
+validation.R`, `generate_systematic_evaluation.R`. Referenz-Scan vorab
+(diesmal breiter als bei Schnitt 1, weil der externe Pull zwischenzeitlich
+neue Referenzstellen geschaffen hatte) fand: `149_ensemble_selection.R`,
+`analysis/multilayer_stack_test.R` (ensemble_selection.R); `130_
+threshold_tuning.R`, `modules/decision_stability_level2_prototype.R`,
+alle 4 `protocols/outer_workflow_evaluation*.R` (class_multiplier_
+tuning.R - reine Pfadkorrektur an den ADR-008-eingefrorenen Dateien,
+keine inhaltliche Aenderung); 4 Testdateien; Markdown-Links in
+`docs/reference/SCRIPT_INDEX.md`. CI-Smoke-Test-Fixture nachgezogen
+(`class_multiplier_tuning.R` jetzt im `modules/`-Unterordner der
+Fixture, obwohl in den tatsaechlich ausgefuehrten Smoke-Test-Schritten
+ungenutzt - fuer Konsistenz trotzdem korrigiert). Eine gefundene
+Erwaehnung (`analysis/check_project_script_coverage.R`) bewusst NICHT
+angepasst - das ist ein kanonischer Dateiname-Kandidat fuer EXTERNE
+`ML_Learning`-Projektkopien (dort weiterhin flach), keine Referenz auf
+die eigene Repo-Datei. Volle testthat-Suite + beide CI-Jobs gruen,
+alle 4 Module funktional aus `modules/` ladbar verifiziert.
+(`MLR3_Classifikation` `14a79c1`.) Root jetzt bei 61 nummerierten + 8
+verbleibenden Kern-/Standalone-Skripten (von urspruenglich 92).
+
 **Stand jetzt**: kein offener fachlicher oder struktureller Punkt mehr
-in `MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning`. Root
-von `MLR3_Classifikation` deutlich aufgeraeumt (Schnitt 1 abgeschlossen,
-Schnitt 2/3 als moegliche Folgeschritte in BACKLOG.md notiert).
+in `MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning`. Schnitt
+1+2 der Root-Aufraeumung abgeschlossen, nur noch Schnitt 3 (4 Standalone-
+Utility-Skripte ohne nummerierten Treiber: `db_housekeeping.R`,
+`merge_project_experiments.R`, `ordinal_qwk.R`, `reproduce_publication_
+benchmark.R`) als moeglicher Folgeschritt offen.
 
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
-Schnitt 2/3 der Root-Aufraeumung, etwas komplett Neues vorschlagen/
+Schnitt 3 der Root-Aufraeumung, etwas komplett Neues vorschlagen/
 erfragen, oder abwarten bis zur JOSS-Wiedervorlage (~Nov 2026).
