@@ -32,15 +32,25 @@ verschoben (`ensemble_selection.R`, `class_multiplier_tuning.R`,
 guenstig gepruefte, klar abgrenzbare Referenzstellen, keine
 Kern-Infrastruktur mehr.
 
-**Warum die restlichen Skripte weiterhin im Root bleiben**: echte
-Kern-Infrastruktur mit sehr breiter Nutzung ueber fast alle
+**Update 2026-09-17 ("Schnitt 3")**: letzte 4 Standalone-Utility-
+Skripte ohne jeden nummerierten Treiber nach `modules/` verschoben
+(`db_housekeeping.R`, `merge_project_experiments.R`, `ordinal_qwk.R`,
+`reproduce_publication_benchmark.R`). `merge_project_experiments.R`
+hatte als einziges der bisher 27 verschobenen Module einen BARE
+`source("db_housekeeping.R")`-Aufruf (arbeitsverzeichnis-relativ statt
+`file.path(project_dir, ...)`, da dieses Skript kein `000_config.R`
+laedt und daher kein `project_dir` kennt) - auf `source("modules/
+db_housekeeping.R")` umgestellt (funktioniert, weil Skripte immer mit
+Repo-Root als Arbeitsverzeichnis gestartet werden, unabhaengig vom
+eigenen Skript-Pfad).
+
+**Warum die restlichen Skripte weiterhin im Root bleiben**: nur noch
+echte Kern-Infrastruktur mit sehr breiter Nutzung ueber fast alle
 Pipeline-Skripte hinweg (`db_logging.R` allein 60+ Referenzstellen,
-`evidence_registry.R`, `provenance.R`) sowie 4 Standalone-Utility-
-Skripte ohne jeden nummerierten Treiber (`db_housekeeping.R`,
-`merge_project_experiments.R`, `ordinal_qwk.R`) - moeglicher "Schnitt 3"
-(siehe BACKLOG.md). Die 4 `outer_workflow_evaluation*.R`-Dateien liegen
-bereits seit 2026-09-16 in [`protocols/`](../../protocols/) (ADR-008-
-eingefroren, siehe eigener Abschnitt unten).
+`evidence_registry.R`, `provenance.R`). Die 4
+`outer_workflow_evaluation*.R`-Dateien liegen bereits seit 2026-09-16
+in [`protocols/`](../../protocols/) (ADR-008-eingefroren, siehe eigener
+Abschnitt unten).
 
 Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 **Aufrufkontext** (wann/von wem es genutzt wird) - **Ergebnis/Nutzen**
@@ -53,7 +63,7 @@ Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 |---|---|
 | [`composition_reweighting.R`](../../modules/composition_reweighting.R) | Label-freie CV-LB-Kompositionsdiagnose (Test-Segmentverteilung statt Train-/CV-Verteilung), 5-Projekt-bestaetigt |
 | [`config_validation.R`](../../modules/config_validation.R) | Prueft `000_config.R` auf innere Konsistenz (Tippfehler, unpassende Bereiche) |
-| [`db_housekeeping.R`](../../db_housekeeping.R) | Rein lesende Diagnose der zentralen `experiments.db` vor einem Merge |
+| [`db_housekeeping.R`](../../modules/db_housekeeping.R) | Rein lesende Diagnose der zentralen `experiments.db` vor einem Merge |
 | [`decision_stability.R`](../../modules/decision_stability.R) | Generischer Baustein: wie stabil ist eine kategoriale Entscheidung unter variierenden Seeds |
 | [`decision_stability_level2_prototype.R`](../../modules/decision_stability_level2_prototype.R) | Wendet `decision_stability.R` konkret auf die Level-2-Modellwahl an |
 | [`ensemble_selection.R`](../../modules/ensemble_selection.R) | Caruana-Greedy-Ensemble-Selection als eigenstaendige Funktion |
@@ -71,9 +81,9 @@ Jeder Eintrag: **Beschreibung** (was das Skript/Modul macht) -
 | [`db_logging.R`](../../db_logging.R) | Zentrale `experiments.db`-Logging-Helfer (EAV-Schema plus JSON-Manifeste) |
 | [`generalization_gap.R`](../../modules/generalization_gap.R) | Formale Generalisierungsluecke (CV- vs. Bootstrap-Verteilung + Baseline-Referenzbereich), von `136_generalization_gap.R` genutzt |
 | [`learning_curve.R`](../../modules/learning_curve.R) | Lernkurve (Score vs. Trainingsgroesse, algorithmusabhaengig), von `023_learning_curve.R` genutzt |
-| [`merge_project_experiments.R`](../../merge_project_experiments.R) | Konsolidiert lokale Projekt-`experiments.db`-Dateien inkrementell in die zentrale Template-DB |
+| [`merge_project_experiments.R`](../../modules/merge_project_experiments.R) | Konsolidiert lokale Projekt-`experiments.db`-Dateien inkrementell in die zentrale Template-DB |
 | [`multilabel.R`](../../modules/multilabel.R) | Multi-Label-Klassifikation (Binary Relevance), von `021_multilabel_workflow.R` genutzt |
-| [`ordinal_qwk.R`](../../ordinal_qwk.R) | Ordinale Ziele + Quadratic Weighted Kappa (Regression + QWK-optimales Runden), optionales Modul |
+| [`ordinal_qwk.R`](../../modules/ordinal_qwk.R) | Ordinale Ziele + Quadratic Weighted Kappa (Regression + QWK-optimales Runden), optionales Modul |
 | [`sanity_checks.R`](../../modules/sanity_checks.R) | Drei Modell-Sanity-Checks (Perturbation/Invarianz/Directional Expectation), von `147_error_analysis_ranger_sanity_checks.R` genutzt |
 | [`seed_stability.R`](../../modules/seed_stability.R) | Seed-/Hyperparameter-Rausch-Stabilitaet bei fixem Split, von `092_seed_stability.R` genutzt |
 | [`split_size_sensitivity.R`](../../modules/split_size_sensitivity.R) | Prueft, ob der gewaehlte Split-Anteil selbst stabil ist, von `022_split_size_sensitivity.R` genutzt |

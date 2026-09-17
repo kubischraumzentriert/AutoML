@@ -5,7 +5,7 @@
 assign("project_dir", testthat::test_path("..", ".."), envir = globalenv())
 suppressPackageStartupMessages({ library(DBI); library(RSQLite); library(data.table) })
 source(testthat::test_path("..", "..", "db_logging.R")) # db_connect() baut das Schema aus db_schema.sql auf
-source(testthat::test_path("..", "..", "db_housekeeping.R"))
+source(testthat::test_path("..", "..", "modules", "db_housekeeping.R"))
 
 # db_connect() aus db_logging.R statt eines eigenen SQL-Parsers - testet
 # gegen das REALE Schema, nicht gegen eine vereinfachte Testkopie, die

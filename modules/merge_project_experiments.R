@@ -46,7 +46,7 @@ suppressPackageStartupMessages({
 # db_housekeeping_check() muessen dieselben Projekte finden, sonst driften
 # Diagnose und tatsaechlicher Merge auseinander. Verhalten unveraendert,
 # nur an einer Stelle definiert statt dupliziert.
-source("db_housekeeping.R")
+source("modules/db_housekeeping.R")
 
 # Auf "classification" gefiltert (DB-Domain-Trennung, siehe
 # db_housekeeping.R/detect_problem_type() und BACKLOG.md "Naechste

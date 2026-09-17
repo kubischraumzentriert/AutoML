@@ -741,7 +741,7 @@ vollstaendig abgeschlossen (die eine Luecke bleibt offen), aber nicht
 mehr "unspezifiziert".
 
 **Fortsetzung (2026-09-14, Nutzeranweisung "ja, mach das so")**: neues
-[`reproduce_publication_benchmark.R`](reproduce_publication_benchmark.R) -
+[`reproduce_publication_benchmark.R`](modules/reproduce_publication_benchmark.R) -
 eigenstaendiges Skript, laedt alle 6 `EXTERNAL_BENCHMARK_SET.md`-
 Datensaetze per `mlr3oml` direkt, OHNE `ML_Learning`-Abhaengigkeit,
 fuehrt Protokoll v2 durch. Voller Verifikationslauf (~30 Min): 4 von 6
