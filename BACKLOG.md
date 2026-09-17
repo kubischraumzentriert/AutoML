@@ -884,6 +884,43 @@ gender-Subgruppen gefunden - eine weitere empirische Bestaetigung
 (analog Kandidat 1/Feature-Importance-Stabilitaet) statt einer blinden
 Annahme.
 
+### Kandidat 5 (Bootstrap-Konfidenzintervalle fuer die finale Metrik) - erledigt (2026-09-17)
+
+Nutzeranfrage "schlag ein neues Backlog-Thema vor" - Luecke gefunden:
+jedes bisherige Endergebnis dieses Templates wird als nackte
+Punktschaetzung berichtet, z.B. `joss/paper.md`: "Balanced Accuracy
+0.9482 on the full, never-seen test set", ohne jede Unsicherheits-
+angabe. `generalization_gap.R` nutzt Bootstrap bereits, aber nur um die
+CV-Schaetzung selbst zu pruefen (Overfitting-auf-die-Testmethode-
+Diagnose), NICHT um eine Streuung um die finale Zahl auszuweisen -
+anderer Zweck, kein Duplikat.
+
+Neues `bootstrap_metric_ci.R`: `bootstrap_metric_ci()` (nichtparametrisches
+Perzentil-Bootstrap ueber die Zeilen eines fixen Vorhersage-Datensatzes,
+kein Neutraining je Resample), `bootstrap_paired_comparison()` (gepaarter
+Vergleich zweier Modelle auf demselben Holdout - beantwortet "ist A
+wirklich besser als B" robuster als zwei sich ueberlappende Einzel-CIs),
+`format_metric_ci()` (Log-/Report-Hilfsfunktion). 21 Checks gruen,
+darunter ein echter Bootstrap-Coverage-Test (bekannte Bernoulli(p=0.8)-
+DGP, 200 unabhaengige Wiederholungen, Ziel-Deckung ~90% trifft im
+erwarteten Toleranzband). Volle Testsuite weiterhin gruen.
+
+**Erste Realprojekt-Anwendung** (`159_bootstrap_metric_ci.R`, am
+Template-eigenen `health_condition`-Projekt): die 0.9482-Zahl selbst ist
+eine Kaggle-Leaderboard-Score OHNE lokal verfuegbare Ground Truth -
+kein Bootstrap moeglich. Stattdessen ehrlich an dem demonstriert, was
+lokal vorliegt: gepoolte 5-fach-Out-of-Fold-Vorhersagen des tatsaechlich
+gelebten Workflows (klassengewichteter Ranger) vs. ungewichtetem
+Default-Ranger. **Ergebnis**: workflow_ranger BAcc 0.9452 [90%-CI:
+0.9426, 0.9478], ranger_default BAcc 0.8640 [90%-CI: 0.8595, 0.8685] -
+gepaarter Unterschied +0.0812 [90%-CI: 0.0771, 0.0852], p<0.0001,
+eindeutig signifikant. Bestaetigt zum ersten Mal MIT Unsicherheitsmass
+(nicht nur als Punktschaetzung), dass die Klassengewichtung hier einen
+echten, keinen zufaelligen Effekt hat. `joss/paper.md` entsprechend
+ergaenzt (Klarstellung, dass die 0.9482-LB-Zahl kein lokales CI erlaubt,
+PLUS die neue, CI-abgesicherte Klassengewichtungs-Aussage) - Wortzahl
+weiterhin im JOSS-Limit (1624/1750).
+
 ## P1.2 Schritt 2 - Status (2026-08-27): historisches Nachtragen
 
 **Nutzeranfrage**: "wir sollten die Historie nachtragen d.h. migrieren"

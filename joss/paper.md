@@ -170,13 +170,19 @@ template's greedy ensemble-selection component produced a measured
 leaderboard improvement, not only a cross-validation improvement; (3) on
 the template's own reference Kaggle dataset, the resulting model reached
 Balanced Accuracy 0.9482 on the full, never-seen test set with a simple,
-explainable random-forest model rather than a black-box ensemble. Beyond
+explainable random-forest model rather than a black-box ensemble
+(a Kaggle leaderboard score, so no local ground truth is available to
+attach a confidence interval to that particular number). Beyond
 single-project results, the template's core class-weighting-plus-
 correction claim was independently re-tested on 6 datasets from the
 external OpenML-CC18 suite [@Bischl2021], selected before any
 performance was observed specifically to guard against benchmark
-selection bias — full results in the project's extended technical
-report. The template has not yet been adopted by other teams or cited in
+selection bias, and — on the reference project's own cross-validated
+holdout, where ground truth is available — a paired bootstrap
+comparison confirms the class-weighting effect itself is not noise
+(+0.081 Balanced Accuracy over an unweighted baseline, 90% CI
+[0.077, 0.085], *p* < 0.001); full results in the project's extended
+technical report. The template has not yet been adopted by other teams or cited in
 third-party publications; its realized impact so far is within the
 author's own competition practice, stated here plainly rather than
 overstated.
