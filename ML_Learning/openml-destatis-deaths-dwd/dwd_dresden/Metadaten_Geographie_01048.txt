@@ -1,0 +1,6 @@
+Stations_id;Stationshoehe;Geogr.Breite;Geogr.Laenge;von_datum;bis_datum;Stationsname
+  1048;  152.00; 51.0883; 13.7601;19260501;19350710;Dresden-Klotzsche
+  1048;  229.00; 51.1246; 13.7639;19350711;19560419;Dresden-Klotzsche
+  1048;  222.00; 51.1325; 13.7721;19560420;19950831;Dresden-Klotzsche
+  1048;  227.00; 51.1280; 13.7543;19950901;20190813;Dresden-Klotzsche
+  1048;  227.57; 51.1278; 13.7543;20190814;        ;Dresden-Klotzsche

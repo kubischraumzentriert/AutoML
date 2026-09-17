@@ -150,6 +150,82 @@ Regionsrobustheitspruefung der Technik, nicht als zweiter Backport-Beleg.
   unabhaengige Projekte) vor jeder generischen Regel; ein Automatismus "DWD
   immer anreichern" ist durch diesen Pilot nicht gedeckt.
 
+#### Erweiterung: drei unabhaengige Destatis/DWD-Projekte (2026-09-17)
+
+Im Unterschied zum Bayern-Fall oben sind dies echte unabhaengige Projekte im
+Sinne von Scheibe 5: jeweils eine andere Destatis-Quelle/-Statistik, ein
+anderer Zielmechanismus und ein anderes Bundesland/Station als der Camping-
+Pilot. Alle drei nutzen denselben oeffentlichen, unauthentifizierten
+GENESIS-Online-REST-Endpunkt (`https://genesis.destatis.de/genesis/api/rest/tables/<code>/data`,
+`Accept: application/json` + `Referer` auf die Tabellenseite - kein Login/
+API-Key), lokal eingefroren als `source_genesis_<code>.json` je Projekt.
+Identisches Vergleichsschema wie die Camping-Piloten: chronologischer Split,
+Seed 42, `classif.ranger`, Schwelle nur auf dem Trainingszeitraum bestimmt.
+
+**Verkehrsunfaelle (Nordrhein-Westfalen/Koeln)** -
+[`ML_Learning/openml-destatis-accidents-dwd/`](../../ML_Learning/openml-destatis-accidents-dwd/)
+
+- Quelle: GENESIS-Tabelle `46241-0021` (Unfaelle mit Personenschaden,
+  Bundeslaender, Monate), DWD-Station Koeln-Bonn (`02667`).
+- Ziel: high/low Unfaelle mit Personenschaden im Folgemonat, Split
+  `2022-01-01`, 179 Baseline-Zeilen (132 Train/47 Test), 100 % Wettermatch.
+- Metrikdelta: BAcc 0.7518 -> 0.7891 (+0.0373), MCC 0.5121 -> 0.5771
+  (+0.0650). Wetter hilft - plausibler Mechanismus (Naesse/Glaette).
+
+**Sterbefaelle (Sachsen/Dresden)** -
+[`ML_Learning/openml-destatis-deaths-dwd/`](../../ML_Learning/openml-destatis-deaths-dwd/)
+
+- Quelle: GENESIS-Tabelle `12613-0012` (Gestorbene, Bundeslaender, Monate),
+  DWD-Station Dresden-Klotzsche (`01048`).
+- Ziel: high/low Sterbefallzahl im Folgemonat (Mechanismus:
+  Winterexzess-Mortalitaet), Split `2022-01-01`, 179 Baseline-Zeilen
+  (132 Train/47 Test), 100 % Wettermatch.
+- Metrikdelta: BAcc 0.8396 -> 0.8157 (-0.0240), MCC 0.6289 -> 0.5406
+  (-0.0883). Wetter schadet.
+
+**Baugewerblicher Umsatz (Baden-Wuerttemberg/Stuttgart)** -
+[`ML_Learning/openml-destatis-construction-dwd/`](../../ML_Learning/openml-destatis-construction-dwd/)
+
+- Quelle: GENESIS-Tabelle `44111-0003` (Baugewerblicher Umsatz im
+  Bauhauptgewerbe, Bundeslaender, Monate bis 2016, Bauarten - Bauarten ohne
+  eigene %TOTAL%-Kategorie, deshalb ueber die 7 Bauarten aufsummiert), DWD-
+  Station Stuttgart-Schnarrenberg (`04928`). Regionale Monatsaufschluesselung
+  dieser Tabelle endet 2016 (Werte danach `0`, eingestellte Zeitreihe, keine
+  echte Fehlwert-Null) - Pilot nutzt deshalb 1995-2016 statt 2011-2025.
+- Ziel: high/low Bauumsatz im Folgemonat (Mechanismus: Frost/Schnee legen
+  Aussenbaustellen lahm), Split `2011-01-01`, 263 Baseline-Zeilen
+  (192 Train/71 Test), 100 % Wettermatch.
+- Metrikdelta: BAcc 0.8246 -> 0.7888 (-0.0357), MCC 0.5170 -> 0.4608
+  (-0.0562). Wetter schadet.
+
+**Zusammenfassung ueber alle 5 Faelle** (2 Camping-Bundeslaender + 3 neue
+unabhaengige Projekte):
+
+| Fall | Quelle | Region/Station | BAcc-Delta | MCC-Delta |
+|---|---|---|---|---|
+| Camping | OpenML 46263 | Brandenburg/Potsdam | +0.054 | +0.089 |
+| Camping | OpenML 46263 | Bayern/Muenchen | -0.018 | -0.032 |
+| Verkehrsunfaelle | Destatis 46241-0021 | NRW/Koeln | +0.037 | +0.065 |
+| Sterbefaelle | Destatis 12613-0012 | Sachsen/Dresden | -0.024 | -0.088 |
+| Baugewerbe | Destatis 44111-0003 | Baden-Wuerttemberg/Stuttgart | -0.036 | -0.056 |
+
+2 von 5 Faellen zeigen eine Verbesserung durch Wetteranreicherung, 3 von 5
+eine Verschlechterung - kein konsistenter Effekt, weder Richtung noch
+Groessenordnung. Skripte: je Projektordner `prepare_pilot.R` (Datenaufbereitung
+inkl. JSON-Stat-Parsing der GENESIS-Antwort) und `compare_pilot.R`
+(Vergleich). Laufzeit je Projekt < 5 s. Git-Stand zum Erweiterungslauf: wird
+beim Commit dieser Aenderung gesetzt.
+
+- Einordnung: erfuellt jetzt die in Scheibe 5 geforderte
+  "mindestens zwei unabhaengige Projekte"-Schwelle (hier: drei), aber mit
+  gemischtem statt konsistent positivem Befund. Das spricht gegen einen
+  generischen Backport ("DWD immer anreichern"), nicht dafuer - siehe
+  aktualisierte Bewertung unter Scheibe 5 unten. Naechster sinnvoller
+  Schritt waere eher zu verstehen, WARUM einfache Monats-Mittel/-Summen in
+  manchen Domaenen helfen und in anderen schaden (z. B. Tagesgranularitaet,
+  Lag-Fenster, Interaktion mit vorhandenen Lag-Features), als weitere
+  Faelle blind hinzuzufuegen.
+
 ### Scheibe 2: Zeit- und Leakage-Gates
 
 - Eventdatum und Wetterdatum explizit definieren.
@@ -189,6 +265,17 @@ automatischer Wechsel auf Rasterdaten.
 - Positive, neutrale und negative Wetterbefunde dokumentieren.
 - Erst danach entscheiden, ob ein generischer Hook in die Orchestrierung
   aufgenommen wird.
+
+**Stand 2026-09-17:** die Mindestanzahl unabhaengiger Projekte ist mit drei
+Destatis/DWD-Piloten (Verkehrsunfaelle, Sterbefaelle, Baugewerbe - siehe
+Evidenz unter Scheibe 1) erreicht. Der Befund ist jedoch gemischt (2 von 5
+Faellen insgesamt positiv, 3 negativ, keine erkennbare Regelmaessigkeit nach
+Domaene oder Region). Damit ist die Bedingung "positive, neutrale und
+negative Befunde dokumentiert" erfuellt, aber nicht die inhaltliche
+Voraussetzung fuer einen generischen Hook: ein Automatismus "reichere jedes
+Projekt mit passendem Datum/Ort automatisch mit DWD-Monatsmittelwerten an"
+waere durch diese Evidenz nicht gedeckt und wuerde in ca. jedem zweiten Fall
+den Score verschlechtern. Kein Backport.
 
 Bis dahin bleibt der Adapter optional und wird nicht in `_targets.R` oder die
 nummerierte Standardreihenfolge eingebaut. Dadurch ist keine Aenderung am

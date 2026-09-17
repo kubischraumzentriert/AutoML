@@ -1,0 +1,8 @@
+Stations_id;Stationshoehe;Geogr.Breite;Geogr.Laenge;von_datum;bis_datum;Stationsname
+  4928;  314.00; 48.8281;  9.2002;19570101;19840831;Stuttgart (Schnarrenberg)
+  4928;  314.00; 48.8281;  9.2002;19840901;19900407;Stuttgart (Schnarrenberg)
+  4928;  314.00; 48.8281;  9.2002;19900408;19980630;Stuttgart (Schnarrenberg)
+  4928;  314.00; 48.8281;  9.2002;19980701;20061016;Stuttgart (Schnarrenberg)
+  4928;  314.28; 48.8281;  9.2000;20061017;20121111;Stuttgart (Schnarrenberg)
+  4928;  314.28; 48.8281;  9.2000;20121112;20251124;Stuttgart (Schnarrenberg)
+  4928;  314.28; 48.8281;  9.2000;20251125;        ;Stuttgart (Schnarrenberg)

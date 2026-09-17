@@ -1,0 +1,7 @@
+Stations_ID;Stationsname;Geo. Laenge [Grad];Geo. Breite [Grad];Stationshoehe [m];Geberhoehe ueber Grund [m];Von_Datum;Bis_Datum;Geraetetyp Name;Messverfahren;eor;
+1048;Dresden-Klotzsche;13.75;51.13;227;1;19950901;20081022;NG 200;Niederschlagsdauer, -menge, elektr.;eor;
+1048;Dresden-Klotzsche;13.75;51.13;227;1;19950901;20140312;Niederschlags-Detektor;Niederschlagsdauer, elektr.;eor;
+1048;Dresden-Klotzsche;13.75;51.13;227;1;20131210;20170215;Niederschlagswächter;Niederschlagsdauer, elektr.;eor;
+1048;Dresden-Klotzsche;13.75;51.13;227;1;20171017;20190813;Niederschlagswächter;Niederschlagsdauer, elektr.;eor;
+1048;Dresden-Klotzsche;13.75;51.13;227.57;1;20190814;20260419;Niederschlagswächter;Niederschlagsdauer, elektr.;eor;
+generiert: 17.06.2026 --  Deutscher Wetterdienst  --

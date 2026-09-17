@@ -4560,21 +4560,40 @@ Details: [`docs/research/AGRIDATASETS_PILOT.md`](docs/research/AGRIDATASETS_PILO
 
 ## DWD-Wetterdaten als optionale Zweitquelle (2026-09-17)
 
-**Status: Umsetzungsscheiben und Adapter angelegt, Stationspilot mit zwei
-Faellen (Brandenburg/Potsdam, Bayern/Muenchen-Stadt) abgeschlossen - gemischter
-Befund, kein Backport.**
+**Status: Umsetzungsscheiben und Adapter angelegt, Stationspilot auf 5 Faelle
+(1 OpenML- + 3 unabhaengige Destatis-Projekte, je mit 1-2 Bundesland/
+Station-Varianten) erweitert - gemischter Befund (2 von 5 positiv, 3 von 5
+negativ), Mindestanzahl unabhaengiger Projekte fuer Scheibe 5 erreicht, aber
+kein Backport wegen fehlender Konsistenz.**
 DWD Climate Data Center wird als bevorzugte reale Wetterquelle vorgemerkt;
 `rdwd` dient als optionaler R-Zugriff. `modules/dwd_weather_adapter.R`
 implementiert Quellenkatalog, Stationsauswahl per Distanz und einen
 reproduzierbaren rueckblickenden (`as-of`) Wetterjoin.
 
-Stationspilot (`ML_Learning/openml-weather-campsite-dwd/`): identischer
-chronologischer Split/Seed/Learner fuer Baseline vs. DWD-Anreicherung, zwei
-Bundesland/Station-Faelle aus derselben OpenML-Quelle. Brandenburg/Potsdam:
-BAcc +0.054, MCC +0.089. Bayern/Muenchen-Stadt: BAcc -0.018, MCC -0.032 -
-Gegenrichtung, vermutlich weil die Bayern-Baseline bereits sehr hoch liegt
-(BAcc 0.949 ohne Wetter). Beide Faelle stammen aus demselben Datensatz, zaehlen
-also nicht als die fuer Scheibe 5 verlangten zwei unabhaengigen Projekte.
+Stationspilot, Teil 1 (`ML_Learning/openml-weather-campsite-dwd/`):
+identischer chronologischer Split/Seed/Learner fuer Baseline vs.
+DWD-Anreicherung, zwei Bundesland/Station-Faelle aus derselben OpenML-Quelle
+(Camping-/Tourismusdaten). Brandenburg/Potsdam: BAcc +0.054, MCC +0.089.
+Bayern/Muenchen-Stadt: BAcc -0.018, MCC -0.032. Beide Faelle stammen aus
+demselben Datensatz, zaehlen also nicht als unabhaengige Projekte.
+
+Stationspilot, Teil 2: drei ECHTE unabhaengige Projekte aus GENESIS-Online
+(Destatis), abgerufen ueber den oeffentlichen, unauthentifizierten REST-
+Endpunkt (kein Login/API-Key noetig) - je andere Statistik, anderer
+Zielmechanismus, anderes Bundesland/Station:
+- Verkehrsunfaelle NRW/Koeln (`ML_Learning/openml-destatis-accidents-dwd/`):
+  BAcc +0.037, MCC +0.065 (Wetter hilft).
+- Sterbefaelle Sachsen/Dresden (`ML_Learning/openml-destatis-deaths-dwd/`):
+  BAcc -0.024, MCC -0.088 (Wetter schadet).
+- Baugewerblicher Umsatz Baden-Wuerttemberg/Stuttgart
+  (`ML_Learning/openml-destatis-construction-dwd/`): BAcc -0.036, MCC -0.056
+  (Wetter schadet).
+
+Damit ist die Scheibe-5-Mindestanzahl unabhaengiger Projekte erreicht, aber
+der Befund bleibt uneinheitlich (2/5 positiv, 3/5 negativ) - kein
+Automatismus "DWD immer anreichern", siehe
+[`docs/research/DWD_WEATHER_INTEGRATION.md`](docs/research/DWD_WEATHER_INTEGRATION.md)
+fuer die vollstaendige Tabelle und Einordnung.
 
 Umsetzung in Scheiben: (1) Stationspilot mit lokal eingefrorenen Tagesdaten,
 (2) Zeit-/Leakage-Gates, (3) Daten-Provenienz und Datenvertrag, (4) separater
