@@ -65,9 +65,15 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
 - **Komplexitaetskosten**: mittel-hoch - braucht mehrfache Wiederholung
   des gesamten Modellwahl-/Ensemble-Prozesses unter kleinen Variationen,
   nicht nur einen einzelnen zusaetzlichen Check.
-- **Prototype**: nein (Stand 2026-08-30).
-- **Backport**: nein/offen. **Prioritaet laut Bewertungsdokument: sehr
-  hoch** als naechste Forschungsidee.
+- **Prototype**: JA (Stand 2026-09-18, Eintrag war veraltet) - als
+  `decision_stability.R`/`decision_stability_level2_prototype.R`
+  umgesetzt, synthetisch verifiziert und an 15 externen CC18-
+  Datensaetzen real angewendet (n=6 -> 10 -> 15 erweitert).
+- **Backport**: JA - im Template (`modules/decision_stability.R`).
+  Zentraler Befund: die urspruenglich suggestive Fold-1-Korrelation
+  zwischen Modell-Stabilitaet und Level-2-Vorteil (rho=-0.28, n=6) haelt
+  der Erweiterung auf n=15 NICHT stand (rho=-0.147) - als widerlegt
+  dokumentiert, siehe `statusanker/SESSION_HANDOFF_2026-08-29.md`.
 
 ## 2. astartes (schwierige/extrapolationsorientierte Splits)
 
@@ -100,9 +106,14 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
   Gruppenstruktur.
 - **Komplexitaetskosten**: moderat - ein zusaetzlicher Split-Modus +
   Vergleichsmetrik, keine Aenderung am Trainingsprozess selbst.
-- **Prototype**: nein (Stand 2026-08-30).
-- **Backport**: nein/offen. **Prioritaet laut Bewertungsdokument: hoch**
-  als Forschungsprototyp.
+- **Prototype**: JA (Stand 2026-09-18, Eintrag war veraltet) - als
+  `hard_split_stress_test.R` (k-means-Cluster-Split) umgesetzt.
+- **Backport**: JA - im Template (`modules/hard_split_stress_test.R`,
+  von `137_hard_split_stress_test.R` genutzt), ADR-003-Schwelle erfuellt
+  (7/7 Projekt-Bestaetigungen). Echter Zusatzfund bei der Anwendung:
+  ein harter Cluster-Split kann ein VERDECKTER Class-Holdout sein statt
+  echter Extrapolation - `class_proportion_shift()`/
+  `class_holdout_suspected`-Flag ergaenzt.
 
 ## 3. Autorank (Cross-Dataset-Statistik)
 
@@ -132,14 +143,27 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
 - **Hypothese**: eine wiederverwendbare Statistik-Report-Funktion wuerde
   kuenftige Mehrfach-Datensatz-Vergleiche (nicht nur P2) konsistent
   absichern.
-- **Komplexitaetskosten**: gering-mittel - im Kern base-R (`stats`),
-  ggf. `scmamp` (R-Aequivalent zu Autorank) fuer Friedman/Nemenyi/
-  Critical-Difference-Diagramme.
-- **Prototype**: teilweise (`analysis/p2_level2_significance_test.R`).
-- **Backport**: offen - eine generische Funktion ist noch nicht gebaut.
-  **Prioritaet laut Bewertungsdokument: hoch, sobald n groesser ist**
-  (aktuell n=6, bei mehr Datensaetzen wird Friedman/Nemenyi erst
-  aussagekraeftig).
+- **Komplexitaetskosten**: gering - im Kern base-R (`stats::friedman.
+  test`), Nemenyi-kritische-Differenz per Standard-Formel + den in
+  Demsar (2006) Tabelle 5(b) veroeffentlichten q_alpha-Werten selbst
+  nachgebaut (KEINE `scmamp`-Abhaengigkeit noetig, R-only-Policy).
+- **Prototype**: JA (Stand 2026-09-18) - `modules/benchmark_statistics_
+  report.R`: `paired_wilcoxon_report()` (k=2), `friedman_nemenyi_
+  report()` (k>=3, Friedman-Omnibus + Nemenyi-Post-hoc), `benchmark_
+  statistics_report()` (waehlt automatisch). 25 synthetische Checks
+  gruen, inkl. eines deterministischen Falls, der die Nemenyi-Schwelle
+  selbst demonstriert (Rangdifferenz 2 signifikant, Rangdifferenz 1
+  nicht, bei identischer zugrunde liegender Rangfolge).
+- **Backport**: JA - im Template (`modules/benchmark_statistics_
+  report.R`, `162_benchmark_statistics_report.R`).
+  **Erste Realprojekt-Anwendung** (auf bereits vorhandene Protokoll-v2-
+  Ergebnisse der 6 externen CC18-Datensaetze, kein neuer Lauf noetig):
+  `workflow_ranger` hat den besten mittleren Rang (2.17 von 6 Armen),
+  aber bei n=6 Datensaetzen haelt KEIN Paar der Nemenyi-Schwelle stand
+  (Friedman p=0.477, kritische Differenz 3.08) - **bestaetigt exakt die
+  eigene Vorhersage dieses Eintrags** ("erst bei mehr Datensaetzen
+  aussagekraeftig"), ein ehrliches, informatives Nullergebnis statt
+  einer unbelegten Behauptung.
 
 ## 4. PyExperimenter (geplante Experimente/Skalierung)
 

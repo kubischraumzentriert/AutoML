@@ -921,6 +921,37 @@ ergaenzt (Klarstellung, dass die 0.9482-LB-Zahl kein lokales CI erlaubt,
 PLUS die neue, CI-abgesicherte Klassengewichtungs-Aussage) - Wortzahl
 weiterhin im JOSS-Limit (1624/1750).
 
+### Kandidat 6 (Autorank/Demsar-2006-Mehrfach-Datensatz-Statistik) - erledigt (2026-09-18)
+
+Nutzeranfrage "mach weiter mit etwas Neuem" - Kandidat #3 aus
+`docs/research/JOSS_TECHNIQUE_WATCH.md` (Autorank, Herbold 2020) war
+noch offen: "ist Methode A ueber MEHRERE Datensaetze hinweg systematisch
+besser" - komplementaer zu `bootstrap_metric_ci.R` (beantwortet dieselbe
+Frage fuer EINEN Datensatz). Bisher nur als Einzelskript
+(`analysis/p2_level2_significance_test.R`) geloest.
+
+Neues `modules/benchmark_statistics_report.R`: `paired_wilcoxon_
+report()` (k=2 Methoden, gepaarter Wilcoxon-Signed-Rank-Test),
+`friedman_nemenyi_report()` (k>=3, Friedman-Omnibus + Nemenyi-Post-hoc,
+kritische Differenz per Demsar-2006-Tabelle 5(b) selbst nachgebaut -
+KEINE `scmamp`-Abhaengigkeit, R-only-Policy), `benchmark_statistics_
+report()` (waehlt automatisch). 25 Checks gruen, inkl. eines
+deterministischen Falls, der die Nemenyi-Schwelle selbst demonstriert.
+
+**Erste Realprojekt-Anwendung** (`162_benchmark_statistics_report.R`) -
+nutzt AUSSCHLIESSLICH bereits vorhandene Artefakte (Protokoll-v2-
+Ergebnisse der 6 externen CC18-Datensaetze aus der P1-Bewertung
+2026-08-29, kein neuer Lauf noetig): `workflow_ranger` hat den besten
+mittleren Rang (2.17 von 6 Armen), aber bei n=6 Datensaetzen haelt KEIN
+Paar der Nemenyi-Schwelle stand (Friedman chi2=4.52, p=0.477, kritische
+Differenz 3.08) - bestaetigt exakt die eigene Vorhersage des
+JOSS_TECHNIQUE_WATCH.md-Eintrags ("erst bei mehr Datensaetzen
+aussagekraeftig"), ein ehrliches informatives Nullergebnis. Bei der
+Gelegenheit 2 veraltete Statuseintraege in `JOSS_TECHNIQUE_WATCH.md`
+korrigiert (Kandidaten #1 VeridicalFlow/Decision-Stability und #2
+astartes/Hard-Split-Stresstest standen dort noch als "Prototype: nein",
+obwohl laengst gebaut und ins Template zurueckgefuehrt).
+
 ## P1.2 Schritt 2 - Status (2026-08-27): historisches Nachtragen
 
 **Nutzeranfrage**: "wir sollten die Historie nachtragen d.h. migrieren"
