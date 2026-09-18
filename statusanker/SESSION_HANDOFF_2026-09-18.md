@@ -171,13 +171,40 @@ Suite weiterhin gruen (reine Doku-Aenderung, kein neuer CI-Lauf noetig -
 `ci-smoke-test.yml` triggert nur bei `.R`-Aenderungen).
 (`MLR3_Classifikation` `bdb1b4f`.)
 
+**4. Aktualisierung:** Nutzeranfrage "schau, ob sonst noch was
+aufzuraeumen ist" (3. Runde) - Abgleich aller `library()`/`require()`-
+Aufrufe im Repo gegen `DESCRIPTION`s Imports-Liste. Fund: **7 tatsaechlich
+genutzte, aber fehlende Pakete** - `duckdb` (`170_build_duckdb_
+experiment_mart.R`, `analysis/merge_duckdb_experiment_marts.R`),
+`ggplot2` (`160`/`161_plot_*.R`), `isotree`/`kernelshap` (147er-
+Fehleranalyse-Reihe), `mlr3oml` (`analysis/select_*_extension.R`,
+`modules/reproduce_publication_benchmark.R`), `skimr` (**`010_eda.R`,
+der allererste Schritt des README.md-"Los geht's"-Pfads** - echtes
+Reibungsrisiko fuer neue Nutzer), `targets` (`_targets.R`). Ergaenzt +
+Description-Text praezisiert (Doppelzweck CI + lokales Setup explizit
+benannt). `MLR3_Regression`s `DESCRIPTION` separat geprueft - dort
+bewusst NUR auf `ci-tests.yml` beschraenkt (eigener ehrlicher
+Beschreibungstext, kein README-Verweis fuer lokales Setup, CI bereits
+ohne diese Pakete gruen) - kein Fund, bewusst unveraendert gelassen.
+(`MLR3_Classifikation` `58e2fdb`.)
+
+**Noch offen bei Abschluss dieses Anker-Updates**: der ausgeloeste
+CI-Lauf (`35363545432`) haengt seit >20 Minuten in der Dependency-
+Installation (vermutlich `duckdb`/`mlr3oml` kompilieren ohne Cache-
+Treffer zum ersten Mal, analog zur fruehen `MLR3_Regression`-CI-Saga) -
+noch nicht abgeschlossen, wird in einer der naechsten Aktualisierungen
+nachgetragen.
+
 ## Stand jetzt
 
-Kein offener fachlicher oder struktureller Punkt in einem der drei
-Projekte. Einzige nicht akut handlungsrelevante Sache: JOSS-Einreichung
-pausiert, Wiedervorlage ~November 2026.
+Kein offener fachlicher oder struktureller Punkt in `MLR3_Regression`
+oder `ML_Learning`. `MLR3_Classifikation`: der DESCRIPTION-Fix ist
+committed+gepusht, CI-Bestaetigung steht noch aus (siehe oben). Einzige
+nicht akut handlungsrelevante Sache: JOSS-Einreichung pausiert,
+Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
-Nutzerentscheidung einholen - etwas komplett Neues vorschlagen/
-erfragen, oder abwarten bis zur JOSS-Wiedervorlage.
+CI-Lauf `35363545432` abwarten/pruefen, danach Nutzerentscheidung
+einholen - etwas komplett Neues vorschlagen/erfragen, oder abwarten bis
+zur JOSS-Wiedervorlage.
