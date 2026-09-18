@@ -8,7 +8,7 @@ Klassifikationsseite dieses Templates dazu konkret beitraegt.
 
 **Fuer die vollstaendige Theorie (i.i.d.-Verletzung, mlr3-Gruppenrolle,
 Permutationstest-Herleitung, Quellen) siehe das Regressions-Pendant**
-[`REFERENZ_GROUP_AWARE_CV.md`](../MLR3_Regression/REFERENZ_GROUP_AWARE_CV.md)
+[`REFERENZ_GROUP_AWARE_CV.md`](https://github.com/kubischraumzentriert/AutoML_Regression/blob/main/REFERENZ_GROUP_AWARE_CV.md)
 im `MLR3_Regression`-Template - `set_group_role()`/`diagnose_group_cv()`
 sind identischer, generischer Code (urspruenglich byte-identisch
 uebernommen), keine Duplikation der Herleitung hier.

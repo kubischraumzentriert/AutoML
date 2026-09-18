@@ -111,7 +111,7 @@ Nutzerentscheidung nach dem 3-Outer-Fold-Rollout ("Weg A", siehe
 `BACKLOG.md`): das urspruengliche n=6-Set fuer die Decision-Stability-
 Forschungsfrage um 4 weitere, bisher unbekannte CC18-Datensaetze
 erweitern (Ziel n=10 insgesamt). Selektionsskript:
-[`analysis/select_weg_b_extension.R`](analysis/select_weg_b_extension.R) - repliziert
+[`analysis/select_weg_b_extension.R`](../../analysis/select_weg_b_extension.R) - repliziert
 EXAKT dieselben Einschlusskriterien wie oben (500-20000 Instanzen,
 <=100 Features, 2-10 Klassen), zusaetzlich ausgeschlossen: alle bereits
 verwendeten 13 Namen (7 Template-Projekte + die bestehenden 6
@@ -145,7 +145,7 @@ durchgefuehrt, Korrelationsanalyse bestaetigt den n=6-Nullbefund erneut
 
 Nutzeranweisung "n=10 auf n=15 erweitern" - die Obergrenze der
 urspruenglichen Vormerkung ("n=10-15"). Selektionsskript:
-[`analysis/select_n15_extension.R`](analysis/select_n15_extension.R) - identische Methodik,
+[`analysis/select_n15_extension.R`](../../analysis/select_n15_extension.R) - identische Methodik,
 diesmal ausgeschlossen: alle bereits verwendeten 17 Namen (7
 Template-Projekte + die bestehenden 10 externen Datensaetze). Zulaessiger
 Pool: **33 Datensaetze** (37 minus die 4 Weg-B-Datensaetze - stimmt

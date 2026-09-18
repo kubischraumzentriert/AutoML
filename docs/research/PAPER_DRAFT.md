@@ -11,7 +11,7 @@ Software).** JOSS reviews the software itself via a short (750-1750
 word) paper, not a full empirical study — so this document is no longer
 *the* submission text. It now serves as the **extended technical
 report** that the actual JOSS submission (
-[`joss/paper.md`](joss/paper.md), [`joss/paper.bib`](joss/paper.bib))
+[`joss/paper.md`](../../joss/paper.md), [`joss/paper.bib`](joss/paper.bib))
 points readers to for the full evaluation (Sections 4-8 below). Sections
 1-3 and 9 of this document remain useful background/framing but are not
 what gets submitted anywhere as-is.
@@ -748,10 +748,10 @@ submission-ready, the following need a human decision, not just more
 writing:
 
 1. **Target venue: DECIDED (2026-08-29) — JOSS.** The actual submission
-   text now lives in [`joss/paper.md`](joss/paper.md) (short,
+   text now lives in [`joss/paper.md`](../../joss/paper.md) (short,
    750-1750 words, reviews the software not a full study); this
    document serves as JOSS's expected "extended report" that the short
-   paper points to. See [`joss/README.md`](joss/README.md) for what
+   paper points to. See [`joss/README.md`](../../joss/README.md) for what
    still needs doing before an actual JOSS submission (author/
    affiliation placeholders, JOSS's repository-readiness checklist,
    compiling the paper locally, the submission itself).

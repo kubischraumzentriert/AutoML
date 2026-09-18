@@ -11,7 +11,7 @@ note: "Nie in-place aendern - jede neue Protokollversion bekommt eine neue Datei
 ## Version 3 (2026-08-29): Level-2-Prototyp (Modellwahl+Tuning+Ensemble im Outer-Fold)
 
 P2 aus der 2026-08-29-Bewertung. Referenzimplementierung:
-[`outer_workflow_evaluation_v3_level2.R`](protocols/outer_workflow_evaluation_v3_level2.R).
+[`outer_workflow_evaluation_v3_level2.R`](../../protocols/outer_workflow_evaluation_v3_level2.R).
 Fuegt einen neuen Arm `level2_workflow` hinzu: pro Outer-Fold wird der
 Outer-Train zusaetzlich in Inner-Train/Inner-Tune (0.75/0.25) gesplittet;
 darauf laufen `auto_tuner()` fuer Ranger (Random-Search) und LightGBM
@@ -37,7 +37,7 @@ und Diskussion.
 
 P1 aus der 2026-08-29-Bewertung ("Baselines fuer Research-Paper noch zu
 schwach"). Referenzimplementierung:
-[`outer_workflow_evaluation_v2_fair_baselines.R`](protocols/outer_workflow_evaluation_v2_fair_baselines.R).
+[`outer_workflow_evaluation_v2_fair_baselines.R`](../../protocols/outer_workflow_evaluation_v2_fair_baselines.R).
 Ergaenzt v1 um 3 Arme, v1 selbst bleibt UNVERAENDERT gueltig fuer die
 bereits damit ausgewerteten 13 Datensaetze (7 Phase C + 6 externes Set):
 

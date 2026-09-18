@@ -23,7 +23,7 @@ JOSS Paper
 -> Backport-Regel (ADR-003)
 ```
 
-[`adr/003-backport-after-confirmation.md`](adr/003-backport-after-confirmation.md)
+[`adr/003-backport-after-confirmation.md`](../../adr/003-backport-after-confirmation.md)
 bleibt massgeblich: kein Backport ohne >=2-Projekt-Bestaetigung oder
 Null-Ergebnis-Beleg. Default fuer jeden Kandidaten unten: **NO BACKPORT
 bis Evidenz vorhanden.**
@@ -131,7 +131,7 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
 - **Haben wir dieses Problem?** War der Ausloeser fuer den
   Research-Aspect-Weg (2026-08-30, siehe `BACKLOG.md`): das gepaarte
   Wilcoxon-Verfahren wird bereits in
-  [`analysis/p2_level2_significance_test.R`](analysis/p2_level2_significance_test.R)
+  [`analysis/p2_level2_significance_test.R`](../../analysis/p2_level2_significance_test.R)
   verwendet.
 - **Status**: **TEILWEISE BEREITS UMGESETZT** (kein reiner Watch-Punkt
   mehr) - die Wilcoxon-Signed-Rank-Methodik laeuft produktiv fuer den

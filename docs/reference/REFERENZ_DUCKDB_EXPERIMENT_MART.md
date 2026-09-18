@@ -277,7 +277,7 @@ oder ein anderes transaktionales System.
 
 ## 12. Umsetzung (2026-08-15) - ERLEDIGT
 
-[`170_build_duckdb_experiment_mart.R`](170_build_duckdb_experiment_mart.R)
+[`170_build_duckdb_experiment_mart.R`](../../170_build_duckdb_experiment_mart.R)
 setzt alle 5 Schritte um, bricht fruehzeitig mit einer klaren Meldung ab,
 falls `duckdb` nicht installiert ist (kein Eingriff in die uebrige
 Pipeline, kein `DESCRIPTION`-Eintrag noetig - Paket wird nur bei
@@ -326,7 +326,7 @@ herausstellte.
 ## 13. Projektuebergreifender Mart (2026-08-15) - ERLEDIGT
 
 Die in Abschnitt 4 vorgesehene Variante `template_experiment_mart.duckdb`
-ist umgesetzt: [`analysis/merge_duckdb_experiment_marts.R`](analysis/merge_duckdb_experiment_marts.R)
+ist umgesetzt: [`analysis/merge_duckdb_experiment_marts.R`](../../analysis/merge_duckdb_experiment_marts.R)
 (Template-Root, analog `merge_project_experiments.R`) sammelt
 `_artifacts/*_results.csv` ueber ALLE Projekte (`R_Workspace`/
 `ML_Learning`-Wurzeln, Projekt = Ordner mit `000_config.R` - dieselbe

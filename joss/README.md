@@ -7,7 +7,7 @@ by the user on 2026-08-29 (see `BACKLOG.md`, P3 status).
   words: Summary, Statement of need, Comparison to existing software,
   Acknowledgements). JOSS reviews the **software**, not a full empirical
   study — the detailed evaluation (Level 1/2 results, ablations,
-  limitations) deliberately lives in [`../PAPER_DRAFT.md`](../PAPER_DRAFT.md)
+  limitations) deliberately lives in [`../PAPER_DRAFT.md`](../docs/research/PAPER_DRAFT.md)
   instead, which `paper.md` points to as the extended technical report.
 - [`paper.bib`](paper.bib) — BibTeX references cited from `paper.md`
   (a small subset of the 14 sources gathered in `PAPER_DRAFT.md`'s
