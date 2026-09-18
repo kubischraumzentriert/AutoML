@@ -1,10 +1,13 @@
 Package: MLR3Classifikation
 Title: mlr3 Classification AutoML Template (CI Dependency Manifest)
 Version: 0.0.0.9000
-Description: Kein echtes R-Paket - diese Datei existiert ausschliesslich,
-    damit r-lib/actions/setup-r-dependencies (siehe .github/workflows/
-    ci-smoke-test.yml) die benoetigten Pakete installieren und cachen kann.
-    Siehe TARGETS.md fuer den Hintergrund (CI-Smoke-Test-Vorhaben).
+Description: Kein echtes R-Paket - diese Datei existiert als vollstaendiges
+    Dependency-Manifest fuer das gesamte Repo (nicht nur die CI-Smoke-Test-
+    Kette): damit r-lib/actions/setup-r-dependencies (siehe .github/workflows/
+    ci-smoke-test.yml) die dort benoetigten Pakete installieren und cachen
+    kann, UND damit README.md's "Los geht's"-Pfad (pak::pak(gsub(...
+    readLines("DESCRIPTION")))) alle Skripte im Repo lauffaehig macht, nicht
+    nur die Smoke-Test-Teilmenge. Siehe TARGETS.md fuer den Hintergrund.
 License: MIT
 Imports:
     data.table,
@@ -29,7 +32,14 @@ Imports:
     nloptr,
     lhs,
     emoa,
-    fastGHQuad
+    fastGHQuad,
+    duckdb,
+    ggplot2,
+    isotree,
+    kernelshap,
+    mlr3oml,
+    skimr,
+    targets
 Suggests:
     testthat (>= 3.0.0)
 Additional_repositories: https://mlr-org.r-universe.dev
