@@ -4561,13 +4561,14 @@ Details: [`docs/research/AGRIDATASETS_PILOT.md`](docs/research/AGRIDATASETS_PILO
 ## DWD-Wetterdaten als optionale Zweitquelle (2026-09-17)
 
 **Status: Umsetzungsscheiben und Adapter angelegt, Stationspilot auf 5 Faelle
-erweitert und per Seed-Stabilitaetspruefung (25 Modell-Seeds je Fall)
-korrigiert - nur 2 von 5 Faellen zeigen einen robusten POSITIVEN Effekt, die
-uebrigen 3 sind Rauschen nahe null (kein robuster negativer Fall). Damit ist
-die Mindestanzahl unabhaengiger Projekte fuer Scheibe 5 erreicht, aber kein
-Backport wegen fehlender Konsistenz. Seed-Stabilitaetspruefung jetzt als
-Trust-Gate (`modules/weather_enrichment_trust_gate.R`) verpflichtend in
-alle vier `compare_pilot.R`-Skripte verdrahtet, mit Testabdeckung.**
+erweitert. Trust-Gate zweimal verschaerft (v1: Seed-Stabilitaet, v2:
+Split-Ratio x Seed) - mit jeder Verschaerfung schrumpft die Zahl belastbarer
+positiver Faelle (2/5 -> 1/5), NIE steigt die Zahl negativer Faelle (bleibt
+bei 0/5). Mindestanzahl unabhaengiger Projekte fuer Scheibe 5 erreicht, aber
+kein Backport wegen fehlender Konsistenz. Trust-Gate
+(`modules/weather_enrichment_trust_gate.R`) verpflichtend in alle vier
+`compare_pilot.R`-Skripte (separates lokales `ML_Learning`-Repo) verdrahtet,
+mit Testabdeckung in beiden Repos synchron gehalten.**
 DWD Climate Data Center wird als bevorzugte reale Wetterquelle vorgemerkt;
 `rdwd` dient als optionaler R-Zugriff. `modules/dwd_weather_adapter.R`
 implementiert Quellenkatalog, Stationsauswahl per Distanz und einen
@@ -4598,7 +4599,17 @@ null (Delta-Mittel +0.00 bis +0.02) mit einer Vorzeichenverteilung nahe
 nachweisbarer negativer Effekt. Korrigierte Lesart: Wetter hilft manchmal
 robust, schadet aber in dieser Evidenz nirgends nachweisbar - weiterhin kein
 Automatismus "DWD immer anreichern" (kein verlaesslicher Nutzen in 3 von 5
-Faellen), aber auch keine Evidenz fuer "Wetter kann aktiv schaden". Siehe
+Faellen), aber auch keine Evidenz fuer "Wetter kann aktiv schaden".
+
+**Trust-Gate v2 (2026-09-18, Split-Ratio x Seed):** der v1-Befund war selbst
+nicht robust gegen die Wahl des einen Split-Zeitpunkts. Ueber 5 Split-Ratios
+(15-35 % Testanteil) x 10 Seeds = 50 Kombinationen bleibt mit dem
+Standard-Sampling-Seed nur noch EIN Fall (Brandenburg/Potsdam, 96 %
+positiv) robust; Verkehrsunfaelle NRW faellt von "robust positiv" auf
+"inconclusive" (86 %, kippt an einem Split-Punkt). Kein Fall wurde in
+irgendeiner der drei Pruefrunden robust negativ.
+`weather_enrichment_seed_stability_gate()` nimmt seitdem `split_ratios`
+statt eines einzelnen `split_date` entgegen. Siehe
 [`docs/research/DWD_WEATHER_INTEGRATION.md`](docs/research/DWD_WEATHER_INTEGRATION.md)
 fuer die vollstaendige Tabelle und Einordnung.
 

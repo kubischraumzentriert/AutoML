@@ -314,7 +314,29 @@ Wetterfeature) - laeuft automatisch in der `unit-tests`-CI-Job (kein
 Workflow-Eintrag noetig, `test_dir()` findet neue `test-*.R`-Dateien
 selbststaendig). Wie der DWD-Adapter selbst bleibt das Gate optional und
 NICHT in `_targets.R`/die nummerierte Standardreihenfolge eingebaut - es
-gilt nur fuer die DWD-Piloten in `ML_Learning/`, nicht global.
+gilt fuer die DWD-Piloten im separaten lokalen `ML_Learning`-Repo (siehe
+Hinweis am Dokumentanfang), nicht global im Template.
+
+#### Trust-Gate v2: Split-Ratio x Seed statt nur Seed (2026-09-18)
+
+Eine Vertiefung im separaten `ML_Learning`-Repo (`robustness_deep_dive.R`)
+zeigte: der v1-Befund oben war SELBST nicht robust gegen die Wahl des
+einen fixen Split-Zeitpunkts. Ueber 5 Split-Ratios (15/20/25/30/35%
+Testanteil, chronologisch) x 10 Seeds = 50 Kombinationen je Fall kippte das
+Bild erneut - mit dem Standard-Sampling-Seed des Gates bleibt nur noch EIN
+Fall (Camping Brandenburg/Potsdam, 96% positiv) robust; die anderen vier
+(inkl. des vorher "robust positiven" Verkehrsunfall-Falls, jetzt 86%)
+fallen auf `inconclusive`, weil sie an einzelnen Split-Punkten kippen. Kein
+einziger Fall wurde in irgendeiner der drei Pruefrunden (Einzelseed ->
+Seed-Stabilitaet -> Split-Ratio x Seed) robust NEGATIV - der Trend zeigt in
+jeder Verschaerfung der Pruefung WENIGER, nie MEHR belastbare positive
+Faelle.
+
+`weather_enrichment_seed_stability_gate()` nimmt seitdem `split_ratios`
+(Vektor von Testanteilen) statt eines einzelnen `split_date` entgegen und
+testet beide Rauschquellen gemeinsam. Das `by_ratio`-Feld im Rueckgabewert
+zeigt, ob ein Befund an einem einzelnen Split-Punkt haengt. Details und die
+vollstaendige Faelletabelle: `FINDINGS.md` im separaten `ML_Learning`-Repo.
 
 ### Scheibe 2: Zeit- und Leakage-Gates
 
