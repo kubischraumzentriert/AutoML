@@ -114,6 +114,37 @@ umgangen durch manuelles Materialisieren der 4 geaenderten Dateien +
   `git status` leer.
 - `ML_Learning` (lokal, kein Remote) @ `bd3c3d4`, `git status` leer.
 
+## Was seit diesem Anker passiert ist
+
+**1. Aktualisierung:** Nutzeranfrage "schau, ob sonst noch was
+aufzuraeumen ist" - Fund: der (jetzt archivierte) alte Statusanker war
+20 Tage/3020 Zeilen gewachsen, faellig fuer diese Rotation (siehe oben).
+`MLR3_Regression`/`ML_Learning` zeigten keine vergleichbaren
+Auffaelligkeiten.
+
+**2. Aktualisierung:** Nutzeranfrage "mach weiter mit etwas Neuem" -
+Kandidat #3 aus `docs/research/JOSS_TECHNIQUE_WATCH.md` (Autorank/
+Demsar 2006) aufgegriffen: neues `modules/benchmark_statistics_
+report.R` - `paired_wilcoxon_report()` (k=2 Methoden), `friedman_
+nemenyi_report()` (k>=3, Friedman-Omnibus + Nemenyi-Post-hoc,
+kritische Differenz per Demsar-2006-Tabelle selbst nachgebaut, keine
+`scmamp`-Abhaengigkeit), `benchmark_statistics_report()` (waehlt
+automatisch). Ergaenzt `bootstrap_metric_ci.R` (Einzeldatensatz) um die
+Mehrfach-Datensatz-Frage. 25 Checks gruen.
+
+**Erste Realprojekt-Anwendung** (`162_benchmark_statistics_report.R`) -
+nutzt ausschliesslich bereits vorhandene Protokoll-v2-Ergebnisse der 6
+externen CC18-Datensaetze (kein neuer Lauf noetig): `workflow_ranger`
+hat den besten mittleren Rang (2.17/6), aber bei n=6 Datensaetzen haelt
+kein Paar der Nemenyi-Schwelle stand (Friedman p=0.477) - bestaetigt
+exakt die eigene Vorhersage des JOSS_TECHNIQUE_WATCH.md-Eintrags ("erst
+bei mehr Datensaetzen aussagekraeftig"), ein ehrliches informatives
+Nullergebnis. Dabei 2 veraltete Statuseintraege dort korrigiert
+(Kandidaten #1 VeridicalFlow/Decision-Stability, #2 astartes/Hard-
+Split-Stresstest standen noch als "Prototype: nein", obwohl laengst
+gebaut/zurueckgefuehrt). Volle testthat-Suite + CI gruen.
+(`MLR3_Classifikation` `5d3c7af`.)
+
 ## Stand jetzt
 
 Kein offener fachlicher oder struktureller Punkt in einem der drei
