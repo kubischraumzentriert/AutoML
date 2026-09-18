@@ -145,6 +145,32 @@ Split-Stresstest standen noch als "Prototype: nein", obwohl laengst
 gebaut/zurueckgefuehrt). Volle testthat-Suite + CI gruen.
 (`MLR3_Classifikation` `5d3c7af`.)
 
+**3. Aktualisierung:** Nutzeranfrage "schau, ob sonst noch was
+aufzuraeumen ist" (2. Runde) - systematischer Check aller relativen
+Markdown-Links (`[text](pfad.R/.md)`) repo-weit, aufgeloest relativ zur
+jeweiligen referenzierenden Datei (nicht root-relativ - die naive
+erste Pruefung lieferte 30 falsche Positive, danach korrekt pro Datei
+aufgeloest). Fund: **8 kaputte Links in 8 Dateien**:
+- 2 eigene Fehler aus dem `protocols/`-Umzug (`docs/research/
+  BENCHMARK_PROTOCOL.md`/`EVALUATION_LEVELS.md` bekamen damals
+  versehentlich root-relative statt `../../`-praefigierte Pfade).
+- 6 aeltere, von der docs/-Restrukturierung (2026-09-02) uebrig
+  gebliebene Bugs (`REFERENZ_DUCKDB_EXPERIMENT_MART.md`,
+  `JOSS_TECHNIQUE_WATCH.md`, `PAPER_DRAFT.md`, `EXTERNAL_BENCHMARK_
+  SET.md`, `joss/README.md` - `PAPER_DRAFT.md` selbst zog damals nach
+  `docs/research/` um, der Rueckverweis aus `joss/README.md` wurde
+  dabei nie nachgezogen).
+- 1 echter Cross-Repo-Link (`REFERENZ_GROUP_AWARE_CV.md` ->
+  `MLR3_Regression`), den relative Pfade auf GitHub grundsaetzlich
+  nicht aufloesen koennen - auf eine absolute GitHub-URL zum
+  Schwester-Repo umgestellt statt weiter kaputt zu bleiben.
+
+Alle 8 gefixt, erneuter Vollcheck zeigt 0 verbleibende kaputte Links.
+`MLR3_Regression` separat geprueft - dort keine Funde. Volle testthat-
+Suite weiterhin gruen (reine Doku-Aenderung, kein neuer CI-Lauf noetig -
+`ci-smoke-test.yml` triggert nur bei `.R`-Aenderungen).
+(`MLR3_Classifikation` `bdb1b4f`.)
+
 ## Stand jetzt
 
 Kein offener fachlicher oder struktureller Punkt in einem der drei
