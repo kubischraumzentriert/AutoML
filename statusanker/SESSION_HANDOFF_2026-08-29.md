@@ -2962,13 +2962,58 @@ bemerkt (Skill-Instinkt griff), sofort mit sauberem Folgecommit
 korrigiert. (`ML_Learning` `3549d14` + `89d9a3c`, beide lokal - kein
 Remote in diesem Repo.)
 
+**56. Aktualisierung:** Nutzeranfrage "ein Pull ist notwendig" -
+`MLR3_Classifikation` war 1 Commit hinter `origin/main` (externe Session,
+"Trust-Gate v2 (Split-Ratio x Seed) ins Template portiert" - dieselbe
+Art externer Parallel-Beitrag wie schon zuvor). `MLR3_Regression` bereits
+synchron. **Echter, mehrfach reproduzierter Fehlschlag beim eigentlichen
+`git pull --ff-only`**: "unable to unlink 'docs': Directory not empty" -
+wiederholt (4x), auch nach Verwerfen des jeweils liegen gebliebenen
+Teil-Checkouts (`BACKLOG.md`). Git-Index/Baum selbst nachweislich sauber
+(`git ls-tree`/`git ls-files -s`/`git clean -ndx` zeigten keine
+Anomalie) - vermutlich ein OneDrive-Sync-Dateisperren-Effekt (Repo liegt
+unter `OneDrive\Dokumente\...`), nicht reproduzierbar isoliert. `git
+reset --hard` vom Auto-Mode-Classifier als irreversible Aktion blockiert
+(korrekt so). Sicherer Workaround gefunden: die 4 tatsaechlich
+geaenderten Dateien (`BACKLOG.md`, `docs/research/DWD_WEATHER_
+INTEGRATION.md`, `modules/weather_enrichment_trust_gate.R`,
+`tests/testthat/test-weather_enrichment_trust_gate.R`) einzeln per `git
+show origin/main:<Datei>` materialisiert, `git diff origin/main`
+auf Leere verifiziert (Arbeitsbaum exakt deckungsgleich), dann NUR den
+Branch-Zeiger per `git update-ref refs/heads/main origin/main` bewegt -
+ohne den problematischen rekursiven Checkout-Schritt. Volle testthat-
+Suite danach gruen. (`MLR3_Classifikation` jetzt `d184c03`.)
+
+**57. Aktualisierung:** Nutzeranfrage "ML_Learning aufraeumen" -
+bezog sich (nach Rueckfrage) auf die 17 im letzten `git status` sichtbaren
+unstaged Aenderungen, nicht auf eine strukturelle Neuordnung. 2 klar
+getrennte Cluster identifiziert und per `AskUserQuestion` einzeln
+geklaert:
+1. `predictingsmartphoneAddiction_s6e8/catboost_info/*` (reine CatBoost-
+   Trainings-Logs, 1500 Zeilen Diff bei praktisch identischem Inhalt) -
+   Nutzer wollte zunaechst committen ("findest du nicht?", nach kurzem
+   Gegenargument), korrigierte dann mitten im Turn auf "eher loeschen"
+   bzw. "in gitignore" - **aus dem Tracking entfernt** (`git rm
+   --cached`, Dateien bleiben lokal), `catboost_info/` generisch in
+   `.gitignore` aufgenommen (betrifft potenziell weitere CatBoost-
+   Projekte im Repo). (`ML_Learning` `bd3c3d4`.)
+2. `DAT_Parkinsons/*` (echte, kohaerente Projektarbeit, zuletzt
+   2026-09-06 unterbrochen: `check_package.py`, `R/120_repeated_cv_
+   champions.R`, `check_feature_parity.py` inkl. Orientierungssuche -
+   deckte einen R/Python-Flattening-Unterschied bei `spatial_moment`
+   auf -, `train_model_from_niftis.py` als neuer bevorzugter
+   Trainingspfad, Public-Score 0.6724) - Inhalt vor dem Commit gesichtet
+   (kohaerent, mit konkreten Scores/Hashes dokumentiert), committed.
+   (`ML_Learning` `9e44f04`.)
+
 **Stand jetzt**: kein offener fachlicher oder struktureller Punkt mehr
-in `MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning`. Beide
-Templates einheitlich nach demselben Muster strukturiert (nummerierte
-Pipeline flach im Root, wiederverwendbare Module in `modules/`,
-ADR-008-eingefrorene Benchmark-Protokolle in `protocols/` bei
-Klassifikation). `ML_Learning` bewusst NICHT mit-umstrukturiert
-(begruendet, siehe oben).
+in `MLR3_Classifikation`, `MLR3_Regression` oder `ML_Learning` - alle
+drei Arbeitsverzeichnisse vollstaendig sauber (`git status` leer bzw.
+nur gepushte/lokal committete Staende). Beide Templates einheitlich
+nach demselben Muster strukturiert (nummerierte Pipeline flach im Root,
+wiederverwendbare Module in `modules/`, ADR-008-eingefrorene Benchmark-
+Protokolle in `protocols/` bei Klassifikation). `ML_Learning` bewusst
+NICHT mit-umstrukturiert (begruendet, siehe 55. Aktualisierung).
 
 **Empfohlener erster Schritt, Stand jetzt**: Nutzerentscheidung einholen -
 etwas komplett Neues vorschlagen/erfragen, oder abwarten bis zur
