@@ -36,6 +36,15 @@ jobs:
           # Nur die fuer die getesteten Module benoetigten Pakete + testthat
           # selbst - deutlich schneller als der volle Smoke-Test-Dependency-Baum.
           extra-packages: any::testthat, any::mlr3, any::mlr3measures, any::data.table, any::digest
+          # Hard-Deps only (Depends/Imports/LinkingTo) - der Action-Default
+          # "all" wuerde sonst zusaetzlich DESCRIPTIONs Suggests-Pakete
+          # (duckdb/mlr3oml/ggplot2/isotree/kernelshap/skimr/targets, siehe
+          # DESCRIPTION-Kopfkommentar) mitziehen, obwohl keines davon von
+          # tests/testthat.R gebraucht wird - echter Fund 2026-09-18:
+          # duckdb kompiliert ohne verfuegbares Binary, CI-Lauf haengte
+          # >40 Minuten (analog zum identischen Fund in MLR3_Regression/
+          # .github/workflows/ci-tests.yml).
+          dependencies: 'c("Depends", "Imports", "LinkingTo")'
 
       - name: testthat-Suite
         run: Rscript tests/testthat.R
@@ -56,9 +65,16 @@ jobs:
           cache-version: 1
           # mlr3extralearners liegt nicht auf CRAN, nur im mlr-org
           # R-Universe - setup-r-dependencies@v2 kennt kein eigenes
-          # "extra-repositories"-Input (siehe Aktions-Fehlermeldung), das
-          # zusaetzliche Repository steht stattdessen in DESCRIPTIONs
-          # Additional_repositories-Feld, das pak automatisch liest.
+          # "extra-repositories"-Input (siehe Aktions-Fehlermeldung); die
+          # tatsaechliche Aufloesung passiert ueber .Rprofile
+          # (options(repos=...)) im Repo-Root, NICHT ueber DESCRIPTIONs
+          # Additional_repositories-Feld (das liest pak NICHT automatisch -
+          # bestaetigter Fund, siehe .Rprofile-Kopfkommentar; dieser
+          # Kommentar hier war entsprechend veraltet/falsch).
+          # Hard-Deps only - siehe unit-tests-Job oben fuer die
+          # Begruendung (Suggests-Pakete wie duckdb wuerden sonst bei
+          # jedem Lauf quellcode-kompiliert).
+          dependencies: 'c("Depends", "Imports", "LinkingTo")'
 
       - name: Kernskripte in die Fixture kopieren
         run: |

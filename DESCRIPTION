@@ -7,7 +7,15 @@ Description: Kein echtes R-Paket - diese Datei existiert als vollstaendiges
     ci-smoke-test.yml) die dort benoetigten Pakete installieren und cachen
     kann, UND damit README.md's "Los geht's"-Pfad (pak::pak(gsub(...
     readLines("DESCRIPTION")))) alle Skripte im Repo lauffaehig macht, nicht
-    nur die Smoke-Test-Teilmenge. Siehe TARGETS.md fuer den Hintergrund.
+    nur die Smoke-Test-Teilmenge. Imports = von den Kernskripten (000-170)
+    UND der CI genutzt. Suggests = nur von einzelnen Einmal-/Zusatzskripten
+    genutzt (z.B. duckdb nur fuer 170_build_duckdb_experiment_mart.R) -
+    bewusst NICHT in Imports, weil pak::lockfile_create()s Default
+    "dependencies=all" sonst JEDEN CI-Lauf mit dem vollen Build dieser
+    teils quellcode-kompilierten Pakete belastet haette (echter Fund
+    2026-09-18: duckdb kompiliert ohne verfuegbares Binary, CI-Lauf
+    haengte >40 Min., siehe ci-smoke-test.yml's explizites
+    "dependencies"-Input dazu). Siehe TARGETS.md fuer den Hintergrund.
 License: MIT
 Imports:
     data.table,
@@ -32,7 +40,9 @@ Imports:
     nloptr,
     lhs,
     emoa,
-    fastGHQuad,
+    fastGHQuad
+Suggests:
+    testthat (>= 3.0.0),
     duckdb,
     ggplot2,
     isotree,
@@ -40,8 +50,6 @@ Imports:
     mlr3oml,
     skimr,
     targets
-Suggests:
-    testthat (>= 3.0.0)
 Additional_repositories: https://mlr-org.r-universe.dev
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
