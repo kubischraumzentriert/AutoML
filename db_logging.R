@@ -254,6 +254,18 @@ db_get_or_create_workflow <- function(con, proj_id, type, name) {
 # erwarten). Ein Fehler beim Erfassen (z.B. `digest` fehlt) darf den
 # eigentlichen Skriptlauf NICHT zum Absturz bringen - deshalb `tryCatch`
 # mit Warnung statt hartem Fehler.
+# Sourced provenance.R nach, falls die aufrufende Funktion (capture_run_
+# provenance()/finalize_run_provenance()) noch nicht im Environment
+# existiert - gemeinsam genutzt von db_create_run() und db_finish_run()
+# (Clean-Code-Review 2026-09-19: vorher wortgleich in beiden dupliziert).
+# fn_name: Name der Funktion, deren Existenz prueft, ob schon gesourct wurde.
+.ensure_provenance_sourced <- function(fn_name) {
+  if (!exists(fn_name, mode = "function")) {
+    source(file.path(get("project_dir", envir = globalenv()), "provenance.R"))
+  }
+  invisible(NULL)
+}
+
 db_create_run <- function(con, wf_id, seed = NA_integer_, git_commit = get_git_commit(), notes = NA_character_,
                            log_baseline_provenance = TRUE, manifest = NULL) {
   run_id <- uuid::UUIDgenerate()
@@ -264,9 +276,7 @@ db_create_run <- function(con, wf_id, seed = NA_integer_, git_commit = get_git_c
   )
   if (isTRUE(log_baseline_provenance)) {
     prov <- tryCatch({
-      if (!exists("capture_run_provenance", mode = "function")) {
-        source(file.path(get("project_dir", envir = globalenv()), "provenance.R"))
-      }
+      .ensure_provenance_sourced("capture_run_provenance")
       capture_run_provenance()
     }, error = function(e) {
       warning("Basis-Provenienz (R-Version/Paketversionen) konnte nicht erfasst werden: ", conditionMessage(e), call. = FALSE)
@@ -293,9 +303,7 @@ db_finish_run <- function(con, run_id, train_data_path = NULL, test_data_path = 
     !is.null(model_artifact_path)
   if (has_finalize_args) {
     tryCatch({
-      if (!exists("finalize_run_provenance", mode = "function")) {
-        source(file.path(get("project_dir", envir = globalenv()), "provenance.R"))
-      }
+      .ensure_provenance_sourced("finalize_run_provenance")
       finalize_run_provenance(
         con, run_id,
         train_data_path = train_data_path, test_data_path = test_data_path,
@@ -437,29 +445,38 @@ db_log_predictions <- function(con, mconf_id, rsmp_id, row_ids, truth, response,
   n <- length(row_ids)
   fold_vec <- if (length(fold) == 1) rep(fold, n) else fold
 
-  dbBegin(con)
-  current_max <- dbGetQuery(con, "SELECT COALESCE(MAX(pred_seq), 0) AS m FROM prediction")$m
-  pred_seqs <- current_max + seq_len(n)
+  # dbWithTransaction() statt manuellem dbBegin()/dbCommit() (Clean-Code-
+  # Review 2026-09-19): schlaegt dbAppendTable() mittendrin fehl, bliebe bei
+  # manuellem Begin/Commit die Transaktion offen - jeder weitere DB-Aufruf
+  # auf derselben Connection wuerde dann mit "cannot start a transaction
+  # within a transaction" scheitern. dbWithTransaction() rollt bei einem
+  # Fehler automatisch zurueck; Variablen aus dem Block (hier pred_seqs)
+  # bleiben danach im aufrufenden Environment sichtbar (verifiziert - der
+  # Code-Block wird im Environment des Aufrufers ausgewertet, keine eigene
+  # Scope-Grenze).
+  DBI::dbWithTransaction(con, {
+    current_max <- dbGetQuery(con, "SELECT COALESCE(MAX(pred_seq), 0) AS m FROM prediction")$m
+    pred_seqs <- current_max + seq_len(n)
 
-  dbAppendTable(con, "prediction", data.frame(
-    pred_seq = pred_seqs,
-    pred_mconf_id = mconf_id,
-    pred_rsmp_id = rsmp_id,
-    pred_row_id = as.integer(row_ids),
-    pred_fold = as.integer(fold_vec),
-    pred_truth = as.character(truth),
-    pred_response = as.character(response),
-    stringsAsFactors = FALSE
-  ))
+    dbAppendTable(con, "prediction", data.frame(
+      pred_seq = pred_seqs,
+      pred_mconf_id = mconf_id,
+      pred_rsmp_id = rsmp_id,
+      pred_row_id = as.integer(row_ids),
+      pred_fold = as.integer(fold_vec),
+      pred_truth = as.character(truth),
+      pred_response = as.character(response),
+      stringsAsFactors = FALSE
+    ))
 
-  prob_df <- as.data.frame(prob_matrix)
-  prob_long <- data.frame(
-    pprob_pred_seq = rep(pred_seqs, times = ncol(prob_df)),
-    pprob_class = rep(colnames(prob_df), each = nrow(prob_df)),
-    pprob_value = unlist(prob_df, use.names = FALSE)
-  )
-  dbAppendTable(con, "prediction_prob", prob_long)
-  dbCommit(con)
+    prob_df <- as.data.frame(prob_matrix)
+    prob_long <- data.frame(
+      pprob_pred_seq = rep(pred_seqs, times = ncol(prob_df)),
+      pprob_class = rep(colnames(prob_df), each = nrow(prob_df)),
+      pprob_value = unlist(prob_df, use.names = FALSE)
+    )
+    dbAppendTable(con, "prediction_prob", prob_long)
+  })
 
   invisible(pred_seqs)
 }
