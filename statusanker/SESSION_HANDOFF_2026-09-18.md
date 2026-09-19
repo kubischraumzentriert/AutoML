@@ -216,18 +216,64 @@ Committed (`48f246b`), gepusht. **Verifiziert**: neuer CI-Lauf
 `35367987508` erfolgreich, `unit-tests` 2m7s, `smoke-test` 2m17s - von
 >40 Minuten Haenger auf ~2 Minuten runter.
 
+**6. Aktualisierung:** Nutzeranfrage "schau dir die anderen Verzeichnisse
+an - ... manche sind sehr kurz gehalten" fuehrte zu einem README-Pass
+ueber alle Top-Level-Verzeichnisse: `ci_smoke_test/README.md` um einen
+"Was ist ein Smoke-Test, wozu dient er hier"-Abschnitt erweitert (bisher
+nur ein Verweis auf `TARGETS.md`); neue READMEs fuer `protocols/`
+(ADR-008-Einfrier-Konvention + Versionstabelle), `features/`
+(projektspezifisch vs. generisch), `docs/` (Index ueber reference/
+research/ablations), `tests/` (Abgrenzung zu `ci_smoke_test/`),
+`statusanker/` (diese Datei hier - Rotationskonvention erklaert).
+`joss/README.md` war seit 2026-08-29 veraltet (suggerierte "Einreichung
+steht unmittelbar bevor") - auf den echten Pause-Status (siehe oben,
+JOSS-Abschnitt) synchronisiert. `adr/`/`analysis/` hatten bereits gute
+READMEs, unveraendert gelassen. Committed `b617c79`/`96747b8`.
+
+**7. Aktualisierung:** Nutzeranfrage "ein neues Thema" -> 3 Optionen
+vorgeschlagen (ReciPies-Gegenpruefung, 2. Projekt-Zeuge fuer ein
+Regression-Backlog-Item, komplett neues Thema). Erst faelschlich "Research
+Aspect" vorgeschlagen (bereits abgeschlossen, siehe 2026-08-30-Eintraege
+im alten Anker - Fehler korrigiert, dabei festgestellt: das P2-Level-2-
+Muster ist bereits ueber 4 ausgeschlossene Kandidaten-Erklaerungen bis
+n=15 Datensaetze ehrlich als ungeklaert dokumentiert, "natuerlicher
+Abschlusspunkt").
+
+**ReciPies-Gegenpruefung (JOSS_TECHNIQUE_WATCH.md Kandidat #5,
+`MLR3_Classifikation`)**: echte, schmale Luecke gefunden - der
+bestehende `feature_names_hash` hashte nur resultierende Spaltennamen
+eines Feature-Sets, nicht die Transformationslogik selbst (ein stiller
+Verhaltenswechsel in einer `add_*_features()`-Funktion waere unbemerkt
+geblieben). Neue `feature_transform_function_hash()` (`000_config.R`)
+hasht die Funktionskoerper der tatsaechlich angewendeten Familien-
+funktionen; `feature_family_functions()` dafuer aus `apply_feature_set()`
+herausgeloest. 8 neue Tests (u.a. direkter Beweis: identischer
+Spaltenname, veraenderte Logik -> unterschiedlicher Hash). Volle Suite +
+CI gruen (`c945093`, Lauf `35432105330`, 2m6s).
+
+**2. Projekt-Zeuge fuer Missing-Data-Mechanismus-Audit (BACKLOG-Kandidat
+27, `MLR3_Regression`)**: `openml-house-prices-regression` (lokal,
+`ML_Learning`) bewusst mit strukturell ANDEREM Missingness-Mechanismus
+gewaehlt (informative Abwesenheit - "kein Pool"/"keine Garage"/"kein
+Keller" als leeres Feld kodiert - statt Beijings Sensorluecken) und
+~300x kleinerer Stichprobe (n=1.168 vs. 360.966). 17/18 Spalten zeigen
+substanzielle Effektgroessen (KS-D 0,17-0,64); die eine Ausnahme
+(`MiscFeature`) zeigt korrekt keinen Ziel-Hinweis trotz MAR-Signal -
+Beleg gegen "meldet pauschal alles". ADR-003-Kriterium fuer die
+`min_effect_size`-Verfeinerung erfuellt. Committed lokal in `ML_Learning`
+(`e4e5c23`) und `MLR3_Regression/BACKLOG.md` (`2a0765b`, gepusht).
+
 ## Stand jetzt
 
-Kein offener fachlicher oder struktureller Punkt in `MLR3_Regression`
-oder `ML_Learning`. `MLR3_Classifikation`: CI-Haenger diagnostiziert,
-gefixt und bestaetigt gruen (siehe 5. Aktualisierung), `git status`
-sauber. `BACKLOG.md` (`MLR3_Classifikation`) und `BACKLOG.md`
-(`MLR3_Regression`) wurden gegengeprueft - beide praktisch vollstaendig
-abgearbeitet, keine offenen, akut umsetzbaren Punkte (nur dokumentierte
-Negativergebnisse bzw. Punkte, die explizit auf ein 2. Projekt zur
-ADR-003-Bestaetigung warten, kein aktueller Handlungsbedarf). Einzige
-nicht akut handlungsrelevante Sache bleibt: JOSS-Einreichung pausiert,
-Wiedervorlage ~November 2026.
+`MLR3_Classifikation`: alle Top-Level-Verzeichnisse haben jetzt eine
+aktuelle README, `feature_transform_function_hash()` neu (ReciPies-
+Luecke geschlossen), CI gruen, `git status` sauber. `MLR3_Regression`:
+Kandidat 27 hat jetzt 2 unabhaengige, strukturell verschiedene
+Projekt-Zeugen, `git status` sauber. `ML_Learning`: neues Diagnose-
+Skript in `openml-house-prices-regression`, lokal committed. Kein
+offener fachlicher oder struktureller Punkt in irgendeinem der 3 Repos.
+Einzige nicht akut handlungsrelevante Sache bleibt: JOSS-Einreichung
+pausiert, Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
