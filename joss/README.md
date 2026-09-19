@@ -1,7 +1,34 @@
 # JOSS submission materials
 
-**Status (2026-08-29): first draft, not submitted.** Target venue chosen
-by the user on 2026-08-29 (see `BACKLOG.md`, P3 status).
+**Status (2026-08-30): submission deliberately PAUSED, not abandoned.**
+Draft itself is complete (see checklist below) - two real, independently
+verified risks led to pausing rather than submitting:
+
+1. **Hard, objective, currently blocking**: JOSS requires >=6 months of
+   public repo history with active development before submission. This
+   repo's first commit was 2026-07-07 - earliest eligible submission
+   date is ~2027-01-07.
+2. **Soft, substantive, does not resolve by waiting**: JOSS's "Scope and
+   Significance" criterion defines "research software" narrowly
+   (scientific-domain modeling tools, research instruments, knowledge
+   extraction from large datasets) and explicitly excludes "pre-trained
+   machine learning models and notebooks". A competition-methodology
+   template (Kaggle/Zindi/OpenML) is inherently closer to an engineering-
+   practice tool than a scientific-domain-modeling tool - a genuine
+   scope-fit risk independent of the age gate.
+
+**Decision**: keep JOSS as the target venue, revisit ~November 2026 (a
+few months before the age gate closes anyway) once a real "research
+aspect" contribution exists - see `BACKLOG.md` ("JOSS-Einreichung
+pausiert (2026-08-30)") for the full reasoning and the suggested
+direction (explaining the P2 Level-2 win/loss pattern instead of leaving
+it as an unexplained negative result). **AutoML-Conf's ABCD track**
+("Applications, Benchmarks, Challenges, Datasets") was noted as a
+parallel alternative venue around the same time - its scope
+(benchmark protocols, honest negative results) may fit this project
+better than JOSS's narrow "research software" definition; 2027 is the
+next reachable cycle (2026's deadline already passed). Both can be
+pursued in parallel, no conflict with the JOSS timeline.
 
 - [`paper.md`](paper.md) — the actual JOSS submission text (750-1750
   words: Summary, Statement of need, Comparison to existing software,
@@ -53,5 +80,6 @@ by the user on 2026-08-29 (see `BACKLOG.md`, P3 status).
 5. Submit via https://joss.theoj.org/papers/new (a GitHub repository URL
    plus this `paper.md` path).
 
-Step 5 (the actual submission) is the only remaining item — a
-deliberate decision, not done as part of this pass.
+Step 5 (the actual submission) is the only remaining checklist item, but
+is intentionally NOT being done yet — see the pause decision at the top
+of this file. Re-check ~November 2026.
