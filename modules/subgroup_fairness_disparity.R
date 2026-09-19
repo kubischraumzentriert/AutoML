@@ -45,7 +45,10 @@
 #'   keine echten Negativen), `ppv` (Predictive Parity, `NA` wenn keine
 #'   positiven Vorhersagen).
 subgroup_fairness_metrics <- function(response, truth, group, positive_class) {
-  stopifnot(length(response) == length(truth), length(truth) == length(group))
+  stopifnot(
+    "response und truth muessen gleich lang sein" = length(response) == length(truth),
+    "truth und group muessen gleich lang sein" = length(truth) == length(group)
+  )
   dt <- data.table::data.table(
     response = as.character(response), truth = as.character(truth), group = as.character(group)
   )
@@ -71,7 +74,7 @@ subgroup_fairness_metrics <- function(response, truth, group, positive_class) {
 #'   verlaessliche Aussage, kein Fehler).
 pairwise_fairness_disparity <- function(metrics_dt, metrics = c("positive_rate", "tpr", "fpr", "ppv")) {
   groups <- metrics_dt$group
-  stopifnot(length(groups) >= 2)
+  stopifnot("mindestens 2 Subgruppen noetig fuer einen paarweisen Vergleich" = length(groups) >= 2)
   combs <- utils::combn(groups, 2)
   rows <- lapply(metrics, function(m) {
     lapply(seq_len(ncol(combs)), function(j) {

@@ -29,7 +29,10 @@
 #'   kalibriert) und `bins` (`data.table` je Bin: `n`, `mean_predicted`,
 #'   `empirical_rate`, `gap`).
 expected_calibration_error <- function(prob, truth, positive_class, n_bins = 10) {
-  stopifnot(length(prob) == length(truth), all(prob >= 0 & prob <= 1))
+  stopifnot(
+    "prob und truth muessen gleich lang sein" = length(prob) == length(truth),
+    "prob muss Wahrscheinlichkeiten im Bereich [0, 1] enthalten" = all(prob >= 0 & prob <= 1)
+  )
   is_positive <- as.integer(as.character(truth) == positive_class)
   bin_edges <- seq(0, 1, length.out = n_bins + 1)
   # rightmost.closed, damit prob==1 noch in den letzten Bin faellt.

@@ -33,7 +33,10 @@
 #'   x besser" bei `higher_better=TRUE`), `statistic`, `p_value`,
 #'   `n` (Anzahl Datensaetze), `wins_x`/`wins_y`/`ties`.
 paired_wilcoxon_report <- function(x, y, higher_better = TRUE) {
-  stopifnot(length(x) == length(y), length(x) >= 2)
+  stopifnot(
+    "x und y muessen gleich lang sein (ein Wertepaar je Datensatz)" = length(x) == length(y),
+    "mindestens 2 Datensaetze noetig fuer einen Wilcoxon-Signed-Rank-Test" = length(x) >= 2
+  )
   diff <- if (higher_better) x - y else y - x
   test <- suppressWarnings(stats::wilcox.test(x, y, paired = TRUE, exact = FALSE))
   list(
@@ -58,7 +61,11 @@ paired_wilcoxon_report <- function(x, y, higher_better = TRUE) {
 friedman_nemenyi_report <- function(score_matrix, higher_better = TRUE, alpha = 0.05) {
   m <- as.matrix(score_matrix)
   n <- nrow(m); k <- ncol(m)
-  stopifnot(k >= 3, n >= 2, !is.null(colnames(m)))
+  stopifnot(
+    "friedman_nemenyi_report() braucht mindestens 3 Methoden (Spalten) - bei 2 stattdessen paired_wilcoxon_report()" = k >= 3,
+    "mindestens 2 Datensaetze (Zeilen) noetig fuer den Friedman-Test" = n >= 2,
+    "score_matrix braucht benannte Spalten (Methodennamen)" = !is.null(colnames(m))
+  )
   if (alpha != 0.05) stop("friedman_nemenyi_report(): nur alpha=0.05 unterstuetzt (Demsar-2006-Tabelle).")
   if (as.character(k) %in% names(.nemenyi_q_alpha_05) == FALSE) {
     stop(sprintf("friedman_nemenyi_report(): keine Nemenyi-q_alpha-Tabelle fuer k=%d Methoden (unterstuetzt: 2-10).", k))
@@ -97,7 +104,10 @@ friedman_nemenyi_report <- function(score_matrix, higher_better = TRUE, alpha = 
 benchmark_statistics_report <- function(score_matrix, higher_better = TRUE, alpha = 0.05) {
   m <- as.matrix(score_matrix)
   k <- ncol(m)
-  stopifnot(k >= 2, !is.null(colnames(m)))
+  stopifnot(
+    "benchmark_statistics_report() braucht mindestens 2 Methoden (Spalten)" = k >= 2,
+    "score_matrix braucht benannte Spalten (Methodennamen)" = !is.null(colnames(m))
+  )
 
   if (k == 2) {
     wilcoxon <- paired_wilcoxon_report(m[, 1], m[, 2], higher_better = higher_better)

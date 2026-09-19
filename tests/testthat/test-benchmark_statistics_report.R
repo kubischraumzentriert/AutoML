@@ -72,7 +72,7 @@ test_that("friedman_nemenyi_report(): exakt gleiche Rangverteilung (Latin Square
 
 test_that("friedman_nemenyi_report(): lehnt k<3, fehlende Spaltennamen und alpha!=0.05 ab", {
   two_col <- data.frame(A = 1:5, B = 5:1)
-  expect_error(friedman_nemenyi_report(two_col), "k >= 3")
+  expect_error(friedman_nemenyi_report(two_col), "mindestens 3 Methoden")
 
   no_names <- matrix(runif(15), ncol = 3)
   expect_error(friedman_nemenyi_report(no_names))

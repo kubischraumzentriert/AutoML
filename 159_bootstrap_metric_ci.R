@@ -76,7 +76,7 @@ for (fold in seq_len(n_folds)) {
 
 oof_workflow <- rbindlist(oof_workflow)[order(row_id)]
 oof_default <- rbindlist(oof_default)[order(row_id)]
-stopifnot(identical(oof_workflow$row_id, oof_default$row_id))
+stopifnot("oof_workflow und oof_default muessen dieselben row_ids in derselben Reihenfolge haben (fuer einen gepaarten Vergleich)" = identical(oof_workflow$row_id, oof_default$row_id))
 
 truth <- factor(oof_workflow$truth, levels = class_names)
 resp_workflow <- factor(oof_workflow$response, levels = class_names)

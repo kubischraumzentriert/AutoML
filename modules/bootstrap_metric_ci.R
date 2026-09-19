@@ -42,7 +42,11 @@
 #'   Vektor, fuer eigene Weiterverarbeitung/Histogramme).
 bootstrap_metric_ci <- function(truth, pred, metric_fn, B = 2000,
                                  conf_level = 0.90, seed = NULL) {
-  stopifnot(NROW(pred) == length(truth), B >= 100, conf_level > 0, conf_level < 1)
+  stopifnot(
+    "pred muss dieselbe Zeilenzahl wie truth haben" = NROW(pred) == length(truth),
+    "B (Anzahl Bootstrap-Resamples) sollte mindestens 100 sein" = B >= 100,
+    "conf_level muss zwischen 0 und 1 liegen" = conf_level > 0 && conf_level < 1
+  )
   if (!is.null(seed)) set.seed(seed)
   n <- length(truth)
   is_mat <- is.matrix(pred) || is.data.frame(pred)
@@ -79,7 +83,10 @@ bootstrap_metric_ci <- function(truth, pred, metric_fn, B = 2000,
 #'   aus), `boot_deltas`.
 bootstrap_paired_comparison <- function(truth, pred_a, pred_b, metric_fn,
                                          B = 2000, conf_level = 0.90, seed = NULL) {
-  stopifnot(NROW(pred_a) == length(truth), NROW(pred_b) == length(truth))
+  stopifnot(
+    "pred_a muss dieselbe Zeilenzahl wie truth haben" = NROW(pred_a) == length(truth),
+    "pred_b muss dieselbe Zeilenzahl wie truth haben" = NROW(pred_b) == length(truth)
+  )
   if (!is.null(seed)) set.seed(seed)
   n <- length(truth)
   is_mat_a <- is.matrix(pred_a) || is.data.frame(pred_a)
