@@ -263,17 +263,60 @@ Beleg gegen "meldet pauschal alles". ADR-003-Kriterium fuer die
 `min_effect_size`-Verfeinerung erfuellt. Committed lokal in `ML_Learning`
 (`e4e5c23`) und `MLR3_Regression/BACKLOG.md` (`2a0765b`, gepusht).
 
+**8. Aktualisierung:** Nutzeranfrage "Sollen wir eigentlich mal einen
+Refaktorierungslauf ueber die R-Scripte machen - Clean Code ist mir
+wichtig" - Empfehlung: kein Rundumschlag ueber alle ~66 Root-Skripte
+(hohes Regressionsrisiko, `protocols/outer_workflow_evaluation*.R` ist
+laut ADR-008 ohnehin eingefroren), stattdessen gezielt mit dem
+`clean-code`-Skill im REVIEW-Modus. Nutzerbestaetigung "ja mach das".
+
+**`000_config.R` (`MLR3_Classifikation`)**: 2 sichere Funde umgesetzt -
+(1) `apply_feature_set()`/`feature_transform_function_hash()` hatten
+denselben Familien-Aufloesungsblock wortgleich dupliziert (durch die
+ReciPies-Aenderung neu entstanden) -> `resolve_feature_families()`
+extrahiert. (2) `feature_transform_function_hash()` rief `hash_value()`
+(aus `provenance.R`) ohne Guard auf -> expliziter `exists()`-Check +
+klare `stop()`-Meldung, konsistent mit dem bestehenden Guard-Stil im
+selben File. Neuer Testfall (mit `new.env(parent = baseenv())`, um
+Test-Pollution durch `test-provenance.R`s globales `source()`
+auszuschliessen). Volle Suite + CI gruen (`bfc3bd3`, Lauf `35438034983`,
+2m6s). Ein 3. Fund (Datei behauptet "reine Basis-Konfiguration" zu sein,
+enthaelt aber ~10 Funktionen) bewusst NUR als Backlog-Notiz festgehalten,
+nicht umgesetzt (groesserer, risikoreicherer Schritt).
+
+**`000_config.R` (`MLR3_Regression`, Nutzeranfrage "ja, mach den
+Regression-Review auch")**: deutlich kleiner/einfacher (325 vs. 854
+Zeilen), keine Duplikation gefunden. Fund: `add_log_offset()`s
+abschliessender `stopifnot()` hatte keine benannten Fehlermeldungen
+(anders als das P0.2-Muster, das im Klassifikations-Template bereits auf
+alle vergleichbaren Faelle angewendet wurde) -> nachgezogen. Dabei
+aufgefallen: `add_log_offset()`/`algorithm_from_learner_id()` hatten
+trotz realer 2-Projekt-Bestaetigung (tweet/dataCar) nie eine eigene
+Testdatei -> neue `test_config_helpers.R` (10 Checks, Projekt-eigene
+`test_*.R`-Konvention). Alle 10 Testdateien + CI gruen (`0ff28e1`, Lauf
+`35438322749`, 1m32s).
+
+**Alle 7 `147_error_analysis_ranger_*.R`-Dateien (768 Zeilen)**:
+Nutzeranfrage "mach weiter mit den 147ern" - **kein nennenswerter Fund**.
+Bereits sauber (loses Kopplungsmuster ueber Artefakte, echte
+Funktionsextraktion wo sinnvoll, gute Guard Clauses). Einziger
+Grenzfall (147_..._models.R trainiert Ranger/LightGBM/LDA in 3 aehnlichen
+Bloecken) bewusst NICHT angefasst - echte Unterschiede je Learner, und
+das Muster zieht sich konsistent durchs gesamte nummerierte
+Skript-Repertoire (ADR-007-Philosophie).
+
 ## Stand jetzt
 
 `MLR3_Classifikation`: alle Top-Level-Verzeichnisse haben jetzt eine
 aktuelle README, `feature_transform_function_hash()` neu (ReciPies-
-Luecke geschlossen), CI gruen, `git status` sauber. `MLR3_Regression`:
-Kandidat 27 hat jetzt 2 unabhaengige, strukturell verschiedene
-Projekt-Zeugen, `git status` sauber. `ML_Learning`: neues Diagnose-
-Skript in `openml-house-prices-regression`, lokal committed. Kein
-offener fachlicher oder struktureller Punkt in irgendeinem der 3 Repos.
-Einzige nicht akut handlungsrelevante Sache bleibt: JOSS-Einreichung
-pausiert, Wiedervorlage ~November 2026.
+Luecke geschlossen), `000_config.R` Clean-Code-bereinigt, CI gruen,
+`git status` sauber. `MLR3_Regression`: Kandidat 27 hat jetzt 2
+unabhaengige, strukturell verschiedene Projekt-Zeugen, `000_config.R`
+Clean-Code-bereinigt (neue Testdatei), CI gruen, `git status` sauber.
+`ML_Learning`: neues Diagnose-Skript in `openml-house-prices-regression`,
+lokal committed. Kein offener fachlicher oder struktureller Punkt in
+irgendeinem der 3 Repos. Einzige nicht akut handlungsrelevante Sache
+bleibt: JOSS-Einreichung pausiert, Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
