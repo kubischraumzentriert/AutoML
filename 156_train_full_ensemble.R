@@ -118,7 +118,11 @@ mconf_id <- db_create_model_config(
       n_members = length(trained_members)
     ),
     preprocessing = list(label = "impute_median_mode", factor_levels_saved = TRUE),
-    features = list(feature_set = "raw", feature_names_hash = hash_value(task_full$feature_names)),
+    features = list(
+      feature_set = "raw",
+      feature_names_hash = hash_value(task_full$feature_names),
+      feature_transform_hash = feature_transform_function_hash("raw")
+    ),
     artifacts = list(model_artifact_path = model_path, model_artifact_sha256 = sha256_file(model_path)),
     extra = list(seed = seed, task_id = task_full$id, rows = task_full$nrow, features = length(task_full$feature_names))
   )

@@ -4650,3 +4650,42 @@ Rasterpilot, (5) generischer Template-Backport erst nach stabiler Evidenz aus
 mindestens zwei unabhaengigen Projekten. Live-Downloads innerhalb von CV oder
 `_targets.R` sind ausgeschlossen. Details und Quellen:
 [`docs/research/DWD_WEATHER_INTEGRATION.md`](docs/research/DWD_WEATHER_INTEGRATION.md).
+
+## ReciPies-Gegenpruefung (JOSS_TECHNIQUE_WATCH.md Kandidat #5) - echte, schmale Luecke gefunden und geschlossen (2026-09-19)
+
+**Nutzeranfrage** "ein neues Thema" -> Kandidat #5 (ReciPies) aus
+`docs/research/JOSS_TECHNIQUE_WATCH.md` aufgegriffen, dort selbst als
+"eher Pruef- als Bauaufgabe" markiert: haben wir bereits eine
+funktionsscharfe Provenienz fuer Feature-Transformationen, oder nur der
+bestehende `feature_names_hash` (Spaltennamen)?
+
+**Fund**: `feature_names_hash` (`150_train_full_model.R`/
+`156_train_full_ensemble.R`) hasht nur die RESULTIERENDEN Spaltennamen
+eines Feature-Sets - ein stiller Verhaltenswechsel in einer
+`add_*_features()`-Funktion (`features/*.R`, z.B. eine geaenderte
+BMI-Schwellenwert-Formel), der keine Spalte hinzufuegt/umbenennt, bliebe
+damit unbemerkt: derselbe Hash, obwohl sich die tatsaechlich berechneten
+Werte geaendert haben. `targets`/Git-Commit decken das nicht granular
+genug ab.
+
+**Umgesetzt**: `feature_transform_function_hash()` in `000_config.R`
+(direkt neben `apply_feature_set()`) hasht die `deparse()`ten
+Funktionskoerper der fuer ein `feature_set` tatsaechlich angewendeten
+`add_*_features()`-Funktionen (sortiert nach Familienname, reihenfolge-
+unabhaengig). `feature_family_functions()` aus `apply_feature_set()`
+herausgeloest (eine gemeinsame Quelle statt zweier synchron zu haltender
+Kopien) - als lazy-evaluierte Funktion (nicht Top-Level-Liste), damit die
+Sourcing-Reihenfolge (`000_config.R` vor `features/*.R`) nicht bricht.
+Ergaenzt `feature_names_hash` in `150`/`156`s Provenienz-Manifest, ersetzt
+ihn nicht.
+
+**Testabdeckung**: neue `tests/testthat/test-feature_transform_provenance.R`,
+8 Faelle - Kernbeweis: zwei Environments mit unveraenderter vs. inhaltlich
+veraenderter `add_bmi_features()` (identischer Spaltenname) ergeben
+unterschiedliche Hashes; Gegenprobe mit einer NICHT beteiligten
+Familienfunktion aendert den Hash NICHT; Reihenfolge-Unabhaengigkeit;
+Determinismus; unbekanntes Feature-Set als Fehler; End-to-End gegen alle
+in `model_feature_sets` der echten `health_condition`-Config verwendeten
+Feature-Sets. Volle Suite weiterhin gruen (322+ Faelle).
+
+Details in `docs/research/JOSS_TECHNIQUE_WATCH.md` Kandidat #5.

@@ -203,20 +203,52 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
 - **Welcher Teil ist uebertragbar?** Die Idee einer expliziten
   `feature_recipe_id`/`function_hashes`/`config_hash`-Provenienz fuer
   Feature-Transformationen.
-- **Haben wir dieses Problem?** VERMUTLICH SCHON GROESSTENTEILS
-  ABGEDECKT durch `targets` (Cache-Invalidierung bei Code-/Daten-
-  Aenderung) + Git-Commit-Logging + Feature-Set-Hash in
-  `provenance.R`/`finalize_run_provenance()` - muesste explizit
-  gegengeprueft werden, bevor irgendetwas Neues gebaut wird.
-- **Hypothese**: falls eine Luecke existiert, waere sie schmal (z.B.
-  Hashes einzelner Transformationsfunktionen statt nur des gesamten
-  Feature-Sets).
-- **Komplexitaetskosten**: gering, falls ueberhaupt noetig - eher eine
-  Pruef- als eine Bauaufgabe.
-- **Prototype**: nein.
-- **Backport**: nein. **Prioritaet laut Bewertungsdokument: mittel** -
-  erst pruefen, ob `targets` + Git + Feature-Set-Hash das bereits
-  ausreichend abdecken.
+- **Haben wir dieses Problem? GEGENGEPRUEFT (2026-09-19) - ECHTE, SCHMALE
+  LUECKE GEFUNDEN UND GESCHLOSSEN.** Die Hypothese unten hielt: der
+  bisherige `feature_names_hash` (`150_train_full_model.R`/
+  `156_train_full_ensemble.R`) hashte nur die RESULTIERENDEN
+  Spaltennamen eines Feature-Sets, nicht die Transformationslogik
+  selbst - ein stiller Verhaltenswechsel in einer `add_*_features()`-
+  Funktion (`features/*.R`), der weder Spalten hinzufuegt noch umbenennt
+  (z.B. eine geaenderte Formel/Schwellenwert-Logik), waere damit
+  UNBEMERKT geblieben. `targets`/Git/Feature-Set-Hash decken das NICHT
+  ab: `targets` invalidiert nur den eigenen Cache dieses Projekts (nicht
+  jedes Skript nutzt `_targets.R`), der Git-Commit-Hash aendert sich
+  zwar, ist aber nicht GRANULAR genug (welche der 6 Feature-Familien war
+  betroffen?).
+- **Umgesetzt**: neue Funktion `feature_transform_function_hash()`
+  (`000_config.R`, direkt neben `apply_feature_set()`) hasht die
+  `deparse()`ten Funktionskoerper der fuer ein `feature_set`
+  TATSAECHLICH angewendeten `add_*_features()`-Funktionen (sortiert nach
+  Familienname, damit die Anwendungsreihenfolge den Hash nicht
+  beeinflusst). `feature_family_functions()` dafuer aus
+  `apply_feature_set()` herausgeloest (eine gemeinsame Quelle statt
+  zweier synchron zu haltender Kopien). Ergaenzt `feature_names_hash` in
+  `150`/`156`s Provenienz-Manifest, ersetzt ihn nicht - Spaltennamen-
+  Aenderungen bleiben weiterhin ueber den bestehenden Hash sichtbar.
+- **Testabdeckung**: neue `tests/testthat/test-feature_transform_provenance.R`,
+  8 Faelle - u.a. der direkte Beweis der geschlossenen Luecke (zwei
+  Environments mit unveraenderter vs. inhaltlich veraenderter
+  `add_bmi_features()` bei IDENTISCHEM Spaltennamen ergeben
+  unterschiedliche Hashes), Gegenprobe (eine NICHT beteiligte
+  Familienfunktion aendern laesst den Hash unveraendert),
+  Reihenfolge-Unabhaengigkeit, Determinismus, unbekanntes Feature-Set
+  als Fehler, End-to-End gegen alle in `model_feature_sets` der echten
+  `health_condition`-Config verwendeten Feature-Sets. Volle Suite
+  weiterhin gruen.
+- **Komplexitaetskosten**: gering wie erwartet - eine neue, ~30-zeilige
+  Funktion + Testdatei, keine neue Abhaengigkeit, kein neues DB-Schema
+  (nutzt die bestehende `run_config`-Provenienz-Infrastruktur).
+- **Prototype**: ja (2026-09-19), an der echten `health_condition`-Config
+  verifiziert.
+- **Backport**: n/a - dieses Template IST bereits der Backport-Ort
+  (`000_config.R`/`provenance.R` sind Kern-Infrastruktur, kein
+  projektspezifischer Code). `MLR3_Regression` hat eine strukturell
+  aehnliche `provenance.R`, aber KEINE `features/*.R`-Familienstruktur
+  (Feature Engineering dort anders organisiert) - eine wortgleiche
+  Uebertragung ist daher nicht direkt sinnvoll, nur der Mechanismus
+  (Funktionskoerper statt nur Spaltennamen hashen) waere uebertragbar,
+  falls dort je eine vergleichbare Familienstruktur entsteht.
 
 ## 6. ImageMLResearch (Experiment-Organisation, nicht die Bildmethoden)
 

@@ -102,7 +102,11 @@ mconf_full <- db_create_model_config(
       hyperparams = learner_full$param_set$values
     ),
     preprocessing = list(label = "impute_median_mode", factor_levels_saved = TRUE),
-    features = list(feature_set = feature_set, feature_names_hash = hash_value(task_full$feature_names)),
+    features = list(
+      feature_set = feature_set,
+      feature_names_hash = hash_value(task_full$feature_names),
+      feature_transform_hash = feature_transform_function_hash(feature_set)
+    ),
     artifacts = list(model_artifact_path = model_path, model_artifact_sha256 = sha256_file(model_path)),
     extra = list(seed = seed, task_id = task_full$id, rows = task_full$nrow, features = length(task_full$feature_names))
   )

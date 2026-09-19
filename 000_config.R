@@ -336,6 +336,27 @@ resolve_task_path <- function(feature_set) {
   stop("Unbekanntes Feature-Set: ", feature_set)
 }
 
+# Familie -> Transformationsfunktion, ALS FUNKTION statt als Top-Level-Liste
+# definiert: der Funktionskoerper (und damit der Zugriff auf add_bmi_features
+# etc.) wird erst beim AUFRUF ausgewertet, nicht beim Sourcen von
+# 000_config.R - zu diesem Zeitpunkt sind features/*.R typischerweise noch
+# nicht geladen (siehe Sourcing-Reihenfolge in 150_train_full_model.R:
+# 000_config.R -> features/*.R -> apply_feature_set()-Aufruf). Eine direkte
+# Top-Level-Zuweisung wuerde deshalb mit "object 'add_bmi_features' not
+# found" abstuerzen. Gemeinsam genutzt von apply_feature_set() (Anwendung)
+# UND feature_transform_function_hash() (Provenienz, s.u.) - eine einzige
+# Quelle statt zweier synchron zu haltender Kopien.
+feature_family_functions <- function() {
+  list(
+    bmi = add_bmi_features,
+    sleep = add_sleep_features,
+    activity = add_activity_features,
+    hydration = add_hydration_features,
+    cardio = add_cardio_features,
+    interactions = add_interaction_features
+  )
+}
+
 # Wendet dieselbe Feature-Set-Logik auf beliebige Daten an (Train-Subset,
 # Full-Train oder test.csv). Die add_*_features-Funktionen muessen vorher aus
 # features/*.R geladen sein; fuer feature_set = "raw" bleibt der Datensatz
@@ -370,20 +391,64 @@ apply_feature_set <- function(data, feature_set) {
     stop("Unbekanntes Feature-Set: ", feature_set)
   }
 
-  feature_family_functions <- list(
-    bmi = add_bmi_features,
-    sleep = add_sleep_features,
-    activity = add_activity_features,
-    hydration = add_hydration_features,
-    cardio = add_cardio_features,
-    interactions = add_interaction_features
-  )
+  functions_by_family <- feature_family_functions()
 
   Reduce(
-    function(current_data, family) feature_family_functions[[family]](current_data),
+    function(current_data, family) functions_by_family[[family]](current_data),
     families,
     data
   )
+}
+
+# =====================================================================
+# feature_transform_function_hash() -- Provenienz-Luecke aus der
+# ReciPies-Gegenpruefung geschlossen (docs/research/JOSS_TECHNIQUE_WATCH.md
+# Kandidat #5, "Prototype: nein" -> hier gepruefte, schmale reale Luecke).
+# =====================================================================
+# Bestehende Provenienz (provenance.R, feature_names_hash in 150/156)
+# hasht nur die RESULTIERENDEN Spaltennamen eines Feature-Sets, nicht die
+# Transformationsfunktionen SELBST. Ein stiller Verhaltenswechsel in einer
+# add_*_features()-Funktion (z.B. eine geaenderte Schwellenwert-/Formel-
+# Logik in add_bmi_features()), der weder Spalten hinzufuegt noch
+# umbenennt, bliebe damit unbemerkt - derselbe feature_names_hash, obwohl
+# sich die tatsaechlich berechneten Werte geaendert haben. Genau die Luecke,
+# die ReciPies' funktionsscharfe Provenienz addressiert.
+#
+# Hasht stattdessen die deparse()ten Funktionskoerper der fuer ein
+# feature_set TATSAECHLICH angewendeten add_*_features()-Funktionen -
+# aendert sich eine Funktion inhaltlich, aendert sich dieser Hash, auch
+# bei unveraenderten Ausgabe-Spaltennamen. Ergaenzt feature_names_hash,
+# ersetzt ihn nicht (Spaltennamen-Aenderungen bleiben weiterhin sichtbar).
+#
+# `feature_set = "raw"` -> NA (keine Transformation). `"surrogate_guided"`
+# bewusst ebenfalls NA: dessen Verhalten haengt zusaetzlich von einer
+# Laufzeit-Spec (surrogate_guided_feature_spec_path) ab, die bereits
+# eigenstaendig per Datei-SHA256 provenienzfaehig ist - ein statischer
+# Funktionskoerper-Hash waere hier unvollstaendig/irrefuehrend.
+feature_transform_function_hash <- function(feature_set) {
+  if (feature_set %in% c("raw", "surrogate_guided")) {
+    return(NA_character_)
+  }
+
+  families <- switch(feature_set,
+    features = feature_families,
+    selected = selected_families,
+    feature_set
+  )
+
+  unknown_families <- setdiff(families, feature_families)
+  if (length(unknown_families) > 0) {
+    stop("Unbekanntes Feature-Set: ", feature_set)
+  }
+
+  # Sortiert nach Familienname (nicht Anwendungsreihenfolge) - derselbe
+  # Funktions-SATZ soll denselben Hash ergeben, unabhaengig davon, in
+  # welcher Reihenfolge er einmal zufaellig zusammengestellt wurde.
+  ordered_families <- sort(families)
+  functions_by_family <- feature_family_functions()
+  bodies <- lapply(ordered_families, function(family) deparse(functions_by_family[[family]]))
+  names(bodies) <- ordered_families
+  hash_value(bodies)
 }
 
 final_model_path <- function(model_name) {
