@@ -305,14 +305,53 @@ Bloecken) bewusst NICHT angefasst - echte Unterschiede je Learner, und
 das Muster zieht sich konsistent durchs gesamte nummerierte
 Skript-Repertoire (ADR-007-Philosophie).
 
+**9. Aktualisierung:** Nutzeranfrage "schau, ob sonst noch was
+aufzuraeumen ist - bzw. ob wir was refactorieren koennen" (4. Runde
+dieser Frage in der Session, wieder ein echter Fund statt Wiederholung).
+
+**Fund 1**: `MLR3_Regression/modules/` hatte - anders als
+`MLR3_Classifikation/modules/` - noch keine README, obwohl auch dort 19
+Dateien ohne Uebersicht liegen. Neue `modules/README.md` (analog
+gruppiert: Trust-Layer/Diagnose, Panel-/Forecasting-spezifisch [opt-in],
+Prediction Intervals, Metriken/Infra). Committed+gepusht (`f20194b`).
+
+**Fund 2 (groesser)**: die P0.2-stopifnot-Bereinigung (2026-08-26) deckte
+nur 7 Aufrufe in 4 Dateien ab - seither kamen etliche weitere ungenannte
+`stopifnot()`-Aufrufe dazu. Per selbstgeschriebenem AST-Parser
+(`getParseData()`) systematisch gefunden (grobe Heuristik lieferte viele
+falsch-positive Treffer bei bereits benannten Mehrfach-Bedingungen -
+jede Fundstelle einzeln per `Read` verifiziert, bevor editiert wurde).
+Nutzerbestaetigung "ja, mach das ueber beide Repos durchziehen".
+
+**`MLR3_Classifikation`**: 9 Dateien gefixt (`benchmark_statistics_
+report.R`, `bootstrap_metric_ci.R`, `composition_reweighting.R`,
+`feature_importance_stability.R`, `missingness_mechanism_audit.R`,
+`probability_calibration.R`, `rolling_drift_diagnosis.R`,
+`subgroup_fairness_disparity.R`, `159_bootstrap_metric_ci.R`). Ein Test
+erwartete die alte generische Meldung ("k >= 3") und wurde auf die neue
+angepasst. Volle Suite + CI gruen (`8abf68e`, Lauf `35438963137`, 2m10s).
+
+**`MLR3_Regression`**: 13 Dateien gefixt (`combined_task_helper.R`,
+`composition_reweighting.R`, `deviance_measures.R`,
+`feature_importance_stability.R`, `group_resampling.R`,
+`missingness_mechanism_audit.R`, `paired_fold_comparison.R`,
+`quantile_regression.R`, `regular_lags_helper.R`,
+`rolling_drift_diagnosis.R`, `time_blocked_resampling.R`,
+`univariate_drift.R`, `110_oof_ensemble.R`) - deutlich mehr als in
+Klassifikation, da die P0.2-Bereinigung dort offenbar nie ankam (z.B.
+`group_resampling.R`/`univariate_drift.R` waren hier noch komplett
+unbenannt, obwohl ihre Klassifikations-Kopien laengst benannt waren).
+Alle 10 Testdateien + CI gruen (`4b1e89e`, Lauf `35439110117`, 1m25s).
+
 ## Stand jetzt
 
-`MLR3_Classifikation`: alle Top-Level-Verzeichnisse haben jetzt eine
-aktuelle README, `feature_transform_function_hash()` neu (ReciPies-
-Luecke geschlossen), `000_config.R` Clean-Code-bereinigt, CI gruen,
-`git status` sauber. `MLR3_Regression`: Kandidat 27 hat jetzt 2
-unabhaengige, strukturell verschiedene Projekt-Zeugen, `000_config.R`
-Clean-Code-bereinigt (neue Testdatei), CI gruen, `git status` sauber.
+`MLR3_Classifikation`: alle Top-Level-Verzeichnisse haben eine aktuelle
+README, `feature_transform_function_hash()` neu (ReciPies-Luecke
+geschlossen), `000_config.R` + 9 weitere Dateien Clean-Code-bereinigt
+(benannte stopifnot-Meldungen), CI gruen, `git status` sauber.
+`MLR3_Regression`: Kandidat 27 hat 2 unabhaengige, strukturell
+verschiedene Projekt-Zeugen, `modules/README.md` neu, `000_config.R` +
+13 weitere Dateien Clean-Code-bereinigt, CI gruen, `git status` sauber.
 `ML_Learning`: neues Diagnose-Skript in `openml-house-prices-regression`,
 lokal committed. Kein offener fachlicher oder struktureller Punkt in
 irgendeinem der 3 Repos. Einzige nicht akut handlungsrelevante Sache
