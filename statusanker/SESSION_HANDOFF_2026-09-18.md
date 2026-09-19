@@ -343,19 +343,52 @@ Klassifikation, da die P0.2-Bereinigung dort offenbar nie ankam (z.B.
 unbenannt, obwohl ihre Klassifikations-Kopien laengst benannt waren).
 Alle 10 Testdateien + CI gruen (`4b1e89e`, Lauf `35439110117`, 1m25s).
 
+**10. Aktualisierung:** Nutzeranfrage "wie machen wir weiter" -> 3
+Optionen vorgeschlagen (neuer 2. Projekt-Zeuge, warten bis JOSS-
+Wiedervorlage, etwas komplett anderes). Nutzerentscheidung: "OK 1.)" -
+2. Projekt-Zeuge fuer Multi-Horizont-Forecasting (`MLR3_Regression`-
+BACKLOG-Kandidat 31, bisher nur `beijing-air-quality-panel`).
+
+**`electricity-load-panel`** (lokal, `ML_Learning`) als 2. Zeuge -
+bereits als "2. Zeuge-Projekt" fuer Kandidaten 25/26 angelegt und
+hatte laut eigenem README schon die passenden Lag-Features fuer eine
+24h-Variante vorbereitet, aber diese selbst noch nicht gebaut. Zuerst
+die fehlende 24h-Horizont-Referenz nachgezogen (`027_forecast_24h_
+reference.R`, `forecast_horizon_24h_drop_cols` in `000_config.R`,
+analog zu Beijings `027`) - LightGBM RMSE 168,86 auf dem echten
+Held-out-Test, klar vor Persistence-Baseline (221,53) - echtes Signal,
+kein Persistenz-Artefakt.
+
+**Multi-Horizont-Modell** (`036_multi_horizon_forecasting.R`,
+"horizon-as-feature"-Ansatz, jede Zeile 2x gestapelt): bestaetigt
+**exakt denselben qualitativen Trade-off wie bei Beijing** - 1h-Horizont
+wird schlechter (+10,04 RMSE, 122,51 vs. 112,47), 24h-Horizont wird
+besser (-5,83 RMSE, 163,03 vs. 168,86), wenn beide in EINEM gemeinsamen
+Modell gelernt werden. Deutlich groessere Betraege als bei Beijing
+(+1,41/-0,69), aber gleiche Richtung in beiden unabhaengigen Projekten -
+**ADR-003-Kriterium erfuellt**. Kein Backport als Modul: die Stapel-/
+NA-Masken-Technik selbst ist ~10 Zeilen direkter Code, uebertragbar ist
+nur der empirische Befund selbst (kein klarer Gewinner, Betriebsvorteil
+vs. letzte RMSE-Punkte), kein wiederverwendbarer Baustein.
+
+Committed lokal in `ML_Learning` (`68c3985`) und `MLR3_Regression/
+BACKLOG.md` (`df84b8f`, gepusht). Details: `ML_Learning/electricity-
+load-panel/README.md` Abschnitt 10.
+
 ## Stand jetzt
 
 `MLR3_Classifikation`: alle Top-Level-Verzeichnisse haben eine aktuelle
 README, `feature_transform_function_hash()` neu (ReciPies-Luecke
 geschlossen), `000_config.R` + 9 weitere Dateien Clean-Code-bereinigt
 (benannte stopifnot-Meldungen), CI gruen, `git status` sauber.
-`MLR3_Regression`: Kandidat 27 hat 2 unabhaengige, strukturell
-verschiedene Projekt-Zeugen, `modules/README.md` neu, `000_config.R` +
-13 weitere Dateien Clean-Code-bereinigt, CI gruen, `git status` sauber.
-`ML_Learning`: neues Diagnose-Skript in `openml-house-prices-regression`,
-lokal committed. Kein offener fachlicher oder struktureller Punkt in
-irgendeinem der 3 Repos. Einzige nicht akut handlungsrelevante Sache
-bleibt: JOSS-Einreichung pausiert, Wiedervorlage ~November 2026.
+`MLR3_Regression`: Kandidat 27 UND Kandidat 31 haben jetzt je 2
+unabhaengige Projekt-Zeugen (ADR-003 erfuellt), `modules/README.md`
+neu, `000_config.R` + 13 weitere Dateien Clean-Code-bereinigt, CI gruen,
+`git status` sauber. `ML_Learning`: neue Skripte in `openml-house-
+prices-regression` und `electricity-load-panel`, beide lokal committed.
+Kein offener fachlicher oder struktureller Punkt in irgendeinem der 3
+Repos. Einzige nicht akut handlungsrelevante Sache bleibt:
+JOSS-Einreichung pausiert, Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
