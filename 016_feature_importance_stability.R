@@ -19,6 +19,7 @@ suppressPackageStartupMessages({
 
 source("000_config.R")
 source(file.path(project_dir, "modules", "feature_importance_stability.R"))
+source(file.path(project_dir, "modules", "task_data_coercion.R"))
 
 if (!file.exists(leak_audit_importance_path)) {
   stop("Einzellauf-Importance fehlt. Erst 015_target_leak_audit.R ausfuehren.")
@@ -26,11 +27,11 @@ if (!file.exists(leak_audit_importance_path)) {
 single_run_importance <- fread(leak_audit_importance_path)
 
 train <- fread(train_path)
-date_cols <- names(train)[vapply(train, function(x) inherits(x, c("Date", "IDate", "POSIXct")), logical(1))]
-train[, (date_cols) := lapply(.SD, as.numeric), .SDcols = date_cols]
-char_cols <- names(train)[vapply(train, is.character, logical(1))]
-train[, (char_cols) := lapply(.SD, as.factor), .SDcols = char_cols]
-train[, (target_col) := as.factor(get(target_col))]
+# prepare_classif_task_data() entfernt auch id_col vor dem Task-Bau (Clean-
+# Code-Review 2026-09-19 fand einen echten Bug: id_col fehlte hier vorher -
+# "id" waere als bedeutungsloses numerisches Feature mittrainiert worden und
+# haette potenziell in der Importance-Rangfolge unten auftauchen koennen).
+prepare_classif_task_data(train, target_col, id_col)
 task_full <- as_task_classif(train, target = target_col, id = "importance_stability")
 task_full$set_col_roles(target_col, add_to = "stratum")
 

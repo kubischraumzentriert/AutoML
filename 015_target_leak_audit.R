@@ -11,6 +11,7 @@ suppressPackageStartupMessages({
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
 source(file.path(project_dir, "modules", "target_leak_audit_helpers.R"))
+source(file.path(project_dir, "modules", "task_data_coercion.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -38,21 +39,13 @@ cat("Warnsignal, kein Erfolg. CV<->Leaderboard-Uebereinstimmung faengt einen\n")
 cat("Leak NICHT (das Artefakt steckt meist auch in den Testdaten).\n\n")
 
 train <- fread(train_path)
-# any(): id_col kann ein Vektor sein (020_task.R unterstuetzt das bereits
-# ueber select(-all_of(id_col)), z.B. um neben der reinen ID auch eine
+# id_col kann ein Vektor sein (z.B. um neben der reinen ID auch eine
 # Hilfsspalte wie einen Zeit-Block-Index auszuschliessen, siehe
-# openml-eeg-eye-state-timeseries in ML_Learning) - ein einzelnes %in%
-# ergaebe sonst einen Vektor, den if() bei Laenge > 1 ablehnt.
-if (any(id_col %in% names(train))) train[, (id_col) := NULL]
-
-char_cols <- names(train)[vapply(train, is.character, logical(1))]
-train[, (char_cols) := lapply(.SD, as.factor), .SDcols = char_cols]
-# Datumsspalten (Date/IDate/POSIXct, z.B. aus fread()) werden von mlr3-Tasks
-# nicht unterstuetzt -> numerisch (Tage/Sekunden seit Epoch) statt fallenlassen,
-# ein Datum kann selbst leak-relevant sein (z.B. "erfasst am" nach dem Ausgang).
-date_cols <- names(train)[vapply(train, function(x) inherits(x, c("Date", "IDate", "POSIXct")), logical(1))]
-train[, (date_cols) := lapply(.SD, as.numeric), .SDcols = date_cols]
-train[, (target_col) := as.factor(get(target_col))]
+# openml-eeg-eye-state-timeseries in ML_Learning) - prepare_classif_task_data()
+# (task_data_coercion.R) handhabt das per any(). Datumsspalten werden
+# numerisch statt fallengelassen (ein Datum kann selbst leak-relevant sein,
+# z.B. "erfasst am" nach dem Ausgang).
+prepare_classif_task_data(train, target_col, id_col)
 
 # LightGBM verarbeitet fehlende Werte und Faktoren nativ, daher ohne
 # Imputations-Pipeline - vereinfacht auch den Zugriff auf importance().
