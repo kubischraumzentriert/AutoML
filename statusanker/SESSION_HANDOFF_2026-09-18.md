@@ -188,23 +188,49 @@ Beschreibungstext, kein README-Verweis fuer lokales Setup, CI bereits
 ohne diese Pakete gruen) - kein Fund, bewusst unveraendert gelassen.
 (`MLR3_Classifikation` `58e2fdb`.)
 
-**Noch offen bei Abschluss dieses Anker-Updates**: der ausgeloeste
-CI-Lauf (`35363545432`) haengt seit >20 Minuten in der Dependency-
-Installation (vermutlich `duckdb`/`mlr3oml` kompilieren ohne Cache-
-Treffer zum ersten Mal, analog zur fruehen `MLR3_Regression`-CI-Saga) -
-noch nicht abgeschlossen, wird in einer der naechsten Aktualisierungen
-nachgetragen.
+**Noch offen bei Abschluss dieses Anker-Updates (damals)**: der
+ausgeloeste CI-Lauf (`35363545432`) haengt seit >20 Minuten in der
+Dependency-Installation (vermutlich `duckdb`/`mlr3oml` kompilieren ohne
+Cache-Treffer zum ersten Mal, analog zur fruehen `MLR3_Regression`-CI-
+Saga) - noch nicht abgeschlossen, wird in einer der naechsten
+Aktualisierungen nachgetragen.
+
+**5. Aktualisierung:** CI-Haenger-Diagnose abgeschlossen. Der haengende
+Lauf `35363545432` wurde geprueft (per `gh run view` bestaetigt >40 Min.
+in der `setup-r-dependencies`-Installation stecken geblieben, danach
+abgebrochen) - Root Cause: `duckdb` UND die 6 weiteren neu zu
+`Imports` hinzugefuegten Suggests-Pakete wurden ueber den Action-
+Default `dependencies="all"` + `deps::.` bei JEDEM CI-Job (auch
+`unit-tests`, der keines davon braucht) installiert; `duckdb` hat kein
+verfuegbares Ubuntu-Binary und kompiliert aus dem Quellcode. **Fix**:
+die 7 Pakete (duckdb, ggplot2, isotree, kernelshap, mlr3oml, skimr,
+targets) von `Imports` nach `Suggests` verschoben (bereits in der 4.
+Aktualisierung geschehen, hier nur bestaetigt), zusaetzlich in
+`ci-smoke-test.yml` beide Jobs (`unit-tests`, `smoke-test`) explizit auf
+`dependencies: 'c("Depends", "Imports", "LinkingTo")'` beschraenkt -
+das schliesst Suggests-Pakete aus der CI-Installation komplett aus,
+unabhaengig vom Action-Default. Vorab per `grep` verifiziert: keines der
+tatsaechlich in der CI-Fixture ausgefuehrten Skripte (015-137,
+`db_logging.R`, referenzierte `modules/`) nutzt eines der 7 Pakete.
+Committed (`48f246b`), gepusht. **Verifiziert**: neuer CI-Lauf
+`35367987508` erfolgreich, `unit-tests` 2m7s, `smoke-test` 2m17s - von
+>40 Minuten Haenger auf ~2 Minuten runter.
 
 ## Stand jetzt
 
 Kein offener fachlicher oder struktureller Punkt in `MLR3_Regression`
-oder `ML_Learning`. `MLR3_Classifikation`: der DESCRIPTION-Fix ist
-committed+gepusht, CI-Bestaetigung steht noch aus (siehe oben). Einzige
-nicht akut handlungsrelevante Sache: JOSS-Einreichung pausiert,
+oder `ML_Learning`. `MLR3_Classifikation`: CI-Haenger diagnostiziert,
+gefixt und bestaetigt gruen (siehe 5. Aktualisierung), `git status`
+sauber. `BACKLOG.md` (`MLR3_Classifikation`) und `BACKLOG.md`
+(`MLR3_Regression`) wurden gegengeprueft - beide praktisch vollstaendig
+abgearbeitet, keine offenen, akut umsetzbaren Punkte (nur dokumentierte
+Negativergebnisse bzw. Punkte, die explizit auf ein 2. Projekt zur
+ADR-003-Bestaetigung warten, kein aktueller Handlungsbedarf). Einzige
+nicht akut handlungsrelevante Sache bleibt: JOSS-Einreichung pausiert,
 Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
-CI-Lauf `35363545432` abwarten/pruefen, danach Nutzerentscheidung
-einholen - etwas komplett Neues vorschlagen/erfragen, oder abwarten bis
-zur JOSS-Wiedervorlage.
+Kein akuter Punkt offen. Naechste sinnvolle Optionen: Nutzer nach einem
+neuen Thema/Projekt fragen, oder bis zur JOSS-Wiedervorlage (~November
+2026) abwarten.
