@@ -41,10 +41,9 @@ make_baseline_learner <- function(base_learner) {
   as_learner(po("imputemedian") %>>% po("imputemode") %>>% base_learner)
 }
 
-# predict_type="prob": siehe 030_baseline.R/BACKLOG.md (2026-09-01).
-learner_lightgbm <- make_baseline_learner(
-  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations, predict_type = "prob")
-)
+# base_learner_constructors (000_config.R) statt lokaler Neukonstruktion -
+# siehe 030_baseline.R (Clean-Code-Review 2026-09-19) fuer die Begruendung.
+learner_lightgbm <- make_baseline_learner(base_learner_constructors$lightgbm())
 
 resampling <- rsmp("cv", folds = cv_folds)
 

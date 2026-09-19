@@ -45,10 +45,9 @@ learner_catboost <- as_learner(
 )
 learner_catboost$id <- "catboost"
 
-learner_lightgbm <- make_baseline_learner(
-  lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations, predict_type = "prob"),
-  id = "lightgbm"
-)
+# base_learner_constructors (000_config.R) statt lokaler Neukonstruktion -
+# siehe 030_baseline.R (Clean-Code-Review 2026-09-19) fuer die Begruendung.
+learner_lightgbm <- make_baseline_learner(base_learner_constructors$lightgbm(), id = "lightgbm")
 
 resampling <- rsmp("cv", folds = cv_folds)
 

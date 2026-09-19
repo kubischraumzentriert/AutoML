@@ -53,8 +53,9 @@ for (cl in classes) {
 # lief bei stark unbalancierten Zielen frueher in seine Obergrenze (6/6).
 
 evaluate_variant <- function(label, task_for_training) {
-  learner <- lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations)
-  learner$predict_type <- "prob"
+  # base_learner_constructors (000_config.R) statt lokaler Neukonstruktion -
+  # siehe 030_baseline.R (Clean-Code-Review 2026-09-19) fuer die Begruendung.
+  learner <- base_learner_constructors$lightgbm()
   learner$train(task_for_training, row_ids = train_ids)
 
   pred_tune <- learner$predict(task_for_training, row_ids = tune_ids)
@@ -100,8 +101,7 @@ fwrite(results, threshold_tuning_results_path)
 # ein Projekt es explizit aktiviert, kein Eingriff in die obigen Ergebnisse.
 if (isTRUE(threshold_tuning_nested)) {
   cat("\n=== Nested/gepooltes per-Fold-Multiplikator-Tuning (", threshold_tuning_nested_folds, "-fach CV) ===\n", sep = "")
-  learner_nested <- lrn("classif.lightgbm", num_iterations = lightgbm_tuning_final_iterations)
-  learner_nested$predict_type <- "prob"
+  learner_nested <- base_learner_constructors$lightgbm()
 
   nested_res <- nested_cv_class_multiplier_tuning(
     task_train_small, learner_nested,

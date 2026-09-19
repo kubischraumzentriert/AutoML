@@ -34,14 +34,11 @@ tar_option_set(
   )
 )
 
-feature_family_functions <- list(
-  bmi = add_bmi_features,
-  sleep = add_sleep_features,
-  activity = add_activity_features,
-  hydration = add_hydration_features,
-  cardio = add_cardio_features,
-  interactions = add_interaction_features
-)
+# Familie -> Transformationsfunktion: NICHT lokal neu definieren, sondern die
+# in 000_config.R zentrale feature_family_functions() nutzen (Clean-Code-
+# Review 2026-09-19 fand hier eine weitere unentdeckte Kopie derselben
+# Zuordnung, analog zu 025_feature_engineering.R).
+family_functions <- feature_family_functions()
 
 build_stratified_subset <- function(train) {
   train %>%
@@ -64,7 +61,7 @@ finalize_task <- function(data, id) {
 build_combined_features <- function(train, families) {
   set.seed(seed)
   raw_subset <- build_stratified_subset(train)
-  Reduce(function(data, family) feature_family_functions[[family]](data), families, raw_subset)
+  Reduce(function(data, family) family_functions[[family]](data), families, raw_subset)
 }
 
 make_baseline_learner <- function(base_learner) {
@@ -82,7 +79,7 @@ list(
     {
       set.seed(seed)
       raw_subset <- build_stratified_subset(train_raw)
-      featured <- feature_family_functions[[feature_family_name]](raw_subset)
+      featured <- family_functions[[feature_family_name]](raw_subset)
       finalize_task(featured, id = paste0(task_id_prefix, "_", feature_family_name))
     },
     pattern = map(feature_family_name),
