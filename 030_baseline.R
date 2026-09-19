@@ -34,35 +34,15 @@ make_baseline_learner <- function(base_learner) {
   as_learner(graph)
 }
 
-learner_lda <- lrn("classif.lda")
-learner_multinom <- lrn("classif.multinom")
-learner_ranger <- lrn(
-  "classif.ranger",
-  num.trees = 200,
-  respect.unordered.factors = "order",
-  seed = seed
-)
-
-if ("trace" %in% learner_multinom$param_set$ids()) {
-  learner_multinom$param_set$values$trace <- FALSE
-}
-
-# predict_type="prob" fuer alle drei Learner: kostet fuer classif.bacc/
-# classif.mcc (Zielmetriken dieses Projekts) nichts, macht das Skript aber
-# sofort tauglich fuer eine AUC-/LogLoss-bewertete Uebertragung auf ein neues
-# Projekt (baseline_measure_ids dort typischerweise inkl. classif.auc, das
-# ohne prob-Vorhersagen fehlschlaegt). Wiederholt aufgetretener Reibungspunkt
-# bei der Uebertragung auf playground-series-s6e5/s5e12 (siehe deren
-# TEMPLATE_FRICTION.md), hier dauerhaft behoben statt bei jedem neuen Projekt
-# erneut nachzuziehen.
-learner_lda$predict_type <- "prob"
-learner_multinom$predict_type <- "prob"
-learner_ranger$predict_type <- "prob"
-
+# base_learner_constructors (000_config.R) statt lokaler Neukonstruktion
+# (Clean-Code-Review 2026-09-19): kapselt bereits den predict_type="prob"-
+# BUGFIX (2026-09-01, gefunden im s6e9-Projekt - siehe dortiger Kommentar
+# in 000_config.R) zentral, statt ihn wie zuvor wortgleich in 030/035/036/
+# 037/050 zu duplizieren.
 learners <- list(
-  make_baseline_learner(learner_lda),
-  make_baseline_learner(learner_multinom),
-  make_baseline_learner(learner_ranger)
+  make_baseline_learner(base_learner_constructors$lda()),
+  make_baseline_learner(base_learner_constructors$multinom()),
+  make_baseline_learner(base_learner_constructors$ranger())
 )
 
 resampling <- rsmp("holdout", ratio = validation_ratio)

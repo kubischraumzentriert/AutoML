@@ -31,18 +31,13 @@ make_baseline_learner <- function(base_learner) {
   as_learner(po("imputemedian") %>>% po("imputemode") %>>% base_learner)
 }
 
-# Ranger als bekannte Referenz (siehe 037), lightgbm verarbeitet Faktoren
-# nativ wie Ranger. predict_type="prob" auf jedem Basis-Learner: kostet fuer
-# classif.bacc/classif.mcc nichts, macht das Skript aber sofort AUC-/LogLoss-
-# tauglich fuer eine Uebertragung auf ein neues Projekt (wiederholter
-# Reibungspunkt bei playground-series-s6e5/s5e12, siehe deren TEMPLATE_FRICTION.md).
-learner_ranger <- make_baseline_learner(
-  lrn("classif.ranger", num.trees = 200, respect.unordered.factors = "order", seed = seed, predict_type = "prob")
-)
-
-learner_lightgbm <- make_baseline_learner(
-  lrn("classif.lightgbm", num_iterations = 200, predict_type = "prob")
-)
+# base_learner_constructors (000_config.R) statt lokaler Neukonstruktion -
+# siehe 030_baseline.R (Clean-Code-Review 2026-09-19) fuer die Begruendung
+# (kapselt den predict_type="prob"-BUGFIX zentral; num.trees=200/
+# num_iterations=lightgbm_tuning_final_iterations=200 entsprechen exakt
+# der vorherigen lokalen Konstruktion hier).
+learner_ranger <- make_baseline_learner(base_learner_constructors$ranger())
+learner_lightgbm <- make_baseline_learner(base_learner_constructors$lightgbm())
 
 resampling <- rsmp("cv", folds = cv_folds)
 

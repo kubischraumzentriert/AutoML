@@ -17,14 +17,15 @@ source(file.path(project_dir, "features", "interactions.R"))
 
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
 
-feature_family_functions <- list(
-  bmi = add_bmi_features,
-  sleep = add_sleep_features,
-  activity = add_activity_features,
-  hydration = add_hydration_features,
-  cardio = add_cardio_features,
-  interactions = add_interaction_features
-)
+# Familie -> Transformationsfunktion: NICHT lokal neu definieren, sondern
+# die in 000_config.R zentrale feature_family_functions() nutzen (Clean-
+# Code-Review 2026-09-19 fand hier eine dritte, unentdeckte Kopie derselben
+# Zuordnung - apply_feature_set()/feature_transform_function_hash() nutzen
+# sie bereits, seit der ReciPies-Provenienz-Aenderung als einzige Quelle
+# gedacht, 025 sourct 000_config.R aber definierte seine eigene Liste
+# separat weiter). Eine neue Feature-Familie muesste sonst an DREI statt
+# einer Stelle ergaenzt werden.
+family_functions <- feature_family_functions()
 
 train <- fread(train_path)
 
@@ -67,7 +68,7 @@ cat("=== Feature-Family Tasks ===\n")
 for (family in feature_families) {
   set.seed(seed)
   raw_subset <- build_stratified_subset(train)
-  featured <- feature_family_functions[[family]](raw_subset)
+  featured <- family_functions[[family]](raw_subset)
   task <- finalize_task(featured, id = paste0(task_id_prefix, "_", family))
   saveRDS(task, task_train_small_feature_family_path(family))
 
@@ -80,7 +81,7 @@ build_combined_features <- function(families) {
   set.seed(seed)
   raw_subset <- build_stratified_subset(train)
   Reduce(
-    function(data, family) feature_family_functions[[family]](data),
+    function(data, family) family_functions[[family]](data),
     families,
     raw_subset
   )

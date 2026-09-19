@@ -22,30 +22,12 @@ if (!file.exists(task_train_small_path)) {
 
 task_train_small <- readRDS(task_train_small_path)
 
-learner_lda <- lrn("classif.lda")
-learner_multinom <- lrn("classif.multinom")
-learner_ranger <- lrn(
-  "classif.ranger",
-  num.trees = 200,
-  respect.unordered.factors = "order",
-  seed = seed
-)
-
-if ("trace" %in% learner_multinom$param_set$ids()) {
-  learner_multinom$param_set$values$trace <- FALSE
-}
-
-# predict_type="prob" fuer alle drei Learner: siehe 030_baseline.R fuer die
-# volle Begruendung (BUGFIX 2026-09-01, gefunden im s6e9-Projekt - dieses
-# Skript fehlte bislang, obwohl 030 den identischen Fix schon hatte).
-learner_lda$predict_type <- "prob"
-learner_multinom$predict_type <- "prob"
-learner_ranger$predict_type <- "prob"
-
+# base_learner_constructors (000_config.R) statt lokaler Neukonstruktion -
+# siehe 030_baseline.R (Clean-Code-Review 2026-09-19) fuer die Begruendung.
 learners <- list(
-  build_classif_pipeline(learner_lda),
-  build_classif_pipeline(learner_multinom),
-  build_classif_pipeline(learner_ranger)
+  build_classif_pipeline(base_learner_constructors$lda()),
+  build_classif_pipeline(base_learner_constructors$multinom()),
+  build_classif_pipeline(base_learner_constructors$ranger())
 )
 
 resampling <- rsmp("holdout", ratio = validation_ratio)
