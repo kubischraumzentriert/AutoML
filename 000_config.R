@@ -357,6 +357,29 @@ feature_family_functions <- function() {
   )
 }
 
+# Loest ein feature_set-Label ("features"/"selected"/ein einzelner
+# Familienname) auf die zugrundeliegenden Familiennamen auf und prueft sie
+# gegen feature_families - gemeinsam genutzt von apply_feature_set()
+# (Anwendung) UND feature_transform_function_hash() (Provenienz), die beide
+# denselben Auswahlmechanismus brauchen (Clean-Code-Review 2026-09-19: vorher
+# wortgleich in beiden Funktionen dupliziert). Nicht fuer "raw"/
+# "surrogate_guided" gedacht - beide Aufrufer behandeln diese Faelle vorher
+# separat.
+resolve_feature_families <- function(feature_set) {
+  families <- switch(feature_set,
+    features = feature_families,
+    selected = selected_families,
+    feature_set
+  )
+
+  unknown_families <- setdiff(families, feature_families)
+  if (length(unknown_families) > 0) {
+    stop("Unbekanntes Feature-Set: ", feature_set)
+  }
+
+  families
+}
+
 # Wendet dieselbe Feature-Set-Logik auf beliebige Daten an (Train-Subset,
 # Full-Train oder test.csv). Die add_*_features-Funktionen muessen vorher aus
 # features/*.R geladen sein; fuer feature_set = "raw" bleibt der Datensatz
@@ -380,17 +403,7 @@ apply_feature_set <- function(data, feature_set) {
     return(add_surrogate_guided_features(data, spec, operations = surrogate_guided_operations))
   }
 
-  families <- switch(feature_set,
-    features = feature_families,
-    selected = selected_families,
-    feature_set
-  )
-
-  unknown_families <- setdiff(families, feature_families)
-  if (length(unknown_families) > 0) {
-    stop("Unbekanntes Feature-Set: ", feature_set)
-  }
-
+  families <- resolve_feature_families(feature_set)
   functions_by_family <- feature_family_functions()
 
   Reduce(
@@ -425,21 +438,22 @@ apply_feature_set <- function(data, feature_set) {
 # Laufzeit-Spec (surrogate_guided_feature_spec_path) ab, die bereits
 # eigenstaendig per Datei-SHA256 provenienzfaehig ist - ein statischer
 # Funktionskoerper-Hash waere hier unvollstaendig/irrefuehrend.
+#
+# Braucht hash_value() aus provenance.R (siehe Sourcing-Reihenfolge in
+# 150_train_full_model.R: 000_config.R -> provenance.R -> features/*.R) -
+# derselbe explizite Guard-Stil wie oben bei apply_feature_set()s
+# 'surrogate_guided'-Zweig (Clean-Code-Review 2026-09-19), statt eines
+# kryptischen "could not find function 'hash_value'"-Fehlers bei falscher
+# Sourcing-Reihenfolge.
 feature_transform_function_hash <- function(feature_set) {
   if (feature_set %in% c("raw", "surrogate_guided")) {
     return(NA_character_)
   }
-
-  families <- switch(feature_set,
-    features = feature_families,
-    selected = selected_families,
-    feature_set
-  )
-
-  unknown_families <- setdiff(families, feature_families)
-  if (length(unknown_families) > 0) {
-    stop("Unbekanntes Feature-Set: ", feature_set)
+  if (!exists("hash_value", mode = "function")) {
+    stop("feature_transform_function_hash() benoetigt source('provenance.R') (liefert hash_value()).")
   }
+
+  families <- resolve_feature_families(feature_set)
 
   # Sortiert nach Familienname (nicht Anwendungsreihenfolge) - derselbe
   # Funktions-SATZ soll denselben Hash ergeben, unabhaengig davon, in

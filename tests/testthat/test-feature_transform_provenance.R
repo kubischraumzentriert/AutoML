@@ -76,6 +76,28 @@ test_that("feature_transform_function_hash() meldet ein unbekanntes Feature-Set 
   expect_error(config_env$feature_transform_function_hash("does_not_exist"), "Unbekanntes Feature-Set")
 })
 
+test_that("feature_transform_function_hash() gibt eine verstaendliche Fehlermeldung, wenn provenance.R nicht gesourct wurde", {
+  # Ohne provenance.R (liefert hash_value()) gesourct - Clean-Code-Review
+  # 2026-09-19: vorher ein kryptischer "could not find function"-Fehler.
+  # parent = baseenv() statt new.env()s Default (Aufrufer-Frame): andere
+  # Testdateien (test-provenance.R) sourcen provenance.R OHNE local= und
+  # definieren hash_value() dadurch im globalen Environment der ganzen
+  # testthat-Session - ohne baseenv() als Parent wuerde exists(inherits=TRUE)
+  # diese globale Definition faelschlich ueber die Environment-Kette finden,
+  # obwohl DIESES Environment provenance.R nie gesourct hat.
+  env_no_provenance <- new.env(parent = baseenv())
+  env_no_provenance$project_dir <- testthat::test_path("..", "..")
+  source(testthat::test_path("..", "..", "000_config.R"), local = env_no_provenance)
+  for (f in list.files(testthat::test_path("..", "..", "features"), pattern = "\\.R$", full.names = TRUE)) {
+    source(f, local = env_no_provenance)
+  }
+  expect_false(exists("hash_value", envir = env_no_provenance, mode = "function"))
+  expect_error(
+    env_no_provenance$feature_transform_function_hash("bmi"),
+    "provenance\\.R"
+  )
+})
+
 test_that("feature_transform_function_hash() aendert sich, wenn eine Familienfunktion sich inhaltlich aendert (Kernbeweis der ReciPies-Luecke)", {
   # Zwei Kopien desselben Environments: eine mit der echten add_bmi_features(),
   # eine mit einer inhaltlich veraenderten Version DERSELBEN Funktion (andere
