@@ -375,20 +375,116 @@ Committed lokal in `ML_Learning` (`68c3985`) und `MLR3_Regression/
 BACKLOG.md` (`df84b8f`, gepusht). Details: `ML_Learning/electricity-
 load-panel/README.md` Abschnitt 10.
 
+**11. Aktualisierung:** Nutzeranfrage "koennen wir weitere
+Refaktorierungen in den Rskripten machen im Klassifikation-Template" ->
+zunaechst `db_logging.R` gezielt geprueft (Clean-Code-Review): (1)
+`db_log_predictions()` nutzte manuelles `dbBegin()`/`dbCommit()` ohne
+Rollback-Pfad bei einem Fehler zwischen den beiden Aufrufen -> auf
+`DBI::dbWithTransaction()` umgestellt (automatischer Rollback,
+empirisch mit einem Standalone-Testskript verifiziert: Variablen aus
+dem Block bleiben im Aufrufer-Scope sichtbar, die Verbindung bleibt nach
+einem Rollback nutzbar). (2) `db_create_run()`/`db_finish_run()` hatten
+identische inline Lazy-Sourcing-Logik fuer `provenance.R` dupliziert ->
+`.ensure_provenance_sourced()` extrahiert. Nutzerbestaetigung "ja, mach
+das". Committed `c0d6e5e`, CI gruen.
+
+Anschliessend die groessere, explizit "nach eigenem Ermessen"
+autorisierte Anfrage: *"Gehe anschliessend durch alle Skripte des
+Workflows und schaue was du refaktorieren kannst ... Ich wuerde
+vorschlagen immer ein Skript nach dem anderen und dann CI - oder was
+meinst Du?"* - Gegenvorschlag (Batch-Commits mit vollem lokalem Test
+nach jeder Aenderung statt ~66 einzelner CI-Laeufe) implizit akzeptiert,
+systematische Durchsicht praktisch des gesamten nummerierten
+Skript-Korpus (Clean-Code-REVIEW-Methodik) in 3 weiteren Batches:
+
+- **Batch B**: echter Bug gefunden - `016_feature_importance_
+  stability.R`/`017_probability_calibration.R`/`018_subgroup_fairness_
+  disparity.R` entfernten `id_col` NICHT vor dem Task-Bau (nur `015`
+  tat das) - `id` waere als bedeutungsloses Feature mittrainiert worden
+  (bei `016` sichtbar in der Feature-Importance-Rangfolge). Neues
+  `modules/task_data_coercion.R` (`prepare_classif_task_data()`, 10
+  Tests) fasst die Coercion-Logik fuer alle 4 Skripte zusammen,
+  `ci-smoke-test.yml` um die neue Modul-Datei ergaenzt. Alle 4 Skripte
+  gegen echte `health_condition`-Daten neu ausgefuehrt, "id" verschwand
+  aus `016`s Feature-Liste. Committed `3f2bb82`, CI gruen.
+- **Batch C**: `base_learner_constructors` (aus `000_config.R`, bereits
+  bestehende Single Source of Truth mit vorkonfiguriertem
+  `predict_type="prob"`) wurde von den meisten Benchmark-Skripten nicht
+  genutzt - jedes rekonstruierte `lrn("classif.*")`+`predict_type`
+  lokal neu. In `025/030/035/036/037/050/080` auf die zentrale Funktion
+  umgestellt; `025_feature_engineering.R` bekam zusaetzlich eine 3.
+  unentdeckte lokale Kopie der Familie->Funktion-Zuordnung entfernt
+  (`feature_family_functions()` aus `000_config.R` statt Neubau).
+  Committed `6fddddd`, CI gruen.
+- **Batch D**: dieselbe `base_learner_constructors`-Bereinigung auf
+  `095/105/110/120/125/130/135/140` ausgeweitet; `_targets.R` hatte eine
+  4. unentdeckte Kopie der Familien-Zuordnung -> ebenfalls auf
+  `feature_family_functions()` umgestellt. Alle 9 Dateien gegen die
+  echten Projektdaten laufen lassen (mehrere wegen >180s CV-Laufzeit im
+  Hintergrund), Ergebnisse konsistent mit dokumentierten Referenzwerten
+  (z.B. CatBoost BAcc 0.9446 exakt wie dokumentiert). Committed
+  `3dffad5`, CI gruen (Lauf `35454322560`, 2m15s).
+
+Bewusst NICHT angefasst (mit Begruendung dokumentiert): `142_ranger_
+tuning_weighted.R`/`146_threshold_tuning_ranger.R` (nutzen echte
+tuning-abgeleitete Baumzahlen statt eines zufaellig passenden Defaults -
+Vereinheitlichung waere eine stille Fehlkopplung), `148_ensemble_
+candidate_pool.R` (echte Parametervariation je Kandidat, keine
+Duplikation), `155/157_predict_*_submission.R` (teilen Logik, laden
+Modelle aber ueber unterschiedliche Pfade - Vereinigung als zu
+risikoreich/niedrignutzig bewertet), `db_get_or_create_project/
+workflow()` (~15 Zeilen SQL-Duplikation, Abstraktion waere Overmodeling).
+
+**12. Aktualisierung:** Nutzeranfrage "was koennen wir noch bereinigen",
+dann konkret "wie sind die Scripte hinsichtlich Uebersichtlichkeit/
+Effizienz aufgestellt - wurde Piping verwendet wo sinnvoll?" - Pipe-Audit
+repo-weit: `%>%` wird in genau den 5 tibble-lastigen EDA-/Feature-
+Skripten genutzt (`010_eda.R`, `020_task.R`, `025_feature_engineering.R`,
+`095_tabpfn_benchmark.R`, `_targets.R`), der native `|>` nur in 2
+Diagnose-Skripten, kein Skript mischt beide. Die uebrigen ~55
+data.table-lastigen Skripte verketten per `dt[...][...]` statt Pipe -
+das ist idiomatisch korrekt (data.table+Pipe gilt als Antipattern,
+verschleiert by-reference-Semantik) und **kein Fund**.
+
+**Echter Fund 1**: `150_train_full_model.R`/`155_predict_submission.R`
+laden `library(tidyverse)` (8 Pakete), nutzen aber **keine einzige**
+tidyverse-Funktion (reiner data.table-Code, 0 Treffer bei
+`%>%`/`mutate`/`select`/... verifiziert) - reine Ladezeit-Verschwendung
+in zwei Skripten, die typischerweise isoliert (neue Submission)
+ausgefuehrt werden. `library(tidyverse)`-Zeile in beiden entfernt.
+
+**Echter Fund 2**: `160_plot_roc_curve.R`/`161_plot_pr_curve.R` teilten
+sich eine fast identische `rbindlist(lapply(algo, ...))`-Schleife zum
+Kurvenaufbau (war schon in der 9. Aktualisierung als niedrigprioritaerer
+Kandidat notiert, jetzt umgesetzt). Neue `compute_algorithm_curves()`
+in `008_curve_diagnostics.R` (parametrisiert ueber x/y-Spalte + Metrik-
+Label), skriptspezifische Teile (160s db_auc-Kreuzcheck gegen
+`metric_result`, 161s Praevalenz-Baseline) bleiben lokal in den
+jeweiligen Skripten.
+
+Alle 5 geaenderten Dateien: Syntax-Check OK, volle testthat-Suite gruen,
+alle 5 Skripte einzeln gegen echte `health_condition`-Daten ausgefuehrt
+(150: Ranger-Training auf 690k Zeilen erfolgreich; 155: Submission mit
+295.753 Zeilen erzeugt; 160/161: ROC-/PR-Kurven mit plausiblen
+AUC-Werten erzeugt, PNG-Dateien gespeichert). Committed `561f58a`,
+gepusht, **CI-Lauf `35565952794` verifiziert: completed/success, 1m51s**.
+
 ## Stand jetzt
 
-`MLR3_Classifikation`: alle Top-Level-Verzeichnisse haben eine aktuelle
-README, `feature_transform_function_hash()` neu (ReciPies-Luecke
-geschlossen), `000_config.R` + 9 weitere Dateien Clean-Code-bereinigt
-(benannte stopifnot-Meldungen), CI gruen, `git status` sauber.
-`MLR3_Regression`: Kandidat 27 UND Kandidat 31 haben jetzt je 2
-unabhaengige Projekt-Zeugen (ADR-003 erfuellt), `modules/README.md`
-neu, `000_config.R` + 13 weitere Dateien Clean-Code-bereinigt, CI gruen,
-`git status` sauber. `ML_Learning`: neue Skripte in `openml-house-
-prices-regression` und `electricity-load-panel`, beide lokal committed.
-Kein offener fachlicher oder struktureller Punkt in irgendeinem der 3
-Repos. Einzige nicht akut handlungsrelevante Sache bleibt:
-JOSS-Einreichung pausiert, Wiedervorlage ~November 2026.
+`MLR3_Classifikation`: der vollstaendige Refaktorierungs-Sweep (Nutzer-
+auftrag "gehe durch alle Skripte ... nach eigenem Ermessen") ist
+abgeschlossen - praktisch das gesamte nummerierte Skript-Korpus (~66
+Dateien) wurde per Clean-Code-REVIEW durchgesehen. Reale Funde: ein
+echter `id`-Spalten-Bug in 3 Skripten (behoben, neues `modules/
+task_data_coercion.R`), Duplikation von `base_learner_constructors`/
+`feature_family_functions()` in 13 Dateien (dedupliziert), ein totes
+`library(tidyverse)` in 2 Dateien (entfernt), eine Kurvenaufbau-
+Duplikation in 2 Plot-Skripten (dedupliziert). Alle Aenderungen einzeln
+gegen echte Projektdaten verifiziert, keine Regressionen. CI gruen
+(`35565952794`, 1m51s), `git status` sauber. `MLR3_Regression`/
+`ML_Learning`: unveraendert seit dem 10. Eintrag. Einzige nicht akut
+handlungsrelevante Sache bleibt: JOSS-Einreichung pausiert,
+Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
