@@ -26,11 +26,13 @@ if (is.null(positive_class)) positive_class <- "unhealthy"
 
 con <- db_connect()
 
-curves <- rbindlist(lapply(algorithms_to_plot, function(algo) {
-  preds <- load_latest_predictions(con, algo, positive_class = positive_class)
-  curve <- compute_classif_curves(preds$pred_truth, preds$prob_positive, positive = positive_class)
+curves <- compute_algorithm_curves(con, algorithms_to_plot, positive_class, "fpr", "tpr", "AUC")
 
-  roc_auc <- curve_auc(curve$fpr, curve$tpr)
+# db_auc als Cross-Check gegen den unabhaengig in metric_result geloggten
+# classif.auc-Wert (aus der eigentlichen mlr3-Resampling-Bewertung) - separat
+# von compute_algorithm_curves(), da nur 160 diesen Abgleich braucht.
+for (algo in algorithms_to_plot) {
+  roc_auc <- curves[algo_name == algo, algo_auc][1]
   db_auc <- dbGetQuery(con, "
     SELECT mr.mres_value
     FROM metric_result mr
@@ -45,9 +47,7 @@ curves <- rbindlist(lapply(algorithms_to_plot, function(algo) {
     algo, roc_auc,
     if (length(db_auc) == 1) sprintf(" | AUC (aus metric_result) = %.4f", db_auc) else ""
   ))
-
-  curve[, algorithm := sprintf("%s (AUC=%.3f)", algo, roc_auc)]
-}))
+}
 
 DBI::dbDisconnect(con)
 

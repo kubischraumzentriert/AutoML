@@ -2,7 +2,6 @@ rm(list = ls())
 
 suppressPackageStartupMessages({
   library(data.table)
-  library(tidyverse)
   library(mlr3)
   library(mlr3learners)
   library(mlr3extralearners)

@@ -26,24 +26,17 @@ if (is.null(positive_class)) positive_class <- "unhealthy"
 
 con <- db_connect()
 
+curves <- compute_algorithm_curves(con, algorithms_to_plot, positive_class, "recall", "precision", "PR-AUC")
+
+for (algo in algorithms_to_plot) {
+  cat(sprintf("  %-10s PR-AUC (Average Precision) = %.4f\n", algo, curves[algo_name == algo, algo_auc][1]))
+}
+
 # Anteil der positiven Klasse im Eval-Split - die Baseline eines "zufaelligen"
 # Klassifikators in der PR-Kurve (im Gegensatz zur ROC-Kurve, wo die Diagonale
-# unabhaengig von der Klassenverteilung ist).
-prevalence <- NA_real_
-
-curves <- rbindlist(lapply(algorithms_to_plot, function(algo) {
-  preds <- load_latest_predictions(con, algo, positive_class = positive_class)
-  curve <- compute_classif_curves(preds$pred_truth, preds$prob_positive, positive = positive_class)
-
-  if (is.na(prevalence)) {
-    prevalence <<- mean(preds$pred_truth == positive_class)
-  }
-
-  pr_auc <- curve_auc(curve$recall, curve$precision)
-  cat(sprintf("  %-10s PR-AUC (Average Precision) = %.4f\n", algo, pr_auc))
-
-  curve[, algorithm := sprintf("%s (PR-AUC=%.3f)", algo, pr_auc)]
-}))
+# unabhaengig von der Klassenverteilung ist). Alle Algorithmen teilen sich
+# denselben Eval-Split, daher genuegt der Wert des ersten.
+prevalence <- curves$algo_prevalence[1]
 
 DBI::dbDisconnect(con)
 

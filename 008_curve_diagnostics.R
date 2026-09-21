@@ -106,3 +106,23 @@ curve_auc <- function(x, y) {
   y <- y[ord]
   sum(diff(x) * (head(y, -1) + tail(y, -1)) / 2)
 }
+
+# Baut je Algorithmus eine Kurve (ROC: x_col="fpr"/y_col="tpr", PR:
+# x_col="recall"/y_col="precision") aus den zuletzt geloggten Vorhersagen und
+# haengt Metadaten fuer Legende/Report an (algo_name, algo_auc, algo_prevalence,
+# der formatierte Legendenname "algo (METRIC=x.xxx)"). Gemeinsame Schleife fuer
+# 160_plot_roc_curve.R/161_plot_pr_curve.R (Clean-Code-Review 2026-09-20 fand
+# hier eine fast identische rbindlist(lapply(...))-Schleife in beiden Skripten).
+compute_algorithm_curves <- function(con, algorithms, positive_class, x_col, y_col, metric_label) {
+  rbindlist(lapply(algorithms, function(algo) {
+    preds <- load_latest_predictions(con, algo, positive_class = positive_class)
+    curve <- compute_classif_curves(preds$pred_truth, preds$prob_positive, positive = positive_class)
+    auc <- curve_auc(curve[[x_col]], curve[[y_col]])
+    curve[, `:=`(
+      algo_name = algo,
+      algo_auc = auc,
+      algorithm = sprintf("%s (%s=%.3f)", algo, metric_label, auc),
+      algo_prevalence = mean(preds$pred_truth == positive_class)
+    )]
+  }))
+}
