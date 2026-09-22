@@ -562,38 +562,96 @@ wiederkehrendes "bestes Einzelmodell schlaegt Ensemble"-Muster, Abschluss
 ohne weiteren Kaggle-Versuch). Lokal committed (`486e2f5`, `ML_Learning`
 hat kein Remote).
 
+**15. Aktualisierung:** Nutzeranfrage nach einer neuen, vom Nutzer
+selbst gefundenen Kaggle-Competition ("Predicting Soil Grain Size
+Distributions from Images") - Bewertung: NICHT geeignet (bildbasiert,
+nur 24 Trainings-Samples, Multi-Output mit Monotonie-Constraint, kein
+offizielles Kaggle-Ranking) - klar begruendet abgelehnt. Nutzerfrage
+"siehst du ein anderes moegliches Kaggle-Projekt" -> systematische
+Durchsicht der Kaggle-Uebersicht (Featured/Research/Community): kein
+guter Fit gefunden (Titanic/House-Prices/Spaceship = zu bekannt,
+LLM/ARC Prize = ausserhalb tabellarisch, RSNA/Biohub/Solar/UMUD/
+Hyperspectral = Computer Vision, IEEE Traffic Flow Bench/IEEE BigData
+Land-Ecosystem = zu spezialisierte Multi-Task-/Grid-Skala-Benchmarks).
+Empfehlung: entweder 2. Projekt-Zeuge (Regression-Kandidat 28/30) jetzt,
+oder ~9 Tage auf `s6e10` warten. Nutzerentscheidung: "den 2.
+Projekt-Zeugen".
+
+**Umsetzung 2. Projekt-Zeuge fuer `MLR3_Regression`-Kandidat 28+30**
+(Nutzerentscheidung "Beide zusammen, frisches OpenML-Dataset"): OpenML
+per `mlr3oml` nach einem strukturell ANDEREN Heteroskedastizitaets-
+Mechanismus durchsucht (i.i.d. statt Panel, Extremwert- statt
+Groessenunterschied) - `medical_charges` hatte defekte ARFF-Parsing
+(nur 57 statt 163k Zeilen extrahiert, verworfen), **Allstate Claims
+Severity (OpenML 42571)** gewaehlt: 188k Zeilen, 116 kategoriale + 14
+numerische Merkmale, Ziel `loss` mit Skewness 3,79/Range-Faktor
+~180.000x. Neues Projekt `ML_Learning/openml-allstate-claims-severity`
+(Bootstrap analog `openml-house-prices-regression`, generische Module
+`paired_fold_comparison.R`/`quantile_regression.R`/
+`conformal_prediction.R` 1:1 aus `electricity-load-panel`
+wiederverwendet, da bereits domaenenunabhaengig geschrieben). Baseline
+bestaetigt plausibles Signal (Ranger MAE 1274, R²=0,50).
+
+**Kandidat 28** (`033_quantile_vs_conformal_intervals.R`): nuancierteres
+Bild als beim 1. Zeugen - Conformal haelt die Gesamt-Coverage (Ziel 90%,
+empirisch 91,0%), bricht aber im hoechsten Schadenhoehen-Dezil auf 51,8%
+ein; Quantilregression schmaler (Breite 3966 vs. 5654), verfehlt aber
+die Gesamt-Coverage klar (80,3%) mit U-foermigem Fehlmuster (39,8% im
+niedrigsten, 53,5% im hoechsten Dezil). Beide Methoden versagen im
+extremsten Dezil vergleichbar schlecht.
+
+**Kandidat 30** (`034_robust_loss_functions.R`): die beim 1. Zeugen
+gefundene LightGBM-alpha-Falle (Default-alpha=0.9 bei tausenderwertigen
+Zielen) EXAKT repliziert (RMSE-Ratio 9,21, MAE-Ratio 19,92) - bestaetigt
+als generisches LightGBM-Verhalten, `WORKFLOW_GUARDS.md` entsprechend
+ergaenzt. Anders als beim 1. Zeugen (dort neutral): bei skaliertem alpha
+UND Quantile-Median zeigt sich hier ein kleiner, aber messbarer
+MAE-Vorteil (Ratio -2,50/-3,50) bei RMSE-neutralem Ergebnis - bei sehr
+extremer Schiefe kann robuster Loss also doch einen echten Hebel bringen.
+
+Beide Kandidaten damit ADR-003-reif (2 unabhaengige, strukturell
+verschiedene Zeugen), Ergebnis ist in beiden Faellen eine Praezisierung
+statt reiner Bestaetigung. Neues `README.md` im `ML_Learning`-Projekt
+(voller Befund + moegliche naechste Schritte). Committed lokal
+(`14ce18c`, `ML_Learning`, kein Remote) und in `MLR3_Regression`
+(`BACKLOG.md`/`WORKFLOW_GUARDS.md`, `4211b71`, gepusht - reine
+Doku-Aenderung, kein CI-Lauf noetig, `ci-tests.yml` triggert nur bei
+`.R`-Aenderungen).
+
+**Naechstes Thema (Nutzerhinweis waehrend der laufenden Allstate-Arbeit,
+per System-Nachricht "Schau dir mal diese Competition an"):** Zindi
+"Climate Risk and Health Prediction Challenge" identifiziert - binaere
+Klassifikation (klimasensitiver Tod ja/nein), tabellarisch, duale Metrik
+F1(60%)+ROC-AUC(40%) bei unausgeglichenen Klassen, kompakte Groesse
+(Train 478 KB/Test 139 KB), $500/$300/$200 Preisgeld, 26 Tage bis
+Ablauf (18.10.) - deutlich besserer Fit als alle bisher geprueften
+Kaggle-Optionen. Nutzerentscheidung: Allstate-Arbeit erst zu einem
+pausierbaren Stand bringen (-> dieser Eintrag), dann zu Zindi wechseln.
+Daten bereits vom Nutzer heruntergeladen nach
+`C:\Users\HP\ML_Learning\climate-risk-health-prediction-challenge\`.
+
 ## Stand jetzt
 
-`MLR3_Classifikation`: der vollstaendige Refaktorierungs-Sweep (Nutzer-
-auftrag "gehe durch alle Skripte ... nach eigenem Ermessen") ist
-abgeschlossen - praktisch das gesamte nummerierte Skript-Korpus (~66
-Dateien) wurde per Clean-Code-REVIEW durchgesehen. Reale Funde: ein
-echter `id`-Spalten-Bug in 3 Skripten (behoben, neues `modules/
-task_data_coercion.R`), Duplikation von `base_learner_constructors`/
-`feature_family_functions()` in 13 Dateien (dedupliziert), ein totes
-`library(tidyverse)` in 2 Dateien (entfernt), eine Kurvenaufbau-
-Duplikation in 2 Plot-Skripten (dedupliziert). Danach: der externe
-CC18-Benchmark ist von n=6 auf n=15 gewachsen, mit einem echten neuen
-Forschungsergebnis (Friedman-Test bei n=15 signifikant, `workflow_
-ranger`s scheinbarer Vorsprung haelt der groesseren Stichprobe global
-NICHT stand, bleibt aber bei kleinen/unausgeglichenen Datensaetzen
-bestehen) - `JOSS_TECHNIQUE_WATCH.md` Kandidat 3 damit vollstaendig
-abgeschlossen. Alle Aenderungen einzeln gegen echte Projektdaten
-verifiziert, keine Regressionen. CI gruen (`35689686621`, 2m6s),
-`git status` sauber. `MLR3_Regression`: unveraendert seit dem 10.
-Eintrag. `ML_Learning`: 9 neue `openml-cc18-*`-Protokoll-v2-Laeufe
-(Artefakte, kein separater Commit) + `PredictingElectricVehiclePurchases-
-s6e9` sauber mit README abgeschlossen (`486e2f5`, lokal, kein Remote).
-Einzige nicht akut handlungsrelevante Sache bleibt: JOSS-Einreichung
-pausiert, Wiedervorlage ~November 2026.
+`MLR3_Classifikation`: der vollstaendige Refaktorierungs-Sweep und die
+CC18-Benchmark-Erweiterung (13./14. Eintrag) bleiben abgeschlossen. CI
+gruen, `git status` sauber. `MLR3_Regression`: Kandidat 28 UND 30 haben
+jetzt je 2 unabhaengige, strukturell verschiedene Projekt-Zeugen
+(ADR-003 erfuellt), `BACKLOG.md`/`WORKFLOW_GUARDS.md` aktualisiert,
+gepusht (`4211b71`). `ML_Learning`: `openml-allstate-claims-severity`
+neu (sauberer Zwischenstand, README dokumentiert, lokal committed
+`14ce18c`), `PredictingElectricVehiclePurchases-s6e9` weiterhin
+abgeschlossen. Naechstes Thema identifiziert und vom Nutzer vorbereitet
+(Zindi Climate-Risk-Challenge, Daten bereits heruntergeladen), aber noch
+NICHT begonnen. Einzige nicht akut handlungsrelevante Sache bleibt:
+JOSS-Einreichung pausiert, Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
-Kein akuter Punkt offen. Eine der in der 13. Aktualisierung
-vorgeschlagenen Optionen bleibt fuer eine kuenftige Session: 2. Projekt-
-Zeuge fuer `MLR3_Regression`-Kandidat 28 (Quantilregression) oder 30
-(robuste Loss-Funktionen). Alternativ: naechste Kaggle-Season abwarten
-(`s6e10`, vermutlich Start ~01.10., monatlicher Rhythmus) fuer wirklich
-frisches Terrain - `s6e9` ist wie oben beschrieben bereits vollstaendig
-ausgeschoepft. Sonst: Nutzer nach einem neuen Thema fragen, oder bis zur
-JOSS-Wiedervorlage (~November 2026) abwarten.
+Mit der Zindi "Climate Risk and Health Prediction Challenge" beginnen
+(`C:\Users\HP\ML_Learning\climate-risk-health-prediction-challenge\` -
+Daten liegen bereits lokal): Projekt-Bootstrap analog zum
+`MLR3_Classifikation`-Template (binaere Klassifikation, duale
+F1/ROC-AUC-Metrik erfordert eine kleine Anpassung an
+`155_predict_submission.R`s Submission-Format - dort aktuell nur EINE
+Spalte Label ODER Wahrscheinlichkeit, hier werden BEIDE gleichzeitig
+gebraucht).
