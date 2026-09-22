@@ -630,28 +630,114 @@ pausierbaren Stand bringen (-> dieser Eintrag), dann zu Zindi wechseln.
 Daten bereits vom Nutzer heruntergeladen nach
 `C:\Users\HP\ML_Learning\climate-risk-health-prediction-challenge\`.
 
+**16. Aktualisierung:** Vollstaendiger Zindi-"Climate Risk and Health
+Prediction Challenge"-Durchlauf (`ML_Learning/climate-risk-health-
+prediction-challenge`, lokal committed, `ML_Learning` hat kein Remote,
+mehrere Commits im Verlauf).
+
+**Projekt-Bootstrap**: binaere Klassifikation (`is_climate_sensitive`),
+3146 Trainings-/1030 Testzeilen, duale Zielmetrik F1(60%)+AUC(40%) bei
+FESTER 0,5-Schwelle (Schwellenwert-Tuning per Wettbewerbsregel
+verboten) - `155_predict_submission.R` musste angepasst werden (zwei
+Spalten `TargetF1`/`TargetRAUC` gleichzeitig statt einer). Baseline
+(LDA/Ranger/LightGBM) lief sauber; nach Join von `climate_features.csv`
+(15 Zusatzmerkmale, ERA5/CHIRPS/MODIS/SRTM) scheiterte LDA HART
+(Kollinearitaet) - durch CatBoost ersetzt.
+
+**Verbesserungskette** (jeweils per 5-facher CV auf der echten
+Zielmetrik gemessen, dokumentiert in `climate-risk-health-prediction-
+challenge/README.md`):
+- Tuning (LightGBM/CatBoost, manuelle Zufallssuche direkt auf F1*0.6+
+  AUC*0.4): 0,79 -> 0,8133/0,8137.
+- Target-Leak-Audit: sauber, kein Verdacht (`age` staerkstes Feature,
+  25%, substanziell plausibel).
+- 2-Wege-Ensemble-Blend (CatBoost 0,6/LightGBM 0,4): 0,8125.
+- Klassengewichtung: klarer NEGATIVBEFUND (verschlechtert monoton bis
+  0,7532 bei power=2 - AUC bleibt stabil, F1 bei der fixen 0,5-Schwelle
+  bricht ein).
+- SVM (RBF-Kernel, One-Hot+Skalierung): getunt 0,7903 - klar hinter den
+  Baumverfahren, NICHT uebernommen.
+- **TabPFN blockierte auf 3 Ebenen** (nicht installiert, kein
+  Auth-Token, bekannter Windows-Login-Haenger, siehe
+  `project_r_windows_env`) UND haette ein 1000-Zeilen-Limit gehabt.
+  **TabICLv2** (soda-inria, `pip install tabicl`, In-Context-Learning,
+  laeuft lokal ohne Login) als Ersatz installiert: UNGETUNT bereits
+  Composite 0,8137 - exakt gleichauf mit getuntem CatBoost.
+- FT-Transformer/TabNSA (Paper-Check, `TabNSA_2503.09850v3.pdf`)
+  bewusst NICHT verfolgt - beide brauchen From-Scratch-Training,
+  typischerweise zehntausende+ Zeilen um Baumverfahren zu schlagen; bei
+  3146 Zeilen unguenstig, TabICL gibt den "Deep Learning bei kleinem
+  n"-Datenpunkt bereits ohne dieses Problem.
+- Meteostat (Nutzerfrage) gepruft, zurueckgestellt: fuer laendliche
+  Standorte in Uganda vermutlich keine/kaum nahe Bodenstationen, die
+  bereits genutzten Quellen (ERA5-Land/CHIRPS) sind fuer genau diese
+  Luecke ausgelegt.
+- **3-Wege-Ensemble** (CatBoost+LightGBM+TabICLv2): Cross-Language-
+  Fold-Synchronisation geloest (`141_prepare_shared_folds.R` exportiert
+  EINE gemeinsame Fold-Zuordnung per `ID`, von R und Python
+  wiederverwendet - R `rsmp("cv")` und sklearn `StratifiedKFold` haetten
+  sonst unterschiedliche Folds erzeugt). Bestes Gewicht (CatBoost
+  0,1/LightGBM 0,2/TabICL 0,7): Composite 0,8152 - Top-15-Gewichte
+  clustern konsistent, kein Zufallstreffer.
+
+**3 Zindi-Submissions eingereicht**:
+1. Getuntes CatBoost: Public Score 0,829207255.
+2. 2-Wege-Blend: **Public Score 0,831305778 - bisher beste Submission.**
+3. 3-Wege-Blend: Public Score 0,830631629 - leicht SCHLECHTER als
+   Submission 2 (-0,0007), obwohl die interne CV den 3-Wege-Blend vorne
+   sah (+0,0027). **Einordnung**: beide Differenzen sind klein
+   gegenueber der Public-LB-Stichprobe (~309 von 1030 Testzeilen, ~30%
+   Zindi-Konvention) - plausibel Stichproben-Rauschen (die 5-fache CV
+   nutzt alle 3146 Zeilen, ~10x mehr Power), kein Beleg gegen die
+   CV-Methodik. Mit nur 2 LB-Punkten kein statistisch abgesicherter
+   Gewinner zwischen Submission 2/3 - beide bleiben eingereicht, keine
+   weitere Aenderung vorgenommen. Alle 3 Scores in `experiments.db`
+   geloggt (`160_log_zindi_submission.R`, analog `db_log_kaggle_
+   submission` in anderen Projekten).
+
+**Zentrale `experiments.db` war veraltet** (Nutzerfrage) - fehlten:
+Zindi-Climate-Risk, Allstate, s6e9, Beijing-Air-Quality, Electricity-
+Load-Panel (5 Projekte). Ursache: `merge_project_experiments.R`
+existierte nur als projekteigene Kopien mit hart codierten
+`source_db_paths`-Listen, die garantiert veralteten - **kein
+kanonisches Exemplar im Template** (Nutzeranregung, sofort behoben).
+Neue Version in `MLR3_Classifikation/merge_project_experiments.R`
+(`df6410f`): automatische Verzeichnis-Discovery statt gepflegter Liste
+(strukturell gegen erneutes Veralten abgesichert). Beim ersten Lauf 2
+echte Bugs gefunden+behoben: (1) Schema-Drift zwischen Projekt-Kopien
+(aeltere Kopien fehlt `run_manifest_json`/`mconf_manifest_json`) -
+Spaltenliste jetzt Schnittmenge aus Ziel+Quelle statt nur Ziel-Spalten.
+(2) `PRAGMA`-Syntax fuer attached Datenbanken ist `PRAGMA schema.
+table_info(x)`, nicht `PRAGMA table_info(schema.x)`. Zentrale DB
+erfolgreich aktualisiert (alle 5 fehlenden Projekte gemergt, Backup vor
+jedem Lauf). Die 15 `openml-cc18-*`-Projekte brauchen keinen Merge -
+nutzen die eingefrorenen ADR-008-Protokollskripte mit eigenem
+CSV-Logging, keine eigene `experiments.db`.
+
 ## Stand jetzt
 
 `MLR3_Classifikation`: der vollstaendige Refaktorierungs-Sweep und die
-CC18-Benchmark-Erweiterung (13./14. Eintrag) bleiben abgeschlossen. CI
-gruen, `git status` sauber. `MLR3_Regression`: Kandidat 28 UND 30 haben
-jetzt je 2 unabhaengige, strukturell verschiedene Projekt-Zeugen
-(ADR-003 erfuellt), `BACKLOG.md`/`WORKFLOW_GUARDS.md` aktualisiert,
-gepusht (`4211b71`). `ML_Learning`: `openml-allstate-claims-severity`
-neu (sauberer Zwischenstand, README dokumentiert, lokal committed
-`14ce18c`), `PredictingElectricVehiclePurchases-s6e9` weiterhin
-abgeschlossen. Naechstes Thema identifiziert und vom Nutzer vorbereitet
-(Zindi Climate-Risk-Challenge, Daten bereits heruntergeladen), aber noch
-NICHT begonnen. Einzige nicht akut handlungsrelevante Sache bleibt:
-JOSS-Einreichung pausiert, Wiedervorlage ~November 2026.
+CC18-Benchmark-Erweiterung (13./14. Eintrag) bleiben abgeschlossen, plus
+das neue kanonische `merge_project_experiments.R` (`df6410f`). CI gruen,
+`git status` sauber. `MLR3_Regression`: Kandidat 28 UND 30 haben je 2
+unabhaengige Projekt-Zeugen (ADR-003 erfuellt), gepusht (`4211b71`).
+`ML_Learning`: `openml-allstate-claims-severity` (sauberer
+Zwischenstand), `climate-risk-health-prediction-challenge` (3
+Submissions, beste 0,831305778, alle Wege dokumentiert inkl.
+Negativbefunde), zentrale `experiments.db` aktuell. Einzige nicht akut
+handlungsrelevante Sache bleibt: JOSS-Einreichung pausiert,
+Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
-Mit der Zindi "Climate Risk and Health Prediction Challenge" beginnen
-(`C:\Users\HP\ML_Learning\climate-risk-health-prediction-challenge\` -
-Daten liegen bereits lokal): Projekt-Bootstrap analog zum
-`MLR3_Classifikation`-Template (binaere Klassifikation, duale
-F1/ROC-AUC-Metrik erfordert eine kleine Anpassung an
-`155_predict_submission.R`s Submission-Format - dort aktuell nur EINE
-Spalte Label ODER Wahrscheinlichkeit, hier werden BEIDE gleichzeitig
-gebraucht).
+**Fuer morgen vorgemerkt** (Nutzeranweisung "das machen wir dann
+morgen"), am Zindi-Projekt weiterarbeiten, drei konkrete Ideen um naeher
+an die ~0,85 heranzukommen, die andere Teilnehmer erreichen (aktuell
+bei 0,831): (1) **Location-Target-Encoding** - `location` (39 Doerfer)
+traegt vermutlich echtes Signal (lokale Gesundheitsversorgung, Sanitaer,
+Hoehenlage) ueber die Klimamerkmale hinaus, ein geglaettetes
+Zielwert-Encoding als Zusatzfeature koennte helfen. (2)
+**Klima-Anomalie-Features** - Abweichung vom saisonalen Normalwert am
+jeweiligen Ort statt absoluter Werte, um "ungewoehnliches Wetter"
+direkter zu erfassen. (3) **Breitere/tiefere Hyperparameter-Suche** fuer
+CatBoost/LightGBM (bisher nur 20-25 Evals, moderater Suchraum).
