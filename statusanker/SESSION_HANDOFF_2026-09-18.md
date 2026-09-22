@@ -469,6 +469,53 @@ alle 5 Skripte einzeln gegen echte `health_condition`-Daten ausgefuehrt
 AUC-Werten erzeugt, PNG-Dateien gespeichert). Committed `561f58a`,
 gepusht, **CI-Lauf `35565952794` verifiziert: completed/success, 1m51s**.
 
+**13. Aktualisierung:** Nutzeranfrage "was koennen wir noch machen" ->
+Bestandsaufnahme beider Backlogs (alle Kandidaten "erledigt"/"geprueft,
+negativ") + `JOSS_TECHNIQUE_WATCH.md`-Durchsicht -> 3 Optionen
+vorgeschlagen (externen Benchmark erweitern / 2. Projekt-Zeuge fuer
+Regression-Kandidat 28/30 / komplett neues Projekt). Nutzerentscheidung
+"Option 1, mach das" - externen CC18-Benchmark von n=6 auf n=15
+erweitern.
+
+**Vorab-Diagnose**: die 9 "Weg B"-Datensaetze (eingefroren 2026-08-31/
+09-01) hatten bereits Task-Vorbereitung + Decision-Stability-/Level-2-
+Laeufe (Protokoll v3), aber **kein** Protokoll-v2-Ergebnis (faire
+getunte Baselines) - genau das, was `benchmark_statistics_report()`
+(Kandidat 6, Autorank) braucht. `docs/research/EXTERNAL_BENCHMARK_SET.md`
+hatte dafuer sogar noch einen veralteten "noch NICHT ausgefuehrt"-Vermerk
+stehen (Status nach der Task-Vorbereitung nie aktualisiert) - dabei
+korrigiert.
+
+**Ausfuehrung**: `outer_workflow_evaluation_v2_fair_baselines.R` (bereits
+in jedem `ML_Learning/openml-cc18-*`-Projektordner als Kopie vorhanden)
+fuer alle 9 fehlenden Datensaetze sequenziell im Hintergrund laufen
+lassen (Laufzeitschaetzung vorab kommuniziert: 30-90 Min., basierend auf
+den bestehenden 6). Waehrend `mfeat-karhunen`s Fold 3 ging der Rechner in
+Standby - der Nutzer erkannte das sofort richtig an der Symptomatik
+(niedrige CPU-Zeit ueber lange Wanduhrzeit), per `Get-Process`-CPU-Zeit-
+Vergleich vor/nach bestaetigt: kein Haenger, der Prozess rechnete nach
+dem Aufwachen normal weiter. Alle 9 Laeufe nach insgesamt ~9,5h
+Wanduhrzeit (davon der groesste Teil Standby, reine Rechenzeit ~70 Min.)
+fehlerfrei durchgelaufen, alle 9 `outer_workflow_evaluation_v2_summary.csv`
+verifiziert (korrekte Zeilenzahl, keine Fehler im Log).
+
+**Ergebnis**: neues, eigenstaendiges `163_benchmark_statistics_
+report_n15.R` (162 bleibt als abgeschlossene n=6-Analyse unveraendert).
+**Bei n=15 wird der Friedman-Test signifikant** (chi2=14.017, p=**0.0155**
+statt p=0.477 bei n=6), 1 Nemenyi-Paar signifikant (`ranger_default` vs.
+`tuned_lightgbm`, Rangdifferenz 2 > kritische Differenz 1.947).
+Bemerkenswert: `workflow_ranger` faellt von Rang 1 (2.17/6 bei n=6) auf
+Rang 3 (3.07/6 bei n=15) - `tuned_lightgbm`/`best_single_tuned_model`
+liegen jetzt davor. **Bestaetigt exakt die eigene Vorhersage aus
+`JOSS_TECHNIQUE_WATCH.md`** ("erst bei mehr Datensaetzen
+aussagekraeftig") - kein Widerspruch zu den bisherigen Einzelbefunden
+(`workflow_ranger` gewinnt/haelt weiterhin klar bei den kleineren/
+unausgeglicheneren Datensaetzen wie `ilpd`/`sick`/`blood-transfusion`,
+das globale Rang-Ergebnis mittelt nur ueber alle 15). `BACKLOG.md`
+Kandidat 6 und `JOSS_TECHNIQUE_WATCH.md` Kandidat 3 (inkl. Prioritaets-
+tabelle) entsprechend aktualisiert. Volle testthat-Suite gruen. Committed
+`9121338`, gepusht, CI gruen (`35689686621`, 2m6s).
+
 ## Stand jetzt
 
 `MLR3_Classifikation`: der vollstaendige Refaktorierungs-Sweep (Nutzer-
@@ -479,15 +526,25 @@ echter `id`-Spalten-Bug in 3 Skripten (behoben, neues `modules/
 task_data_coercion.R`), Duplikation von `base_learner_constructors`/
 `feature_family_functions()` in 13 Dateien (dedupliziert), ein totes
 `library(tidyverse)` in 2 Dateien (entfernt), eine Kurvenaufbau-
-Duplikation in 2 Plot-Skripten (dedupliziert). Alle Aenderungen einzeln
-gegen echte Projektdaten verifiziert, keine Regressionen. CI gruen
-(`35565952794`, 1m51s), `git status` sauber. `MLR3_Regression`/
-`ML_Learning`: unveraendert seit dem 10. Eintrag. Einzige nicht akut
-handlungsrelevante Sache bleibt: JOSS-Einreichung pausiert,
-Wiedervorlage ~November 2026.
+Duplikation in 2 Plot-Skripten (dedupliziert). Danach: der externe
+CC18-Benchmark ist von n=6 auf n=15 gewachsen, mit einem echten neuen
+Forschungsergebnis (Friedman-Test bei n=15 signifikant, `workflow_
+ranger`s scheinbarer Vorsprung haelt der groesseren Stichprobe global
+NICHT stand, bleibt aber bei kleinen/unausgeglichenen Datensaetzen
+bestehen) - `JOSS_TECHNIQUE_WATCH.md` Kandidat 3 damit vollstaendig
+abgeschlossen. Alle Aenderungen einzeln gegen echte Projektdaten
+verifiziert, keine Regressionen. CI gruen (`35689686621`, 2m6s),
+`git status` sauber. `MLR3_Regression`/`ML_Learning`: unveraendert seit
+dem 10. Eintrag (bis auf die 9 neuen `openml-cc18-*`-Protokoll-v2-Laeufe
+in `ML_Learning`, lokal, kein separater Commit noetig - Artefakte, keine
+Skript-Aenderung). Einzige nicht akut handlungsrelevante Sache bleibt:
+JOSS-Einreichung pausiert, Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
-Kein akuter Punkt offen. Naechste sinnvolle Optionen: Nutzer nach einem
-neuen Thema/Projekt fragen, oder bis zur JOSS-Wiedervorlage (~November
-2026) abwarten.
+Kein akuter Punkt offen. Zwei der drei in der 13. Aktualisierung
+vorgeschlagenen Optionen bleiben fuer eine kuenftige Session: 2. Projekt-
+Zeuge fuer `MLR3_Regression`-Kandidat 28 (Quantilregression) oder 30
+(robuste Loss-Funktionen), oder ein komplett neues Projekt (z.B. aktuelle
+Kaggle-Playground-Series-Season pruefen). Sonst: Nutzer nach einem neuen
+Thema fragen, oder bis zur JOSS-Wiedervorlage (~November 2026) abwarten.
