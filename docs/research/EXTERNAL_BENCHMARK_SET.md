@@ -166,16 +166,17 @@ multiclass, weiterhin nah an 50/50.
 | 40966 | `MiceProtein` | 1080 | 81 | 8 | multiclass |
 | 18 | `mfeat-morphological` | 2000 | 6 | 10 | multiclass |
 
-**Status: EINGEFROREN, noch NICHT ausgefuehrt.**
+**Status: AUSGEFUEHRT (Stand 2026-09-22).** Task-Vorbereitung +
+`BENCHMARK_PROTOCOL.md` v3 (Level-2-Prototyp) + Decision-Stability ueber
+alle 3 Outer-Folds erledigt (siehe `analysis/decision_stability_
+level2_analysis_n15.R`). Protokoll v2 (faire getunte Baselines) wurde
+fuer diese 5 UND die vorherige Tranche (4 Datensaetze) erst nachtraeglich
+nachgeholt (2026-09-22, `163_benchmark_statistics_report_n15.R`, siehe
+`BACKLOG.md` Kandidat 6 "Erweiterung n=6 -> n=15") - dieser Absatz war
+bis dahin veraltet (Status hier nie nach der Ausfuehrung aktualisiert).
 
 Vollstaendige Metadaten aller 72 CC18-Datensaetze (fuer Nachvollziehbarkeit
 der Poolgroesse):
 [`_artifacts/cc18_full_metadata.csv`](_artifacts/cc18_full_metadata.csv)
 (nicht versioniert, lokal reproduzierbar). Die 4 gezogenen Datensaetze
 selbst: [`_artifacts/weg_b_extension_selection.csv`](_artifacts/weg_b_extension_selection.csv).
-
-**Status: EINGEFROREN, noch NICHT ausgefuehrt.** Naechster Schritt:
-Task-Vorbereitung analog zu den bestehenden 6 (`ML_Learning/openml-cc18-*`),
-dann `BENCHMARK_PROTOCOL.md` v3 (Level-2-Prototyp) + Decision-Stability
-ueber alle 3 Outer-Folds - derselbe Ablauf wie bei den ersten 6, NICHT
-vorher an Performance-Zahlen angepasst.

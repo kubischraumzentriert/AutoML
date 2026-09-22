@@ -952,6 +952,42 @@ korrigiert (Kandidaten #1 VeridicalFlow/Decision-Stability und #2
 astartes/Hard-Split-Stresstest standen dort noch als "Prototype: nein",
 obwohl laengst gebaut und ins Template zurueckgefuehrt).
 
+**Erweiterung n=6 -> n=15 (2026-09-22)**: Nutzeranfrage "was koennen wir
+noch machen" -> Option "externen Benchmark erweitern" gewaehlt. Die 9
+"Weg B"-Datensaetze (`docs/research/EXTERNAL_BENCHMARK_SET.md`,
+eingefroren 2026-08-31/09-01) hatten bereits Task-Vorbereitung +
+Decision-Stability-/Level-2-Laeufe (Protokoll v3), aber noch KEIN
+Protokoll-v2-Ergebnis (faire getunte Baselines) - genau die Voraussetzung
+fuer `benchmark_statistics_report()`. Nachgeholt: `outer_workflow_
+evaluation_v2_fair_baselines.R` fuer alle 9 in den jeweiligen
+`ML_Learning`-Projektordnern ausgefuehrt (~70 Minuten Gesamtlaufzeit,
+sequenziell; eine Unterbrechung durch Rechner-Standby waehrend
+`mfeat-karhunen`s Fold 3 verzoegerte nur die Wanduhrzeit, keine
+Beeintraechtigung der Ergebnisse - per `Get-Process`-CPU-Zeit-Vergleich
+vor/nach verifiziert, dass der Prozess nach dem Aufwachen normal
+weiterrechnete). Neues, eigenstaendiges
+[`163_benchmark_statistics_report_n15.R`](../163_benchmark_statistics_report_n15.R)
+(162 bleibt als abgeschlossene n=6-Analyse unveraendert, analog zur
+Nicht-in-place-Konvention bei `BENCHMARK_PROTOCOL.md`).
+
+**Ergebnis: bei n=15 wird der Friedman-Test signifikant** (chi2=14.017,
+df=5, **p=0.0155**, ggue. p=0.477 bei n=6) - **1 signifikantes Paar**
+haelt der Nemenyi-Schwelle stand (kritische Differenz 1.947):
+`ranger_default` vs. `tuned_lightgbm` (Rangdifferenz 2). Bemerkenswert:
+`workflow_ranger` faellt von Rang 1 (2.17/6 bei n=6) auf Rang 3 (3.07/6
+bei n=15) - `tuned_lightgbm` (Rang 2.67) und `best_single_tuned_model`
+(Rang 2.87) liegen jetzt davor. Bestaetigt **exakt** die eigene
+Vorhersage aus `JOSS_TECHNIQUE_WATCH.md` ("erst bei mehr Datensaetzen
+aussagekraeftig") - bei n=6 war weder das Nullergebnis noch
+`workflow_ranger`s scheinbarer Vorsprung statistisch abgesichert, beides
+war ehrlich als vorlaeufig gekennzeichnet. **Einordnung**: kein
+Widerspruch zu bisherigen Einzelbefunden (P1-Status: `workflow_ranger`
+gewinnt/haelt bei den KLEINEREN/unausgeglicheneren Datensaetzen wie
+`ilpd`/`sick`/`blood-transfusion` weiterhin klar - das globale
+Rang-Ergebnis mittelt ueber alle 15, verdeckt aber nicht die
+datensatzspezifische Staerke). `JOSS_TECHNIQUE_WATCH.md` Kandidat 3
+entsprechend aktualisiert.
+
 ## P1.2 Schritt 2 - Status (2026-08-27): historisches Nachtragen
 
 **Nutzeranfrage**: "wir sollten die Historie nachtragen d.h. migrieren"

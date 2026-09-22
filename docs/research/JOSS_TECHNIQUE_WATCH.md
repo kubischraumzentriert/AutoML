@@ -164,6 +164,17 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
   eigene Vorhersage dieses Eintrags** ("erst bei mehr Datensaetzen
   aussagekraeftig"), ein ehrliches, informatives Nullergebnis statt
   einer unbelegten Behauptung.
+- **Erweiterung n=6 -> n=15 (2026-09-22, `163_benchmark_statistics_
+  report_n15.R`)**: die 9 "Weg B"-Datensaetze bekamen nachtraeglich ein
+  Protokoll-v2-Ergebnis (bisher nur Decision-Stability/Level-2). **Bei
+  n=15 wird der Friedman-Test signifikant** (chi2=14.017, p=**0.0155**,
+  vs. p=0.477 bei n=6), 1 Paar haelt der Nemenyi-Schwelle stand
+  (`ranger_default` vs. `tuned_lightgbm`). `workflow_ranger` faellt von
+  Rang 1 (n=6) auf Rang 3 (n=15) - `tuned_lightgbm`/`best_single_
+  tuned_model` liegen jetzt davor. **Dieser Eintrag ist damit vollstaendig
+  bestaetigt**: die Aussage war buchstaeblich nur bei n=6 (noch) nicht
+  aussagekraeftig, bei n=15 zeigt sich ein echtes, statistisch
+  abgesichertes globales Muster. Details: `BACKLOG.md` Kandidat 6.
 
 ## 4. PyExperimenter (geplante Experimente/Skalierung)
 
@@ -413,7 +424,7 @@ begutachteten R-Paket.
 |---|---|---|
 | VeridicalFlow / Decision-Stability | staerkt Trust-Story direkt | **hoch** |
 | astartes / schwierige Splits | neuer Generalisierungs-Stresstest | **hoch** |
-| Autorank / Benchmark-Statistik | staerkt Research-Evaluation, TEILWEISE bereits umgesetzt | **hoch, sobald n groesser** |
+| Autorank / Benchmark-Statistik | staerkt Research-Evaluation | **erledigt (n=15, Friedman p=0.0155 signifikant)** |
 | PyExperimenter / geplante Studien | skaliert Benchmark-Ausfuehrung | mittel |
 | ReciPies / Transformation-Provenienz | Reproduzierbarkeit, evtl. schon abgedeckt | mittel |
 | mlr3 (laufender Check) | Eigenentwicklungen vermeiden | mittel |
