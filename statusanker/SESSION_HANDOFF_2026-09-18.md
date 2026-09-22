@@ -516,6 +516,52 @@ Kandidat 6 und `JOSS_TECHNIQUE_WATCH.md` Kandidat 3 (inkl. Prioritaets-
 tabelle) entsprechend aktualisiert. Volle testthat-Suite gruen. Committed
 `9121338`, gepusht, CI gruen (`35689686621`, 2m6s).
 
+**14. Aktualisierung:** Nutzeranfrage "wie geht es weiter, haben wir was
+im Backlog" -> die in der 13. Aktualisierung offen gelassene Option
+"komplett neues Projekt" aufgegriffen: Nutzerentscheidung "Option 2, pruef
+welche Kaggle-Season gerade laeuft".
+
+**Live-Recherche** (WebSearch + Browser, `kaggle.com/competitions?
+hostSegmentIdFilter=8`): aktuell laeuft `playground-series-s6e9`
+("Predicting Electric Vehicle Purchases"), gestartet 01.09., noch 8 Tage
+bis Ablauf. **Aber**: kein frisches Terrain - lokal existiert bereits
+ein umfangreiches Projekt dazu (`ML_Learning/
+PredictingElectricVehiclePurchases-s6e9`), Skripte bis `167`, 3 echte
+Kaggle-Submissions, letzte Aktivitaet 2026-09-06 (aus einer fruaheren,
+nicht in diesem Kontext sichtbaren Session).
+
+**Statusklaerung** (Nutzerauftrag "schau nach, wo das s6e9-Projekt
+stehen geblieben ist"): per direkter Abfrage der projekteigenen
+`experiments.db` (`run`/`submission_result`-Tabellen) rekonstruiert -
+NICHT haengen geblieben, sondern sauber bis zu 3 Submissions
+durchgelaufen:
+
+| # | Modell | LB-AUC |
+|---|---|---|
+| 1 (02.09.) | LightGBM, getunt, volle Daten | **0.94142** (beste) |
+| 2 (04.09.) | Ranger, getunt (Hedge) | 0.93829 |
+| 3 (06.09.) | Ranger, Full-Data-Rerun (Subset-Tuning-Bug gefixt) | 0.93854 |
+
+**Nutzerauftrag "b) probieren"** (CatBoost als naechste Idee) -> beim
+Nachschauen festgestellt: **bereits getestet** (`catboost_results.csv`,
+02.09.: AUC 0.9406 vs. LightGBMs 0.9413 im selben Lauf, 11x langsamer).
+Daraufhin systematisch weiter zurueckverfolgt, was sonst noch offen war -
+Ergebnis: eine ungewoehnlich vollstaendige Kette an bereits getesteten,
+negativen/neutralen Befunden (Ensembling/Blending, negative Stacking-
+Gewichte, Low-Signal-Feature-Removal, Split-Reshuffling-Tuning
+[Nagler/Schneider/Bischl/Feurer NeurIPS 2024], XGBoost, Feature
+Engineering [explizit verworfen, `feature_families <- character(0)`],
+Covariate-Shift-Check [Adversarial-AUC=0.500, kein Shift]) - jede
+naheliegende Idee war schon ausprobiert, keine schlug die erste
+LightGBM-Submission.
+
+**Nutzerentscheidung "Ja, README schreiben und abschliessen"**: neue
+`ML_Learning/PredictingElectricVehiclePurchases-s6e9/README.md` (Aufgabe,
+Submissions-Tabelle, vollstaendige Negativbefund-Kette, Einordnung als
+wiederkehrendes "bestes Einzelmodell schlaegt Ensemble"-Muster, Abschluss
+ohne weiteren Kaggle-Versuch). Lokal committed (`486e2f5`, `ML_Learning`
+hat kein Remote).
+
 ## Stand jetzt
 
 `MLR3_Classifikation`: der vollstaendige Refaktorierungs-Sweep (Nutzer-
@@ -534,17 +580,20 @@ NICHT stand, bleibt aber bei kleinen/unausgeglichenen Datensaetzen
 bestehen) - `JOSS_TECHNIQUE_WATCH.md` Kandidat 3 damit vollstaendig
 abgeschlossen. Alle Aenderungen einzeln gegen echte Projektdaten
 verifiziert, keine Regressionen. CI gruen (`35689686621`, 2m6s),
-`git status` sauber. `MLR3_Regression`/`ML_Learning`: unveraendert seit
-dem 10. Eintrag (bis auf die 9 neuen `openml-cc18-*`-Protokoll-v2-Laeufe
-in `ML_Learning`, lokal, kein separater Commit noetig - Artefakte, keine
-Skript-Aenderung). Einzige nicht akut handlungsrelevante Sache bleibt:
-JOSS-Einreichung pausiert, Wiedervorlage ~November 2026.
+`git status` sauber. `MLR3_Regression`: unveraendert seit dem 10.
+Eintrag. `ML_Learning`: 9 neue `openml-cc18-*`-Protokoll-v2-Laeufe
+(Artefakte, kein separater Commit) + `PredictingElectricVehiclePurchases-
+s6e9` sauber mit README abgeschlossen (`486e2f5`, lokal, kein Remote).
+Einzige nicht akut handlungsrelevante Sache bleibt: JOSS-Einreichung
+pausiert, Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
-Kein akuter Punkt offen. Zwei der drei in der 13. Aktualisierung
-vorgeschlagenen Optionen bleiben fuer eine kuenftige Session: 2. Projekt-
+Kein akuter Punkt offen. Eine der in der 13. Aktualisierung
+vorgeschlagenen Optionen bleibt fuer eine kuenftige Session: 2. Projekt-
 Zeuge fuer `MLR3_Regression`-Kandidat 28 (Quantilregression) oder 30
-(robuste Loss-Funktionen), oder ein komplett neues Projekt (z.B. aktuelle
-Kaggle-Playground-Series-Season pruefen). Sonst: Nutzer nach einem neuen
-Thema fragen, oder bis zur JOSS-Wiedervorlage (~November 2026) abwarten.
+(robuste Loss-Funktionen). Alternativ: naechste Kaggle-Season abwarten
+(`s6e10`, vermutlich Start ~01.10., monatlicher Rhythmus) fuer wirklich
+frisches Terrain - `s6e9` ist wie oben beschrieben bereits vollstaendig
+ausgeschoepft. Sonst: Nutzer nach einem neuen Thema fragen, oder bis zur
+JOSS-Wiedervorlage (~November 2026) abwarten.
