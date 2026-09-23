@@ -714,30 +714,70 @@ jedem Lauf). Die 15 `openml-cc18-*`-Projekte brauchen keinen Merge -
 nutzen die eingefrorenen ADR-008-Protokollskripte mit eigenem
 CSV-Logging, keine eigene `experiments.db`.
 
+**17. Aktualisierung (2026-09-23):** Fortsetzung der Zindi-Arbeit wie am
+Vortag vorgemerkt (Nutzeranweisung "wie machen wir weiter" -> die 3
+Ideen aus der 16. Aktualisierung umgesetzt), plus ein externer
+Parallel-Session-Pull.
+
+**Externer Pull**: `MLR3_Classifikation` lag 1 Commit hinter
+`origin/main` (Nutzerhinweis "ein Pull ist notwendig") - `881edc1`,
+andere parallele Session (gleicher Autor): reine Umbenennung
+`modules/weather_enrichment_trust_gate.R` ->
+`modules/enrichment_trust_gate.R` (Mechanismus ist domaenenneutral,
+haengt an keiner Stelle tatsaechlich an "Wetter"), Tests gruen. Sauberer
+Fast-Forward-Pull, keine Konflikte.
+
+**Breitere Hyperparameter-Suche** (`101_tuning_wide.R`, Nutzeranfrage):
+60 statt 25 Evaluationen, Suchphase per 3-facher CV statt Einzel-Holdout,
+breiterer Suchraum (LightGBM: `num_leaves` bis 400, `lambda_l1`/
+`lambda_l2`/`max_depth` neu; CatBoost: `bagging_temperature`/
+`random_strength` neu). Auf denselben Folds: LightGBM 0,8064 -> **0,8186**
+(+0,0122, jetzt bestes Einzelmodell im Projekt), CatBoost 0,8080 ->
+**0,8130**. Neue Hyperparameter in `base_learner_constructors` hinterlegt.
+
+**Feature-Engineering-Test** (`110_feature_engineering_test.R`): zwei
+Ideen leakage-sicher geprueft (Location-Target-Encoding per
+verschachtelter 5-facher CV INNERHALB jedes aeusseren CV-Trainingsanteils).
+**Location-Target-Encoding hilft leicht** (+0,0011, `location` traegt
+offenbar echtes, von Klimamerkmalen unabhaengiges Signal) -
+uebernommen: auf dem vollen Training berechnet, per gespeicherter Map
+auf `test.csv` angewendet (legitim, da nur Test-IDs verwendet werden,
+nie deren wahrer Zielwert). **Klima-Anomalie-Features schaden**
+(-0,0027, vermutlich redundant mit dem, was Baeume ueber
+location+Rohwert ohnehin implizit lernen) - verworfen.
+
+**3-Wege-Blend-Gewichte neu bestimmt** (142/143 erneut mit den staerkeren
+Modellen): CatBoost wurde durch die breitere Suche so viel staerker,
+dass es die Gewichtung jetzt dominiert - **CatBoost 0,8/LightGBM 0,0/
+TabICL 0,2 -> Composite 0,8175** (ggue. 0,8166 CatBoost allein, 0,8129
+TabICL allein). Die alten Gewichte (TabICL dominant mit 0,7) waren nur
+solange optimal, wie CatBoost/LightGBM schwaecher getunt waren - Lehre:
+Blend-Gewichte muessen nach jeder substanziellen Modell-Verbesserung neu
+gesucht werden. Neue `submission.csv` erzeugt (29 Features inkl.
+Location-Encoding) und verifiziert, **noch nicht bei Zindi eingereicht**
+(Stand Ende dieser Aktualisierung). Alle Schritte committed (`274b57d`,
+`ML_Learning`, kein Remote).
+
 ## Stand jetzt
 
 `MLR3_Classifikation`: der vollstaendige Refaktorierungs-Sweep und die
 CC18-Benchmark-Erweiterung (13./14. Eintrag) bleiben abgeschlossen, plus
-das neue kanonische `merge_project_experiments.R` (`df6410f`). CI gruen,
-`git status` sauber. `MLR3_Regression`: Kandidat 28 UND 30 haben je 2
+das kanonische `merge_project_experiments.R` (`df6410f`) und der externe
+Enrichment-Trust-Gate-Umbenennung-Pull (`881edc1`). CI gruen, `git
+status` sauber. `MLR3_Regression`: Kandidat 28 UND 30 haben je 2
 unabhaengige Projekt-Zeugen (ADR-003 erfuellt), gepusht (`4211b71`).
 `ML_Learning`: `openml-allstate-claims-severity` (sauberer
 Zwischenstand), `climate-risk-health-prediction-challenge` (3
-Submissions, beste 0,831305778, alle Wege dokumentiert inkl.
-Negativbefunde), zentrale `experiments.db` aktuell. Einzige nicht akut
-handlungsrelevante Sache bleibt: JOSS-Einreichung pausiert,
-Wiedervorlage ~November 2026.
+eingereichte Submissions, beste bisher eingereichte 0,831305778; interne
+CV-Schaetzung nach der heutigen Verbesserungsrunde bei 0,8175, diese
+Version noch NICHT eingereicht), zentrale `experiments.db` aktuell.
+Einzige nicht akut handlungsrelevante Sache bleibt: JOSS-Einreichung
+pausiert, Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
-**Fuer morgen vorgemerkt** (Nutzeranweisung "das machen wir dann
-morgen"), am Zindi-Projekt weiterarbeiten, drei konkrete Ideen um naeher
-an die ~0,85 heranzukommen, die andere Teilnehmer erreichen (aktuell
-bei 0,831): (1) **Location-Target-Encoding** - `location` (39 Doerfer)
-traegt vermutlich echtes Signal (lokale Gesundheitsversorgung, Sanitaer,
-Hoehenlage) ueber die Klimamerkmale hinaus, ein geglaettetes
-Zielwert-Encoding als Zusatzfeature koennte helfen. (2)
-**Klima-Anomalie-Features** - Abweichung vom saisonalen Normalwert am
-jeweiligen Ort statt absoluter Werte, um "ungewoehnliches Wetter"
-direkter zu erfassen. (3) **Breitere/tiefere Hyperparameter-Suche** fuer
-CatBoost/LightGBM (bisher nur 20-25 Evals, moderater Suchraum).
+Die neueste Zindi-Submission (breite Hyperparameter-Suche + Location-
+Target-Encoding + neu bestimmte 3-Wege-Blend-Gewichte, interne
+CV-Schaetzung 0,8175) ist erzeugt und verifiziert, aber noch nicht
+eingereicht - Nutzerentscheidung abwarten, ob/wann eingereicht wird.
+Sonst kein akuter Punkt offen.
