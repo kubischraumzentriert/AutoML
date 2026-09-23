@@ -4632,10 +4632,14 @@ erweitert. Trust-Gate zweimal verschaerft (v1: Seed-Stabilitaet, v2:
 Split-Ratio x Seed) - mit jeder Verschaerfung schrumpft die Zahl belastbarer
 positiver Faelle (2/5 -> 1/5), NIE steigt die Zahl negativer Faelle (bleibt
 bei 0/5). Mindestanzahl unabhaengiger Projekte fuer Scheibe 5 erreicht, aber
-kein Backport wegen fehlender Konsistenz. Trust-Gate
-(`modules/weather_enrichment_trust_gate.R`) verpflichtend in alle vier
-`compare_pilot.R`-Skripte (separates lokales `ML_Learning`-Repo) verdrahtet,
-mit Testabdeckung in beiden Repos synchron gehalten.**
+kein Backport wegen fehlender Konsistenz. Trust-Gate verpflichtend in alle
+vier `compare_pilot.R`-Skripte (separates lokales `ML_Learning`-Repo)
+verdrahtet, mit Testabdeckung. 2026-09-23 im Template domaenenneutral
+umbenannt: `modules/weather_enrichment_trust_gate.R` ->
+`modules/enrichment_trust_gate.R` (Funktionen entsprechend), weil der
+Mechanismus an keiner Stelle wetterspezifisch ist - die Kopie im separaten
+`ML_Learning`-Repo behaelt bewusst den alten, dort weiterhin zutreffenden
+Namen.**
 DWD Climate Data Center wird als bevorzugte reale Wetterquelle vorgemerkt;
 `rdwd` dient als optionaler R-Zugriff. `modules/dwd_weather_adapter.R`
 implementiert Quellenkatalog, Stationsauswahl per Distanz und einen
@@ -4675,8 +4679,8 @@ Standard-Sampling-Seed nur noch EIN Fall (Brandenburg/Potsdam, 96 %
 positiv) robust; Verkehrsunfaelle NRW faellt von "robust positiv" auf
 "inconclusive" (86 %, kippt an einem Split-Punkt). Kein Fall wurde in
 irgendeiner der drei Pruefrunden robust negativ.
-`weather_enrichment_seed_stability_gate()` nimmt seitdem `split_ratios`
-statt eines einzelnen `split_date` entgegen. Siehe
+`weather_enrichment_seed_stability_gate()` (heute: `enrichment_seed_stability_gate()`)
+nimmt seitdem `split_ratios` statt eines einzelnen `split_date` entgegen. Siehe
 [`docs/research/DWD_WEATHER_INTEGRATION.md`](docs/research/DWD_WEATHER_INTEGRATION.md)
 fuer die vollstaendige Tabelle und Einordnung.
 

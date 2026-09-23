@@ -70,7 +70,7 @@ jeweiligen Kopfkommentar für Scope-Einschränkungen.
 |---|---|---|
 | `agridatasets_adapter.R` | Adapter für das optionale `agridatasets`-Paket (erzwingt explizite Join-Schlüssel) | `analysis/agridatasets_pilot.R` |
 | `dwd_weather_adapter.R` | Adapter für lokal eingefrorene DWD-Wetterdaten (rückblickender as-of-Join) | projektspezifisch (`ML_Learning`) |
-| `weather_enrichment_trust_gate.R` | Zweidimensionales Stabilitäts-Gate (Seed x Split-Ratio) vor jeder "Wetter hilft/schadet"-Aussage | projektspezifisch (`ML_Learning`) |
+| `enrichment_trust_gate.R` | Zweidimensionales Stabilitäts-Gate (Seed x Split-Ratio) vor jeder "Anreicherung hilft/schadet"-Aussage; domänenneutral, aktuell nur von den DWD-Piloten genutzt | wiederverwendbar (bisher genutzt: `ML_Learning`) |
 
 ## Siehe auch
 

@@ -1,46 +1,69 @@
 # =============================================================================
-# weather_enrichment_trust_gate.R -- Trust-Gate fuer Baseline-vs.-DWD-Wetter-
+# enrichment_trust_gate.R -- Trust-Gate fuer Baseline-vs.-Enrichment-
 # Vergleiche: verlangt eine zweidimensionale Stabilitaetspruefung (Modell-
-# Seed UND Split-Ratio), bevor ein Vergleich als "Wetter hilft"/"Wetter
-# schadet" berichtet werden darf.
+# Seed UND Split-Ratio), bevor ein Vergleich als "Anreicherung hilft"/
+# "Anreicherung schadet" berichtet werden darf.
 # =============================================================================
-# Anlass v1 (siehe docs/research/DWD_WEATHER_INTEGRATION.md, Abschnitt
-# "Ursachenanalyse: Seed-Stabilitaet statt Domaenenerklaerung"): die erste
-# Runde der DWD-Piloten (5 Faelle, in einem separaten lokalen ML_Learning-
-# Repo, nicht Teil dieses Template-Repos) verglich Baseline vs. Wetter mit
-# je EINEM Ranger-Modell-Seed bei FIXEM Datensplit. Ergebnis auf den ersten
-# Blick: 2 von 5 Faellen positiv, 3 negativ. Eine Pruefung ueber 25 Seeds
-# bei fixem Split zeigte: 3 der "negativen" Faelle waren bei 40-52%
-# positiver Seeds schlicht Modellrauschen, keine echte Verschlechterung.
-# Nur 2 Faelle blieben mit >=96% positiver Seeds robust (v1-Gate,
-# split_date-basiert).
+# Herkunft: urspruenglich als weather_enrichment_trust_gate.R fuer die
+# DWD-Wetterpiloten gebaut (siehe docs/research/DWD_WEATHER_INTEGRATION.md,
+# Abschnitt "Ursachenanalyse: Seed-Stabilitaet statt Domaenenerklaerung").
+# 2026-09-23 domaenenneutral umbenannt (Modul, Funktionen, Parameter) -
+# der Mechanismus (fixe Trainingsdaten, zwei Rauschkanaele geprueft: Modell-
+# Seed und Split-Ratio) haengt an keiner Stelle an "Wetter"; jede Baseline-
+# vs.-Enrichment-Frage mit chronologischen Daten kann dieses Gate nutzen.
+# Die DWD-Piloten selbst (und ihre eigene Kopie dieses Moduls unter dem
+# alten Namen) leben in einem separaten lokalen ML_Learning-Repo, nicht in
+# diesem Template - siehe Hinweis am Anfang von DWD_WEATHER_INTEGRATION.md.
+#
+# Verwandtschaft zu bestehenden Modulen (kein Duplikat, zwei kombinierte
+# Rauschkanaele auf einem DELTA statt auf einem Einzeltask):
+# - seed_stability.R (092): prueft Modell-Seed-Rauschen bei fixem Split -
+#   aber fuer EINEN Task, nicht fuer ein Baseline-vs-Enrichment-Delta.
+# - split_size_sensitivity.R (022): prueft Split-Ratio-Sensitivitaet -
+#   aber per ZUFAELLIGEM Resampling (rsmp("subsampling")) und ebenfalls nur
+#   fuer EINEN Task.
+# Dieses Gate kombiniert beide Rauschkanaele (Seed + Split-Ratio) und wendet
+# sie auf das DELTA zwischen zwei Varianten an, mit einem echten
+# Entscheidungs-/Abbruch-Mechanismus (assert_enrichment_finding() stoppt
+# bei nicht gedecktem Befund) statt reiner Diagnose. Der Split ist bewusst
+# CHRONOLOGISCH (letzte N% der Zeilen) statt zufaellig - passend fuer
+# Zeitreihen-/Panel-Daten (DWD-Monatsdaten), waehrend die beiden anderen
+# Module zufaelliges Resampling fuer i.i.d.-artige Wettbewerbsdaten
+# annehmen (dort waere ein chronologischer Split falsch, hier waere
+# zufaelliges Resampling ein Lookahead-Risiko).
+#
+# Anlass v1: die erste Runde der DWD-Piloten (5 Faelle) verglich Baseline
+# vs. Wetter mit je EINEM Ranger-Modell-Seed bei FIXEM Datensplit. Ergebnis
+# auf den ersten Blick: 2 von 5 Faellen positiv, 3 negativ. Eine Pruefung
+# ueber 25 Seeds bei fixem Split zeigte: 3 der "negativen" Faelle waren bei
+# 40-52% positiver Seeds schlicht Modellrauschen, keine echte
+# Verschlechterung. Nur 2 Faelle blieben mit >=96% positiver Seeds robust
+# (v1-Gate, split_date-basiert).
 #
 # Anlass v2 (2026-09-18): der v1-Befund war SELBST nicht robust gegen die
 # Wahl des einen fixen Split-Zeitpunkts. Eine Pruefung ueber 5 Split-Ratios
 # (15/20/25/30/35% Testanteil, chronologisch) x 10 Seeds = 50 Kombinationen
 # je Fall aenderte das Bild erneut: mit dem Standard-Sampling-Seed dieses
-# Gates bleibt nur noch EIN Fall (Camping Brandenburg/Potsdam, 96% positiv)
-# robust - die anderen vier (u.a. der vorher "robust positive" Verkehrsunfall-
-# Fall, jetzt 86%) fallen auf "inconclusive", weil sie an einzelnen
-# Split-Punkten kippen. Kein einziger Fall wurde in irgendeiner Pruefrunde
-# robust NEGATIV. Split-Wahl ist damit ein eigener, vergleichbar wichtiger
-# Rauschkanal wie der Modell-Seed selbst - dieses Gate prueft deshalb jetzt
-# BEIDE gemeinsam statt nur den Seed bei fixem Split.
+# Gates blieb nur noch EIN Fall robust - vier fielen auf "inconclusive",
+# weil sie an einzelnen Split-Punkten kippten. Kein einziger Fall wurde in
+# irgendeiner Pruefrunde robust NEGATIV. Split-Wahl ist damit ein eigener,
+# vergleichbar wichtiger Rauschkanal wie der Modell-Seed selbst - dieses
+# Gate prueft deshalb BEIDE gemeinsam statt nur den Seed bei fixem Split.
 #
 # min_share_for_verdict = 0.9 ist NICHT aus einer Formel abgeleitet, sondern
-# empirisch an der Faellemenge kalibriert, die den Bedarf fuer dieses Gate
-# ausgeloest hat (v1: robuste Cluster bei 96-100%, Rausch-Cluster bei
+# empirisch an der DWD-Faellemenge kalibriert, die den Bedarf fuer dieses
+# Gate ausgeloest hat (v1: robuste Cluster bei 96-100%, Rausch-Cluster bei
 # 40-52%). split_ratios-Default (0.15/0.20/0.25/0.30/0.35) und
-# n_seeds_per_ratio=10 (50 Kombinationen gesamt) sind aus derselben
-# Untersuchung uebernommen - kein Dogma, aber der beste verfuegbare,
-# empirisch gepruefte Wert. Weitere Faelle koennten beides spaeter
-# verschieben.
+# n_seeds_per_ratio=10 (50 Kombinationen gesamt) stammen aus derselben
+# Untersuchung - kein Dogma, aber der beste verfuegbare, empirisch
+# gepruefte Wert. Ein neuer Anwendungsfall in einer anderen Domaene koennte
+# beides verschieben.
 
 suppressPackageStartupMessages({
   library(data.table)
 })
 
-#' Prueft, ob ein Baseline-vs.-Wetter-Metrikdelta ueber Modell-Seed UND
+#' Prueft, ob ein Baseline-vs.-Enrichment-Metrikdelta ueber Modell-Seed UND
 #' Split-Ratio hinweg stabil gerichtet ist, oder ob es sich um Rauschen
 #' (Modell- und/oder Split-Wahl-Rauschen) handelt.
 #'
@@ -51,9 +74,11 @@ suppressPackageStartupMessages({
 #' Deltas zusammen bestimmen die Entscheidung.
 #'
 #' @param baseline_data data.frame/data.table mit Spalten `date`, `target`
-#'   und Baseline-Features (keine Wetterspalten), chronologisch sortierbar.
-#' @param weather_data data.frame/data.table mit denselben Zeilen/Spalten
-#'   plus Wetterfeatures.
+#'   und den Baseline-Features (ohne die Anreicherungsspalten),
+#'   chronologisch sortierbar.
+#' @param enriched_data data.frame/data.table mit denselben Zeilen/Spalten
+#'   plus den zusaetzlichen Anreicherungs-Features (z.B. Wetter, aber
+#'   beliebige andere externe Quelle).
 #' @param learner_constructor function(seed) -> mlr3-Learner (frisch, noch
 #'   nicht trainiert). Muss `predict_type` etc. bereits selbst setzen.
 #' @param measure mlr3-Measure (z.B. `msr("classif.bacc")`).
@@ -72,19 +97,19 @@ suppressPackageStartupMessages({
 #'   ob der Befund an einem einzelnen Split haengt), `decision` (einer von
 #'   "robust_improvement", "robust_regression", "inconclusive"),
 #'   `n_kombinationen`, `min_share_for_verdict`.
-weather_enrichment_seed_stability_gate <- function(baseline_data, weather_data,
-                                                     learner_constructor, measure,
-                                                     split_ratios = c(0.15, 0.20, 0.25, 0.30, 0.35),
-                                                     n_seeds_per_ratio = 10,
-                                                     drop_cols = c("id", "date"),
-                                                     target_col = "target",
-                                                     sampling_seed = 42,
-                                                     min_share_for_verdict = 0.9) {
+enrichment_seed_stability_gate <- function(baseline_data, enriched_data,
+                                            learner_constructor, measure,
+                                            split_ratios = c(0.15, 0.20, 0.25, 0.30, 0.35),
+                                            n_seeds_per_ratio = 10,
+                                            drop_cols = c("id", "date"),
+                                            target_col = "target",
+                                            sampling_seed = 42,
+                                            min_share_for_verdict = 0.9) {
   if (!requireNamespace("mlr3", quietly = TRUE)) {
-    stop("weather_enrichment_seed_stability_gate() benoetigt das Paket mlr3.", call. = FALSE)
+    stop("enrichment_seed_stability_gate() benoetigt das Paket mlr3.", call. = FALSE)
   }
-  if (nrow(baseline_data) != nrow(weather_data)) {
-    stop("baseline_data und weather_data muessen dieselbe Zeilenzahl haben.", call. = FALSE)
+  if (nrow(baseline_data) != nrow(enriched_data)) {
+    stop("baseline_data und enriched_data muessen dieselbe Zeilenzahl haben.", call. = FALSE)
   }
   if (!is.numeric(min_share_for_verdict) || min_share_for_verdict <= 0.5 ||
       min_share_for_verdict > 1) {
@@ -126,7 +151,7 @@ weather_enrichment_seed_stability_gate <- function(baseline_data, weather_data,
 
   grid <- data.table::CJ(ratio = split_ratios, seed = seeds)
   grid[, delta := mapply(function(r, s) {
-    fit_score(weather_data, r, s) - fit_score(baseline_data, r, s)
+    fit_score(enriched_data, r, s) - fit_score(baseline_data, r, s)
   }, ratio, seed)]
 
   share_positive <- mean(grid$delta > 0)
@@ -152,18 +177,19 @@ weather_enrichment_seed_stability_gate <- function(baseline_data, weather_data,
   )
 }
 
-#' Verlangt, dass ein Baseline-vs.-Wetter-Befund durch das Trust-Gate gedeckt
-#' ist, BEVOR er als gerichteter Befund ("Wetter hilft"/"Wetter schadet")
-#' berichtet wird. Bricht mit `stop()` ab, wenn die behauptete Richtung nicht
-#' zur Gate-Entscheidung passt - macht die Pruefung nicht optional.
+#' Verlangt, dass ein Baseline-vs.-Enrichment-Befund durch das Trust-Gate
+#' gedeckt ist, BEVOR er als gerichteter Befund ("Anreicherung hilft"/
+#' "Anreicherung schadet") berichtet wird. Bricht mit `stop()` ab, wenn die
+#' behauptete Richtung nicht zur Gate-Entscheidung passt - macht die
+#' Pruefung nicht optional.
 #'
-#' @param gate_result Rueckgabe von weather_enrichment_seed_stability_gate().
+#' @param gate_result Rueckgabe von enrichment_seed_stability_gate().
 #' @param claimed_direction "improvement", "regression" oder "any" (nur
 #'   pruefen, dass ueberhaupt ein robuster Befund vorliegt, egal welche
 #'   Richtung).
 #' @return TRUE (unsichtbar), wenn der Befund gedeckt ist.
-assert_weather_enrichment_finding <- function(gate_result,
-                                               claimed_direction = c("improvement", "regression", "any")) {
+assert_enrichment_finding <- function(gate_result,
+                                       claimed_direction = c("improvement", "regression", "any")) {
   claimed_direction <- match.arg(claimed_direction)
   decision <- gate_result$decision
 
@@ -172,8 +198,8 @@ assert_weather_enrichment_finding <- function(gate_result,
       paste0(
         "Trust-Gate nicht bestanden: %d/%d Kombinationen (Split-Ratio x Seed) ",
         "positiv, %d/%d negativ (Schwelle %.0f%%) - kein robuster Befund. Ein ",
-        "gerichteter Befund ('Wetter hilft'/'Wetter schadet') darf NICHT ",
-        "berichtet werden. Siehe weather_enrichment_trust_gate.R (Anlass v2)."
+        "gerichteter Befund ('Anreicherung hilft'/'Anreicherung schadet') darf ",
+        "NICHT berichtet werden. Siehe enrichment_trust_gate.R (Anlass v2)."
       ),
       round(gate_result$share_positive * gate_result$n_kombinationen), gate_result$n_kombinationen,
       round(gate_result$share_negative * gate_result$n_kombinationen), gate_result$n_kombinationen,

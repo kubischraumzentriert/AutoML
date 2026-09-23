@@ -5,7 +5,17 @@ liegen im SEPARATEN lokalen `ML_Learning`-Repo (`C:\Users\HP\ML_Learning`,
 kein Remote), nicht in diesem Template-Repo - versehentlich hier
 committete Kopien wurden entfernt (siehe `.gitignore`). Nur die
 wiederverwendbaren Module (`modules/dwd_weather_adapter.R`,
-`modules/weather_enrichment_trust_gate.R`) gehoeren zum Template selbst.
+`modules/enrichment_trust_gate.R`) gehoeren zum Template selbst.
+
+**Hinweis (2026-09-23)**: `weather_enrichment_trust_gate.R` wurde in
+`modules/enrichment_trust_gate.R` umbenannt (Funktionen entsprechend:
+`weather_enrichment_seed_stability_gate()` ->
+`enrichment_seed_stability_gate()`, `assert_weather_enrichment_finding()`
+-> `assert_enrichment_finding()`). Der Mechanismus ist domaenenneutral -
+jede Baseline-vs.-Enrichment-Frage mit chronologischen Daten kann das Gate
+nutzen, nicht nur Wetter. Die eigenstaendige Kopie im separaten
+`ML_Learning`-Repo behaelt bewusst den alten, wetterspezifischen Namen
+(dort ist er weiterhin fachlich zutreffend).
 
 ## Ziel
 
@@ -286,18 +296,21 @@ Deltas), aber nicht robust genug fuer eine Domaenenregel.
 
 Damit derselbe Fehlschluss (Einzelseed-Delta faelschlich als "hilft"/
 "schadet" berichten) nicht erneut passiert, ist die Seed-Stabilitaetspruefung
-jetzt kein manueller Nachtrag mehr, sondern ein Pflichtschritt:
-[`modules/weather_enrichment_trust_gate.R`](../../modules/weather_enrichment_trust_gate.R)
-stellt zwei Funktionen bereit:
+jetzt kein manueller Nachtrag mehr, sondern ein Pflichtschritt: das Gate
+(damals `weather_enrichment_trust_gate.R`, seit 2026-09-23 domaenenneutral
+`modules/enrichment_trust_gate.R` - siehe Hinweis am Dokumentanfang)
+stellte damals zwei Funktionen bereit:
 
-- `weather_enrichment_seed_stability_gate()` - fixer Datensplit, 25
-  Ranger-Seeds (Default), klassifiziert das Delta als `robust_improvement`,
+- `weather_enrichment_seed_stability_gate()` (heute:
+  `enrichment_seed_stability_gate()`) - fixer Datensplit, 25 Ranger-Seeds
+  (Default), klassifiziert das Delta als `robust_improvement`,
   `robust_regression` oder `inconclusive` (Schwelle: `min_share_for_verdict`
   = 0.9, empirisch zwischen den beobachteten Clustern 96-100% [robust] und
   40-52% [Rauschen] kalibriert - siehe Kopfkommentar der Datei).
-- `assert_weather_enrichment_finding()` - bricht mit `stop()` ab, wenn ein
-  Skript versucht, eine Richtung ("improvement"/"regression") zu behaupten,
-  die nicht zur Gate-Entscheidung passt. Macht die Pruefung nicht optional.
+- `assert_weather_enrichment_finding()` (heute: `assert_enrichment_finding()`)
+  - bricht mit `stop()` ab, wenn ein Skript versucht, eine Richtung
+  ("improvement"/"regression") zu behaupten, die nicht zur
+  Gate-Entscheidung passt. Macht die Pruefung nicht optional.
 
 Alle vier `compare_pilot.R`-Skripte (Camping, Verkehrsunfaelle, Sterbefaelle,
 Baugewerbe) rufen das Gate jetzt nach dem Einzelseed-Vergleich automatisch
@@ -308,9 +321,9 @@ aus der Gate-Entscheidung. Erneuter Lauf mit dem Gate bestaetigt exakt die
 obige Korrektur: Brandenburg und NRW `robust_improvement`, Bayern/Sachsen/
 Baugewerbe `inconclusive`.
 
-Tests: [`tests/testthat/test-weather_enrichment_trust_gate.R`](../../tests/testthat/test-weather_enrichment_trust_gate.R)
+Tests: [`tests/testthat/test-enrichment_trust_gate.R`](../../tests/testthat/test-enrichment_trust_gate.R)
 mit synthetischer Ground Truth (informatives vs. nicht-informatives
-Wetterfeature) - laeuft automatisch in der `unit-tests`-CI-Job (kein
+Anreicherungsfeature) - laeuft automatisch in der `unit-tests`-CI-Job (kein
 Workflow-Eintrag noetig, `test_dir()` findet neue `test-*.R`-Dateien
 selbststaendig). Wie der DWD-Adapter selbst bleibt das Gate optional und
 NICHT in `_targets.R`/die nummerierte Standardreihenfolge eingebaut - es
@@ -332,8 +345,8 @@ Seed-Stabilitaet -> Split-Ratio x Seed) robust NEGATIV - der Trend zeigt in
 jeder Verschaerfung der Pruefung WENIGER, nie MEHR belastbare positive
 Faelle.
 
-`weather_enrichment_seed_stability_gate()` nimmt seitdem `split_ratios`
-(Vektor von Testanteilen) statt eines einzelnen `split_date` entgegen und
+`weather_enrichment_seed_stability_gate()` (heute: `enrichment_seed_stability_gate()`)
+nimmt seitdem `split_ratios` (Vektor von Testanteilen) statt eines einzelnen `split_date` entgegen und
 testet beide Rauschquellen gemeinsam. Das `by_ratio`-Feld im Rueckgabewert
 zeigt, ob ein Befund an einem einzelnen Split-Punkt haengt. Details und die
 vollstaendige Faelletabelle: `FINDINGS.md` im separaten `ML_Learning`-Repo.
