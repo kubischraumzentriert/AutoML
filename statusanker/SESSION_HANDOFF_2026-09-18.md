@@ -758,26 +758,61 @@ Location-Encoding) und verifiziert, **noch nicht bei Zindi eingereicht**
 (Stand Ende dieser Aktualisierung). Alle Schritte committed (`274b57d`,
 `ML_Learning`, kein Remote).
 
+**18. Aktualisierung:** Die in der 17. Aktualisierung erzeugte,
+"verbesserte" Zindi-Submission (breite Suche + Location-Encoding +
+CatBoost-dominanter 3-Wege-Blend, interne CV 0,8175) wurde eingereicht -
+Nutzerrueckmeldung: **Public Score 0,82788465, SCHLECHTESTE aller 4
+Submissions**, trotz hoechster interner CV-Schaetzung.
+
+**Kein Zufall mehr, sondern ein klares Muster ueber alle 4 Submissions**:
+je hoeher die interne CV-Schaetzung stieg (0,8077 -> 0,8125 -> 0,8152 ->
+0,8175), desto schlechter wurde die tatsaechliche LB-Performance
+(0,8313 bestbekannt -> 0,8306 -> 0,8279 schlechteste). Wahrscheinliche
+Ursache: die breite 60-Evals-Suche (nur 3-fache CV-Suchphase, mehr
+Modellkapazitaet: `max_depth` bis 12) ueberpasst sich vermutlich an die
+Suchphasen-CV-Instanz, UND der Blend wurde von 3 diversen Modellen auf
+fast nur noch CatBoost (Gewicht 0,8) konzentriert - weniger
+Ensemble-Diversitaet = mehr Varianz.
+
+**Rueckbau auf Nutzeranweisung "ja mache das"**: `000_config.R`/`150`/
+`155` zurueckgesetzt auf die Konfiguration von Submission 2 (schmal
+getunte CatBoost/LightGBM aus `100_tuning.R`, 2-Wege-Blend CatBoost
+0,6/LightGBM 0,4, OHNE Location-Encoding, OHNE TabICL -
+`ensemble_w_tabicl <- 0`, Code bleibt fuer spaetere vorsichtigere
+Versuche erhalten). Die breiten Hyperparameter bleiben unter
+`lightgbm_wide`/`catboost_wide` dokumentiert, aber inaktiv. Neue
+`submission.csv` reproduziert Submission 2 exakt (`TargetF1`:
+338x0/692x1, mittlere `TargetRAUC`: 0,656 - identisch), verifiziert.
+Committed (`6187864`).
+
+**Lehre**: bei nur 3146 Zeilen ist selbst 5-fache interne CV nicht mehr
+zuverlaessig genug, um zwischen Configs zu unterscheiden, die sich um
+wenige Promille-Punkte unterscheiden - zusaetzliche Optimierung kann
+sich an die CV-Instanz ueberanpassen, ohne dass die interne Schaetzung
+selbst das anzeigt. Reale LB-Bestaetigung zaehlt hier staerker als
+weitere interne Verbesserungsjagd - in `README.md` Abschnitt 16 als
+"Naechste Schritte"-Warnung festgehalten (falls weiter optimiert wird:
+wiederholte CV mit mehreren Seeds statt einem einzelnen Durchlauf, oder
+sparsame LB-Bestaetigung statt Mass-Tuning).
+
 ## Stand jetzt
 
 `MLR3_Classifikation`: der vollstaendige Refaktorierungs-Sweep und die
-CC18-Benchmark-Erweiterung (13./14. Eintrag) bleiben abgeschlossen, plus
-das kanonische `merge_project_experiments.R` (`df6410f`) und der externe
-Enrichment-Trust-Gate-Umbenennung-Pull (`881edc1`). CI gruen, `git
-status` sauber. `MLR3_Regression`: Kandidat 28 UND 30 haben je 2
-unabhaengige Projekt-Zeugen (ADR-003 erfuellt), gepusht (`4211b71`).
-`ML_Learning`: `openml-allstate-claims-severity` (sauberer
-Zwischenstand), `climate-risk-health-prediction-challenge` (3
-eingereichte Submissions, beste bisher eingereichte 0,831305778; interne
-CV-Schaetzung nach der heutigen Verbesserungsrunde bei 0,8175, diese
-Version noch NICHT eingereicht), zentrale `experiments.db` aktuell.
-Einzige nicht akut handlungsrelevante Sache bleibt: JOSS-Einreichung
-pausiert, Wiedervorlage ~November 2026.
+CC18-Benchmark-Erweiterung bleiben abgeschlossen, plus das kanonische
+`merge_project_experiments.R` (`df6410f`) und der externe Enrichment-
+Trust-Gate-Umbenennung-Pull (`881edc1`). CI gruen, `git status` sauber.
+`MLR3_Regression`: Kandidat 28 UND 30 haben je 2 unabhaengige
+Projekt-Zeugen (ADR-003 erfuellt), gepusht (`4211b71`). `ML_Learning`:
+`openml-allstate-claims-severity` (sauberer Zwischenstand),
+`climate-risk-health-prediction-challenge` (4 eingereichte Submissions,
+beste weiterhin 0,831305778 - AKTIVE Konfiguration nach dem Rueckbau,
+volle Lehre inkl. Negativbefund in README.md dokumentiert), zentrale
+`experiments.db` aktuell. Einzige nicht akut handlungsrelevante Sache
+bleibt: JOSS-Einreichung pausiert, Wiedervorlage ~November 2026.
 
 ## Empfohlener erster Schritt
 
-Die neueste Zindi-Submission (breite Hyperparameter-Suche + Location-
-Target-Encoding + neu bestimmte 3-Wege-Blend-Gewichte, interne
-CV-Schaetzung 0,8175) ist erzeugt und verifiziert, aber noch nicht
-eingereicht - Nutzerentscheidung abwarten, ob/wann eingereicht wird.
-Sonst kein akuter Punkt offen.
+Kein akuter Punkt offen. Das Zindi-Projekt steht auf der bisher besten
+bekannten, real LB-bestaetigten Konfiguration (2-Wege-Blend, Public
+Score 0,831305778) - keine weitere Aenderung noetig, ausser der Nutzer
+moechte gezielt (und sparsam, siehe Lehre oben) weiter experimentieren.
