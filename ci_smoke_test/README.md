@@ -47,13 +47,17 @@ pusht):
 ```bash
 cd ci_smoke_test
 for f in db_logging.R db_schema.sql 005_benchmark_runtime.R 006_tuning_diagnostics.R \
-         class_multiplier_tuning.R split_size_sensitivity.R learning_curve.R \
-         seed_stability.R generalization_gap.R \
          015_target_leak_audit.R 020_task.R 022_split_size_sensitivity.R \
          023_learning_curve.R 030_baseline.R 080_boosting_benchmark.R \
          090_ranger_tuning.R 100_lightgbm_tuning.R 092_seed_stability.R \
          136_generalization_gap.R; do
   cp "../$f" "./$f"
+done
+mkdir -p modules
+for f in class_multiplier_tuning.R split_size_sensitivity.R learning_curve.R \
+         seed_stability.R generalization_gap.R hard_split_stress_test.R \
+         target_leak_audit_helpers.R task_data_coercion.R experiment_planner.R; do
+  cp "../modules/$f" "modules/$f"
 done
 Rscript generate_fixture.R
 Rscript 015_target_leak_audit.R && Rscript 020_task.R && Rscript 022_split_size_sensitivity.R && \

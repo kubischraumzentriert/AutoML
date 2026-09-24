@@ -13,6 +13,7 @@ suppressPackageStartupMessages({
 source("000_config.R")
 source(file.path(project_dir, "005_benchmark_runtime.R"))
 source(file.path(project_dir, "db_logging.R"))
+source(file.path(project_dir, "modules", "experiment_planner.R"))
 
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
@@ -23,6 +24,27 @@ if (!file.exists(task_train_small_path)) {
 
 task_train_small <- readRDS(task_train_small_path)
 task_train_small <- enable_class_stratification(task_train_small)
+
+# Experiment-Planung (siehe docs/research/JOSS_TECHNIQUE_WATCH.md Kandidat 4):
+# der Config-Hash faengt genau den s6e9-Fund ab (subset_fraction/Feature-
+# Engineering geaendert, ohne dass dieser Arm neu getunt wurde) - aendert
+# sich der Hash gegenueber dem letzten 'done'-Lauf, markiert
+# db_plan_experiment() den Eintrag automatisch als 'stale'.
+.planner_con <- db_connect()
+.planner_proj_id <- db_get_or_create_project(.planner_con, project_name)
+.planner_pexp_id <- db_plan_experiment(
+  .planner_con, .planner_proj_id, "090_ranger_tuning",
+  script = "090_ranger_tuning.R",
+  config_hash = experiment_config_hash(task_train_small, extra = list(
+    ranger_tuning_search_trees = ranger_tuning_search_trees,
+    ranger_tuning_evals = ranger_tuning_evals,
+    ranger_tuning_final_trees = ranger_tuning_final_trees,
+    cv_folds = cv_folds
+  )),
+  priority = "high", seed = seed
+)
+db_start_experiment(.planner_con, .planner_pexp_id)
+DBI::dbDisconnect(.planner_con)
 
 # Tuning-Zielmetrik = baseline_measure_ids[1] statt hart codiertem
 # classif.bacc - fuer dieses Projekt identisch (BAcc ist hier die
@@ -182,6 +204,7 @@ db_log_timed_benchmark(
   resampling_strategy = "cv", resampling_folds = cv_folds, resampling_seed = seed
 )
 
+db_complete_experiment(db_con, .planner_pexp_id, db_run_id)
 db_finish_run(db_con, db_run_id)
 DBI::dbDisconnect(db_con)
 cat("Experiment-DB   :", experiments_db_path, "\n")

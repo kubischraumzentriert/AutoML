@@ -33,6 +33,24 @@ suppressPackageStartupMessages({
   library(uuid)
 })
 
+#' Bequemlichkeits-Hash fuer eine Tuning-"Arm"-Konfiguration: hasht die
+#' TATSAECHLICH verwendeten Task-Daten (faengt Aenderungen wie
+#' subset_fraction/Feature-Engineering auf, unabhaengig davon WELCHER
+#' Parameter sich geaendert hat - genau das war die Luecke im s6e9-Fund,
+#' siehe Kopfkommentar) plus optionale weitere Werte (z.B. Tuning-Budget).
+#'
+#' @param task mlr3 Task (dessen `$data()` gehasht wird).
+#' @param extra benannte Liste zusaetzlicher Werte (z.B. Budget-Parameter,
+#'   Suchraum-Grenzen) - aendert sich einer davon, soll der Arm ebenfalls
+#'   als veraltet gelten.
+#' @return character(1) Hash.
+experiment_config_hash <- function(task, extra = list()) {
+  if (!requireNamespace("digest", quietly = TRUE)) {
+    stop("experiment_config_hash() benoetigt das Paket digest.", call. = FALSE)
+  }
+  digest::digest(list(data = task$data(), extra = extra), algo = "xxhash64")
+}
+
 #' Plant ein Experiment oder aktualisiert einen bestehenden Plan-Eintrag.
 #'
 #' Eindeutigkeit ueber (proj_id, label) - ein zweiter Aufruf mit demselben

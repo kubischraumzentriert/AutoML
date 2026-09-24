@@ -4755,5 +4755,19 @@ Tests (`tests/testthat/test-experiment_planner.R`), direkter Nachbau des
 s6e9-Falls als Testfall. Volle testthat-Suite gruen.
 
 **Status: Prototyp, noch KEIN vollstaendiger Backport** - ADR-003 verlangt
-1-2 reale Projektbestaetigungen, die noch aussstehen. Naechster Schritt:
-bei einem kuenftigen Multi-Arm-Tuning-Lauf tatsaechlich verwenden.
+1-2 reale Projektbestaetigungen, die noch ausstehen.
+
+**Verdrahtung + Smoke-Test-Nachweis (2026-09-24)**: `090_ranger_tuning.R`
+und `100_lightgbm_tuning.R` rufen jetzt `db_plan_experiment()`/
+`db_start_experiment()`/`db_complete_experiment()` tatsaechlich auf (Label
+je Skript, Config-Hash aus `experiment_config_hash()` - hasht die
+tatsaechlich verwendeten Task-Daten plus Tuning-Budget). CI-Smoke-Test-
+Workflow (`.github/workflows/ci-smoke-test.yml`) kopiert
+`modules/experiment_planner.R` jetzt mit in die Fixture; lokale Syntax-
+pruefung beider Skripte fehlerfrei (voller Lauf lokal nicht moeglich -
+`mlr3extralearners` hier nicht installiert, nur ueber die CI-Dependencies
+verfuegbar). **Das ist noch KEIN echtes Projekt im ADR-003-Sinn** (die
+CI-Fixture ist synthetisch) - zeigt nur, dass die Verdrahtung technisch
+funktioniert. Reale Bestaetigung bleibt offen, bis ein tatsaechliches
+Multi-Arm-Tuning-Projekt damit laeuft; als naechstes: ein passendes
+OpenML-Projekt dafuer auswaehlen.

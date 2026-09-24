@@ -1,10 +1,10 @@
 # =====================================================================
-# test-experiment_planner.R -- Korrektheitstests fuer db_plan_experiment()/
-# db_start_experiment()/db_complete_experiment()/db_close_experiment()/
-# report_planned_experiments() (experiment_planner.R).
+# test-experiment_planner.R -- Korrektheitstests fuer experiment_config_hash()/
+# db_plan_experiment()/db_start_experiment()/db_complete_experiment()/
+# db_close_experiment()/report_planned_experiments() (experiment_planner.R).
 # =====================================================================
 assign("project_dir", testthat::test_path("..", ".."), envir = globalenv())
-suppressPackageStartupMessages({ library(DBI); library(RSQLite) })
+suppressPackageStartupMessages({ library(DBI); library(RSQLite); library(mlr3) })
 source(testthat::test_path("..", "..", "db_logging.R")) # db_connect() baut das Schema aus db_schema.sql auf
 source(testthat::test_path("..", "..", "modules", "experiment_planner.R"))
 
@@ -13,6 +13,29 @@ make_schema_db <- function() {
   proj_id <- db_get_or_create_project(con, paste0("test-proj-", uuid::UUIDgenerate()))
   list(con = con, proj_id = proj_id)
 }
+
+make_task <- function(n = 20, seed = 1) {
+  set.seed(seed)
+  dt <- data.frame(x = rnorm(n), y = factor(sample(c("a", "b"), n, replace = TRUE)))
+  as_task_classif(dt, target = "y", id = "t")
+}
+
+test_that("experiment_config_hash() liefert denselben Hash fuer identische Daten", {
+  expect_equal(experiment_config_hash(make_task()), experiment_config_hash(make_task()))
+})
+
+test_that("experiment_config_hash() aendert sich, wenn sich die Task-Daten aendern (subset_fraction-Analogie)", {
+  small <- make_task(n = 10)
+  full <- make_task(n = 100)
+  expect_false(experiment_config_hash(small) == experiment_config_hash(full))
+})
+
+test_that("experiment_config_hash() aendert sich, wenn sich nur `extra` aendert (z.B. Tuning-Budget)", {
+  task <- make_task()
+  h1 <- experiment_config_hash(task, extra = list(evals = 20))
+  h2 <- experiment_config_hash(task, extra = list(evals = 50))
+  expect_false(h1 == h2)
+})
 
 test_that("db_plan_experiment() legt einen neuen Eintrag mit Status 'planned' an", {
   db <- make_schema_db()
