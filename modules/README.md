@@ -58,6 +58,7 @@ nachträglichen Diagnose.
 |---|---|---|
 | `db_housekeeping.R` | Rein lesende Diagnose der zentralen, gemergten Experiment-DB (Merge nötig? Duplikate? unvollständige Runs?) | `merge_project_experiments.R` |
 | `merge_project_experiments.R` | Konsolidiert projekteigene `experiments.db`-Dateien mehrerer lokaler Projekte in eine zentrale DB | manuell aufgerufen |
+| `experiment_planner.R` | `planned_experiment`-Tabelle: geplante/laufende/veraltete Experimente je Projekt, erkennt per Config-Hash, wenn ein Arm nach einem Konfigurationswechsel nicht neu gelaufen ist | manuell aufgerufen, PyExperimenter-inspiriert (siehe `docs/research/JOSS_TECHNIQUE_WATCH.md` Kandidat 4) |
 | `generate_systematic_evaluation.R` | Erzeugt eine Projekt-x-Modul-Ergebnistabelle aus der Evidence Registry | manuell aufgerufen |
 | `reproduce_publication_benchmark.R` | Eigenständige Reproduktion des berichteten 6-Datensatz-Benchmarks ohne `ML_Learning`-Abhängigkeit | manuell aufgerufen (Reproduzierbarkeitsnachweis) |
 

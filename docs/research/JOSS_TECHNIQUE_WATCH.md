@@ -189,18 +189,44 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
 - **Welcher Teil ist uebertragbar?** Die Idee einer `planned_experiment`-
   Tabelle (Status/Dataset/Methode/Budget/Seed/Prioritaet/Ergebnis-Run-ID)
   als Erweiterung der bestehenden Experiment-DB.
-- **Haben wir dieses Problem?** Aktuell nein in relevantem Ausmass - die
-  6 externen Laeufe wurden manuell/skriptgesteuert nacheinander
-  gefahren, ohne formale Planungs-/Wiederaufnahme-Infrastruktur. Wuerde
-  erst relevant, wenn der Benchmark auf 10-15+ Datensaetze waechst.
-- **Hypothese**: bei einer groesseren Anzahl geplanter Laeufe (Research-
-  Benchmark-Erweiterung) wuerde eine formale Planungstabelle Fehler
-  (vergessene/doppelte Laeufe) reduzieren.
-- **Komplexitaetskosten**: mittel - neue DB-Tabelle + einfache
-  Ausfuehrungs-/Status-Logik.
-- **Prototype**: nein.
-- **Backport**: nein. **Prioritaet laut Bewertungsdokument: mittel** -
-  vor allem relevant, WENN der Benchmark waechst.
+- **Haben wir dieses Problem?** Urspruenglich (2026-08-30): nein in
+  relevantem Ausmass - die 6 externen Laeufe wurden manuell/skript-
+  gesteuert nacheinander gefahren, ohne formale Planungs-/Wiederaufnahme-
+  Infrastruktur. Vorgemerkt als relevant, WENN der Benchmark auf 10-15+
+  Datensaetze waechst.
+- **Trigger erreicht (2026-09-24)**: der externe CC18-Benchmark ist auf
+  n=15 gewachsen (`163_benchmark_statistics_report_n15.R`, siehe Kandidat
+  3 oben). VOR dem Backport gezielt geprueft, ob die konkrete Reibung
+  ("vergessene/doppelte Laeufe") tatsaechlich auftrat: die eigentliche
+  n=6->10->15-Erweiterung selbst lief sauber (dedizierte Auswahlskripte,
+  keine Duplikate). Ein ECHTER, verwandter Fund existiert aber:
+  `PredictingElectricVehiclePurchases-s6e9` (2026-09-04, siehe
+  `BACKLOG.md`) - nach der Umstellung von 10%-Subset auf volle Datenmenge
+  wurde `090_ranger_tuning.R` nie erneut ausgefuehrt, waehrend LightGBM
+  korrekt neu getunt wurde. Kein Scheduling-/Duplikat-Problem, sondern
+  ein STILLER Konfigurationsdrift zwischen parallelen Armen.
+- **Hypothese (verfeinert)**: eine Config-Hash-basierte Staleness-
+  Erkennung (nicht die volle PyExperimenter-Feature-Breite) haette den
+  s6e9-Fund automatisch sichtbar gemacht, statt ihn erst beim manuellen
+  Score-Logging zu bemerken.
+- **Komplexitaetskosten**: gering-mittel wie erwartet - eine neue DB-
+  Tabelle + Status-/Hash-Logik, kein neues Skript-Framework.
+- **Prototype**: JA (2026-09-24) - `planned_experiment`-Tabelle
+  (`db_schema.sql`) + `modules/experiment_planner.R`
+  (`db_plan_experiment()`, `db_start_experiment()`,
+  `db_complete_experiment()`, `db_close_experiment()`,
+  `report_planned_experiments()`). 19 synthetische Tests
+  (`tests/testthat/test-experiment_planner.R`), u.a. der direkte
+  Nachbau des s6e9-Falls (derselbe Label, geaenderter Config-Hash ->
+  ein 'done'-Eintrag wird automatisch auf 'stale' gesetzt).
+- **Backport**: TEILWEISE - Infrastruktur ist im Template
+  (`db_schema.sql`/`modules/experiment_planner.R`), aber noch NICHT in
+  einem realen Projekt angewendet (ADR-003-Schwelle: mindestens 1-2
+  reale Projektbestaetigungen fehlen noch). Naechster Schritt: bei einem
+  kuenftigen Multi-Arm-Tuning-Lauf (analog 090/100/125) tatsaechlich
+  `db_plan_experiment()` je Arm aufrufen und pruefen, ob die Staleness-
+  Erkennung einen echten Fall wie s6e9 vor dem naechsten Auftreten
+  gefangen haette.
 
 ## 5. ReciPies (Feature-Transformation-Provenienz)
 
@@ -425,7 +451,7 @@ begutachteten R-Paket.
 | VeridicalFlow / Decision-Stability | staerkt Trust-Story direkt | **hoch** |
 | astartes / schwierige Splits | neuer Generalisierungs-Stresstest | **hoch** |
 | Autorank / Benchmark-Statistik | staerkt Research-Evaluation | **erledigt (n=15, Friedman p=0.0155 signifikant)** |
-| PyExperimenter / geplante Studien | skaliert Benchmark-Ausfuehrung | mittel |
+| PyExperimenter / geplante Studien | Config-Drift zwischen Armen erkennen (s6e9-Fund) | **Prototyp erledigt, Realprojekt-Anwendung offen** |
 | ReciPies / Transformation-Provenienz | Reproduzierbarkeit, evtl. schon abgedeckt | mittel |
 | mlr3 (laufender Check) | Eigenentwicklungen vermeiden | mittel |
 | ImageMLResearch | Experiment-/Report-Organisation | niedrig-mittel |

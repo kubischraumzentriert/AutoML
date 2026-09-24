@@ -4729,3 +4729,31 @@ in `model_feature_sets` der echten `health_condition`-Config verwendeten
 Feature-Sets. Volle Suite weiterhin gruen (322+ Faelle).
 
 Details in `docs/research/JOSS_TECHNIQUE_WATCH.md` Kandidat #5.
+
+## PyExperimenter-Prototyp: `planned_experiment`-Tabelle (2026-09-24)
+
+JOSS-Kandidat #4 (`docs/research/JOSS_TECHNIQUE_WATCH.md`) wurde am
+2026-08-30 mit der Bedingung "relevant, WENN der Benchmark auf 10-15+
+Datensaetze waechst" zurueckgestellt - seit dem n=15-CC18-Benchmark
+(Kandidat #6) erreicht. VOR dem Backport gezielt geprueft, ob die
+konkrete Reibung ("vergessene/doppelte Laeufe") ueberhaupt vorlag: die
+n=6->10->15-Erweiterung selbst lief sauber, ABER ein echter verwandter
+Fund existiert - `PredictingElectricVehiclePurchases-s6e9` (2026-09-04):
+nach Umstellung von 10%-Subset auf volle Daten wurde `090_ranger_tuning.R`
+nie neu ausgefuehrt, waehrend LightGBM korrekt neu getunt wurde. Ein
+stiller Konfigurationsdrift zwischen parallelen Armen, kein Scheduling-
+Problem.
+
+**Umgesetzt** (verfeinerte Hypothese statt der vollen PyExperimenter-
+Breite): `planned_experiment`-Tabelle in `db_schema.sql` +
+`modules/experiment_planner.R` (`db_plan_experiment()` mit
+Config-Hash-basierter Staleness-Erkennung - ein 'done'-Eintrag, dessen
+Label erneut mit geaendertem Hash geplant wird, kippt automatisch auf
+'stale'; `db_start_experiment()`/`db_complete_experiment()`/
+`db_close_experiment()`/`report_planned_experiments()`). 19 synthetische
+Tests (`tests/testthat/test-experiment_planner.R`), direkter Nachbau des
+s6e9-Falls als Testfall. Volle testthat-Suite gruen.
+
+**Status: Prototyp, noch KEIN vollstaendiger Backport** - ADR-003 verlangt
+1-2 reale Projektbestaetigungen, die noch aussstehen. Naechster Schritt:
+bei einem kuenftigen Multi-Arm-Tuning-Lauf tatsaechlich verwenden.
