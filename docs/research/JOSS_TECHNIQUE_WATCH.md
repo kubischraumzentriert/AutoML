@@ -219,14 +219,23 @@ geprueft (nicht aus dem Bewertungsdokument uebernommen ohne Gegenpruefung)
   (`tests/testthat/test-experiment_planner.R`), u.a. der direkte
   Nachbau des s6e9-Falls (derselbe Label, geaenderter Config-Hash ->
   ein 'done'-Eintrag wird automatisch auf 'stale' gesetzt).
-- **Backport**: TEILWEISE - Infrastruktur ist im Template
-  (`db_schema.sql`/`modules/experiment_planner.R`), aber noch NICHT in
-  einem realen Projekt angewendet (ADR-003-Schwelle: mindestens 1-2
-  reale Projektbestaetigungen fehlen noch). Naechster Schritt: bei einem
-  kuenftigen Multi-Arm-Tuning-Lauf (analog 090/100/125) tatsaechlich
-  `db_plan_experiment()` je Arm aufrufen und pruefen, ob die Staleness-
-  Erkennung einen echten Fall wie s6e9 vor dem naechsten Auftreten
-  gefangen haette.
+- **Backport**: JA, ADR-003-Schwelle erfuellt (2026-09-28) - Infrastruktur
+  zuerst nach `MLR3_Regression` zurueckgefuehrt (`db_schema.sql`/
+  `modules/experiment_planner.R`, dort identisch), dann am
+  `beijing-air-quality-panel`-Projekt real angewendet (`100_lightgbm_
+  tuning.R`, echte 360.966-Zeilen-Regressionsaufgabe, kein CI-Fixture).
+  **Zwei Nachweise, beide erfolgreich**: (1) ein voller, echter Lauf
+  (Bayesian-Optimization-Suche + 5-fache-CV-Finalvergleich) legte
+  korrekt einen `planned_experiment`-Eintrag an, setzte ihn auf
+  'running' und nach Abschluss auf 'done' mit verknuepfter `run_id`. (2)
+  Direkter Nachbau des s6e9-Fehlerfalls GEGEN DIE ECHTE PROJEKT-DB:
+  derselbe Label mit geaendertem Config-Hash (simulierter
+  Konfigurationswechsel ohne Rerun) setzte den bestehenden 'done'-
+  Eintrag automatisch auf 'stale', `report_planned_experiments()` zeigte
+  die Warnung korrekt an - genau der Mechanismus, der den urspruenglichen
+  s6e9-Fund gefangen haette, funktioniert nachweislich auch ausserhalb
+  der synthetischen Tests. Eintrag danach auf den echten Endzustand
+  zurueckgesetzt (kein verwaister Test-Datensatz in der Projekt-DB).
 
 ## 5. ReciPies (Feature-Transformation-Provenienz)
 
