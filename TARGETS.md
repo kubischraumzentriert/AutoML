@@ -2796,3 +2796,55 @@ liessen, um sie hier direkt umzusetzen. Details, Herleitung und Status siehe
   Separation unbegrenzt haengen kann statt nur zu warnen (anders als bei
   BBBP/Tox21, dort n>p, `log_reg` warnte nur). Volle Herleitung in
   `leukemia-genomics-pn-test/README.md`.
+
+- **`fread()`-Rundweg kann grosse Sensor-Zaehlerwerte als `bit64::
+  integer64` einlesen, das mlr3-Tasks ablehnen (2026-09-25,
+  `openml-aps-failure-scania`).** Einzelne anonymisierte Sensor-
+  Histogramm-Features (Kaggle "APS Failure at Scania Trucks") erreichen
+  Werte bis 8,58 Mrd. - ueberschreiten beim Rundweg durch `train.csv`
+  2^31-1 und werden von `fread()` als `integer64` eingelesen (`Must be a
+  subset of {...}, but has additional elements {'integer64'}`).
+  `fread(..., integer64 = "double")` allein reicht NICHT (setzt trotzdem
+  die S3-Klasse "integer64", nur der interne Speicher ist double) -
+  zusaetzlich explizit per `as.double()` entklassifizieren:
+  `int64_cols <- names(dt)[vapply(dt, inherits, logical(1), what =
+  "integer64")]; dt[, (int64_cols) := lapply(.SD, as.double), .SDcols =
+  int64_cols]`. Bisher kein Projekt dieser Template-Familie hatte so
+  grosse Ganzzahlwerte - neuer Fallstrick, kein Backport-Modul noetig
+  (3 Zeilen direkter Code), aber dokumentiert fuer den naechsten
+  Sensor-/Zaehlerdaten-Fall.
+
+- **Klassengewichtung und post-hoc-Schwellenwert-Tuning wirken
+  weitgehend AUSTAUSCHBAR, nicht additiv (2026-09-28,
+  `openml-aps-failure-scania`).** Bei ~1,8% Imbalance (staerkste aller
+  bisherigen Projekte): reines Schwellenwert-Tuning (ein einziger Fit,
+  Schwelle 0,5->0,05) hob BAcc von 0,874 auf 0,946 - nahe an der viel
+  teureren Trainings-Klassengewichtung (power=1,5, 6 volle CV-Laeufe,
+  BAcc 0,962 bei Standardschwelle 0,5). Beide Hebel GLEICHZEITIG
+  (gewichtetes Modell + eigene optimale Schwelle) brachten nur noch
+  +0,0006 zusaetzlich - die optimale Schwelle des gewichteten Modells lag
+  fast bei 0,5 (0,54), waehrend die des ungewichteten Modells stark
+  verschoben war (0,05). **Lehre**: beide Techniken korrigieren im Kern
+  dieselbe Verzerrung (die bei starker Imbalance zu hohe Standard-
+  Schwelle 0,5) - bei extremer Imbalance lohnt sich zuerst die
+  guenstigere Schwellenverschiebung zu pruefen, bevor in ein teures
+  Klassengewichtungs-Grid investiert wird. Kein Backport (Erkenntnis,
+  kein Code), aber ein Muster, das bei kuenftigen stark unbalancierten
+  Projekten zuerst geprueft werden sollte.
+
+- **`missingness_mechanism_audit.R` 3. reale Projektanwendung
+  (2026-09-25/26, `openml-aps-failure-scania`).** Nach Beijing
+  (Sensorausfaelle 0,05-4%) und house-prices (kategoriale informative
+  Abwesenheit) diesmal die hoechste Missingness-Rate aller Testfaelle
+  (99% der Zeilen betroffen, 169 von 170 Features). 40 von 170 Features
+  zeigten ein echtes MNAR-Signal (Fehlen selbst haengt vom Ziel ab,
+  KS-D 0,12-0,14) - plausibel (ein Sensor kann bei einem sich
+  anbahnenden Defekt anders auslesbar sein). **Ergaenzender Befund**:
+  explizite Missing-Indikator-Features fuer diese 40 Spalten brachten
+  KEINEN messbaren Modellgewinn (gepaarte 3-fache CV, AUC-Differenz
+  -0,00087, Vorzeichen uneinheitlich ueber die Folds) - Ranger nutzte das
+  Signal offenbar bereits implizit ueber die stark korrelierten
+  Original-Features. Bestaetigt erneut (wie bei Beijing Kandidat 8): ein
+  statistisch nachweisbarer Mechanismus-Befund ist nicht automatisch ein
+  nutzbarer Modell-Hebel - immer per CV nachmessen. Volle Herleitung in
+  `openml-aps-failure-scania/README.md` Abschnitte 5/6.
