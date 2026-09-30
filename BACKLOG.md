@@ -4730,7 +4730,7 @@ Feature-Sets. Volle Suite weiterhin gruen (322+ Faelle).
 
 Details in `docs/research/JOSS_TECHNIQUE_WATCH.md` Kandidat #5.
 
-## PyExperimenter-Prototyp: `planned_experiment`-Tabelle (2026-09-24)
+## PyExperimenter-Prototyp: `planned_experiment`-Tabelle - ADR-003 erfuellt (2026-09-24, real bestaetigt 2026-09-28)
 
 JOSS-Kandidat #4 (`docs/research/JOSS_TECHNIQUE_WATCH.md`) wurde am
 2026-08-30 mit der Bedingung "relevant, WENN der Benchmark auf 10-15+
@@ -4766,8 +4766,19 @@ Workflow (`.github/workflows/ci-smoke-test.yml`) kopiert
 `modules/experiment_planner.R` jetzt mit in die Fixture; lokale Syntax-
 pruefung beider Skripte fehlerfrei (voller Lauf lokal nicht moeglich -
 `mlr3extralearners` hier nicht installiert, nur ueber die CI-Dependencies
-verfuegbar). **Das ist noch KEIN echtes Projekt im ADR-003-Sinn** (die
-CI-Fixture ist synthetisch) - zeigt nur, dass die Verdrahtung technisch
-funktioniert. Reale Bestaetigung bleibt offen, bis ein tatsaechliches
-Multi-Arm-Tuning-Projekt damit laeuft; als naechstes: ein passendes
-OpenML-Projekt dafuer auswaehlen.
+verfuegbar). Das war zu diesem Zeitpunkt noch KEIN echtes Projekt im
+ADR-003-Sinn (die CI-Fixture ist synthetisch) - zeigte nur, dass die
+Verdrahtung technisch funktioniert.
+
+**ADR-003 erfuellt (2026-09-28)**: nach `MLR3_Regression` zurueckgefuehrt
+(Schema+Modul identisch) und am `beijing-air-quality-panel`-Projekt
+(echte 360.966-Zeilen-Regressionsaufgabe) real getestet - (1) ein voller
+Tuning-Lauf legte den Planungseintrag korrekt an und schloss ihn mit
+verknuepfter `run_id` ab, (2) direkter Nachbau des urspruenglichen
+s6e9-Fehlerfalls GEGEN DIE ECHTE PROJEKT-DB (simulierter Konfigurations-
+wechsel ohne Rerun) setzte den bestehenden 'done'-Eintrag automatisch auf
+'stale'. Beide Nachweise erfolgreich - der Mechanismus faengt den
+Zielfehler nachweislich auch ausserhalb synthetischer Tests. Details:
+`docs/research/JOSS_TECHNIQUE_WATCH.md` Kandidat 4,
+`MLR3_Regression/BACKLOG.md` Kandidat 33 (dort ebenfalls als erledigt
+markiert), `ML_Learning/beijing-air-quality-panel/README.md`.
