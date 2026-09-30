@@ -22,7 +22,7 @@ vertraut. Kein Teil der eigentlichen Trainings-Pipeline.
 | `target_leak_audit_helpers.R` | Testbare Kernfunktionen des Leakage-Audits (Determinismus-Check, kumulative Top-k-Schwelle, Cluster-Erkennung) | `015_target_leak_audit.R` |
 | `univariate_drift.R` | Statistische Train-vs-Test-Drift-Tests je Spalte (Ergänzung zur Adversarial Validation) | `115_adversarial_validation.R`, `rolling_drift_diagnosis.R`, `missingness_mechanism_audit.R` |
 | `rolling_drift_diagnosis.R` | Concept-Drift über MEHRERE Zeitperioden statt nur Train-vs-Test | eigenständig (Projekt-Skripte) |
-| `missingness_mechanism_audit.R` | Ist Fehlen in einem Feature informativ (MCAR/MAR/MNAR-artig), statt naiv zu imputieren? | eigenständig |
+| `missingness_mechanism_audit.R` | Ist Fehlen in einem Feature informativ (MCAR/MAR/MNAR-artig, siehe Kasten unten), statt naiv zu imputieren? | eigenständig |
 | `composition_reweighting.R` | Label-freie Diagnose, ob eine CV↔Test-/LB-Lücke ein reiner Kompositionseffekt ist | eigenständig |
 | `feature_importance_stability.R` | Ist die Gain-Importance-Rangfolge über Folds/Seeds stabil, oder Rauschen eines Einzellaufs? | `016_feature_importance_stability.R` |
 | `seed_stability.R` | Score-Streuung bei fixem Split allein durch Lerner-Seed/Hyperparameter-Jitter | `092_seed_stability.R` |
@@ -37,6 +37,31 @@ vertraut. Kein Teil der eigentlichen Trainings-Pipeline.
 | `subgroup_fairness_disparity.R` | Performt das Modell über sensible Untergruppen hinweg systematisch unterschiedlich? | `018_subgroup_fairness_disparity.R` |
 | `bootstrap_metric_ci.R` | Bootstrap-Konfidenzintervall für EINE final berichtete Metrik auf festen Vorhersagen | `159_bootstrap_metric_ci.R` |
 | `benchmark_statistics_report.R` | Friedman/Nemenyi (Demsar 2006) - ist Methode A über MEHRERE Datensätze hinweg systematisch besser? | `162_benchmark_statistics_report.R` |
+
+**MCAR/MAR/MNAR** (fehlende Werte, drei klassische Kategorien -
+Referenzpunkt für alle Fundstellen, die die Begriffe nur noch verwenden,
+z.B. `TARGETS.md`/`BACKLOG.md`/Projekt-READMEs; volle Herleitung inkl.
+Grenzen im Kopfkommentar von `missingness_mechanism_audit.R`):
+
+- **MCAR** (Missing Completely At Random) - Fehlen ist reiner Zufall,
+  unabhängig von allem. Naive Imputation (Median/Modus) ist unbedenklich.
+- **MAR** (Missing At Random) - Fehlen hängt von ANDEREN beobachteten
+  Features ab (z.B. "Sensor X fällt bei Regen häufiger aus"). Median-
+  Imputation verzerrt dann bedingte Zusammenhänge.
+- **MNAR** (Missing Not At Random) - Fehlen hängt vom (unbeobachteten)
+  WERT der Spalte selbst oder vom ZIEL ab (z.B. "hohe Werte werden
+  seltener gemessen", oder ein Sensor liest bei einem sich anbahnenden
+  Defekt anders/gar nicht aus). Der gefährlichste Fall - naive
+  Imputation kann hier systematische Verzerrung ins Modell einbauen,
+  weil das Fehlen selbst eine Information trägt, die dabei verloren
+  geht.
+
+`missingness_mechanism_audit.R` kann MCAR nicht sauber von MNAR-durch-
+den-eigenen-Wert unterscheiden (der eigene, unbeobachtete Wert ist per
+Definition nicht prüfbar) - es prüft stattdessen zwei indirekte Signale:
+haengt das Fehlen mit dem ZIEL zusammen (Hinweis auf MNAR bzgl. des
+Ziels) und/oder mit ANDEREN Features (Hinweis auf MAR)? Zeigt keines der
+beiden ein Signal, ist das konsistent mit MCAR (kein Beweis).
 
 ## Modell-/Workflow-Bausteine
 
