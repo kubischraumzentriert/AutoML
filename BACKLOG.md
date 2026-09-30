@@ -4782,3 +4782,24 @@ Zielfehler nachweislich auch ausserhalb synthetischer Tests. Details:
 `docs/research/JOSS_TECHNIQUE_WATCH.md` Kandidat 4,
 `MLR3_Regression/BACKLOG.md` Kandidat 33 (dort ebenfalls als erledigt
 markiert), `ML_Learning/beijing-air-quality-panel/README.md`.
+
+## Offen: `list2env()`-Import in `147_error_analysis_ranger_confidence.R` (2026-09-30, noch NICHT umgesetzt)
+
+Stichproben-Lesbarkeits-Review (Nutzeranfrage "3 zufaellige Skripte auf
+Refactoring pruefen") an 3 zufaellig gewaehlten Skripten
+(`147_error_analysis_ranger_confidence.R`,
+`018_subgroup_fairness_disparity.R`, `036_feature_family_benchmark.R`) -
+zwei davon ohne nennenswerten Befund, ein echter Fund:
+
+`147_error_analysis_ranger_confidence.R` Zeile 18:
+`invisible(list2env(models, envir = environment()))` spritzt ein fuer den
+Leser unsichtbares Set an Variablen (`ranger_response`, `truth`,
+`lightgbm_confidence`, etc.) implizit in den Skript-Scope - welche
+Variablen ab dieser Zeile existieren, ist nur durch Oeffnen von
+`147_..._models.R` herauszufinden. **Vorschlag (noch nicht umgesetzt)**:
+explizites Auspacken (`ranger_response <- models$ranger_response` usw.)
+statt `list2env()` - macht die Abhaengigkeiten an der Verwendungsstelle
+sichtbar. Kleinere Nebenbefunde im selben Skript (doppelte `n_classes <=
+2`-Pruefung; 3 Modellfamilien hart ueber benannte Spalten statt einer
+Liste verdrahtet) - beide niedrige Prioritaet. Bewusst zurueckgestellt,
+bis explizit entschieden wird, den Code anzufassen.
