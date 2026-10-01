@@ -4,8 +4,11 @@
 updated 2026-08-29 with a first literature pass; Section 6/8 extended
 2026-08-30 with the formal Research Aspect work - significance test,
 tuning-budget test, metafeature analysis; Section 7.3 extended
-2026-09-01 with the n=10/n=15 decision-stability re-tests. Reviewed for
-staleness 2026-10-01, still accurate as of that date.) Not submitted
+2026-09-01 with the n=10/n=15 decision-stability re-tests; Section 6
+extended 2026-10-01 with the P2 significance test re-run at n=15;
+Section 1 extended 2026-10-01 with an explicit scope-fit argument for
+JOSS's "research software" definition. Reviewed for staleness
+2026-10-01, still accurate as of that date.) Not submitted
 anywhere - submission itself remains paused for the 6-month public-repo-
 age gate (see `BACKLOG.md` "JOSS-Einreichung pausiert", earliest eligible
 ~2027-01-07). Written in English, even though the underlying repository
@@ -117,6 +120,38 @@ We make the following contributions:
    showing concrete cases where leak audits and drift checks prevented a
    wrong conclusion, alongside one documented blind spot the guard did
    not catch.
+
+**A note on scope, addressed here rather than left for a reviewer to
+raise.** JOSS's own scope guidance defines research software broadly —
+including research instruments and tools for knowledge extraction from
+large datasets — while explicitly excluding submissions that are
+themselves "pre-trained machine learning models and notebooks."
+Developed against commercial data-science competitions (Kaggle, Zindi,
+DrivenData) rather than a conventional scientific domain, this project
+risks being read as the latter before anyone opens it. Neither
+description fits what is actually being submitted: the artifact is not
+a trained model or a notebook that solves one competition, but reusable
+diagnostic *software* — leak/shift/stability checks, an append-only
+experiment-and-evidence database, a governed cross-project backport
+process — whose claims are *tested*, not demonstrated, against a
+rotating set of independent tabular-classification tasks. The
+competitions and OpenML datasets function as a renewable validation
+testbed, exactly as a suite of benchmark problems functions for a
+numerical-methods package, not as the submission's subject matter. This
+has direct JOSS precedent: Autorank [@Herbold2020], a statistical
+model-comparison package, is validated against multiple classifier
+benchmarks without claiming the classifiers themselves as its
+contribution; VeridicalFlow [@Duncan2022VeridicalFlow], a PCS-framework
+implementation, is validated across multiple prediction tasks for the
+same reason. We surface this scope question explicitly, with the
+precedent, because an unaddressed scope mismatch is a more serious risk
+to this submission than any single empirical result in Sections 5-7 —
+and because the Level-2 negative result (Section 6) and its formal
+significance testing (re-confirmed at n = 15 once the benchmark set
+allowed it) are themselves evidence that this testbed is used for
+methodological validation, not leaderboard optimization: a workflow
+built only to win competitions would not publish a result showing that
+more of its own complexity fails to help.
 
 ## 2. System Description
 

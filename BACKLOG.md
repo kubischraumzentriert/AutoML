@@ -4849,3 +4849,43 @@ Grundauswertung und der separaten n=6/10/15-Decision-Stability-
 Erweiterung). Datumsfelder in `README.md`/`joss/paper.md`/
 `PAPER_DRAFT.md` waren echt veraltet (letzte Aktualisierung 2026-08-29/
 09-10) und wurden aufgefrischt.
+
+## Scope-Fit-Argument im Statement of need ergaenzt (2026-10-01)
+
+**Nutzeranfrage** "mach weiter mit dem Scope-Fit-Argument im Statement
+of need" - der am 2026-08-30 als Richtung notierte, aber bis jetzt nicht
+umgesetzte Plan: JOSS' "research software"-Definition schliesst explizit
+"pre-trained machine learning models and notebooks" aus, waehrend sie
+Forschungsinstrumente/Werkzeuge zur Wissensextraktion aus grossen
+Datensaetzen einschliesst - ein Template, das an Kaggle/Zindi/DrivenData-
+Wettbewerben entwickelt wurde, laeuft Gefahr, als "Wettbewerbscode" statt
+als Forschungssoftware gelesen zu werden, BEVOR ein Reviewer den
+Fliesstext ueberhaupt erreicht.
+
+**Umgesetzt**: neuer Absatz in `joss/paper.md`s "Statement of need"
+(kurz, ohne neue Zitate, um das knappe Wortbudget nicht zu sprengen) und
+ein ausfuehrlicherer, mit Praezedenzfaellen begruendeter Absatz in
+`docs/research/PAPER_DRAFT.md` Section 1 (kein Wortlimit dort). Kernargument:
+das eingereichte Artefakt ist weder ein trainiertes Modell noch ein
+Notebook, das EINEN Wettbewerb loest, sondern wiederverwendbare
+Diagnose-SOFTWARE (Leak-/Drift-/Stabilitaets-Checks, Experiment-/
+Evidence-Datenbank, governierter Backport-Prozess) - die Wettbewerbe/
+OpenML-Datensaetze dienen nur als erneuerbares Validierungs-Testbed,
+genau wie eine Benchmark-Problem-Sammlung fuer ein numerisches Loeser-
+Paket. Praezedenzfaelle (in PAPER_DRAFT.md zitiert, bereits an anderer
+Stelle im Dokument verwendet): Autorank (Herbold 2020, JOSS) und
+VeridicalFlow (Duncan et al. 2022) - beide JOSS-Veroeffentlichungen, die
+ihre Methodik an mehreren Benchmark-/Vorhersageaufgaben validieren, ohne
+diese Aufgaben selbst als ihren Beitrag zu beanspruchen. Als zusaetzliche
+Evidenz fuer "methodische Validierung statt Leaderboard-Optimierung"
+wird der Level-2-Negativbefund samt seiner bei n=15 bestaetigten
+Signifikanztests herangezogen (ein reines Wettbewerbs-Siegtool wuerde
+keinen Befund veroeffentlichen, der die eigene Komplexitaet als nicht
+hilfreich ausweist).
+
+**Nebeneffekt**: `joss/paper.md`s Rohwortzahl liegt jetzt bei ~1788
+(`wc -w`, inkl. Frontmatter/Ueberschriften, reine Prosa-Zahl vermutlich
+etwas niedriger) - erstmals AN oder knapp UEBER der 1750-Wort-Zielmarke.
+Der seit 2026-08-29 ohnehin vorgemerkte Editor-Kuerzungsdurchgang ist
+damit nicht mehr nur Politur, sondern noetig vor einer echten Einreichung
+- noch keine konkrete Kuerzung identifiziert.

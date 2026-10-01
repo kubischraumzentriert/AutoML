@@ -37,6 +37,16 @@ revision pass, not an actual submission date (JOSS sets that at review
 time). No structural changes this pass - content still reflects
 `docs/research/PAPER_DRAFT.md` as of the Research-Aspect work
 (2026-08-30) plus the n=15 decision-stability extension (2026-09-01).
+
+STATUS (2026-10-01, 2nd pass same day): added a scope-fit paragraph to
+Statement of need (explicitly pre-empting "this is Kaggle code, not
+research software" before a JOSS editor raises it - see BACKLOG.md
+"Scope-Fit-Argument im Statement of need"). This pushed the raw word
+count to ~1788 (`wc -w paper.md`, includes frontmatter/headers so true
+prose count is somewhat lower) - AT or slightly OVER the 1750-word
+target for the first time. The still-pending editor trim pass (noted
+above since 2026-08-29) is now not just a polish step but needed to get
+back under budget before submission - no specific cut identified yet.
 -->
 
 # Summary
@@ -113,6 +123,18 @@ the software itself rather than a full empirical study. The
 greedy-ensemble-selection component follows the method of
 @Caruana2004, adapted to this template's per-project experiment
 database.
+
+A tool developed against commercial data-science competitions risks
+being mistaken for competition code rather than research software.
+Neither this submission's scope nor its artifact matches that concern:
+it is not a trained model or a notebook that solves one task, but
+reusable diagnostic software — leak/shift/stability checks, an
+append-only experiment-and-evidence database, a governed cross-project
+backport process — whose claims are *tested*, not demonstrated, against
+a rotating set of independent tabular-classification tasks. Those tasks
+function as a renewable validation testbed, the same role a
+benchmark-problem suite plays for a numerical solver, not as the
+submission's subject matter.
 
 # State of the field
 
