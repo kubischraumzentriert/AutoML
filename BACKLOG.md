@@ -4803,3 +4803,49 @@ sichtbar. Kleinere Nebenbefunde im selben Skript (doppelte `n_classes <=
 2`-Pruefung; 3 Modellfamilien hart ueber benannte Spalten statt einer
 Liste verdrahtet) - beide niedrige Prioritaet. Bewusst zurueckgestellt,
 bis explizit entschieden wird, den Code anzufassen.
+
+## P2-Signifikanztest bei n=15 wiederholt - Nullbefund jetzt mit ausreichender Power bestaetigt (2026-10-01)
+
+**Nutzeranfrage** "was können wir noch machen für eine gute JOSS-
+Publikation" fuehrte zur Durchsicht von `PAPER_DRAFT.md`/`joss/paper.md`
+auf Aktualitaet. Dabei aufgefallen: der urspruengliche Wilcoxon-
+Signifikanztest fuer den P2-Level-2-Befund (`p2_level2_significance_
+test.R`, 2026-08-30) lief nur bei n=6 (V=8, p=0.6875) - mit dem expliziten
+Demsar-Vorbehalt "braucht ~8-10 Datensaetze fuer ausreichende Power". Die
+Decision-Stability-Korrelation (eine ANDERE Fragestellung) wurde zwar
+schon bei n=6/10/15 getestet (Weg-B-Erweiterungen, 2026-08-31/09-01),
+aber der urspruengliche Sieg/Niederlage-Signifikanztest selbst nie auf
+die groessere Stichprobe uebertragen.
+
+**Reine Nachanalyse bereits vorhandener Zahlen** (kein neuer Modell-
+Lauf): neues Skript
+[`analysis/p2_level2_significance_test_n15.R`](analysis/p2_level2_significance_test_n15.R)
+kombiniert die Level2@10-vs-beste-Baseline-Deltas aller 15 Datensaetze
+(urspruengliche 6 + Weg-B 1./2. Tranche, Quellen in den jeweiligen
+BACKLOG-Eintraegen).
+
+**Ergebnis**: 9 Siege/6 Niederlagen (vorher 3/3 bei n=6), Mittelwert-Delta
++1.3 Punkte (getrieben von den 2 staerksten unbalancierten Ausreissern
+`ozone-level-8hr` +20.1, `jm1` +9.0) - **Wilcoxon-Test bleibt NICHT
+signifikant: V=69, p=0.6387**. Sensitivitaetscheck ohne die 2 Ausreisser
+(n=13): V=40, p=0.7354 - noch flacher, der Nullbefund ist nicht durch die
+beiden grossen Deltas maskiert. **Erstmals mit ausreichender Power
+(n=15 statt n=6) - ein deutlich belastbareres Nullergebnis als die
+urspruengliche Messung**, nicht nur eine Wiederholung.
+
+**In `docs/research/PAPER_DRAFT.md` eingearbeitet**: neuer Absatz in
+Section 6 (nach dem Tuning-Budget-Test, vor der Metafeature-Analyse),
+Abstract um einen Satz ergaenzt, Limitations-Punkt (Section 8) praezisiert
+- gilt jetzt nur noch fuer die UEBRIGEN Vergleiche (Sections 5/7), nicht
+mehr fuer den Level-1-vs-2-Test selbst. Status-Header auf 2026-10-01
+aktualisiert. `joss/paper.md` braucht hierfuer KEINE Aenderung (das
+Kurzformat geht nicht auf diese empirische Detailtiefe ein).
+
+**Nebenbefund beim Dokumenten-Check**: keine Abstract/Body-Inkonsistenz
+gefunden (ein erster Verdacht - "Abstract sagt 6, Body sagt 15
+Datensaetze" - erwies sich bei genauerem Lesen als falscher Alarm: das
+Abstract trennt bereits korrekt zwischen der 6-Datensatz-Level-2-
+Grundauswertung und der separaten n=6/10/15-Decision-Stability-
+Erweiterung). Datumsfelder in `README.md`/`joss/paper.md`/
+`PAPER_DRAFT.md` waren echt veraltet (letzte Aktualisierung 2026-08-29/
+09-10) und wurden aufgefrischt.

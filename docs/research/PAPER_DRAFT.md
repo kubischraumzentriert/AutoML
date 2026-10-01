@@ -49,7 +49,11 @@ A further prototype ("Level 2": model selection, tuning, and ensembling
 performed *inside* each outer-CV fold) shows a mixed, on-average slightly
 negative result relative to Level 1 across the same 6 external datasets,
 at 5-30x the compute cost — a negative finding we report because it
-bounds, rather than inflates, the workflow's claimed value. Two further
+bounds, rather than inflates, the workflow's claimed value. A paired
+significance test of this result, originally underpowered at n = 6,
+was re-run once the benchmark set reached n = 15 for an unrelated
+follow-up question and confirms the null result at adequate power
+(p = 0.64). Two further
 trust-layer extensions test whether Level 2's inner decisions can be
 trusted at all: a decision-stability check finds that its model-
 selection step is unstable under small seed perturbations in most cases,
@@ -470,6 +474,26 @@ that narrows the explanation space instead of leaving it open. The
 reproducible code for both comparisons is in
 `analysis/p2_level2_significance_test.R`.
 
+**We later re-ran the significance test itself on the larger n = 15
+benchmark set assembled for the decision-stability question (Section
+7.3), closing the power gap Demšar's guidance had flagged.** The
+original 6-dataset result (V = 8, p = 0.6875) carried an explicit caveat:
+Demšar recommends roughly 8-10 datasets for the Wilcoxon test to have
+reasonable power, so a non-significant result at n = 6 could not
+distinguish a true null effect from simple under-power. Using the same
+Level-2-vs-best-prior deltas, extended with the 9 additional datasets
+from the two independent Weg-B extensions (Section 7.3), the pattern
+shifts numerically (9 wins, 6 losses, mean delta ≈ +1.3 points — pulled
+upward mainly by two strongly imbalanced binary datasets, `ozone-
+level-8hr` +20.1 and `jm1` +9.0 points) but remains statistically
+indistinguishable from zero: V = 69, p = 0.6387. A sensitivity check
+excluding those two outliers (n = 13) gives an even flatter result
+(V = 40, p = 0.7354), so the null finding is not an artifact of a thin
+tail being masked by two large deltas either direction. With adequate
+power for the first time, this is a materially more defensible null
+result than the original n = 6 reading, not merely a repeated one.
+Reproducible code: `analysis/p2_level2_significance_test_n15.R`.
+
 **We also checked whether simple dataset meta-features explain the
 pattern, and found none that do.** Beyond dataset size and class
 imbalance (already ruled out informally in the original rollout) and
@@ -629,11 +653,16 @@ conflated in a single z-score.
   comparison** (Section 6, a paired Wilcoxon signed-rank test following
   [@Demsar2006]) — the other per-dataset deltas throughout Sections 5
   and 7 are still reported as point estimates without a matching formal
-  test or a multiple-comparisons correction. With only 6-7 datasets per
-  comparison, any such test would have limited power regardless
-  ([@Demsar2006] recommends on the order of 8-10 datasets for the
-  Wilcoxon test used here); this is a real constraint of the sample
-  size, not a gap that more careful statistics alone would close.
+  test or a multiple-comparisons correction. The Level 1-vs-2 test
+  itself was originally run at n = 6 (below [@Demsar2006]'s recommended
+  8-10-dataset minimum for reasonable power) but has since been re-run
+  at n = 15, once the benchmark set was independently extended for the
+  decision-stability question (Section 6/7.3) — the null result holds
+  at adequate power (p = 0.6387), so this specific test is no longer
+  power-limited. The other comparisons throughout Sections 5 and 7 are
+  still at 6-7 datasets and remain genuinely power-limited; this is a
+  real constraint of their sample size, not a gap that more careful
+  statistics alone would close.
 - **Level 2's default tuning budget is small** (10 evaluations per arm
   per outer fold) for compute reasons; unlike in an earlier version of
   this manuscript, this is no longer an untested gap — Section 6 reports
