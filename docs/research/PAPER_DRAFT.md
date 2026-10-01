@@ -1,10 +1,16 @@
 # A Reproducible, Trust-Centered AutoML Workflow for Tabular Classification in R/mlr3
 
 **Status: DRAFT (2026-08-29, first full pass; Related Work/Section 3
-updated 2026-08-29 with a first literature pass). Not submitted
-anywhere. Written in English, even though the underlying repository is
-documented in German — see "How to use this draft" at the end for what
-still needs human decision-making before this is submission-ready.**
+updated 2026-08-29 with a first literature pass; Section 6/8 extended
+2026-08-30 with the formal Research Aspect work - significance test,
+tuning-budget test, metafeature analysis; Section 7.3 extended
+2026-09-01 with the n=10/n=15 decision-stability re-tests. Reviewed for
+staleness 2026-10-01, still accurate as of that date.) Not submitted
+anywhere - submission itself remains paused for the 6-month public-repo-
+age gate (see `BACKLOG.md` "JOSS-Einreichung pausiert", earliest eligible
+~2027-01-07). Written in English, even though the underlying repository
+is documented in German — see "How to use this draft" at the end for
+what still needs human decision-making before this is submission-ready.**
 
 **Target venue chosen (2026-08-29): JOSS (Journal of Open Source
 Software).** JOSS reviews the software itself via a short (750-1750

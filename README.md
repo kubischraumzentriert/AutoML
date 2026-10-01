@@ -1,7 +1,7 @@
 ---
 title: "MLR3 Classification AutoML Template"
 author: "Andre Endress"
-date: "2026-09-10"
+date: "2026-10-01"
 ---
 
 # MLR3 Classification AutoML Template

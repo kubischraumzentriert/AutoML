@@ -13,7 +13,7 @@ authors:
 affiliations:
   - name: Independent Researcher
     index: 1
-date: 29 August 2026
+date: 1 October 2026
 bibliography: paper.bib
 ---
 
@@ -28,6 +28,15 @@ directly against joss.readthedocs.io/en/latest/paper.html and the
 openjournals/joss repository docs rather than assumed from memory. Word
 count target for JOSS is 750-1750 words; this draft currently sits
 within that range but has not been trimmed by an editor pass yet.
+
+STATUS (2026-10-01): still DRAFT, still NOT submitted - submission itself
+remains paused for the 6-month public-repo-age gate (first commit
+2026-07-07, earliest eligible ~2027-01-07, see BACKLOG.md "JOSS-
+Einreichung pausiert"). `date:` field above bumped to reflect this
+revision pass, not an actual submission date (JOSS sets that at review
+time). No structural changes this pass - content still reflects
+`docs/research/PAPER_DRAFT.md` as of the Research-Aspect work
+(2026-08-30) plus the n=15 decision-stability extension (2026-09-01).
 -->
 
 # Summary
