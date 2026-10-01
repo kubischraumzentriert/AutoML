@@ -4912,3 +4912,77 @@ Zaehlmethode, kein echtes Platzproblem. Status-Kommentar in
 `joss/paper.md` entsprechend korrigiert (3 STATUS-Eintraege jetzt dort:
 2026-08-29 Erstfassung, 2026-10-01 Datumsauffrischung, 2026-10-01
 Scope-Fit-Absatz+Kuerzung+korrigierte Wortzahl).
+
+## Zentrale experiments.db: Merge-Lauf + Luecke bei den 15 CC18-Datensaetzen geschlossen (2026-10-01)
+
+**Nutzeranfrage**: "sollten wir den Stand der Projekte und die Ergebnisse
+vielleicht im Template speichern oder am besten in der experiments.db ...
+oder ein Dokument, wo alle Versuche und Ergebnisse als Zusammenfassung zu
+den Projekten steht". Antwort: Grossteil davon existiert schon
+(`merge_project_experiments.R`/ADR-001 fuer die zentrale DB,
+`ML_Learning/README.md` als Projekt-Index) - auf Nutzeranweisung den
+Merge-Lauf tatsaechlich ausgefuehrt statt nur behauptet.
+
+**Merge-Lauf-Ergebnis**: Stand war bereits aktuell (alle 35 gefundenen
+Quell-`experiments.db` schon gemergt, keine neu) - zentrale DB hatte 38
+Projekte, 10000+ `metric_result`-Zeilen. 2 Quellen korrekt uebersprungen
+(Schutzmechanismus: ">1 project-Zeile in der Quelle"): `tweet`
+(poisson+tweedie in einer DB) und die `MLR3_Regression`-eigene zentrale
+DB selbst (faelschlich als Quelle gefunden ueber `search_roots`, aber
+folgenlos abgefangen).
+
+**Echte Luecke gefunden**: die 15 externen OpenML-CC18-Benchmark-
+Datensaetze (`docs/research/EXTERNAL_BENCHMARK_SET.md`, "Weg B",
+dieselben 15 wie im JOSS-Paper-Signifikanztest `p2_level2_significance_
+test_n15.R`) hatten **keine eigene `experiments.db`** - schlanke Ad-hoc-
+Skripte ohne eigenes Projektverzeichnis/DB-Logging, ihre Ergebnisse
+steckten nur als Zahlen in `BACKLOG.md`-Prosa (zwei getrennte "Weg
+B"-Tranchen-Abschnitte) und in der bereits vorhandenen Rohwerte-CSV
+`_artifacts/benchmark_statistics_report_cc18_n15.csv` (Quelle fuer
+`163_benchmark_statistics_report_n15.R`).
+
+**Geschlossen**: neues, einmaliges Backfill-Skript
+[`analysis/backfill_cc18_n15_into_experiments_db.R`](analysis/backfill_cc18_n15_into_experiments_db.R)
+traegt die Protokoll-v2-Ergebnisse (faire getunte Baselines,
+3-fache Outer-CV, Metrik BAcc, 6 Arme: `ranger_default`/
+`lightgbm_default`/`tuned_ranger`/`tuned_lightgbm`/
+`best_single_tuned_model`/`workflow_ranger`) aus der vorhandenen CSV
+nach, je Datensatz als eigenes `project`/`workflow`/`run` mit 6
+`model_config`s x 3 `metric_result`s (BAcc, BAcc-SD, BAcc-Worst-Fold) -
+analog `migrate_systematic_evaluation_to_evidence.R`s Vorgehen beim
+historischen Nachtragen. Idempotent (ueberspringt bereits vorhandene
+Projekte), Backup vor dem Schreiben. Stichprobe (`ilpd`) gegen die
+Quell-CSV via `v_model_results` geprueft - passt. Zentrale DB jetzt
+**53 Projekte**.
+
+**Konsolidierte Ergebnistabelle** (bester Arm je Datensatz, BAcc,
+Protokoll v2) - vorher nie an einer Stelle zusammengefasst (nur in 2
+getrennten Tranchen-Tabellen):
+
+| Datensatz | bester Arm | BAcc |
+|---|---|---:|
+| `analcatdata-authorship` | tuned_lightgbm | 0.9921 |
+| `mice-protein` | tuned_lightgbm | 0.9920 |
+| `optdigits` | tuned_lightgbm | 0.9840 |
+| `phishing-websites` | tuned_lightgbm | 0.9688 |
+| `sick` | workflow_ranger | 0.9624 |
+| `mfeat-karhunen` | tuned_lightgbm | 0.9580 |
+| `qsar-biodeg` | workflow_ranger | 0.8512 |
+| `ozone-level-8hr` | workflow_ranger | 0.8124 |
+| `mfeat-morphological` | tuned_lightgbm | 0.7284 |
+| `ilpd` | workflow_ranger | 0.7141 |
+| `jm1` | workflow_ranger | 0.6656 |
+| `eucalyptus` | tuned_lightgbm | 0.6356 |
+| `blood-transfusion` | workflow_ranger | 0.6294 |
+| `dresses-sales` | tuned_lightgbm | 0.6147 |
+| `cmc` | tuned_ranger | 0.5294 |
+
+`workflow_ranger` gewinnt bei 6/15 (v.a. kleinere/unausgeglichenere
+Datensaetze: `sick`, `qsar-biodeg`, `ozone-level-8hr`, `ilpd`, `jm1`,
+`blood-transfusion`), `tuned_lightgbm` bei 8/15 (groessere/
+ausgeglichenere), `tuned_ranger` bei 1/15 (`cmc`) - deckt sich mit dem
+bereits dokumentierten Einzelbefund (Abschnitt "P1.2 Schritt 2", 162/163:
+globaler Friedman/Nemenyi-Rang mittelt ueber alle 15, verdeckt aber nicht
+die datensatzspezifische `workflow_ranger`-Staerke bei kleinen/
+unausgeglichenen Faellen). Keine neue Erkenntnis, aber jetzt an EINER
+Stelle nachschlagbar statt ueber 2 Tranchen-Abschnitte verteilt.
