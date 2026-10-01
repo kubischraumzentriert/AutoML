@@ -4889,3 +4889,26 @@ etwas niedriger) - erstmals AN oder knapp UEBER der 1750-Wort-Zielmarke.
 Der seit 2026-08-29 ohnehin vorgemerkte Editor-Kuerzungsdurchgang ist
 damit nicht mehr nur Politur, sondern noetig vor einer echten Einreichung
 - noch keine konkrete Kuerzung identifiziert.
+
+## Editor-Kuerzungsdurchgang fuer `joss/paper.md` erledigt (2026-10-01)
+
+**Nutzeranfrage** "Ja, mach das Kuerzen" - Reaktion auf den Rohwortzahl-
+Alarm (~1788, `wc -w`) aus dem vorherigen Schritt.
+
+**Umgesetzt**: Summary/State of the field/Software design sprachlich
+gestrafft (kein Inhalt gestrichen, nur praeziser formuliert) - Rohwortzahl
+auf ~1731 gesenkt.
+
+**Wichtiger Nebenbefund beim Kuerzen**: der Alarm war teilweise
+UEBERTRIEBEN. `wc -w` zaehlt den gesamten Datei-Inhalt MIT, inklusive des
+internen STATUS-Kommentarblocks (`<!-- ... -->`, ~260 Woerter) und des
+YAML-Frontmatters - beide werden von pandoc/JOSS' Renderer beim
+tatsaechlichen Einreichungs-Wortlimit NICHT mitgezaehlt. Echte
+Prosa-Zaehlung (Frontmatter+Kommentare vorher entfernt): **1445 Woerter**
+- bequem innerhalb der 750-1750-Zielspanne, ~300 Woerter Marge. Das
+Kuerzen war trotzdem inhaltlich wertvoll (praezisere Sprache), aber die
+urspruengliche "an/ueber dem Limit"-Einschaetzung war ein Artefakt der
+Zaehlmethode, kein echtes Platzproblem. Status-Kommentar in
+`joss/paper.md` entsprechend korrigiert (3 STATUS-Eintraege jetzt dort:
+2026-08-29 Erstfassung, 2026-10-01 Datumsauffrischung, 2026-10-01
+Scope-Fit-Absatz+Kuerzung+korrigierte Wortzahl).

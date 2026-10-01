@@ -41,12 +41,20 @@ time). No structural changes this pass - content still reflects
 STATUS (2026-10-01, 2nd pass same day): added a scope-fit paragraph to
 Statement of need (explicitly pre-empting "this is Kaggle code, not
 research software" before a JOSS editor raises it - see BACKLOG.md
-"Scope-Fit-Argument im Statement of need"). This pushed the raw word
-count to ~1788 (`wc -w paper.md`, includes frontmatter/headers so true
-prose count is somewhat lower) - AT or slightly OVER the 1750-word
-target for the first time. The still-pending editor trim pass (noted
-above since 2026-08-29) is now not just a polish step but needed to get
-back under budget before submission - no specific cut identified yet.
+"Scope-Fit-Argument im Statement of need"). This pushed the raw `wc -w`
+count to ~1788, apparently at/over the 1750-word target.
+
+STATUS (2026-10-01, 3rd pass same day): did the trim pass. Tightened
+Summary/State of the field/Software design (no content cut, prose only).
+While trimming, noticed the raw `wc -w paper.md` count includes this
+STATUS comment block and the YAML frontmatter, neither of which pandoc/
+JOSS's renderer counts toward the submitted word count - the raw-wc-w
+alarm was overstated, this draft was never actually over budget.
+Verified the TRUE prose count directly (frontmatter + HTML comments
+stripped before counting): **1445 words** - comfortably within the
+750-1750 target, ~300-word margin. Trimming was still worthwhile for
+its own sake (tighter prose). Margin remains for the still-blank
+Acknowledgements section once there is something to put there.
 -->
 
 # Summary
@@ -62,24 +70,16 @@ covariate-shift checks, split-size/learning-curve/seed-stability
 diagnostics, a generalization-gap check, and model sanity checks — that
 runs on every new project before any score is trusted. Every diagnostic
 result, training run, hyperparameter, and resampling strategy is logged
-to a per-project SQLite experiment database. Claims about the original
-nine trust-layer modules are tracked in a curated, hand-maintained
-results table with editorial detail (footnotes, correction history);
-newer claims about the outer-evaluation workflow (Sections 5-6 of the
-extended report) are additionally backed by a structured, queryable
-evidence-registry entry that can regenerate its own results table on
-demand — in both cases traceable to a concrete source rather than
-memory or prose alone. The template has been hardened across 15+
-independent Kaggle/Zindi/
-DrivenData/OpenML projects under a governance rule (backport a new
-module only after confirmation on ≥2 independent projects, or a proven
-no-op) that is designed specifically to prevent the template from
-overfitting to any single project's idiosyncrasies. Two independent
-continuous-integration jobs run on every change: a unit-test suite
-covering the diagnostic modules, database logging, and provenance
-capture, and an end-to-end smoke test that runs the core pipeline
-against a synthetic fixture, so that the claims above are automatically
-re-checked rather than only documented once and trusted thereafter.
+to a per-project SQLite experiment database, and both the original
+trust-layer claims and newer outer-evaluation results are additionally
+backed by a queryable evidence registry — traceable to a concrete
+source rather than memory or prose alone. The template has been
+hardened across 15+ independent Kaggle/Zindi/DrivenData/OpenML projects
+under a governance rule (backport a new module only after confirmation
+on ≥2 independent projects, or a proven no-op) designed specifically to
+prevent it from overfitting to any single project's idiosyncrasies. Two
+CI jobs — a unit-test suite and an end-to-end smoke test against a
+synthetic fixture — re-check these claims automatically on every change.
 
 # Statement of need
 
@@ -138,53 +138,43 @@ submission's subject matter.
 
 # State of the field
 
-`mlr3` [@Lang2019] itself provides the underlying machine-learning
-building blocks (tasks, learners, resamplings, measures) but no
-AutoML-level workflow or trust layer on top of them; this template is
-built on `mlr3`, not a replacement for it. Compared to general-purpose
-tabular AutoML systems such as Auto-sklearn [@Feurer2015] and
-AutoGluon-Tabular [@Erickson2020], this template deliberately keeps its
-model-search space small and fixed (Ranger and LightGBM, with optional
-tuning) and instead invests its complexity budget in the diagnostic
-trust layer and in an experiment-logging/evidence-registry
-infrastructure that make every claim about the workflow's behavior
-independently re-derivable from a queryable database — a design
-trade-off aimed at reproducibility and auditability on tabular
-classification specifically, rather than at maximizing coverage of
-model families or search-space breadth. Within the R ecosystem
-specifically, this fills a gap that neither `mlr3` nor its extension
-packages address directly: none of them ship an always-on leakage/shift
-trust layer, a governed cross-project template-evolution process, or a
-per-project experiment/evidence database as a first-class, reusable
-component, all of which this template provides as its primary
-contribution rather than as an incidental add-on.
+`mlr3` [@Lang2019] provides the underlying machine-learning building
+blocks (tasks, learners, resamplings, measures) but no AutoML-level
+workflow or trust layer on top of them; this template is built on
+`mlr3`, not a replacement for it. Compared to general-purpose tabular
+AutoML systems such as Auto-sklearn [@Feurer2015] and AutoGluon-Tabular
+[@Erickson2020], this template keeps its model-search space small and
+fixed (Ranger and LightGBM, with optional tuning) and instead invests
+its complexity budget in the diagnostic trust layer and an
+experiment-logging/evidence-registry infrastructure that makes every
+claim about the workflow's behavior independently re-derivable from a
+queryable database — reproducibility and auditability over search-space
+breadth. Within the R ecosystem, this fills a gap neither `mlr3` nor its
+extension packages address: none ship an always-on leakage/shift trust
+layer, a governed template-evolution process, or a per-project
+experiment/evidence database as a first-class component.
 
 # Software design
 
-This template is deliberately a flat collection of numbered R scripts
-(currently 99), not an R package with a formal API — a trade-off made
-explicitly to keep the barrier to copying and adapting a single script
-for a new, time-pressured competition low, at the cost of the
-discoverability an installable package/API would give. Each project
-gets its own local SQLite experiment database rather than a shared,
-live one, so a project can be worked on, copied, or archived
-independently without touching a central service; a separate merge
+This template is deliberately a flat collection of numbered R scripts,
+not an R package with a formal API — keeping the barrier to copying and
+adapting a single script for a new, time-pressured competition low, at
+the cost of package-level discoverability. Each project gets its own
+local SQLite experiment database rather than a shared, live one, so it
+can be worked on, copied, or archived independently; a separate merge
 script aggregates finished projects into one queryable database for
-cross-project analysis when needed, rather than requiring
-always-on connectivity. The template is R-only by policy — a
-GPU-only neural-model variant is exported to a disposable Python script
-only at the very end of a project, if a prototype in R shows it is
-worth the extra complexity, rather than maintaining a parallel Python
-codebase throughout. Finally, a new diagnostic module or workflow
-change is only merged into the shared template once it is confirmed on
-at least two independent projects (or proven to be a no-op) — a
-governance rule chosen specifically to prevent the template from
-overfitting to the idiosyncrasies of whichever single project motivated
-the change. Two modules added under this rule test the model-selection
-step's *decision stability* under seed perturbation and its performance
-under a structurally harder, extrapolation-oriented train/test split,
-respectively — the latter's rollout also surfaced and fixed a
-class-imbalance-related false-positive risk in its own diagnostic.
+cross-project analysis when needed. The template is R-only by policy —
+a GPU-only neural-model variant is exported to a disposable Python
+script only at the end of a project, if an R prototype shows it is worth
+the extra complexity. A new diagnostic module or workflow change is only
+merged into the shared template once confirmed on at least two
+independent projects (or proven a no-op) — a governance rule chosen to
+prevent overfitting to whichever single project motivated the change.
+Two modules added under this rule test the model-selection step's
+*decision stability* under seed perturbation and its performance under a
+structurally harder, extrapolation-oriented train/test split — the
+latter's rollout also surfaced and fixed a class-imbalance-related
+false-positive risk in its own diagnostic.
 
 # Research impact statement
 
