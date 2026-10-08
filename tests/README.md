@@ -127,3 +127,8 @@ Public Score 0.95785 unveraendert. Kein echter Score registriert/Upload.
 Seed-Paare. Der echte Screeninglauf 093 wurde separat ausgefuehrt und in der
 Projekt-DB mit sechs Modellkonfigurationen protokolliert; Ergebnis ohne
 Seed-/Thread-Scoreeffekt.
+
+`094_lightgbm_seed_thread_cv.R` bestaetigte den Befund mit 30 Fits auf einer
+identischen 5-Fold-Zerlegung: sechs gleiche CV-BAcc-Mittelwerte und null
+gepaarte Thread-Differenzen. Der Lauf ist als eigener CV-Run in SQLite und
+unter `_artifacts/lightgbm_seed_thread_cv_*` abgelegt.

@@ -170,6 +170,10 @@ lightgbm_seed_thread_results_path <- file.path(artifact_dir, "lightgbm_seed_thre
 lightgbm_seed_thread_paired_path <- file.path(artifact_dir, "lightgbm_seed_thread_paired.csv")
 lightgbm_seed_thread_summary_path <- file.path(artifact_dir, "lightgbm_seed_thread_summary.csv")
 lightgbm_seed_thread_artifact_path <- file.path(artifact_dir, "lightgbm_seed_thread_artifact.rds")
+lightgbm_seed_thread_cv_results_path <- file.path(artifact_dir, "lightgbm_seed_thread_cv_results.csv")
+lightgbm_seed_thread_cv_paired_path <- file.path(artifact_dir, "lightgbm_seed_thread_cv_paired.csv")
+lightgbm_seed_thread_cv_summary_path <- file.path(artifact_dir, "lightgbm_seed_thread_cv_summary.csv")
+lightgbm_seed_thread_cv_artifact_path <- file.path(artifact_dir, "lightgbm_seed_thread_cv_artifact.rds")
 
 class_weight_results_path <- file.path(artifact_dir, "class_weight_results.csv")
 lightgbm_family_results_path <- file.path(artifact_dir, "lightgbm_family_results.csv")

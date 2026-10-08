@@ -179,7 +179,8 @@ Probabilitaeten bit-identisch zum bisherigen gewichteten Mittel; Modell-SHA
 unveraendert. Evidenz: _artifacts/bridge_template_noop.log. Kein reales
 Full-Training/Upload und keine Aenderung am lokalen S6E10-Projekt.
 
-Noch nicht committet/gepusht; letzter Remote-Stand weiterhin 694c88c.
+Die Registrierungsbruecke ist in `fd2b312` committet und nach `origin/main`
+gepusht. Die aktuelle CV-Erweiterung ist noch uncommittet.
 Volle Suite: 38 Testdateien, UTF-8, ohne Fehler; nur bestehende
 Paket-Build-Warnungen. Produktionsgraph mit 20 Targets geparst.
 Evidenz: _artifacts/bridge_full_suite_utf8.log. Tatsachliche tar_make()-
@@ -204,3 +205,12 @@ Artefakte: `_artifacts/lightgbm_seed_thread_results.csv`,
 `_artifacts/lightgbm_seed_thread_db_retry.log`. Der erste Lauf hatte nur
 einen SQLite-Loggingfehler wegen NULL-Holdout-Folds; der erfolgreiche Lauf
 verwendet explizit `folds = 1`. Keine Produktionssubmission und kein Upload.
+
+Gepaarte CV-Bestaetigung ebenfalls abgeschlossen: `094_lightgbm_seed_thread_cv.R`
+instanziiert genau dieselben 5 Folds fuer alle sechs Settings (30 Fits).
+Alle CV-BAcc-Mittelwerte = 0.8756581, Seed-SD = 0, gepaarte Thread-
+Differenzen = 0; Threads 4 erneut langsamer. DB-Run
+`dc36a921-0fe1-4457-8872-dd7e4b033921`, Artefakte unter
+`_artifacts/lightgbm_seed_thread_cv_*`. Der absolute CV-Wert ist nicht mit
+dem Holdout-Wert gleichzusetzen; der Nullbefund zur Seed-/Thread-Wahl ist
+jedoch ueber beide Designs stabil. Kein Produktionsmodell geaendert.

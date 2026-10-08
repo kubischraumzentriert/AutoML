@@ -115,6 +115,13 @@ Logs/No-op-Bericht unter _artifacts/p0_*. Weitere Kandidaten bleiben offen:
   Threads 4 waren langsamer; kein Score-Hebel und kein Template-Defaultwechsel.
   Run `6f204de2-489b-4adc-9bc0-91edd1f44c09`, sechs Modellkonfigurationen.
   Artefakte: `lightgbm_seed_thread_{results,paired,summary}.csv` und `.rds`.
+- [x] P2: Gepaarte LightGBM-CV-Bestaetigung (2026-10-08).
+  `094_lightgbm_seed_thread_cv.R`: dieselben 5 instanziierten Folds fuer
+  dieselben 3 Seeds x 2 Threadzahlen, 30 Fits. Alle sechs CV-BAcc-Werte =
+  0.8756581, Seed-SD = 0, gepaarte Thread-Deltas = 0. Threads 4 erneut
+  langsamer. Der absolute CV-Wert weicht vom Holdout ab, der Seed-/Thread-
+  Befund bleibt aber identisch; kein Template-Defaultwechsel.
+  Run `dc36a921-0fe1-4457-8872-dd7e4b033921`, Artefakte `lightgbm_seed_thread_cv_*`.
 - [ ] P2: kontrollierte LightGBM-Seeds/Threads und gepaarte Bestaetigung
   als generischen Versuchsbaustein pruefen. Ein getestetes Feature oder
   Blend wird nicht allein wegen eines kleinen positiven Mittels deployed.
