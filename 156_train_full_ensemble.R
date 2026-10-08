@@ -40,6 +40,7 @@ train[, (target_col_name) := as.factor(get(target_col_name))]
 feature_levels <- lapply(train[, ..feature_char_cols], levels)
 
 task_full <- as_task_classif(train, target = target_col_name, id = paste0(task_id_prefix, "_full_ensemble"))
+task_full <- apply_positive_class(task_full, positive_class)
 # Gewichtet, IDENTISCH zum etablierten Deployment-Pfad (150_train_full_
 # model.R nutzt denselben add_balanced_class_weights()-Helfer) - behebt
 # denselben Bug wie in 148_ensemble_candidate_pool.R (siehe dort/TARGETS.md):
@@ -101,7 +102,8 @@ db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = sprintf(
 model_path <- final_ensemble_full_path(db_run_id)
 saveRDS(
   list(members = trained_members, feature_levels = feature_levels,
-       class_names = composition$class_names, target_col_name = target_col_name),
+       class_names = composition$class_names, target_col_name = target_col_name,
+       feature_set = "raw", positive_class = positive_class),
   model_path
 )
 
@@ -115,7 +117,8 @@ mconf_id <- db_create_model_config(
       name = "ensemble",
       task_type = "classif",
       composition = composition_str,
-      n_members = length(trained_members)
+      n_members = length(trained_members),
+      positive_class = positive_class
     ),
     preprocessing = list(label = "impute_median_mode", factor_levels_saved = TRUE),
     features = list(

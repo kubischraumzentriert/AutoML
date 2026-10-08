@@ -7,6 +7,7 @@ suppressPackageStartupMessages({
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
 source(file.path(project_dir, "provenance.R"))
+source(file.path(project_dir, "modules", "submission_registry.R"))
 
 parse_cli_args <- function(args = commandArgs(trailingOnly = TRUE)) {
   out <- list()
@@ -25,13 +26,14 @@ parse_cli_args <- function(args = commandArgs(trailingOnly = TRUE)) {
     } else {
       key <- stripped
       if (i == length(args) || startsWith(args[[i + 1L]], "--")) {
-        value <- "TRUE"
+        stop("Wert fehlt fuer --", key, call. = FALSE)
       } else {
         i <- i + 1L
         value <- args[[i]]
       }
     }
 
+    if (key %in% names(out)) stop("Doppeltes Argument: --", key, call. = FALSE)
     out[[key]] <- value
     i <- i + 1L
   }
@@ -55,7 +57,7 @@ parse_score <- function(value) {
 }
 
 submission_file_info <- function(source_path) {
-  if (!file.exists(source_path)) {
+  if (!file.exists(source_path) || dir.exists(source_path)) {
     stop("Submission-Datei nicht gefunden: ", source_path, call. = FALSE)
   }
 
@@ -69,97 +71,34 @@ submission_file_info <- function(source_path) {
   )
 }
 
-latest_model_artifact_info <- function(con, model_name, workflow_name) {
-  model_path <- db_get_latest_model_artifact_path(con, model_name, workflow_name = workflow_name)
-  if (is.na(model_path) || !nzchar(model_path) || !file.exists(model_path)) {
-    return(list(path = NA_character_, sha256 = NA_character_))
-  }
-  normalized_path <- normalizePath(model_path, winslash = "/", mustWork = TRUE)
-  list(path = normalized_path, sha256 = sha256_file(normalized_path))
+run_submission_registration <- function() {
+  args <- parse_cli_args()
+  allowed <- c("submission-path", "platform", "competition", "status", "metric-name",
+    "public-score", "private-score", "model-name", "workflow-name", "mconf-id", "notes")
+  if (any(!names(args) %in% allowed)) stop("Unknown registration argument: ", paste(setdiff(names(args), allowed), collapse = ", "))
+  submission_file <- arg_value(args, "submission-path", submission_path)
+  file_info <- submission_file_info(submission_file)
+  platform <- arg_value(args, "platform", Sys.getenv("SUBMISSION_PLATFORM", "kaggle"))
+  environment_competition <- Sys.getenv("SUBMISSION_COMPETITION", "")
+  competition <- arg_value(args, "competition", if (nzchar(environment_competition)) environment_competition else NULL)
+  status <- arg_value(args, "status", "submitted")
+  metric_name <- arg_value(args, "metric-name", NULL)
+  public_score <- parse_score(arg_value(args, "public-score", NA_character_))
+  private_score <- parse_score(arg_value(args, "private-score", NA_character_))
+  model_name <- arg_value(args, "model-name", NULL)
+  workflow_name <- arg_value(args, "workflow-name", NULL)
+  mconf_id <- arg_value(args, "mconf-id", NULL)
+  user_notes <- arg_value(args, "notes", NA_character_)
+  con <- db_connect()
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+  result <- register_validated_submission(con, project_name, file_info, platform, competition,
+    status, metric_name, public_score, private_score, mconf_id, model_name, workflow_name, user_notes)
+  cat("=== Validated submission registered (no upload performed) ===\n")
+  cat("submission_id:", result$submission_id, "\nmconf_id:", result$mconf_id,
+    "\ncandidate_run_id:", result$candidate_run_id, "\nevent_run_id:", result$event_run_id, "\n")
+  cat("platform:", platform, "\ncompetition:", result$competition, "\nmetric:", result$metric_name, "\n")
+  cat("public_score:", result$public_score, "\nprivate_score:", result$private_score, "\n")
+  cat("submission_sha256:", file_info$sha256, "\nmodel_sha256:", result$model_sha256,
+    "\nsubmission_file:", file_info$path, "\n")
 }
-
-args <- parse_cli_args()
-
-submission_file <- normalizePath(
-  arg_value(args, "submission-path", submission_path),
-  winslash = "/",
-  mustWork = FALSE
-)
-platform <- arg_value(args, "platform", Sys.getenv("SUBMISSION_PLATFORM", "kaggle"))
-competition <- arg_value(args, "competition", Sys.getenv("SUBMISSION_COMPETITION", project_name))
-status <- arg_value(args, "status", "submitted")
-metric_name <- arg_value(args, "metric-name", baseline_measure_ids[[1]])
-public_score <- parse_score(arg_value(args, "public-score", NA_character_))
-private_score <- parse_score(arg_value(args, "private-score", NA_character_))
-model_name <- arg_value(args, "model-name", resolve_submission_model_name())
-workflow_name <- arg_value(args, "workflow-name", "150_train_full_model.R")
-mconf_id <- arg_value(args, "mconf-id", NA_character_)
-user_notes <- arg_value(args, "notes", "")
-
-if (!status %in% c("submitted", "late_submission")) {
-  stop("status muss 'submitted' oder 'late_submission' sein.", call. = FALSE)
-}
-
-con <- db_connect()
-on.exit(DBI::dbDisconnect(con), add = TRUE)
-
-if (is.na(mconf_id) || !nzchar(mconf_id)) {
-  mconf_id <- db_get_latest_model_config_id(con, model_name, workflow_name = workflow_name)
-}
-if (is.na(mconf_id) || !nzchar(mconf_id)) {
-  stop(
-    "Keine passende model_config gefunden. Erst 150_train_full_model.R ausfuehren ",
-    "oder --mconf-id explizit uebergeben.",
-    call. = FALSE
-  )
-}
-
-submission_info <- submission_file_info(submission_file)
-model_info <- latest_model_artifact_info(con, model_name, workflow_name)
-manifest <- capture_reproducibility_manifest(
-  model = list(name = model_name, workflow_name = workflow_name, mconf_id = mconf_id),
-  artifacts = list(
-    model_artifact_path = model_info$path,
-    model_artifact_sha256 = model_info$sha256,
-    submission_path = submission_info$path,
-    submission_sha256 = submission_info$sha256,
-    submission_size_bytes = submission_info$size_bytes,
-    submission_mtime = submission_info$mtime
-  ),
-  submission = list(
-    platform = platform,
-    competition = competition,
-    status = status,
-    metric_name = metric_name,
-    public_score = public_score,
-    private_score = private_score
-  ),
-  extra = list(reproducibility_policy = "no_submission_archive_required")
-)
-
-subm_id <- db_log_submission_result(
-  con = con,
-  mconf_id = mconf_id,
-  platform = platform,
-  competition = competition,
-  file_path = submission_info$path,
-  status = status,
-  metric_name = metric_name,
-  public_score = public_score,
-  private_score = private_score,
-  notes = if (nzchar(user_notes)) user_notes else NA_character_,
-  manifest = manifest
-)
-
-cat("=== Submission registriert ===\n")
-cat("submission_id:", subm_id, "\n")
-cat("mconf_id:", mconf_id, "\n")
-cat("platform:", platform, "\n")
-cat("competition:", competition, "\n")
-cat("metric:", metric_name, "\n")
-cat("public_score:", ifelse(is.na(public_score), "NA", public_score), "\n")
-cat("private_score:", ifelse(is.na(private_score), "NA", private_score), "\n")
-cat("submission_sha256:", submission_info$sha256, "\n")
-cat("submission_file:", submission_info$path, "\n")
-cat("model_artifact_sha256:", model_info$sha256, "\n")
-cat("policy: no submission copy archived; reproducibility comes from model/config/git/provenance\n")
+run_submission_registration()

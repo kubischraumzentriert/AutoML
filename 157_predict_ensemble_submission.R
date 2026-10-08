@@ -1,5 +1,4 @@
 rm(list = ls())
-
 suppressPackageStartupMessages({
   library(data.table)
   library(mlr3)
@@ -7,74 +6,56 @@ suppressPackageStartupMessages({
   library(mlr3extralearners)
   library(mlr3pipelines)
 })
-
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
 
-# Analog zu 155_predict_submission.R, aber fuer das Greedy-Ensemble aus
-# 156_train_full_ensemble.R: mittelt die Wahrscheinlichkeiten mehrerer
-# Mitglieder GEWICHTET (Gewicht = wie oft der Kandidat in 149 ausgewaehlt
-# wurde) statt eines einzelnen Learners. Schreibt NACH submission_ensemble_
-# path, NICHT nach submission_path - ueberschreibt die bestehende
-# Einzelmodell-Submission nicht.
-db_con <- db_connect()
-model_path <- db_get_latest_model_artifact_path(db_con, "ensemble", workflow_name = "156_train_full_ensemble.R")
-DBI::dbDisconnect(db_con)
-
-if (is.na(model_path) || !file.exists(model_path)) {
+validate_only <- "--validate-only" %in% commandArgs(trailingOnly = TRUE)
+con <- db_connect()
+record <- db_get_submission_model_record(con, project_name, "ensemble", "156_train_full_ensemble.R")
+DBI::dbDisconnect(con)
+if (nrow(record) == 0L || !file.exists(record$model_path[[1]])) {
+  if (validate_only) stop("No completed ensemble available for validation.")
   source(file.path(project_dir, "156_train_full_ensemble.R"))
-  db_con <- db_connect()
-  model_path <- db_get_latest_model_artifact_path(db_con, "ensemble", workflow_name = "156_train_full_ensemble.R")
-  DBI::dbDisconnect(db_con)
+  validate_only <- FALSE
+  con <- db_connect()
+  record <- db_get_submission_model_record(con, project_name, "ensemble", "156_train_full_ensemble.R")
+  DBI::dbDisconnect(con)
 }
+source(file.path(project_dir, "provenance.R"))
+source(file.path(project_dir, "modules", "submission_contract.R"))
+source(file.path(project_dir, "modules", "submission_artifacts.R"))
 
-model_bundle <- readRDS(model_path)
-members <- model_bundle$members
-feature_levels <- model_bundle$feature_levels
-class_names <- model_bundle$class_names
-
-test <- fread(test_path)
-test_ids <- test[[id_col]]
-test[, (id_col) := NULL]
-for (col in names(feature_levels)) {
-  test[[col]] <- factor(test[[col]], levels = feature_levels[[col]])
-}
-
-cat(sprintf("=== Ensemble-Vorhersage: %d Mitglieder ===\n", length(members)))
-total_weight <- sum(vapply(members, `[[`, integer(1), "weight"))
-prob_sum <- NULL
-response_via_argmax <- NULL
-for (member in members) {
-  pred <- member$learner$predict_newdata(test)
-  cat(sprintf("  %s (Gewicht %d/%d)\n", member$label, member$weight, total_weight))
-  weighted_prob <- pred$prob[, class_names, drop = FALSE] * member$weight
-  prob_sum <- if (is.null(prob_sum)) weighted_prob else prob_sum + weighted_prob
-}
-prob_avg <- prob_sum / total_weight
-response_via_argmax <- factor(class_names[max.col(prob_avg, ties.method = "first")], levels = class_names)
-
-# Submission-Format haengt an der ZIELMETRIK, identische Logik wie
-# 155_predict_submission.R.
-prob_metric <- is_threshold_independent_metric(baseline_measure_ids[1])
-
-if (prob_metric && ncol(prob_avg) == 2) {
-  pos <- if (!is.null(positive_class)) as.character(positive_class) else class_names[length(class_names)]
-  if (!pos %in% class_names) {
-    stop("positive_class '", pos, "' ist keine der Klassen (", paste(class_names, collapse = ", "), ").")
+run_ensemble_submission_export <- function() {
+  check_registered_submission_artifact(record)
+  if (!identical(record$mconf_feature_set[[1]], "raw")) stop("Ensemble export requires raw features.")
+  bundle <- readRDS(record$model_path[[1]])
+  if (length(id_col) != 1L) stop("Submission requires one configured ID column.")
+  test <- fread(test_path, colClasses = list(character = id_col))
+  test_ids <- test[[id_col]]
+  validate_submission_ids(test_ids, "Test")
+  test[, (id_col) := NULL]
+  test <- align_submission_factor_levels(test, bundle$feature_levels)
+  predictions <- ensemble_submission_prediction(bundle, test, target_col, positive_class)
+  expected <- submission_prediction_values(predictions,
+    is_threshold_independent_metric(baseline_measure_ids[[1]]), positive_class)
+  sample <- if (file.exists(sample_submission_path)) {
+    fread(sample_submission_path, colClasses = list(character = id_col))
+  } else NULL
+  if (validate_only) {
+    submission <- read_submission_csv(submission_ensemble_path, id_col, target_col, expected$mode)
+    report <- validate_submission_table(submission, test_ids, id_col, target_col, expected, sample)
+  } else {
+    submission <- data.table(test_ids, expected$values)
+    setnames(submission, c(id_col, target_col))
+    report <- write_checked_submission(submission, submission_ensemble_path, test_ids, id_col, target_col, expected, sample)
   }
-  submission <- data.table(test_ids, prob_avg[, pos])
-  setnames(submission, c(id_col, target_col))
-  fwrite(submission, submission_ensemble_path)
-  cat("\n=== Ensemble-Submission erzeugt (prob-Metrik ", baseline_measure_ids[1],
-      ": P(", target_col, "=", pos, ")) ===\n", sep = "")
-  cat("Zeilen:", nrow(submission), "  mean(pred):", round(mean(submission[[target_col]]), 4), "\n")
-} else {
-  submission <- data.table(test_ids, as.character(response_via_argmax))
-  setnames(submission, c(id_col, target_col))
-  fwrite(submission, submission_ensemble_path)
-  cat("\n=== Ensemble-Submission erzeugt (Labels) ===\n")
-  cat("Zeilen:", nrow(submission), "\nKlassenverteilung:\n")
-  print(table(submission[[target_col]]))
+  report <- c(report, list(status = if (validate_only) "validated_existing_file" else "generated_validated",
+    mconf_id = record$mconf_id[[1]], model_sha256 = sha256_file(record$model_path[[1]]),
+    submission_path = submission_ensemble_path, submission_sha256 = sha256_file(submission_ensemble_path),
+    metric_name = baseline_measure_ids[[1]], test_sha256 = sha256_file(test_path), sample_checked = !is.null(sample)))
+  run_id <- log_validated_submission_candidate(report, "157_predict_ensemble_submission.R")
+  cat("=== Ensemble submission contract PASSED ===\nFile:", submission_ensemble_path,
+    "\nModel configuration:", report$mconf_id, "\nValidation DB run:", run_id,
+    "\nSingle-model CSV unchanged; no upload or score recorded.\n")
 }
-cat("\nGespeichert:", submission_ensemble_path, "\n")
-cat("(bestehende submission.csv/Einzelmodell unveraendert)\n")
+run_ensemble_submission_export()

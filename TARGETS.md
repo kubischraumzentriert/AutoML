@@ -69,7 +69,7 @@ Aus dem Terminal (ohne R-Konsole zu öffnen) geht es auch direkt:
 Rscript -e "targets::tar_make()"
 ```
 
-## Unsere Pipeline im Überblick (17 Ziele)
+## Unsere Pipeline im Überblick
 
 `_targets.R` bildet den *finalen* Workflow ab (entspricht den nummerierten
 Skripten `020`/`025`/`070`/`150`/`155`), in vier Phasen:
@@ -82,7 +82,15 @@ Skripten `020`/`025`/`070`/`150`/`155`), in vier Phasen:
 3. **Finale Modelle auf dem Subset** (`model_name` → `final_model_subset`,
    ebenfalls dynamisch verzweigt über `model_feature_sets`).
 4. **Volles Training & Submission** (`train_full`, `full_feature_levels`,
-   `task_full`, `task_full_weighted`, `final_model_full`, `submission`).
+   `task_full`, `task_full_weighted`, `final_model_full`, `final_model_artifacts`,
+   `sample_submission_file`, `submission`).
+
+`final_model_artifacts` persistiert das volle Cache-Modell und seine DB-Referenz
+als zwei Datei-Targets in `_artifacts`. `submission` prueft dieses Artefakt gegen
+Manifest/Parameter und protokolliert die validierte CSV ohne Einreichung/Score.
+Nach echter Einreichung kann 158 die Datei ueber ihren SHA256 genau dieser
+Modell-ID zuordnen. DB und targets-Store gemeinsam sichern; nach DB-Verlust
+DB wiederherstellen oder Artefakt-/Submission-Targets explizit invalidieren.
 
 Die **dynamische Verzweigung** (`pattern = map(...)`) ist der Grund, warum wir
 z.B. für sechs Feature-Familien nicht sechs fast identische `tar_target()`-
@@ -108,10 +116,10 @@ Angenommen, du willst `class_weight_power` von 1.5 auf 1.75 testen:
 
 1. Aendere den Wert in `000_config.R`.
 2. `targets::tar_visnetwork()` - du siehst: `task_full_weighted`,
-   `final_model_full` und `submission` sind jetzt als veraltet markiert
+   `final_model_full`, `final_model_artifacts` und `submission` sind jetzt als veraltet markiert
    (haengen von `class_weight_power` ab). `task_family`, `task_combined` etc.
    bleiben unveraendert (aktuell), da sie nicht von diesem Wert abhaengen.
-3. `targets::tar_make()` - nur die drei veralteten Ziele werden neu berechnet
+3. `targets::tar_make()` - nur die veralteten Ziele werden neu berechnet
    (inkl. dem vollen Ranger-Training, ca. 12 Minuten). Der Rest kommt aus dem
    Cache, ohne neu zu laufen.
 4. `submission.csv` (bzw. `targets::tar_read(submission)`) enthaelt das neue

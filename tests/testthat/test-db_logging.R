@@ -344,6 +344,35 @@ test_that("db_log_predictions() vergibt beim 2. Aufruf pred_seq OHNE Kollision m
 
 # --- db_log_submission_result(): Upsert-Verhalten --------------------------
 
+test_that("submission summary preserves unknown scores only for the same file identity", {
+  db <- make_test_db()
+  on.exit({ dbDisconnect(db$con); unlink(db$path) })
+  project <- db_get_or_create_project(db$con, "score-preservation")
+  workflow <- db_get_or_create_workflow(db$con, project, "script", "model.R")
+  run <- db_create_run(db$con, workflow)
+  model <- db_create_model_config(db$con, run, "classif", "ranger")
+  manifest <- list(artifacts = list(submission_sha256 = "original-hash"), submission = list(public_score = 0.8, private_score = 0.9))
+  id <- db_log_submission_result(db$con, model, "kaggle", "comp", "a.csv", "submitted", "classif.auc",
+    public_score = 0.8, private_score = 0.9, manifest = manifest)
+  manifest$submission$public_score <- NA_real_
+  manifest$submission$private_score <- 0.91
+  expect_identical(db_log_submission_result(db$con, model, "kaggle", "comp", "renamed.csv", "submitted", "classif.auc",
+    private_score = 0.91, manifest = manifest), id)
+  row <- dbGetQuery(db$con, "SELECT subm_public_score, subm_private_score, subm_manifest_json FROM submission_result")
+  expect_equal(row$subm_public_score, 0.8)
+  expect_equal(row$subm_private_score, 0.91)
+  expect_equal(jsonlite::fromJSON(row$subm_manifest_json)$submission$public_score, 0.8)
+  manifest$artifacts$submission_sha256 <- "new-hash"
+  db_log_submission_result(db$con, model, "kaggle", "comp", "new.csv", "submitted", "classif.auc",
+    public_score = 0.85, manifest = manifest)
+  row <- dbGetQuery(db$con, "SELECT subm_public_score, subm_private_score FROM submission_result")
+  expect_equal(row$subm_public_score, 0.85)
+  expect_true(is.na(row$subm_private_score))
+  expect_error(db_log_submission_result(db$con, model, "kaggle", "different-comp", "new.csv", "submitted",
+    "classif.auc", public_score = 0.99), "competition differs")
+  expect_equal(dbGetQuery(db$con, "SELECT subm_public_score FROM submission_result")$subm_public_score, 0.85)
+})
+
 test_that("db_log_submission_result() legt beim 1. Aufruf an, aktualisiert beim 2. (kein Duplikat)", {
   db <- make_test_db()
   on.exit({ dbDisconnect(db$con); unlink(db$path) })

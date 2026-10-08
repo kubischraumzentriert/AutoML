@@ -50,13 +50,71 @@ Logs/No-op-Bericht unter _artifacts/p0_*. Weitere Kandidaten bleiben offen:
   oder neu stratifizierter CV (dort sind Aenderungen beabsichtigt).
   Volle Suite jetzt 35 Testdateien, UTF-8-Locale, ohne Testfehler;
   Evidenz unter _artifacts/p1_*. ADR-003 defensive Qualifikation.
-- [ ] P1: generischer Submission-Vertrag nach 155: Spalten, Anzahl/IDs,
+- [x] P1: generischer Submission-Vertrag in 155 und _targets: Spalten, Anzahl/IDs,
   Wahrscheinlichkeitsspalte, Wertebereich, Faktorstufen, Modellparameter
   und Artefakthashes. Lokales 155_validate_submission.R ist absichtlich
   S6E10-spezifisch und darf nicht unveraendert kopiert werden.
-- [ ] P1: erzeugte/gepruefte Kandidaten getrennt von echter Einreichung
+  modules/submission_contract.R: binaere Wahrscheinlichkeiten oder Labels;
+  IDs als Text (fuehrende Nullen), exakte Sample-/Testreihenfolge,
+  endliche Werte in [0,1], Klassenorientierung und Faktorstufen.
+  Konstante Wahrscheinlichkeiten bleiben erlaubt. Mehrspaltige Multiclass-
+  Prob-Formate werden explizit abgewiesen statt still Labels auszugeben.
+  155 pinnt Projekt/Modell-ID/Datei/Manifest in einem DB-Snapshot und
+  prueft SHA256, Parameter, Feature-Set und ggf. Transformationshash.
+  --validate-only rechnet Prediktionen neu, schreibt aber keine neue CSV
+  oder Modelle; nur Pruefbericht/DB-Lauf. Staged CSV wird vor Uebernahme
+  gelesen/geprueft; Validierungsfehler lassen die bestehende Datei stehen.
+  _targets nutzt denselben Export inkl. Klassenwahl; Model-Caching ueber
+  dessen Graph, kein neuer DB-Modell-Run dort.
+  Sieben neue Testfaelle inkl. echter Rscript-/SQLite-Fixtures und echtem
+  targets-Exportausdruck; volle Suite 37 Dateien, UTF-8, ohne Fehler.
+  Template-health_condition: vorhandene 295753-Zeilen-Labeldatei mit
+  identischem SHA256 roundgetrippt (Format-No-op, keine Scorebehauptung).
+  S6E10 rein lesend: alle IDs/Format/Originalhashes und 256 frische
+  P(TRUE)-Vorhersagen geprueft; Originaldatei/DB/Modell unveraendert.
+  CI-Nacharbeit aus P1: eigene Smoke-Config um apply_positive_class ergaenzt,
+  Konsistenztest und echter isolierter 023-Lauf (800 Zeilen) bestanden.
+  Logs/Berichte unter _artifacts/submission_*. Noch kein Commit/Push.
+- [x] P1: erzeugte/gepruefte Kandidaten getrennt von echter Einreichung
   protokollieren. Lokal run/run_config versus submission_result; klaeren,
   ob eigener Kandidatenstatus/Schema benoetigt wird (ADR-006 beachten).
+  Ohne Schemaausbau: 155-Kandidaten und 158-Score-Ereignisse als Historie
+  in run/run_config, submission_result als Summary. Registry-Reader
+  project-scoped, nur abgeschlossene Kandidaten; SHA/model/manifest pinnen.
+  158 waehlt nicht Latest: alter Kandidat bleibt trotz spaeterem Training
+  gebunden. Identische Bytes aus mehreren Modellen verlangen --mconf-id.
+  Fehlende Scores bleiben fuer gleichen SHA erhalten; neue Bytes erben
+  keine alten Scores. Reportete/effektive Scores als separate Event-Felder.
+  Competition-Konflikte abweisen; Event + Summary transaktional, Fehler
+  ohne Ghost-Events. Metrik aus Kandidat; Legacy ohne metric_name nur mit
+  explizitem Flag. Unbekannte/duplizierte/wertlose CLI-Flags abweisen.
+  38 Testdateien unter UTF-8 ohne Fehler; End-to-end Rscript-/SQLite-
+  Probe, direkte Upsert-Regressionen und Legacy-S6E10-Readonly-Pruefung:
+  bestehende 0.95785 und Source-DB/CSV-Hashes unveraendert. Keine echte
+  Einreichung/Score-Neuregistrierung vorgenommen. ADR-006: DDL unberuehrt.
+- [x] P1: Bridge fuer targets-Cache-/156/157-Ensemble-Artefakte zur
+  registrierten Kandidatenhistorie implementiert (2026-10-08).
+  targets: eindeutiges Modell-/Referenz-RDS als Datei-Target, projektbezogene
+  DB-Modell-ID und gemeinsamer Exportvertrag; unveraenderter Cache-Lauf
+  ohne neue Modell-/Kandidatenzeilen. Artefakt-Aenderung baut die Referenz neu.
+  157: Modell-SHA, Gewichte/Klassen/Probabilitaeten, Faktoren, CSV-Rundweg
+  und --validate-only; Einzelmodell-CSV bleibt unangetastet.
+  158: Trainingsworkflow aus gepinnter ID (150/156/targets), explizites
+  --workflow-name nur als Filter. Gemeinsames Kandidaten-Logging transaktional.
+  Legacy-Dateien vor Registrierung mit passendem Modell validieren;
+  --mconf-id ist kein Validierungs-Bypass. Keine DDL-/S6E10-Aenderung.
+  ADR-003: health_condition-Ensemble auf 256 Zeilen bit-identische
+  Probabilitaeten (bridge_template_noop.log); binaere/Multiclass-Fixtures,
+  echter targets-Cache-/Rscript-/SQLite-Pfad und Rollback bei DB-Fehler.
+  Volle Suite: 38 Testdateien ohne Fehler (bridge_full_suite_utf8.log),
+  Produktionsgraph mit 20 Targets geparst; nur Paket-Build-Warnungen.
+- [x] P2: Kontrollierter LightGBM-Seed-/Thread-Screeninglauf (2026-10-08).
+  `093_lightgbm_seed_thread_stability.R`: fixer Holdout auf dem bestehenden
+  10%-Task, 3 Seeds (42/43/44) x 2 Threadzahlen (1/4), 200 Iterationen.
+  Alle sechs BAcc-Werte = 0.8733064, Seed-SD = 0, gepaarte Thread-Deltas = 0.
+  Threads 4 waren langsamer; kein Score-Hebel und kein Template-Defaultwechsel.
+  Run `6f204de2-489b-4adc-9bc0-91edd1f44c09`, sechs Modellkonfigurationen.
+  Artefakte: `lightgbm_seed_thread_{results,paired,summary}.csv` und `.rds`.
 - [ ] P2: kontrollierte LightGBM-Seeds/Threads und gepaarte Bestaetigung
   als generischen Versuchsbaustein pruefen. Ein getestetes Feature oder
   Blend wird nicht allein wegen eines kleinen positiven Mittels deployed.

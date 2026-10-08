@@ -375,8 +375,8 @@ db_create_resampling <- function(con, run_id, strategy, folds = NA_integer_, rat
   rsmp_id
 }
 
-# Speichert einen externen Submission-Score. Derselbe Modell-/Plattform-/Status-
-# Eintrag wird bei erneutem Ausfuehren aktualisiert statt doppelt angelegt.
+# Summary je Modell/Plattform/Status/Metrik; 158 schreibt die separate Historie.
+# Unbekannte Scores bleiben nur fuer dieselbe Dateiidentitaet erhalten.
 db_log_submission_result <- function(con, mconf_id, platform, competition, file_path,
                                      status, metric_name, public_score = NA_real_,
                                      private_score = NA_real_, notes = NA_character_,
@@ -385,13 +385,41 @@ db_log_submission_result <- function(con, mconf_id, platform, competition, file_
   existing <- dbGetQuery(
     con,
     paste(
-      "SELECT subm_id FROM submission_result",
+      "SELECT subm_id, subm_competition, subm_file_path, subm_public_score, subm_private_score, subm_notes, subm_manifest_json FROM submission_result",
       "WHERE subm_mconf_id = ? AND subm_platform = ? AND subm_status = ? AND subm_metric_name = ?"
     ),
     params = list(mconf_id, platform, status, metric_name)
   )
 
   if (nrow(existing) > 0) {
+    if (!is.na(existing$subm_competition[1]) && !is.na(competition) &&
+        !identical(existing$subm_competition[1], competition)) {
+      stop("Submission competition differs from the existing summary; cannot overwrite it.", call. = FALSE)
+    }
+    old_hash <- if (!is.na(existing$subm_manifest_json[1])) {
+      jsonlite::fromJSON(existing$subm_manifest_json[1])$artifacts$submission_sha256
+    } else NULL
+    new_hash <- if (!is.na(manifest_json)) jsonlite::fromJSON(manifest_json)$artifacts$submission_sha256 else NULL
+    same_file <- if (!is.null(old_hash) && !is.null(new_hash)) {
+      identical(old_hash, new_hash)
+    } else {
+      identical(existing$subm_file_path[1], file_path)
+    }
+    if (same_file) {
+      if (is.na(public_score)) public_score <- existing$subm_public_score[1]
+      if (is.na(private_score)) private_score <- existing$subm_private_score[1]
+      if (is.na(notes)) notes <- existing$subm_notes[1]
+      if (is.na(manifest_json)) manifest_json <- existing$subm_manifest_json[1]
+    }
+    if (is.na(competition)) competition <- existing$subm_competition[1]
+    if (!is.na(manifest_json)) {
+      merged_manifest <- jsonlite::fromJSON(manifest_json, simplifyVector = FALSE)
+      if (!is.null(merged_manifest$submission)) {
+        merged_manifest$submission$public_score <- public_score
+        merged_manifest$submission$private_score <- private_score
+        manifest_json <- db_manifest_to_json(merged_manifest)
+      }
+    }
     dbExecute(
       con,
       paste(
@@ -577,6 +605,79 @@ db_get_latest_model_artifact_path <- function(con, algorithm, workflow_name = "1
     return(NA_character_)
   }
   result$model_path[1]
+}
+
+# One project-scoped snapshot pins model ID, path and manifest together.
+db_get_submission_model_record <- function(con, project_name, algorithm = NULL,
+                                           workflow_name = "150_train_full_model.R", mconf_id = NULL) {
+  DBI::dbGetQuery(con, "
+    SELECT mc.mconf_id, mc.mconf_algorithm, mc.mconf_feature_set, mc.mconf_manifest_json,
+           h.hparam_value AS model_path, wf.wf_name AS model_workflow
+    FROM model_config mc
+    JOIN run r ON r.run_id = mc.mconf_run_id
+    JOIN workflow wf ON wf.wf_id = r.run_wf_id
+    JOIN project p ON p.proj_id = wf.wf_proj_id
+    JOIN hyperparam h ON h.hparam_mconf_id = mc.mconf_id
+    WHERE p.proj_name = ? AND (? IS NULL OR mc.mconf_algorithm = ?)
+      AND (? IS NULL OR wf.wf_name = ?)
+      AND wf.wf_name IN ('150_train_full_model.R', '156_train_full_ensemble.R', '_targets.R')
+      AND (? IS NULL OR mc.mconf_id = ?)
+      AND h.hparam_name = 'model_artifact_path' AND r.run_finished_at IS NOT NULL
+    ORDER BY r.run_seq DESC, mc.mconf_seq DESC
+    LIMIT 1
+  ", params = list(project_name, if (is.null(algorithm)) NA_character_ else algorithm,
+    if (is.null(algorithm)) NA_character_ else algorithm,
+    if (is.null(workflow_name)) NA_character_ else workflow_name,
+    if (is.null(workflow_name)) NA_character_ else workflow_name,
+    if (is.null(mconf_id)) NA_character_ else mconf_id, if (is.null(mconf_id)) NA_character_ else mconf_id))
+}
+
+# Existing EAV tables are the append-only candidate/event ledger, no schema fork.
+db_list_submission_candidates <- function(con, project_name) {
+  DBI::dbGetQuery(con, "
+    SELECT r.run_id AS candidate_run_id, r.run_finished_at AS validated_at,
+      MAX(CASE WHEN c.rconf_key = 'mconf_id' THEN c.rconf_value END) AS mconf_id,
+      MAX(CASE WHEN c.rconf_key = 'status' THEN c.rconf_value END) AS status,
+      MAX(CASE WHEN c.rconf_key = 'submission_sha256' THEN c.rconf_value END) AS submission_sha256,
+      MAX(CASE WHEN c.rconf_key = 'model_sha256' THEN c.rconf_value END) AS model_sha256,
+      MAX(CASE WHEN c.rconf_key = 'submission_path' THEN c.rconf_value END) AS submission_path,
+      MAX(CASE WHEN c.rconf_key = 'metric_name' THEN c.rconf_value END) AS metric_name,
+      COUNT(DISTINCT CASE WHEN c.rconf_key = 'mconf_id' THEN c.rconf_value END) AS model_id_count,
+      COUNT(DISTINCT CASE WHEN c.rconf_key = 'model_sha256' THEN c.rconf_value END) AS model_hash_count,
+      COUNT(DISTINCT CASE WHEN c.rconf_key = 'submission_sha256' THEN c.rconf_value END) AS file_hash_count,
+      COUNT(DISTINCT CASE WHEN c.rconf_key = 'status' THEN c.rconf_value END) AS status_count
+    FROM run r JOIN workflow w ON w.wf_id = r.run_wf_id
+    JOIN project p ON p.proj_id = w.wf_proj_id JOIN run_config c ON c.rconf_run_id = r.run_id
+    WHERE p.proj_name = ? AND r.run_finished_at IS NOT NULL
+      AND w.wf_name IN ('155_predict_submission.R', '155_validate_submission.R',
+                       '157_predict_ensemble_submission.R', '_targets_submission')
+    GROUP BY r.run_id
+    HAVING status IN ('generated_validated', 'validated_existing_file', 'generated_validated_not_submitted')
+    ORDER BY r.run_seq DESC
+  ", params = list(project_name))
+}
+
+db_list_submission_events <- function(con, project_name) {
+  DBI::dbGetQuery(con, "
+    SELECT r.run_id AS event_run_id, r.run_finished_at AS recorded_at,
+      MAX(CASE WHEN c.rconf_key = 'candidate_run_id' THEN c.rconf_value END) AS candidate_run_id,
+      MAX(CASE WHEN c.rconf_key = 'mconf_id' THEN c.rconf_value END) AS mconf_id,
+      MAX(CASE WHEN c.rconf_key = 'submission_id' THEN c.rconf_value END) AS submission_id,
+      MAX(CASE WHEN c.rconf_key = 'submission_sha256' THEN c.rconf_value END) AS submission_sha256,
+      MAX(CASE WHEN c.rconf_key = 'public_score' THEN c.rconf_value END) AS public_score,
+      MAX(CASE WHEN c.rconf_key = 'private_score' THEN c.rconf_value END) AS private_score,
+      MAX(CASE WHEN c.rconf_key = 'platform' THEN c.rconf_value END) AS platform,
+      MAX(CASE WHEN c.rconf_key = 'competition' THEN c.rconf_value END) AS competition,
+      MAX(CASE WHEN c.rconf_key = 'status' THEN c.rconf_value END) AS status,
+      MAX(CASE WHEN c.rconf_key = 'metric_name' THEN c.rconf_value END) AS metric_name
+    FROM run r JOIN workflow w ON w.wf_id = r.run_wf_id
+    JOIN project p ON p.proj_id = w.wf_proj_id JOIN run_config c ON c.rconf_run_id = r.run_id
+    WHERE p.proj_name = ? AND r.run_finished_at IS NOT NULL
+      AND w.wf_name = '158_register_submission_result.R'
+    GROUP BY r.run_id
+    HAVING MAX(CASE WHEN c.rconf_key = 'event_type' THEN c.rconf_value END) = 'submission_registration'
+    ORDER BY r.run_seq
+  ", params = list(project_name))
 }
 
 # Liefert die Modell-Konfiguration des zuletzt trainierten finalen Modells,

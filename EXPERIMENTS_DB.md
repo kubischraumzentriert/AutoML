@@ -1,7 +1,7 @@
 ---
 title: "MLR3 Classification - Experiment-Tracking-Datenbank (experiments.db)"
 author: "Andre Endress"
-date: "2026-09-10"
+date: "2026-10-08"
 ---
 
 # Anleitung: Experiment-Tracking-Datenbank (`experiments.db`)
@@ -229,19 +229,37 @@ Wettbewerbs, `subm_private_score` der nach Wettbewerbsschluss entscheidende
 Score. `subm_status` unterscheidet normale Einreichungen (`submitted`) von
 Late Submissions (`late_submission`).
 
-`db_log_submission_result()` legt den Eintrag an oder aktualisiert ihn bei
-einem erneuten Aufruf fuer dieselbe Modell-/Plattform-/Status-Kombination.
-Die Modellreferenz liefert `db_get_latest_model_config_id(con, algorithm)`.
+submission_result ist die Summary je Modell/Plattform/Status/Metrik,
+nicht die ganze Historie. 158 pinnt ueber den CSV-SHA256 eines validierten
+Kandidaten im selben Projekt, nicht ueber Latest-Modell-Auswahl.
+Mehrere Modelle mit identischen Bytes verlangen --mconf-id; Modellhash
+muss Kandidat und Model-Manifest entsprechen.
+
+Kandidaten und Score-Ereignisse stehen als append-only Historie in den
+vorhandenen run/run_config-Tabellen. Kein neues Schema, ADR-006 bleibt
+eingehalten. Reader:
+
+```r
+db_list_submission_candidates(con, project_name)
+db_list_submission_events(con, project_name)
+```
+
+158 speichert candidate_run_id, mconf_id, Datei-/Modellhash, Plattform,
+Competition, Status, Metrik und reportete/effektive Scores. Eine Transaktion
+aktualisiert Summary und haengt ein Ereignis an; vorige Events bleiben.
+Fehlend/NA loescht bekannte Scores fuer denselben Datei-SHA nicht.
+Neue Bytes desselben Modells erben keine Public-/Private-Werte der alten
+Datei. Competition-Konflikte werden abgewiesen statt ueberschrieben.
 
 Wichtig fuer Wettbewerbe: Die Submissiondatei muss nicht dauerhaft als Kopie
 archiviert werden. Entscheidend ist, dass sie reproduzierbar bleibt. Der
 empfohlene Ablauf ist deshalb:
 
-1. Finales Modell per `150_train_full_model.R` oder `156_train_full_ensemble.R`
+1. Finales Modell per `150_train_full_model.R`
    trainieren; das Modellartefakt wird run-id-basiert gespeichert und in
    `experiments.db` referenziert.
-2. Submission per `155_predict_submission.R` oder
-   `157_predict_ensemble_submission.R` erzeugen.
+2. Submission per `155_predict_submission.R` erzeugen/validieren; ein
+   abgeschlossener Kandidat bindet Datei und Modell.
 3. Datei hochladen und danach den Score mit
    `158_register_submission_result.R` registrieren.
 
@@ -252,6 +270,13 @@ Git-Commit, R-/renv-Umgebung und der verwendete Trainingsworkflow. `subm_notes`
 bleibt fuer kurze menschliche Hinweise frei. Damit kann eine ueberschriebene
 `submission.csv` wieder aus Code, Config, Modellartefakt und Datenstand erzeugt
 werden, ohne jede Submissiondatei selbst aufheben zu muessen.
+
+Fuer die Registrierung muessen CSV und gepinntes Modell vorhanden sein.
+Alte Kandidaten ohne metric_name verlangen --metric-name. Lokale
+Kandidaten gelangen NICHT in submission_result. 157 und _targets nutzen
+dieselbe Kandidatenhistorie; 158 leitet den Trainingsworkflow aus der
+gepinnten Modell-ID ab (150, 156 oder _targets.R). Historische
+Score-Zeilen werden nicht als vermeintliche neue Ereignisse backgefuellt.
 
 ### `literature_source` / `literature_benchmark_result`
 
@@ -636,13 +661,26 @@ Rscript merge_project_experiments.R
 - Fuer ein neues Projekt `source_db_paths` im Skript um den Pfad zu dessen
   `_artifacts/experiments.db` ergaenzen.
 
-## Bekannte Einschraenkung
+## Targets- und Ensemble-Bruecke
 
-`_targets.R` schreibt aktuell **nicht** in `experiments.db` (das Schema
-unterstuetzt `wf_type = 'targets'` bereits dafuer, es wird aber von keinem
-Code genutzt). Grund: Der finale Produktions-Workflow trifft keine neuen
-Modell-/Feature-/Gewichtungsentscheidungen mehr - die sind bereits ueber die
-Skripte `030`-`145` getroffen und in `000_config.R` festgeschrieben. Sollte
-sich das aendern (z.B. `_targets.R` soll selbst mehrere Kandidaten
-vergleichen statt nur `submission_model_name` zu trainieren), koennte
-`db_logging.R` unveraendert auch aus `_targets.R` heraus aufgerufen werden.
+`final_model_artifacts` schreibt das gecachte volle Modell als eindeutiges
+RDS mit Manifest-SHA in model_config (Workflow `_targets.R`, Typ `targets`).
+Ein zweites, ebenfalls als Datei getracktes RDS pinnt mconf_id/Pfad/SHA.
+`submission` liest das registrierte Artefakt und protokolliert nach erfolgreichem
+Vertrag einen `_targets_submission`-Run. Ein unveraenderter tar_make()-Aufruf
+nutzt den Cache ohne neue DB-Zeilen. Geloeschte/geaenderte Artefaktdateien
+invalidieren das Datei-Target; alte Modelle/Kandidaten bleiben historisch erhalten.
+
+156 speichert die positive Klasse additiv. 157 akzeptiert auch bestehende
+raw-Ensemble-Bundles, sofern ein abgeschlossenes, projektbezogenes Modell
+mit passendem Manifest-SHA vorhanden ist. Gewichte, Klassen und Probabilitaeten
+werden geprueft; unbekannte Faktorstufen werden nicht still in NA umgewandelt.
+`--validate-only` validiert eine bestehende Ensemble-CSV ohne Training/Ueberschreiben.
+
+DB und targets-Store bleiben gemeinsam aufzubewahren: SQLite ist bewusst kein
+Datei-Target (eigene DB-Schreibvorgaenge sollen das Training nicht invalidieren).
+Nach DB-Verlust erst die DB wiederherstellen oder `final_model_artifacts` und
+`submission` explizit invalidieren; eine Score-Registrierung erfindet keine IDs.
+Dateifreigabe und DB-Schreiben sind keine gemeinsame Filesystem-Transaktion:
+ein DB-Fehler kann eine valide CSV ohne registrierten Kandidaten hinterlassen.
+158 verweigert dann die Registrierung bis zur erfolgreichen Exportvalidierung.

@@ -12,6 +12,9 @@ library(targets)
 project_dir <- normalizePath(getwd())
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
+source(file.path(project_dir, "modules", "submission_contract.R"))
+source(file.path(project_dir, "provenance.R"))
+source(file.path(project_dir, "modules", "submission_artifacts.R"))
 # _targets.R wird bei jedem tar_make()-Aufruf frisch neu ausgefuehrt (nicht
 # gecacht wie die Ziele selbst) - der aufgeloeste Wert spiegelt daher immer
 # den aktuellen Stand von submission_model_override/submission_model_selection.csv
@@ -160,7 +163,8 @@ list(
   }),
 
   tar_target(task_full, {
-    enable_class_stratification(as_task_classif(train_full_model_data, target = target_col, id = paste0(task_id_prefix, "_full_", submission_model_name)))
+    task <- as_task_classif(train_full_model_data, target = target_col, id = paste0(task_id_prefix, "_full_", submission_model_name))
+    enable_class_stratification(apply_positive_class(task, positive_class))
   }),
 
   tar_target(task_full_weighted, {
@@ -179,24 +183,42 @@ list(
   }),
 
   tar_target(test_file, test_path, format = "file"),
+  tar_target(final_model_artifacts, {
+    persist_targets_submission_model(final_model_full, full_feature_levels,
+      model_feature_sets[[submission_model_name]], positive_class, task_full_weighted)
+  }, format = "file"),
+  tar_target(sample_submission_file, {
+    if (file.exists(sample_submission_path)) sample_submission_path else character(0)
+  }, format = "file", cue = tar_cue(mode = "always")),
   tar_target(
     submission,
     {
-      test <- fread(test_file)
+      pinned <- read_targets_submission_model(final_model_artifacts)
+      bundle <- pinned$bundle
+      prototype <- make_baseline_learner(base_learner_constructors[[submission_model_name]]())
+      validate_submission_model(bundle, model_feature_sets[[submission_model_name]],
+        prototype$param_set$values, positive_class)
+      test <- fread(test_file, colClasses = list(character = id_col))
       test_ids <- test[[id_col]]
       test[, (id_col) := NULL]
       feature_set <- model_feature_sets[[submission_model_name]]
       test <- apply_feature_set(test, feature_set)
       setDT(test)
-      for (col in names(full_feature_levels)) {
-        test[[col]] <- factor(test[[col]], levels = full_feature_levels[[col]])
-      }
+      test <- align_submission_factor_levels(test, bundle$feature_levels)
 
-      predictions <- final_model_full$predict_newdata(test)
-      result <- data.table(id = test_ids, response = predictions$response)
-      setnames(result, "id", id_col)
-      setnames(result, "response", target_col)
-      fwrite(result, submission_path)
+      predictions <- bundle$learner$predict_newdata(test)
+      expected <- submission_prediction_values(predictions,
+        is_threshold_independent_metric(baseline_measure_ids[[1]]), positive_class)
+      result <- data.table(test_ids, expected$values)
+      setnames(result, c(id_col, target_col))
+      sample <- if (length(sample_submission_file)) fread(sample_submission_file,
+        colClasses = list(character = id_col)) else NULL
+      report <- write_checked_submission(result, submission_path, test_ids, id_col, target_col, expected, sample)
+      report <- c(report, list(status = "generated_validated", mconf_id = pinned$reference$mconf_id,
+        model_sha256 = pinned$reference$model_sha256, submission_path = submission_path,
+        submission_sha256 = sha256_file(submission_path), metric_name = baseline_measure_ids[[1]],
+        test_sha256 = sha256_file(test_file), sample_checked = !is.null(sample)))
+      log_validated_submission_candidate(report, "_targets_submission")
       submission_path
     },
     format = "file"

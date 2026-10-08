@@ -1,5 +1,4 @@
 rm(list = ls())
-
 suppressPackageStartupMessages({
   library(data.table)
   library(mlr3)
@@ -7,106 +6,84 @@ suppressPackageStartupMessages({
   library(mlr3extralearners)
   library(mlr3pipelines)
 })
-
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
-# Alle features/*.R laden statt einzelne Familien-Dateien hartzucodieren -
-# siehe 150_train_full_model.R fuer die Begruendung (zwei unabhaengige
-# Uebertragungen, s6e5/s5e12, scheiterten an fehlenden Feature-Dateien).
-for (f in list.files(file.path(project_dir, "features"), pattern = "\\.R$", full.names = TRUE)) {
-  source(f)
+for (f in list.files(file.path(project_dir, "features"), pattern = "\\.R$", full.names = TRUE)) source(f)
+
+read_model_record <- function() {
+  con <- db_connect()
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+  db_get_submission_model_record(con, project_name, resolve_submission_model_name())
 }
-
-model_name <- resolve_submission_model_name()
-feature_set <- model_feature_sets[[model_name]]
-
-# Der Modell-Pfad ist an eine run_id gebunden (siehe 000_config.R/
-# 150_train_full_model.R) - kein fixer Dateiname mehr. Wird ueber die zuletzt
-# in experiments.db geloggte model_artifact_path fuer diesen Algorithmus
-# gefunden; existiert noch keiner, wird 150 einmal ausgefuehrt.
-db_con <- db_connect()
-model_path <- db_get_latest_model_artifact_path(db_con, model_name)
-DBI::dbDisconnect(db_con)
-
-if (is.na(model_path) || !file.exists(model_path)) {
+validate_only <- "--validate-only" %in% commandArgs(trailingOnly = TRUE)
+record <- read_model_record()
+if (nrow(record) == 0L || !file.exists(record$model_path)) {
+  if (validate_only) stop("No completed final model available for validation.")
   source(file.path(project_dir, "150_train_full_model.R"))
-  db_con <- db_connect()
-  model_path <- db_get_latest_model_artifact_path(db_con, model_name)
-  DBI::dbDisconnect(db_con)
+  # 150 clears globals; restore the export entry point's state.
+  validate_only <- FALSE
+  con <- db_connect()
+  record <- db_get_submission_model_record(con, project_name, resolve_submission_model_name())
+  DBI::dbDisconnect(con)
 }
+source(file.path(project_dir, "provenance.R"))
+source(file.path(project_dir, "modules", "submission_contract.R"))
+source(file.path(project_dir, "modules", "submission_artifacts.R"))
 
-model_bundle <- readRDS(model_path)
-learner <- model_bundle$learner
-feature_levels <- model_bundle$feature_levels
-if ("feature_set" %in% names(model_bundle)) {
-  trained_feature_set <- model_bundle$feature_set
-} else if (identical(feature_set, "raw")) {
-  trained_feature_set <- "raw"
-} else {
-  stop(
-    "Das gespeicherte Modell enthaelt noch keine feature_set-Information, ",
-    "die aktuelle Config erwartet aber feature_set = '", feature_set,
-    "'. Bitte 150_train_full_model.R erneut ausfuehren."
-  )
-}
-if (!identical(trained_feature_set, feature_set)) {
-  stop(
-    "Das gespeicherte Modell wurde mit feature_set = '", trained_feature_set,
-    "' trainiert, die aktuelle Config erwartet aber '", feature_set,
-    "'. Bitte 150_train_full_model.R erneut ausfuehren."
-  )
-}
-
-test <- fread(test_path)
-test_ids <- test[[id_col]]
-test[, (id_col) := NULL]
-test <- apply_feature_set(test, feature_set)
-
-# Faktorstufen exakt an das Training angleichen (nicht per as.factor() neu
-# ableiten), damit unterschiedliche Stufenmengen zwischen Train und Test die
-# Vorhersage nicht verfaelschen.
-for (col in names(feature_levels)) {
-  test[[col]] <- factor(test[[col]], levels = feature_levels[[col]])
-}
-
-predictions <- learner$predict_newdata(test)
-
-# Submission-Format haengt an der ZIELMETRIK (baseline_measure_ids[1]):
-# - schwellenwert-UNABHAENGIG (AUC/LogLoss/PRAUC) + BINAER -> Wahrscheinlichkeit
-#   der positiven Klasse P(positive). Kaggle-AUC/-LogLoss erwarten prob, NICHT
-#   das Klassen-Label. Die positive Klasse kommt aus positive_class (000_config).
-# - sonst (BAcc/MCC/... ODER Multiclass) -> Klassen-Labels wie bisher.
-# (is_threshold_independent_metric() stammt aus db_logging.R.)
-prob_metric <- is_threshold_independent_metric(baseline_measure_ids[1])
-
-if (prob_metric && !is.null(predictions$prob) && ncol(predictions$prob) == 2) {
-  classes <- colnames(predictions$prob)
-  pos <- if (!is.null(positive_class)) as.character(positive_class) else classes[length(classes)]
-  if (!pos %in% classes) {
-    stop("positive_class '", pos, "' ist keine der Klassen (", paste(classes, collapse = ", "), ").")
+run_submission_export <- function() {
+  if (nrow(record) != 1L) stop("Could not resolve a completed final model.")
+  model_name <- resolve_submission_model_name()
+  feature_set <- model_feature_sets[[model_name]]
+  model_path <- record$model_path[[1]]
+  manifest <- jsonlite::fromJSON(record$mconf_manifest_json[[1]])
+  expected_hash <- manifest$artifacts$model_artifact_sha256
+  model_hash <- sha256_file(model_path)
+  if (is.null(expected_hash) || !identical(expected_hash, model_hash)) {
+    stop("Model artifact hash differs from its registered manifest, or hash is missing.")
   }
-  if (is.null(positive_class)) {
-    warning("positive_class ist NULL - nutze '", pos, "' als positive Klasse. ",
-            "Fuer eine prob-basierte Submission positive_class in 000_config.R setzen.")
+  if (!identical(record$mconf_feature_set[[1]], feature_set)) stop("Registered feature_set differs from configuration.")
+  if (!identical(feature_set, "raw")) {
+    current_transform <- feature_transform_function_hash(feature_set)
+    registered_transform <- manifest$features$feature_transform_hash
+    if (is.null(registered_transform) || is.na(current_transform) ||
+        !identical(current_transform, registered_transform)) {
+      stop("Feature transformation hash differs from the registered model.")
+    }
   }
-  submission <- data.table(test_ids, predictions$prob[, pos])
-  setnames(submission, c(id_col, target_col))
-  fwrite(submission, submission_path)
-  cat("=== Submission erzeugt (prob-Metrik ", baseline_measure_ids[1],
-      ": P(", target_col, "=", pos, ")) ===\n", sep = "")
-  cat("Zeilen:", nrow(submission), "  mean(pred):",
-      round(mean(submission[[target_col]]), 4), "\n")
-} else {
-  if (prob_metric && !is.null(predictions$prob)) {
-    warning("Prob-basierte Zielmetrik bei >2 Klassen: das Submission-Format ist ",
-            "wettbewerbsspezifisch (i.d.R. eine Spalte je Klasse). Es werden ",
-            "vorerst Labels ausgegeben - ggf. projektspezifisch anpassen.")
+  bundle <- readRDS(model_path)
+  expected_learner <- as_learner(po("imputemedian") %>>% po("imputemode") %>>%
+    base_learner_constructors[[model_name]]())
+  validate_submission_model(bundle, feature_set, expected_learner$param_set$values, positive_class)
+  if (length(id_col) != 1L) stop("Submission requires one configured ID column.")
+  test <- fread(test_path, colClasses = list(character = id_col))
+  test_ids <- test[[id_col]]
+  validate_submission_ids(test_ids, "Test")
+  test[, (id_col) := NULL]
+  test <- apply_feature_set(test, feature_set)
+  test <- align_submission_factor_levels(test, bundle$feature_levels)
+  predictions <- bundle$learner$predict_newdata(test)
+  expected <- submission_prediction_values(predictions,
+    is_threshold_independent_metric(baseline_measure_ids[[1]]), positive_class)
+  sample <- if (file.exists(sample_submission_path)) {
+    fread(sample_submission_path, colClasses = list(character = id_col))
+  } else NULL
+  if (validate_only) {
+    submission <- read_submission_csv(submission_path, id_col, target_col, expected$mode)
+    report <- validate_submission_table(submission, test_ids, id_col, target_col, expected, sample)
+  } else {
+    submission <- data.table(test_ids, expected$values)
+    setnames(submission, c(id_col, target_col))
+    report <- write_checked_submission(submission, submission_path, test_ids, id_col, target_col, expected, sample)
   }
-  submission <- data.table(test_ids, as.character(predictions$response))
-  setnames(submission, c(id_col, target_col))
-  fwrite(submission, submission_path)
-  cat("=== Submission erzeugt (Labels) ===\n")
-  cat("Zeilen:", nrow(submission), "\nKlassenverteilung:\n")
-  print(table(submission[[target_col]]))
+  report <- c(report, list(status = if (validate_only) "validated_existing_file" else "generated_validated",
+    mconf_id = record$mconf_id[[1]], model_path = model_path, model_sha256 = model_hash,
+    metric_name = baseline_measure_ids[[1]],
+    submission_path = submission_path, submission_sha256 = sha256_file(submission_path),
+    sample_checked = !is.null(sample), test_sha256 = sha256_file(test_path)))
+  run_id <- log_validated_submission_candidate(report, "155_predict_submission.R")
+  cat("=== Submission contract PASSED ===\n")
+  cat("Mode:", report$mode, "Rows:", report$rows, "Positive class:", report$positive_class, "\n")
+  cat("File:", submission_path, "\nModel configuration:", report$mconf_id,
+    "\nValidation DB run:", run_id, "\n")
 }
-cat("\nGespeichert:", submission_path, "\n")
+run_submission_export()

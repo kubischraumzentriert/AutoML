@@ -130,16 +130,24 @@ flowchart TD
     EnsembleSelection["Phase 11b: 148_ensemble_candidate_pool.R<br/>+ 149_ensemble_selection.R<br/>Caruana Greedy Ensemble Selection"] --> DEnsembleWins{"Greedy-Ensemble schlaegt<br/>bestes Einzelmodell (Bestaetigungsmenge)?"}
     DEnsembleWins -- "ja" --> EnsembleDeploy["Phase 12a-Alt: 156_train_full_ensemble.R<br/>+ 157_predict_ensemble_submission.R<br/>nur eindeutige Kandidaten, gewichtet gemittelt"]
     DEnsembleWins -- "nein" --> SelectModel
-    EnsembleDeploy --> SubmissionDone2(["submission_ensemble.csv"])
+    EnsembleDeploy --> SubmissionContract
+    SelectModel --> TargetsDeploy["Alternative: targets full-model Cache<br/>final_model_artifacts: RDS + DB-Referenz<br/>submission: Artefakt-/CSV-Vertrag"]
+    TargetsDeploy --> SubmissionContract
 
     SelectModel["Phase 12a: 148_select_submission_model.R<br/>Vorschlag aus experiments.db"] --> FullTrain["Phase 12b: 150_train_full_model.R<br/>Training auf VOLLEM train.csv<br/>positive Klasse konsistent setzen/speichern"]
     FullTrain --> Predict["Phase 12c: 155_predict_submission.R"]
 
     Predict --> DProb{"Wahrscheinlichkeits-Submission,<br/>AUC oder LogLoss?"}
     DProb -- "ja" --> ProbCol["Richtige Klassenspalte explizit waehlen,<br/>NICHT mlr3-Default positive class"]
-    DProb -- "nein, Klassenlabel" --> SubmissionDone
-    ProbCol --> SubmissionDone(["submission.csv"])
-    SubmissionDone --> MergeDB["Projekt in zentrale experiments.db uebernehmen:<br/>Rscript merge_project_experiments.R<br/>(im Template, idempotent, separater Aufruf)"]
+    DProb -- "nein, Klassenlabel" --> SubmissionContract
+    ProbCol --> SubmissionContract["155 / 157 / targets: Submission-Vertrag<br/>IDs/Spalten, Werte und Modellreferenz<br/>staged CSV erneut lesen/pruefen"]
+    SubmissionContract --> DSubmissionValid{"Vertrag erfuellt?"}
+    DSubmissionValid -- "nein" --> RejectSubmission["Abbruch vor Dateifreigabe<br/>bestehende Submission behalten"]
+    DSubmissionValid -- "ja" --> SubmissionDone(["submission.csv oder submission_ensemble.csv<br/>validierter lokaler DB-Kandidat"])
+    SubmissionDone --> DUploaded{"Tatsaechlich eingereicht?"}
+    DUploaded -- "nein, lokaler Kandidat" --> MergeDB
+    DUploaded -- "ja, Nutzer meldet Ergebnis" --> RegisterScore["158: Dateihash auf validierten Kandidaten pinnen<br/>Score-Ereignis und Summary transaktional"]
+    RegisterScore --> MergeDB["Projekt in zentrale experiments.db uebernehmen:<br/>Rscript merge_project_experiments.R<br/>(im Template, idempotent, separater Aufruf)"]
     MergeDB --> Done(["Ende"])
 ```
 
@@ -742,9 +750,48 @@ source("150_train_full_model.R")   # trainiert auf dem VOLLEN train.csv
 source("155_predict_submission.R") # schreibt submission.csv
 ```
 
+155 prueft vor der Uebernahme der Datei Modell-ID/Projekt, registrierten
+Modellhash, exakte Constructor-Parameter, Feature-Set und bei transformierten
+Features den gespeicherten Transformationshash. Test-Faktorstufen muessen
+bekannt sein. IDs werden als Text gelesen, um fuehrende Nullen zu erhalten.
+Spalten und ID-Reihenfolge muessen exakt Test/Sample entsprechen. Zunaechst
+temporare CSV, dann erneutes Lesen und Wertevergleich gegen die gerade
+berechneten Modellprediktionen, erst danach Kopie an submission_path.
+Das ist kein atomarer Dateisystem-/DB-Commit; Validierungsfehler treten
+jedoch vor Dateifreigabe auf. Ohne Sample ist dessen Pruefung explizit aus.
+
+```bash
+Rscript 155_predict_submission.R --validate-only
+```
+
+Dieser Modus prueft eine bestehende Datei gegen neu berechnete Prediktionen,
+ohne CSV-/Modell-Ueberschreibung oder automatisches Training. Pruefbericht
+und lokaler run/run_config-Eintrag werden gespeichert; kein Upload/Score
+und kein submitted-Eintrag. Modellreferenz und Hashes sind im Bericht unter
+_artifacts/submission_validation_<run_id>.rds enthalten. Bei spaeterer
+Einreichungsregistrierung pinnt 158 das Modell ueber Kandidat und Dateihash;
+bei mehreren passenden Modellen mconf_id explizit angeben.
+
+_targets nutzt denselben Vertrag und gibt bei binaeren Prob-Metriken
+ebenfalls P(positive_class) statt Labels aus. Das optionale Sample-Dateiziel
+wird bei jedem Lauf auf Existenz geprueft und bei vorhandener Datei getrackt.
+final_model_artifacts persistiert den gecachten Learner als eindeutiges
+Modell-RDS plus DB-Referenz-RDS (beide format=file). Der Export nutzt dieses
+Artefakt, prueft Manifest/Parameter und schreibt einen _targets_submission-
+Kandidaten. Unveraenderte Cache-Laeufe erzeugen keine neuen Modell-/Kandidatenzeilen.
+
+Unterstuetzte Standardformate: id + binaere Wahrscheinlichkeit oder
+id + Klassenlabel (auch Multiclass). Mehrspaltige Multiclass-Prob-Formate
+benoetigen explizite projektspezifische Zuordnung und werden nicht geraten.
+Bei alten Modellbundles bleibt raw ohne Feature-Set-Metadaten moeglich;
+fehlende positive_class-Metadaten werden nicht erfunden. Registrierter
+SHA256 und passende Modellparameter sind fuer 155 dennoch erforderlich.
+155/157/_targets zusammen mit db_logging, provenance,
+modules/submission_contract.R und modules/submission_artifacts.R kopieren.
+
 150 wendet ebenfalls `apply_positive_class()` aus 000_config an und
 speichert die effektive Klasse additiv in Modellbundle und Manifest.
-Bei Skript-Updates 000_config zusammen mit 023/150 uebernehmen, nicht
+Bei Skript-Updates 000_config zusammen mit 023/150/156 uebernehmen, nicht
 einzeln in eine alte Konfiguration ohne diesen Helper kopieren.
 
 **Bei einer Wahrscheinlichkeits-Submission (AUC/LogLoss-Wettbewerb)**: in
@@ -760,8 +807,44 @@ gegenpruefen, bevor die Datei hochgeladen wird.
 (`final_model_full_path(model_name, run_id)`, kein fixer Dateiname mehr) - ein
 erneuter Lauf ueberschreibt die vorherige Datei nicht mehr kommentarlos. Der
 Pfad wird als `model_artifact_path`-Hyperparameter in `experiments.db`
-geloggt; `155` findet ihn ueber `db_get_latest_model_artifact_path()`
+geloggt; `155` pinnt ihn project-scoped ueber `db_get_submission_model_record()`
 (`db_logging.R`) automatisch wieder - keine manuelle Pfadverwaltung noetig.
+
+### Score registrieren (`158_register_submission_result.R`)
+
+Erst nach echter Einreichung; das Skript fuehrt KEINEN Upload aus.
+
+```bash
+Rscript 158_register_submission_result.R --competition <competition-id> --public-score <score>
+Rscript 158_register_submission_result.R --private-score <score>
+```
+
+158 sucht im konfigurierten Projekt abgeschlossene 155-/157-/targets-Kandidaten mit
+exakt dem CSV-SHA256, nicht das neueste Modell. Modellhash muss Kandidat
+und Manifest entsprechen. Identische Bytes aus mehreren Modellen:
+--mconf-id erforderlich. Falsche IDs/Algorithmen/Workflows und veraenderte
+Dateien werden abgewiesen; ein ID-Parameter umgeht die Validierung nicht.
+Die Default-Metrik stammt aus dem Kandidaten, nicht spaeterer Config.
+Historische Kandidaten ohne metric_name verlangen --metric-name.
+
+Ohne Competition-Flag/Umgebungsvariable wird bei Updates die bisherige
+Competition genutzt, beim ersten Eintrag project_name als Fallback.
+Explizit abweichende Competition darf die Summary nicht ueberschreiben.
+NA/fehlende Scores bleiben fuer denselben CSV-SHA erhalten; neue Bytes
+desselben Modells erben keine Scores der alten Datei.
+
+DB-Transaktion: Summary in submission_result plus neues Ereignis in
+run/run_config. Vorherige Ereignisse bleiben erhalten; reportete und
+effektive Scores sind getrennt. db_list_submission_candidates() und
+db_list_submission_events() liefern project-scoped Historie. Keine DDL.
+Modellartefakt und DB-validierter Kandidat muessen vorhanden sein.
+Trainingsworkflow aus dem gepinnten Modell: 150, 156 oder _targets.R;
+--workflow-name bleibt ein optionaler Filter, kein pauschaler 150-Default.
+157 bietet ebenfalls --validate-only, prueft Gewichte/Klassen/Modell-SHA
+und schreibt nur submission_ensemble_path (Einzelmodell-CSV unveraendert).
+Ensemble-Score: --submission-path submission_ensemble.csv an 158 uebergeben.
+Unregistrierte Artefakte werden nicht einem zufaelligen Modell zugeordnet.
+158 mit db_logging, provenance und modules/submission_registry.R kopieren.
 
 **Letzter Schritt nach Abschluss (oder an sinnvollen Zwischenstaenden): dieses
 Projekt in die zentrale experiments.db uebernehmen.**

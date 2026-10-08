@@ -59,6 +59,14 @@ enable_class_stratification <- function(task) {
 }
 
 glmnet_nfolds <- 3
+apply_positive_class <- function(task, positive_class = NULL) {
+  if (inherits(task, "TaskClassif") && !is.null(positive_class) &&
+      length(task$class_names) == 2L) {
+    task$positive <- positive_class
+  }
+  task
+}
+
 glmnet_nlambda <- 30
 
 artifact_dir <- file.path(project_dir, "_artifacts")

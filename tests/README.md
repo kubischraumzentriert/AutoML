@@ -71,3 +71,59 @@ oder Erwartungswerte werden fuer dieses Umgebungsproblem nicht veraendert.
 
 Die Tests isolieren kleine Fixtures; kein neues Training der lokalen
 Kaggle-Submission und kein Schreibzugriff auf deren Experimentdatenbank.
+
+## Submission-Vertrag (2026-10-08)
+
+- `test-submission_contract.R`: richtige Probability-Klasse, IDs/Spalten,
+  Sample-Reihenfolge, Wertebereich, fuehrende Nullen, legale konstante
+  Wahrscheinlichkeiten, Faktoren, Parameter und CSV-Fehlerpfade.
+- `test-submission_export.R`: echter 155-Aufruf in isolierten Rscript-
+  Prozessen mit kleinen trainierten rpart-Modellen/SQLite; binaere
+  Probabilities und Multiclass-Labels. Fremdprojekt und unvollstaendiger
+  Modelllauf werden nicht ausgewaehlt. --validate-only lehnt falsche
+  Probability-Spalte/stale Parameter ab und laesst die Datei unveraendert.
+  Der echte targets-Submission-Ausdruck erzeugt dieselben Dateibytes.
+- `tests/fixtures/submission_config.R`: minimale Konfiguration dieser
+  temporaeren Prozesse, kein neuer produktiver Default.
+
+CI-Konsistenztest prueft apply_positive_class in Smoke- und Root-Config.
+Nachgeholter isolierter 023-Smoke-Lauf und Runtime-Pruefung eines leeren
+optionalen targets-Dateiziels bestanden. Keine komplette Heavy-CI erneut
+gestartet; die Gesamtsuite umfasste hier 37 Testdateien.
+
+## Kandidaten und Score-Historie (2026-10-08)
+
+Die Bruecke wird in test-submission_export.R zusaetzlich
+mit echten 157-/158-Aufrufen fuer binaere und Multiclass-Ensembles geprueft:
+Gewichte/Klassen/Modell-SHA, unveraenderte Einzelmodell-CSV und richtiger
+Trainingsworkflow im Score-Manifest. Der echte targets-Graph nutzt die
+Produktionsausdruecke fuer final_model_artifacts/submission in einer kleinen
+Fixture: erster Export, cachegleicher zweiter Lauf, Artefakt-Wiederaufbau,
+DB-Rollback/Datei-Cleanup bei injiziertem Fehler und Score-Pinning.
+targets-Test nur bei installiertem optionalem Paket; isolierte R-Prozesse.
+Bruecken-Abschluss: alle 38 Testdateien ohne Fehler, Produktionsgraph mit
+20 Targets geparst (_artifacts/bridge_full_suite_utf8.log). No-op gegen
+vorhandenes health_condition-Ensemble: 256 Zeilen, bit-identische
+Probabilitaeten, unveraenderter Modell-SHA (bridge_template_noop.log).
+
+`test-submission_registry.R` prueft CLI-Grenzen und widerspruechliche
+EAV-Referenzen. db_logging-Regressionsfall: bekannte Scores nur bei
+gleicher Dateiidentitaet erhalten, bei neuen Bytes kein Score-Uebertrag;
+Competition-Konflikt darf bestehenden Wert nicht aendern.
+
+Erweiterter echter Rscript-/SQLite-Test in test-submission_export.R:
+altes validiertes Modell nach spaeterem Training korrekt gepinnt,
+Private-Update ohne Public-/Competition-Flag erhaelt beides, fruehere
+Events unveraendert. Identische Bytes aus zwei Modellen sind mehrdeutig,
+explizite Modell-ID hilft; falsche Algorithmen, CLI-Typos, manipulierte
+CSV/Modelle und Competition-Konflikte hinterlassen keine Ghost-Events.
+Die Summary bleibt eine Zeile, die Historie drei unabhaengige Events.
+
+Volle Suite: 38 Testdateien, UTF-8, ohne Fehler. Legacy-S6E10-Kandidat
+auf temporaerer DB-Kopie rein lesend aufgeloest, Originalhashes und
+Public Score 0.95785 unveraendert. Kein echter Score registriert/Upload.
+
+`test-lightgbm_seed_thread.R` prueft Grid-/Pairing-Vertrag und unvollstaendige
+Seed-Paare. Der echte Screeninglauf 093 wurde separat ausgefuehrt und in der
+Projekt-DB mit sechs Modellkonfigurationen protokolliert; Ergebnis ohne
+Seed-/Thread-Scoreeffekt.

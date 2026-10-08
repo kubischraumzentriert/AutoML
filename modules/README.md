@@ -20,6 +20,9 @@ vertraut. Kein Teil der eigentlichen Trainings-Pipeline.
 | Datei | Zweck | Genutzt von |
 |---|---|---|
 | `target_leak_audit_helpers.R` | Testbare Kernfunktionen des Leakage-Audits (Determinismus-Check, kumulative Top-k-Schwelle, Cluster-Erkennung) | `015_target_leak_audit.R` |
+| `submission_contract.R` | Defensiver Exportvertrag: IDs/Schema, binaere Wahrscheinlichkeit oder Labels, Faktorstufen, Parameter und staged CSV-Rundweg | `155_predict_submission.R`, `_targets.R` |
+| `submission_registry.R` | Datei-SHA auf DB-Kandidat/Modell pinnen; Score-Summary und Ereignishistorie transaktional fortschreiben | `158_register_submission_result.R` |
+| `submission_artifacts.R` | Hashgepruefte Modellartefakte, transaktionale Kandidatenhistorie, targets-Persistenz und geprueftes Ensemble-Mittel | `155`, `157`, `_targets.R` |
 | `univariate_drift.R` | Statistische Train-vs-Test-Drift-Tests je Spalte (Ergänzung zur Adversarial Validation) | `115_adversarial_validation.R`, `rolling_drift_diagnosis.R`, `missingness_mechanism_audit.R` |
 | `rolling_drift_diagnosis.R` | Concept-Drift über MEHRERE Zeitperioden statt nur Train-vs-Test | eigenständig (Projekt-Skripte) |
 | `missingness_mechanism_audit.R` | Ist Fehlen in einem Feature informativ (MCAR/MAR/MNAR-artig, siehe Kasten unten), statt naiv zu imputieren? | eigenständig |

@@ -162,6 +162,15 @@ lightgbm_tuning_search_iterations <- 100
 lightgbm_tuning_evals <- 25
 lightgbm_tuning_final_iterations <- 200
 
+# 093: kontrollierter, gepaarter LightGBM-Check. Der Holdout-Split bleibt
+# identisch; nur Learner-Seed und Threadzahl werden variiert.
+lightgbm_seed_thread_seeds <- c(42L, 43L, 44L)
+lightgbm_seed_thread_threads <- c(1L, 4L)
+lightgbm_seed_thread_results_path <- file.path(artifact_dir, "lightgbm_seed_thread_results.csv")
+lightgbm_seed_thread_paired_path <- file.path(artifact_dir, "lightgbm_seed_thread_paired.csv")
+lightgbm_seed_thread_summary_path <- file.path(artifact_dir, "lightgbm_seed_thread_summary.csv")
+lightgbm_seed_thread_artifact_path <- file.path(artifact_dir, "lightgbm_seed_thread_artifact.rds")
+
 class_weight_results_path <- file.path(artifact_dir, "class_weight_results.csv")
 lightgbm_family_results_path <- file.path(artifact_dir, "lightgbm_family_results.csv")
 
