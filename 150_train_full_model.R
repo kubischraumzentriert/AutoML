@@ -42,6 +42,7 @@ train[, (target_col) := as.factor(get(target_col))]
 feature_levels <- lapply(train[, ..feature_char_cols], levels)
 
 task_full <- as_task_classif(train, target = target_col, id = paste0(task_id_prefix, "_full_", model_name))
+task_full <- apply_positive_class(task_full, positive_class)
 
 weight_power <- model_class_weight_power[[model_name]]
 if (!is.null(weight_power) && weight_power != 0) {
@@ -80,7 +81,8 @@ db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = paste0("Finale
 
 model_path <- final_model_full_path(model_name, db_run_id)
 saveRDS(
-  list(learner = learner_full, feature_levels = feature_levels, feature_set = feature_set),
+  list(learner = learner_full, feature_levels = feature_levels, feature_set = feature_set,
+       positive_class = task_full$positive),
   model_path
 )
 
@@ -97,6 +99,7 @@ mconf_full <- db_create_model_config(
       task_type = "classif",
       learner_id = learner_full$id,
       predict_type = learner_full$predict_type,
+      positive_class = task_full$positive,
       class_weight_power = if (!is.null(weight_power)) weight_power else NA_real_,
       hyperparams = learner_full$param_set$values
     ),

@@ -70,6 +70,15 @@ enable_class_stratification <- function(task) {
   task
 }
 
+# Preserve defaults/cached settings for NULL and multiclass tasks, like 020.
+apply_positive_class <- function(task, positive_class = NULL) {
+  if (inherits(task, "TaskClassif") && !is.null(positive_class) &&
+      length(task$class_names) == 2L) {
+    task$positive <- positive_class
+  }
+  task
+}
+
 glmnet_nfolds <- 3
 glmnet_nlambda <- 30
 

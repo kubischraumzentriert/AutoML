@@ -13,6 +13,53 @@ source(testthat::test_path("..", "..", "modules", "target_leak_audit_helpers.R")
 
 # --- compute_determinism() --------------------------------------------------
 
+test_that("LightGBM importance mapping is an exact no-op for clean names", {
+  importance <- c(wait = 0, score = 12.5)
+  expect_identical(restore_lightgbm_importance_names(importance, c("score", "wait")), importance)
+  expect_identical(restore_lightgbm_importance_names(numeric(0), "score"), numeric(0))
+})
+
+test_that("LightGBM whitespace mapping preserves values and importance order", {
+  importance <- c(wait_time = 0, service_score = 12.5, cabin = 3)
+  mapped <- restore_lightgbm_importance_names(importance, c("service score", "cabin", "wait\ttime"))
+  expect_identical(unname(mapped), unname(importance))
+  expect_identical(names(mapped), c("wait\ttime", "service score", "cabin"))
+})
+
+test_that("LightGBM mapping refuses ambiguity even for apparent exact matches", {
+  expect_error(restore_lightgbm_importance_names(c(a_b = 1), c("a b", "a_b")), "Ambiguous")
+  expect_error(restore_lightgbm_importance_names(c(a_b = 1), c("a b", "a\tb")), "Ambiguous")
+  expect_error(restore_lightgbm_importance_names(c(a_b = 1, "a b" = 2), "a b"), "same task feature")
+})
+
+test_that("LightGBM mapping refuses unknown, missing and duplicate names", {
+  expect_error(restore_lightgbm_importance_names(c(unknown = 1), "score"), "cannot be mapped")
+  expect_error(restore_lightgbm_importance_names(c(1, 2), c("a", "b")), "importance names")
+  expect_error(restore_lightgbm_importance_names(setNames(c(1, 2), c("a", "a")), "a"), "importance names")
+  expect_error(restore_lightgbm_importance_names(c(a = 1), c("a", NA_character_)), "feature names")
+})
+
+test_that("real LightGBM importance maps back to spaced task columns", {
+  skip_if_not_installed("mlr3extralearners")
+  skip_if_not_installed("lightgbm")
+  suppressPackageStartupMessages({ library(mlr3); library(mlr3extralearners) })
+  task_data <- data.table("service score" = rep(1:5, 20),
+    "wait time" = rep(1:20, each = 5), outcome = factor(rep(c("no", "yes"), 50)))
+  task <- as_task_classif(task_data, target = "outcome")
+  learner <- lrn("classif.lightgbm", num_iterations = 5L,
+    min_data_in_leaf = 2L, num_threads = 1L, verbose = -1L, seed = 42L)
+  learner$train(task)
+  predictions_before <- learner$predict(task)$response
+  importance <- learner$importance()
+  mapped <- restore_lightgbm_importance_names(importance, task$feature_names)
+  # importance() may omit unused features rather than returning zero entries.
+  expect_gt(length(mapped), 0L)
+  expect_true(all(names(mapped) %in% task$feature_names))
+  expect_identical(gsub("[[:space:]]", "_", names(mapped)), names(importance))
+  expect_identical(unname(mapped), unname(importance))
+  expect_identical(learner$predict(task)$response, predictions_before)
+})
+
 test_that("compute_determinism() erkennt exakten Determinismus (purity=1)", {
   feature <- rep(c("a", "b", "c"), each = 20)
   target <- rep(c("klasse1", "klasse2", "klasse3"), each = 20)  # feature legt target exakt fest

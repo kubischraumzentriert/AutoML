@@ -11,7 +11,7 @@
 # train.csv direkt gelesen (Best-Effort-Generik, siehe unten).
 rm(list = ls())
 suppressPackageStartupMessages({
-  library(data.table); library(mlr3); library(mlr3learners); library(DBI)
+  library(data.table); library(mlr3); library(mlr3learners); library(mlr3pipelines); library(DBI)
 })
 
 source("000_config.R")
@@ -35,6 +35,8 @@ if (exists("task_full_path") && file.exists(task_full_path)) {
   if (length(char_cols) > 0) full_dt[, (char_cols) := lapply(.SD, as.factor), .SDcols = char_cols]
   task_full <- as_task_classif(full_dt, target = target_col)
 }
+task_full <- apply_positive_class(task_full, positive_class)
+task_full <- enable_class_stratification(task_full)
 n_full <- task_full$nrow
 cat("Volldatensatz:", n_full, "Zeilen (aktueller subset_fraction:", subset_fraction, ")\n")
 
@@ -54,7 +56,8 @@ cat("Getestete fractions:", paste(fractions, collapse = ", "), "\n")
 # Wahrscheinlichkeiten, sonst NaN statt eines Fehlers) - derselbe Fix wie in
 # 030_baseline.R und (2026-09-01, gefunden im s6e9-Projekt) in
 # base_learner_constructors + 035/036/037/038/050, siehe BACKLOG.md.
-learner <- lrn("classif.ranger", num.trees = 100, respect.unordered.factors = "order", seed = seed, predict_type = "prob")
+learner <- as_learner(po("imputemedian") %>>% po("imputemode") %>>%
+  lrn("classif.ranger", num.trees = 100, respect.unordered.factors = "order", seed = seed, predict_type = "prob"))
 measure <- msr(baseline_measure_ids[1])
 
 lc <- learning_curve(task_full, learner, measure, fractions,
@@ -77,7 +80,9 @@ db_run_id <- db_create_run(db_con, db_wf_id, seed = seed,
 db_log_run_config(db_con, db_run_id, list(
   learning_curve_max_rows = learning_curve_max_rows,
   learning_curve_repeats = learning_curve_repeats,
-  learning_curve_cv_folds = learning_curve_cv_folds
+  learning_curve_cv_folds = learning_curve_cv_folds,
+  positive_class = if (is.null(task_full$positive)) NA_character_ else task_full$positive,
+  preprocessing = "foldwise_impute_median_mode"
 ))
 rsmp_id <- db_create_resampling(db_con, db_run_id, strategy = "cv",
                                  folds = learning_curve_cv_folds, seed = seed)
@@ -85,6 +90,7 @@ for (i in seq_len(nrow(lc))) {
   mconf_id <- db_create_model_config(
     db_con, db_run_id, task_type = "classif", algorithm = algorithm_from_learner_id(learner$id),
     feature_set = "raw", task_id = task_full$id,
+    preprocessing = "impute_median_mode",
     hyperparams = list(train_fraction = lc$fraction[i], n_train = lc$n[i])
   )
   db_log_metric_result(db_con, mconf_id, rsmp_id, baseline_measure_ids[1], lc$val_score[i])

@@ -32,7 +32,7 @@ flowchart TD
     Start(["Neues Kaggle-Projekt"]) --> Prep["Phase 0: Kaggle-Overview lesen<br/>Zielspalte, Metrik-Wortlaut, Submission-Format"]
     Prep --> Config["Phase 1: 000_config.R ausfuellen<br/>id_col, target_col, baseline_measure_ids"]
 
-    Config --> LeakAudit["015: Target-Leak-Audit<br/>(volles Dataset, kein Subset)"]
+    Config --> LeakAudit["015: Target-Leak-Audit<br/>(volles Dataset, kein Subset)<br/>Importance-Namen eindeutig auf Originalspalten abbilden"]
     LeakAudit --> DLeak{"Feature &gt;50% Gain-Share<br/>oder Determinismus:<br/>P(Klasse gegeben Wert) = 0 oder 1?"}
     DLeak -- "ja" --> LeakFix["Feature entfernen/pruefen<br/>(honest-vs-inflated Vergleich)"]
     LeakFix --> LeakAudit
@@ -51,7 +51,7 @@ flowchart TD
     DSplitFlag -- "ja" --> SplitFix["Anderen ratio waehlen<br/>und/oder CV statt Holdout"]
     SplitFix --> LearnCurve
 
-    LearnCurve["Phase 3c: 023_learning_curve.R<br/>Ranger, Score vs. Trainingsgroesse"]
+    LearnCurve["Phase 3c: 023_learning_curve.R<br/>Ranger mit foldweiser Imputation<br/>positive Klasse und Stratifikation"]
     LearnCurve --> DLearnCurve{"Regressions-Steigung bei<br/>subset_fraction noch relevant<br/>(&gt;10% der Score-Spannweite)?"}
     DLearnCurve -- "nein, Plateau" --> Baseline
     DLearnCurve -- "ja, noch steigend" --> LearnCurveNote["Subset-basierte Modellvergleiche<br/>mit Vorsicht interpretieren<br/>(Ranking koennte bei mehr Daten kippen)"]
@@ -132,7 +132,7 @@ flowchart TD
     DEnsembleWins -- "nein" --> SelectModel
     EnsembleDeploy --> SubmissionDone2(["submission_ensemble.csv"])
 
-    SelectModel["Phase 12a: 148_select_submission_model.R<br/>Vorschlag aus experiments.db"] --> FullTrain["Phase 12b: 150_train_full_model.R<br/>Training auf VOLLEM train.csv"]
+    SelectModel["Phase 12a: 148_select_submission_model.R<br/>Vorschlag aus experiments.db"] --> FullTrain["Phase 12b: 150_train_full_model.R<br/>Training auf VOLLEM train.csv<br/>positive Klasse konsistent setzen/speichern"]
     FullTrain --> Predict["Phase 12c: 155_predict_submission.R"]
 
     Predict --> DProb{"Wahrscheinlichkeits-Submission,<br/>AUC oder LogLoss?"}
@@ -309,6 +309,16 @@ Stellvertreter genuegte) haengt das Ergebnis hier direkt von der Kapazitaet
 des Algorithmus ab - das Skript laeuft deshalb mit Ranger, dem tatsaechlich
 eingesetzten Algorithmus, nicht mit einem billigen Ersatz.
 
+Ranger wird mit `imputemedian`/`imputemode` gewrappt: Median und Modus
+werden je CV-Trainingsfold gelernt, nicht einmal vor der CV auf allen
+Zeilen. Der separat berichtete Trainingsscore verwendet den Fit auf der
+jeweiligen Teilstichprobe. Positive Klasse und Stratum werden sowohl nach
+CSV-Laden als auch nach Laden eines gespeicherten Tasks angewendet.
+`positive_class=NULL` behaelt die vorhandene Einstellung; ein konfigurierter
+Wert wird nur bei binaeren Tasks gesetzt, bei Multiclass bleibt er ungenutzt.
+Bestehende Stratum-Rollen bleiben erhalten. Zeit-/Group-CV bleibt eine
+separate projektspezifische Entscheidung; Default ist stratifizierte CV.
+
 Laedt bewusst den VOLLEN Datensatz (nicht `task_train_small`), um auch
 ueber den bisherigen `subset_fraction`-Punkt hinaus testen zu koennen -
 gekappt bei `learning_curve_max_rows` (Default 150000 Zeilen), da der
@@ -332,6 +342,11 @@ source("030_baseline.R")
 
 Trainiert LDA, Multinom, Ranger (jeweils mit `imputemedian`/`imputemode`-
 Vorverarbeitung) per Holdout, misst `baseline_measure_ids`.
+
+Die Abschluss-Provenienz verwendet das instanziierte Resampling aus dem
+gespeicherten Benchmark. `run_timed_benchmark()` instanziiert eine Kopie
+des Eingabe-Resamplings; dieses unveraenderte Eingabeobjekt enthaelt noch
+keine Fold-Zuweisungen und ist fuer den Fold-Hash ungeeignet.
 
 **Zwei Fallstricke, auf die die Skripte selbst hinweisen (nicht raten,
 Warnungen lesen):**
@@ -726,6 +741,11 @@ Entscheidung setzen.
 source("150_train_full_model.R")   # trainiert auf dem VOLLEN train.csv
 source("155_predict_submission.R") # schreibt submission.csv
 ```
+
+150 wendet ebenfalls `apply_positive_class()` aus 000_config an und
+speichert die effektive Klasse additiv in Modellbundle und Manifest.
+Bei Skript-Updates 000_config zusammen mit 023/150 uebernehmen, nicht
+einzeln in eine alte Konfiguration ohne diesen Helper kopieren.
 
 **Bei einer Wahrscheinlichkeits-Submission (AUC/LogLoss-Wettbewerb)**: in
 `155_predict_submission.R` explizit die Wahrscheinlichkeitsspalte fuer die

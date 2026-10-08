@@ -36,3 +36,38 @@ Neue Module bekommen beim Anlegen i.d.R. direkt eine eigene Testdatei
 (siehe `BACKLOG.md` P0.1 für die historische Aufarbeitung aller
 damals ungetesteten Bausteine) - eine fehlende Testdatei für ein
 bestehendes Modul ist meist eine echte Lücke, kein bewusstes Auslassen.
+
+## S6E10 P0-Regressionen (2026-10-08)
+
+- `test-target_leak_audit_helpers.R`: Importance-Namensmapping fuer
+  LightGBM; No-op, Reihenfolge/Werte, Leerzeichen, Kollisionen,
+  unbekannte/fehlende Namen und echte LightGBM-Integration.
+- `test-baseline_provenance.R`: fuehrt den echten Abschluss-Aufruf aus
+  030 auf einem kleinen Benchmark und temporaerer SQLite-DB aus.
+  Prueft den gespeicherten Fold-Hash sowie unveraenderte Scores/Predictions.
+
+Falls R unter Windows beim Start `Setting LC_CTYPE=C.UTF-8 failed` meldet,
+koennen Unicode-Symboltests mit Kodierungsdifferenzen scheitern. Fuer diese
+Umgebung in R eine verfuegbare UTF-8-Locale setzen, dann den Runner starten:
+
+```r
+Sys.setlocale("LC_CTYPE", "English_United States.utf8")
+source("tests/testthat.R")
+```
+
+Die Rueckgabe von setlocale muss nichtleer sein. Keine globale erzwungene
+Windows-Locale im plattformuebergreifenden Test-Runner. Fachliche Tests
+oder Erwartungswerte werden fuer dieses Umgebungsproblem nicht veraendert.
+
+## Task- und Lernkurven-Regressionen (2026-10-08)
+
+- `test-classification_task_settings.R`: binaere Overrides, NULL,
+  Multiclass-No-op, bestehende Stratum-Rollen, echte 023-CSV/RDS-Ladezweige
+  und additive positive_class-Metadaten im 150-Modellbundle.
+- `test-learning_curve_preprocessing.R`: echte 023-Pipeline im festen
+  Train/Test-Split, Trainingsmedian/-modus trotz extremer Testdaten,
+  identische Ranger-Vorhersagen bei vollstaendigen Daten und endliche
+  LogLoss-Lernkurven bei binaeren/Multiclass-Tasks mit Fehlwerten.
+
+Die Tests isolieren kleine Fixtures; kein neues Training der lokalen
+Kaggle-Submission und kein Schreibzugriff auf deren Experimentdatenbank.

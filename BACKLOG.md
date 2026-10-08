@@ -2,6 +2,69 @@
 
 Dieses Dokument übersetzt die aktuelle Bewertung des Classification-Templates in einen konkreten Arbeitsplan für Codex.
 
+## S6E10 Backport-Kandidaten (2026-10-08, P0 und Task-P1 qualifiziert)
+
+Evidenz: lokales `ML_Learning/playground-series-s6e10`, Template-Basis
+3b77648, getuntes LightGBM/raw; vom Nutzer gemeldete Public AUC 0.95785.
+Dieser Score bestaetigt keine allgemeine Modellwahl oder Feature-Regel.
+Vor Code-Backport ADR-003: zweite unabhaengige Projektpruefung oder
+regressionsgetesteter defensiver No-op. Noch keine neuen generischen Defaults.
+
+- [x] P0: `015` LightGBM-Importance-Namen auf Originalmerkmale zurueckfuehren.
+  Leerzeichen werden intern zu Unterstrichen; falsche Zuordnung machte den
+  ersten lokalen Audit ungueltig. Tests: unveraenderte saubere Namen,
+  Leerzeichen, Kollisionen und unbekannte Namen; bei Ambiguitaet abbrechen.
+  Generischer Helper in modules/target_leak_audit_helpers.R, Werte und
+  Reihenfolge unveraendert. Auch apparent-exact-match-Kollisionen werden
+  abgewiesen. Echte LightGBM-Integration bestanden; Importance darf nicht
+  verwendete Merkmale weglassen. Exakter No-op auf den vorhandenen
+  health_condition-Importance-Werten: ADR-003 defensive Qualifikation.
+- [x] P0: `030` Provenienz mit dem tatsaechlich instanziierten Benchmark-
+  Resampling speichern, nicht mit dem noch uninstanziierten Eingabeobjekt.
+  Praezisierung des ersten Backlogtexts: die Variable ist definiert,
+  run_timed_benchmark instanziiert aber ihre Kopie. Neuer Test fuehrt den
+  echten Abschluss-Aufruf auf kleiner Benchmark-/SQLite-Fixture aus:
+  korrekter Fold-Hash gespeichert, Scores/Vorhersagen unveraendert.
+
+Pruefung P0 am 2026-10-08: gezielte Tests und bestehende Importance-
+Regression bestanden; volle Suite mit 33 Testdateien unter Windows-
+UTF-8-Locale ohne Testfehler. Initial drei Unicode-Symbolfehler unter
+fehlgeschlagener C.UTF-8-Startup-Locale, mit verfuegbarer LC_CTYPE
+English_United States.utf8 behoben, ohne fachliche Tests zu aendern.
+Logs/No-op-Bericht unter _artifacts/p0_*. Weitere Kandidaten bleiben offen:
+
+- [x] P1: `023` Lernkurve mit foldweiser Imputation, positiver Klasse und
+  Stratifikation; `150` positive Klasse explizit im Full-Task/Bundle.
+  Rueckwaertskompatibilitaet fuer NULL, binaer und Multiclass testen.
+  apply_positive_class in 000_config: binaerer Override, NULL behaelt
+  Defaults/Caches, Multiclass bleibt unveraendert (mlr3 positive=NA).
+  023 nutzt Median-/Modus-Pipeline und setzt Rollen nach CSV/RDS-Laden.
+  150 speichert Klasseninformation additiv in Bundle und Manifest.
+  Sieben Task-/Lade-/Bundle-Testfaelle, drei Imputations-/Lernkurvenfaelle:
+  extremer Testfold aendert Trainingsmedian/-modus nicht; saubere Daten
+  liefern identische Ranger-Predictions; binaere/Multiclass-Lernkurven
+  mit NAs und LogLoss laufen. Kein neuer Parameter-/Thread-Default.
+  Health-condition-No-op: 300 vollstaendige Zeilen, 13 Features aus dem
+  vorhandenen Task; Wahrscheinlichkeiten/Labels/Klasse/Stratum identisch.
+  Das ist KEINE Aussage ueber unveraenderte Scores bei fehlenden Werten
+  oder neu stratifizierter CV (dort sind Aenderungen beabsichtigt).
+  Volle Suite jetzt 35 Testdateien, UTF-8-Locale, ohne Testfehler;
+  Evidenz unter _artifacts/p1_*. ADR-003 defensive Qualifikation.
+- [ ] P1: generischer Submission-Vertrag nach 155: Spalten, Anzahl/IDs,
+  Wahrscheinlichkeitsspalte, Wertebereich, Faktorstufen, Modellparameter
+  und Artefakthashes. Lokales 155_validate_submission.R ist absichtlich
+  S6E10-spezifisch und darf nicht unveraendert kopiert werden.
+- [ ] P1: erzeugte/gepruefte Kandidaten getrennt von echter Einreichung
+  protokollieren. Lokal run/run_config versus submission_result; klaeren,
+  ob eigener Kandidatenstatus/Schema benoetigt wird (ADR-006 beachten).
+- [ ] P2: kontrollierte LightGBM-Seeds/Threads und gepaarte Bestaetigung
+  als generischen Versuchsbaustein pruefen. Ein getestetes Feature oder
+  Blend wird nicht allein wegen eines kleinen positiven Mittels deployed.
+
+Nicht uebernehmen: Airline-Rating-Differenzen (zweite CV nur 2/5 Siege),
+30%-CatBoost-Blend (Konfidenzintervall enthaelt null), konkrete LightGBM-
+Parameter oder 200 Iterationen als universelle Vorgabe.
+
 ## Hinweis zur Struktur-Prämisse (wichtig vor der Umsetzung von P1-P3)
 
 Dieses Repo ist **bewusst kein R-Paket** (siehe `TARGETS.md`: `DESCRIPTION`

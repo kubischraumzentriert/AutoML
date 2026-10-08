@@ -69,7 +69,7 @@ test_ids <- holdout$test_set(1)
 cat("=== Schritt 1: Feature-Importance-Konzentration ===\n")
 learner_imp <- lrn("classif.lightgbm", num_iterations = 200, predict_type = "prob")
 learner_imp$train(task_full)
-imp <- learner_imp$importance()
+imp <- restore_lightgbm_importance_names(learner_imp$importance(), feature_cols)
 importance_dt <- data.table(feature = names(imp), gain = as.numeric(imp))
 importance_dt[, share := gain / sum(gain)]
 setorder(importance_dt, -share)

@@ -5,11 +5,40 @@
 # =====================================================================
 # Der volle Mechanismus (WARUM Determinismus/kumulative Schwelle/Cluster-
 # Erkennung einen Leak anzeigen) ist in README.md ("Target-Leakage-Audit")
-# beschrieben. Diese Datei enthaelt nur die drei eigenstaendig testbaren
-# Kernberechnungen, damit sie mit bekanntem Ground Truth (synthetische
+# beschrieben. Diese Datei enthaelt eigenstaendig testbare Kernberechnungen
+# und defensive Namenszuordnung fuer bekannte synthetische Erwartungswerte
 # Positiv-/Negativ-Faelle, analog den bereits dokumentierten realen
 # Bestaetigungen road-accident-risk/bike-sharing/lending-club) regressions-
 # getestet werden koennen, statt nur manuell einmalig verifiziert zu sein.
+
+restore_lightgbm_importance_names <- function(importance, feature_names) {
+  if (!is.numeric(importance) || !is.character(feature_names) ||
+      anyNA(feature_names) || anyDuplicated(feature_names)) {
+    stop("Expected numeric importance and unique nonmissing feature names.", call. = FALSE)
+  }
+  normalized_names <- gsub("[[:space:]]", "_", feature_names)
+  # Even an apparent exact match is ambiguous if another column normalizes to it.
+  if (anyDuplicated(normalized_names)) {
+    stop("Ambiguous feature names after LightGBM whitespace normalization.", call. = FALSE)
+  }
+  if (length(importance) == 0L) return(importance)
+  importance_names <- names(importance)
+  if (is.null(importance_names) || anyNA(importance_names) || anyDuplicated(importance_names)) {
+    stop("Expected unique nonmissing importance names.", call. = FALSE)
+  }
+  if (all(importance_names %in% feature_names)) return(importance)
+  positions <- match(importance_names, feature_names)
+  missing <- is.na(positions)
+  positions[missing] <- match(importance_names[missing], normalized_names)
+  if (anyNA(positions)) {
+    stop("LightGBM importance names cannot be mapped to task features.", call. = FALSE)
+  }
+  if (anyDuplicated(positions)) {
+    stop("Multiple importance names map to the same task feature.", call. = FALSE)
+  }
+  names(importance) <- feature_names[positions]
+  importance
+}
 
 #' Schritt 2: Determinismus P(Ziel = Wert | Feature = Wert) fuer EINE
 #' niedrig-kardinale Spalte.
