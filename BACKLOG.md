@@ -135,6 +135,23 @@ Nicht uebernehmen: Airline-Rating-Differenzen (zweite CV nur 2/5 Siege),
 30%-CatBoost-Blend (Konfidenzintervall enthaelt null), konkrete LightGBM-
 Parameter oder 200 Iterationen als universelle Vorgabe.
 
+## Zentraler Template-Merge S6E10 (2026-10-09)
+
+- [x] S6E10-Projekt-DB in die zentrale Template-DB gemergt. Die robuste
+  Merge-Variante liest Quellen ueber temporaere lokale Kopien, weil direkte
+  SQLite-Zugriffe unter Windows/OneDrive sonst als fehlende `project`-Zeile
+  erscheinen koennen.
+- [x] `submission_result` als aggregierte Tabelle in den Merge aufgenommen.
+  Damit bleibt der externe Score im zentralen Bestand erhalten, waehrend
+  `prediction`/`prediction_prob` weiterhin bewusst lokal bleiben.
+- [x] Zentral verifiziert: Projekt
+  `playground-series-s6e10-airline-satisfaction`, Public AUC `0.95785`,
+  Submission-ID `fc657dc7-74a3-43de-a7c0-11bebf962352`, Modell-ID
+  `085ee4b0-b350-4c34-9759-d5de7cfeea91`; 16 Workflows, 469
+  Modellkonfigurationen, 3109 Metrikergebnisse, 1 Submission-Result.
+- [ ] Naechster sinnvoller Schritt: Merge-Skript und Doku committen; danach
+  Template-Remote nur auf ausdrueckliche Push-Freigabe aktualisieren.
+
 ## Hinweis zur Struktur-Prämisse (wichtig vor der Umsetzung von P1-P3)
 
 Dieses Repo ist **bewusst kein R-Paket** (siehe `TARGETS.md`: `DESCRIPTION`

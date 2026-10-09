@@ -25,7 +25,7 @@ suppressPackageStartupMessages({
 # die jemand pflegen muesste.
 #
 # Bewusst NUR die aggregierten Tabellen (project/workflow/run/run_config/
-# model_config/resampling/hyperparam/metric_result) - NICHT prediction/
+# model_config/resampling/hyperparam/metric_result/submission_result) - NICHT prediction/
 # prediction_prob. Gruende:
 # 1. Zeilenebene ist projektspezifisch (row_id/truth/response beziehen sich
 #    auf unterschiedliche Datensaetze/Zielspalten) - projektuebergreifend
@@ -61,13 +61,19 @@ source_db_paths <- unique(unlist(lapply(search_roots, function(root) {
   if (!dir.exists(root)) return(character(0))
   list.files(root, pattern = "^experiments\\.db$", recursive = TRUE, full.names = TRUE)
 })))
+explicit_source_db_paths <- Sys.getenv("AUTOML_MERGE_SOURCE_DB_PATHS", unset = "")
+if (nzchar(explicit_source_db_paths)) {
+  explicit_paths <- trimws(strsplit(explicit_source_db_paths, ";", fixed = TRUE)[[1]])
+  source_db_paths <- unique(c(source_db_paths, explicit_paths[nzchar(explicit_paths)]))
+}
 source_db_paths <- source_db_paths[normalizePath(source_db_paths, mustWork = FALSE) != normalizePath(target_db_path, mustWork = FALSE)]
 names(source_db_paths) <- source_db_paths
 
 # Tabellen in Fremdschluessel-Abhaengigkeitsreihenfolge (Eltern vor Kindern).
 merge_tables <- c(
   "project", "workflow", "run", "run_config",
-  "model_config", "resampling", "hyperparam", "metric_result"
+  "model_config", "resampling", "hyperparam", "metric_result",
+  "submission_result"
 )
 
 if (!file.exists(target_db_path)) {
@@ -95,11 +101,27 @@ existing_projects <- dbGetQuery(con, "SELECT proj_name FROM project")$proj_name
 for (source_path in source_db_paths) {
   cat("=== ", source_path, " ===\n", sep = "")
 
+  # Unter Windows/OneDrive kann SQLite die Originaldatei trotz vorhandener
+  # Datei nicht oeffnen (z.B. wegen Dateisperre oder Synchronisationsstatus).
+  # Eine lokale temporaere Kopie ist read-only gegenueber dem Projekt und
+  # vermeidet, dass ein solches Oeffnungsproblem als "keine project-Zeile"
+  # fehlinterpretiert wird.
+  source_copy <- tempfile(pattern = "automl_merge_", fileext = ".db")
+  if (!file.copy(source_path, source_copy, overwrite = TRUE)) {
+    cat("  Temporariaere Kopie konnte nicht angelegt werden, uebersprungen.\n\n")
+    next
+  }
+  on.exit(unlink(source_copy, force = TRUE), add = TRUE)
+
   source_proj_name <- {
-    src_con <- dbConnect(RSQLite::SQLite(), source_path)
-    proj_name <- tryCatch(dbGetQuery(src_con, "SELECT proj_name FROM project")$proj_name, error = function(e) character(0))
-    dbDisconnect(src_con)
-    proj_name
+    src_con <- tryCatch(dbConnect(RSQLite::SQLite(), source_copy), error = function(e) NULL)
+    if (is.null(src_con)) {
+      character(0)
+    } else {
+      proj_name <- tryCatch(dbGetQuery(src_con, "SELECT proj_name FROM project")$proj_name, error = function(e) character(0))
+      dbDisconnect(src_con)
+      proj_name
+    }
   }
 
   if (length(source_proj_name) == 0) {
@@ -115,7 +137,7 @@ for (source_path in source_db_paths) {
     next
   }
 
-  dbExecute(con, sprintf("ATTACH DATABASE '%s' AS src", source_path))
+  dbExecute(con, sprintf("ATTACH DATABASE '%s' AS src", source_copy))
 
   dbBegin(con)
   tryCatch({
@@ -136,6 +158,10 @@ for (source_path in source_db_paths) {
       target_cols <- dbGetQuery(con, sprintf("PRAGMA table_info(%s)", tbl))
       source_cols <- dbGetQuery(con, sprintf("PRAGMA src.table_info(%s)", tbl))
       cols <- intersect(target_cols$name[target_cols$pk == 0], source_cols$name[source_cols$pk == 0])
+      if (length(cols) == 0) {
+        cat(sprintf("  %-14s nicht in beiden Schemas vorhanden, uebersprungen\n", tbl))
+        next
+      }
       col_list <- paste(cols, collapse = ", ")
 
       n_before <- dbGetQuery(con, paste0("SELECT COUNT(*) AS n FROM ", tbl))$n

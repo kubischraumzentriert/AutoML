@@ -640,12 +640,15 @@ Rscript merge_project_experiments.R
 
 - Sichert die Ziel-DB zuerst per Dateikopie (`experiments_backup_<Zeitstempel>.db`).
 - Kopiert `project`/`workflow`/`run`/`run_config`/`model_config`/`resampling`/
-  `hyperparam`/`metric_result` aus jeder in `source_db_paths` gelisteten
+  `hyperparam`/`metric_result`/`submission_result` aus jeder in `source_db_paths` gelisteten
   Projekt-DB. Alle diese Tabellen haengen ausschliesslich an UUID-Text-
   Schluesseln (`<praefix>_id`) - kollisionsfrei kopierbar, die lokale
   `<praefix>_seq`-Spalte (SQLite-rowid-Alias, dient nur als lokaler
   Primary Key) wird dabei bewusst ausgeschlossen und in der Ziel-DB neu
   vergeben.
+- `submission_result` wird mitgefuehrt, damit externe Leaderboard-Scores
+  (z.B. der Kaggle Public Score) im zentralen Vergleich erhalten bleiben;
+  `prediction`/`prediction_prob` bleiben weiterhin projektspezifisch.
 - **Bewusst NICHT gemergt**: `prediction`/`prediction_prob` (Zeilenebene).
   Diese beziehen sich auf projektspezifische `row_id`/`truth`/`response`-Werte
   (nicht projektuebergreifend vergleichbar) und nutzen zusaetzlich lokale
@@ -658,8 +661,16 @@ Rscript merge_project_experiments.R
   Ziel-DB noch nicht existiert - mehrfaches Ausfuehren ist gefahrlos, auch
   nach neuen Projekten einfach `source_db_paths` ergaenzen und erneut
   ausfuehren.
+- Falls die automatische Dateisystem-Discovery einen Projektordner (z.B.
+  unter OneDrive) nicht sieht, kann ein expliziter, semikolongetrennter
+  Override verwendet werden: `AUTOML_MERGE_SOURCE_DB_PATHS=<pfad1>;<pfad2>`.
+  Der Override ergaenzt die Discovery und ist kein Ersatz fuer die
+  projektbezogene `proj_name`-Pruefung.
 - Fuer ein neues Projekt `source_db_paths` im Skript um den Pfad zu dessen
   `_artifacts/experiments.db` ergaenzen.
+- Die Quelle wird vor dem Lesen in eine temporaere lokale Kopie ueberfuehrt,
+  damit SQLite-Dateisperren oder Synchronisationszustaende nicht als fehlende
+  `project`-Zeile interpretiert werden.
 
 ## Targets- und Ensemble-Bruecke
 
