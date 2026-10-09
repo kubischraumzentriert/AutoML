@@ -4,8 +4,8 @@
 
 - Template-Repo: `C:\Users\HP\OneDrive\Dokumente\R_Workspace\MLR3_Classifikation`
 - Branch: `main`
-- HEAD: `0c2ed18` (`Record second-project submission bridge validation`)
-- Remote-Stand: `deffb6d`; `0c2ed18` ist lokal noch nicht gepusht.
+- HEAD: `dbdf296` (`Merge S6E10 results into central template DB`)
+- Remote-Stand: `dbdf296` auf `origin/main`; Arbeitsbaum sauber.
 
 ## Heute abgeschlossen
 
@@ -19,16 +19,23 @@
 - Merge-Backup: `_artifacts/experiments_backup_20261009T060132.db`.
 - Der Merge liest Quell-DBs jetzt ueber temporaere lokale Kopien. Ein
   expliziter Override ist ueber `AUTOML_MERGE_SOURCE_DB_PATHS` moeglich.
-
-## Uncommitted
-
-- `merge_project_experiments.R`
-- `EXPERIMENTS_DB.md`
-- `BACKLOG.md`
-- diese Handoff-Datei
+- `analysis/compare_literature_vs_own_results.R` erfolgreich ausgefuehrt:
+  110 gematchte Paare (`context_only`), 32 aggregierte Benchmark-Zeilen ohne
+  lokales Dataset. Reports liegen unter `_artifacts/literature_vs_own_results.*`.
+- `analysis/classify_literature_comparability.R` und das manuelle Review
+  erfolgreich ausgefuehrt: 10 Kandidaten, alle bleiben `keep_context_only`.
+  Hauptluecken bei `credit-g`: positive Klasse, exakter Task, Preprocessing,
+  Benchmark-Harness/Ressourcen und Seed-Protokoll.
+- `analysis/reproduce_literature_f1_credit_bank.R` ausgefuehrt: `credit-g`
+  mit positiver Klasse `bad`, 10-Fold-CV, Seed 42 und Imputation. LightGBM:
+  F1 `0.5394`, AUC `0.7627`, BAcc `0.6750`; Ranger: F1 `0.5061`, AUC
+  `0.7907`, BAcc `0.6595`. Werte sind in der Template-DB protokolliert und
+  bleiben als lokale Reproduktion getrennt von Literaturwerten.
 
 ## Naechster Schritt
 
-1. `git diff --check` und gezielten Merge-Test nochmals bestaetigen.
-2. Aenderungen lokal committen.
-3. Nur bei ausdruecklicher Freigabe nach `origin/main` pushen.
+1. Reproduzierende `credit-g`-Konfiguration mit explizitem Task, positiver
+   Klasse, 10-Fold-Resampling und dokumentiertem Ressourcenbudget weiter
+   gegen die Paper-Harness-Annahmen abgleichen.
+2. Nur aus gut vergleichbaren, reproduzierten Paaren Template-Kandidaten
+   ableiten.

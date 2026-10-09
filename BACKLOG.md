@@ -149,8 +149,58 @@ Parameter oder 200 Iterationen als universelle Vorgabe.
   Submission-ID `fc657dc7-74a3-43de-a7c0-11bebf962352`, Modell-ID
   `085ee4b0-b350-4c34-9759-d5de7cfeea91`; 16 Workflows, 469
   Modellkonfigurationen, 3109 Metrikergebnisse, 1 Submission-Result.
-- [ ] Naechster sinnvoller Schritt: Merge-Skript und Doku committen; danach
-  Template-Remote nur auf ausdrueckliche Push-Freigabe aktualisieren.
+- [x] Merge-Skript und Doku in `dbdf296` committed und nach `origin/main`
+  gepusht. Naechster sinnvoller Schritt: den expliziten Literatur-vs.-eigenen
+  Ergebnisvergleich ausfuehren und seine Vergleichsluecken als Testkandidaten
+  priorisieren.
+
+## Literaturvergleich ausgefuehrt (2026-10-09)
+
+- [x] `analysis/compare_literature_vs_own_results.R` gegen die zentrale DB
+  ausgefuehrt. Reports: `_artifacts/literature_vs_own_results.{csv,md}`.
+- [x] Ergebnis: 110 gematchte Dataset/Metrik-Paare, alle als
+  `matched_context_only`; 32 aggregierte Benchmark-Zeilen ohne lokales
+  Dataset. Damit kein belastbarer Nachweis fuer einen neuen generischen
+  Modell-, Seed-, Thread- oder Preprocessing-Default.
+- [ ] Naechster Test: fuer die vier OpenML-Paare mit vorhandenen lokalen
+  Projekten (`adult`, `amazon-employee-access`, `bank-marketing`, `credit-g`)
+  die Vergleichbarkeit je Metrik, Split, Resampling und Zeitbudget explizit
+  klassifizieren; nur `roughly_comparable` fuer eine Technologieentscheidung
+  verwenden.
+
+## Literaturvergleich: Vergleichbarkeits-Triage (2026-10-09)
+
+- [x] `analysis/classify_literature_comparability.R` ausgefuehrt:
+  35 `aggregate_or_metadata_context`, 30
+  `resampling_mismatch_context`, 10 `split_match_candidate`, 7
+  `source_context_missing_openml_id`.
+- [x] Das vorhandene manuelle Review fuer die 10 Kandidaten ausgefuehrt.
+  Beide geprueften Quellen (`credit-g` F1 und AUC) bleiben
+  `keep_context_only`: positiver Klassenwert, exakter OpenML-Task,
+  Preprocessing, Harness/Ressourcen und Seed-Protokoll sind nicht vollstaendig
+  belegt. Reports liegen unter `_artifacts/literature_*comparability*` und
+  `_artifacts/literature_split_candidate_review.*`.
+- [ ] Naechster belastbarer Test: eine reproduzierende `credit-g`-Konfiguration
+  mit explizitem OpenML-Task, positiver Klasse, 10-Fold-Resampling und
+  dokumentiertem Zeit-/Ressourcenbudget bauen; erst danach eine
+  `roughly_comparable`-Einstufung erwogen.
+
+## Credit-G-Reproduktion ausgefuehrt (2026-10-09)
+
+- [x] Bestehende Reproduktionsroutine ausgefuehrt:
+  `analysis/reproduce_literature_f1_credit_bank.R`. Der Lauf nutzt OpenML
+  `credit-g`/Task 31, positive Klasse `bad`, 10-Fold-CV, Median/Mode-Imputation,
+  Seed 42 und protokolliert Modell-/Metrikwerte in der Template-DB.
+- [x] Ergebnis: LightGBM 10-Fold F1 `0.5394`, AUC `0.7627`, BAcc `0.6750`
+  (22.4 s); Ranger F1 `0.5061`, AUC `0.7907`, BAcc `0.6595` (6.5 s).
+  Artefakte: `_artifacts/literature_metric_reproduction_f1_credit_bank.*`.
+- [x] Vergleichbarkeit bleibt `context_only`: Die lokale 10-Fold-Reproduktion
+  ist belastbare eigene Evidenz, ersetzt aber nicht die fehlenden Angaben zu
+  Paper-Preprocessing, exakter Task-/Klassenkonvention, Harness und
+  Ressourcen-/Seed-Protokoll.
+- [ ] Naechster Schritt: den Reproduktionslauf mit einer expliziten
+  `run_config`-Zusammenfassung fuer Paper-Harness-Annahmen versehen oder die
+  fehlenden Quellenparameter beschaffen; keine automatische Hochstufung.
 
 ## Hinweis zur Struktur-Prämisse (wichtig vor der Umsetzung von P1-P3)
 
