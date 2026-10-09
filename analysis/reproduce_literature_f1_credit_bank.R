@@ -104,7 +104,23 @@ run_credit_g <- function() {
   proj_id <- db_get_or_create_project(con, "openml-credit-g")
   wf_id <- db_get_or_create_workflow(con, proj_id, "script", "reproduce_literature_f1_credit_bank.R")
   run_id <- db_create_run(con, wf_id, seed = 42, notes = "Literature metric reproduction: local 10-fold F1 for credit-g.")
-  db_log_run_config(con, run_id, list(cv_folds = folds, positive_class = positive, reproduction_metric = "classif.fbeta(beta=1)"))
+  db_log_run_config(con, run_id, list(
+    cv_folds = folds,
+    positive_class = positive,
+    openml_task_id = 31L,
+    openml_dataset_id = 31L,
+    reproduction_metric = "classif.fbeta(beta=1)",
+    paper_metric = "roc_auc",
+    paper_split_protocol = "OpenML organizer-provided 10 folds",
+    paper_time_budget_minutes = 60,
+    paper_hard_kill_minutes = 120,
+    paper_cpu = 8,
+    paper_ram_gb = 32,
+    paper_environment = "Ubuntu 18.04; Intel Xeon Gold 6148",
+    local_preprocessing = "median/mode imputation",
+    local_seed = 42L,
+    local_budget_note = "No paper-harness claim; local mlr3 reproduction runtime is recorded per model."
+  ))
   rsmp_id <- db_create_resampling(con, run_id, strategy = "cv", folds = folds, seed = 42)
 
   rows <- list()

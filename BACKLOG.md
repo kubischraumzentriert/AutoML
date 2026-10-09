@@ -202,6 +202,48 @@ Parameter oder 200 Iterationen als universelle Vorgabe.
   `run_config`-Zusammenfassung fuer Paper-Harness-Annahmen versehen oder die
   fehlenden Quellenparameter beschaffen; keine automatische Hochstufung.
 
+## Credit-G-Harness-Abgleich (2026-10-09)
+
+- [x] Primaerquelle fuer die LightAutoML-Tabelle geprueft. Appendix A nennt
+  OpenML-organizer-provided 10 folds, ROC-AUC fuer binaere Aufgaben, 1 Stunde
+  Framework-Limit, harten Prozessabbruch nach 2 Stunden, 8 CPU, 32 GB RAM,
+  Ubuntu 18.04 und Intel Xeon Gold 6148.
+- [x] Diese Annahmen in `seed_literature_benchmark_results.R` und als
+  `run_config`-Metadaten in `reproduce_literature_f1_credit_bank.R` erfasst.
+  Der zweite Lauf reproduziert die Kennzahlen stabil: LightGBM AUC `0.7627`,
+  F1 `0.5394`; Ranger AUC `0.7907`, F1 `0.5061`.
+- [x] Entscheidung: weiterhin `context_only`. Das lokale mlr3-Experiment
+  nutzt nicht den LightAutoML-/AMLB-Docker-Harness und beansprucht weder das
+  Paper-Zeitlimit noch dessen Framework-Ergebnisse zu reproduzieren.
+- [ ] Naechster Test: falls direkter Vergleich weiterhin benoetigt wird,
+  eine getrennte 1h/8-CPU/32-GB-Harness-Reproduktion planen; kein
+  Template-Backport aus dem bisherigen Einzel-Datensatz ableiten.
+- [x] Umgebungscheck fuer den getrennten Harness-Lauf: lokales Python findet
+  weder `lightautoml` noch `automlbenchmark`; Docker ist nicht verfuegbar.
+  Der direkte Paper-Harness ist damit reproduzierbar als externe
+  Umgebungsaufgabe markiert, nicht als fehlgeschlagener Modelltest.
+- [ ] Vor einer Installation/Cloud-Ausfuehrung explizit entscheiden, ob der
+  Aufwand fuer einen direkten 1h-Harness-Vergleich den Erkenntnisgewinn
+  rechtfertigt. Bis dahin bleibt `credit-g` lokal reproduziert, aber
+  `context_only`.
+
+## WSL-/Podman-Harness installiert (2026-10-09)
+
+- [x] LightAutoML `0.4.2` in WSL/Ubuntu 24.04 installiert:
+  `/home/anen/.venvs/automl-paper`; CPU-PyTorch `2.14.1+cpu`,
+  `torch.cuda.is_available() == FALSE`.
+- [x] AutoMLBenchmark aus OpenML-Repo-Commit `dfe8d21` unter
+  `/home/anen/src/automlbenchmark` eingerichtet, eigene venv
+  `/home/anen/.venvs/automlbenchmark`; `runbenchmark.py --help` laeuft.
+  Python-3.12-Kompatibilitaet wurde mit NumPy `1.26.4` und SciPy `1.11.4`
+  hergestellt; die alte Python-3.9-Lockdatei wird nicht unveraendert
+  erzwungen.
+- [x] Podman `4.9.3` in WSL verifiziert. AutoMLBenchmark erwartet intern den
+  Befehl `docker`; ein benutzerspezifischer Alias `/home/anen/bin/docker`
+  verweist auf `/usr/bin/podman`. Ein Podman-Testcontainer lief erfolgreich.
+- [ ] Naechster Ausfuehrungstest: genau ein `credit-g`-Smoke-Fold im
+  AutoMLBenchmark-Pfad, danach erst ein vollstaendiger 10-Fold-/1h-Lauf.
+
 ## Hinweis zur Struktur-Prämisse (wichtig vor der Umsetzung von P1-P3)
 
 Dieses Repo ist **bewusst kein R-Paket** (siehe `TARGETS.md`: `DESCRIPTION`
@@ -5186,3 +5228,17 @@ globaler Friedman/Nemenyi-Rang mittelt ueber alle 15, verdeckt aber nicht
 die datensatzspezifische `workflow_ranger`-Staerke bei kleinen/
 unausgeglichenen Faellen). Keine neue Erkenntnis, aber jetzt an EINER
 Stelle nachschlagbar statt ueber 2 Tranchen-Abschnitte verteilt.
+
+## AutoMLBenchmark credit-g Smoke-Test (2026-10-09)
+
+Der erste echte LightAutoML-Lauf im WSL-/Podman-Harness ist abgeschlossen:
+OpenML `credit-g` (Task 31), Fold 0, `test`-Constraint, ROC-AUC
+`0.8452380952380952`. Der Lauf verwendete das Image
+`automlbenchmark/lightautoml:0.3.7.3-v2.1.3` und dauerte 570 Sekunden
+Training bzw. 592 Sekunden insgesamt. Das versionierte Ergebnis-Paket liegt
+unter `benchmarks/automlbenchmark/credit-g_smoke_v6/`.
+
+Einordnung: `literature_context_only`; kein Kaggle-Score und kein Ersatz für
+den geplanten 10-Fold-Lauf. Nächster Schritt ist die vollständige
+reproduzierbare 10-Fold-Messung mit anschließender Ablage in der
+Literaturvergleichs-Datenbank.

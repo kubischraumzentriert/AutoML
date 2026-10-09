@@ -4,8 +4,8 @@
 
 - Template-Repo: `C:\Users\HP\OneDrive\Dokumente\R_Workspace\MLR3_Classifikation`
 - Branch: `main`
-- HEAD: `dbdf296` (`Merge S6E10 results into central template DB`)
-- Remote-Stand: `dbdf296` auf `origin/main`; Arbeitsbaum sauber.
+- HEAD: `9933040` (`Record credit-g literature reproduction`)
+- Remote-Stand: `9933040` auf `origin/main`; Arbeitsbaum sauber.
 
 ## Heute abgeschlossen
 
@@ -31,6 +31,20 @@
   F1 `0.5394`, AUC `0.7627`, BAcc `0.6750`; Ranger: F1 `0.5061`, AUC
   `0.7907`, BAcc `0.6595`. Werte sind in der Template-DB protokolliert und
   bleiben als lokale Reproduktion getrennt von Literaturwerten.
+- Appendix-A-Harnessdaten der LightAutoML-Quelle sind jetzt erfasst:
+  10 OpenML-Folds, ROC-AUC, 1h Framework-Limit/2h Hard-Kill, 8 CPU, 32 GB
+  RAM, Ubuntu 18.04/Xeon Gold 6148. Der lokale Lauf bleibt bewusst
+  `context_only`, da er nicht den Docker-/Framework-Harness ausfuehrt.
+- Umgebungscheck fuer einen direkten Lauf: `lightautoml` und
+  `automlbenchmark` fehlen im lokalen Python; Docker ist nicht verfuegbar.
+  Kein Installationsversuch ohne separate Entscheidung ueber Aufwand und
+  Reproduzierbarkeitsnutzen.
+- WSL-/Podman-Umgebung inzwischen eingerichtet: LightAutoML `0.4.2` in
+  `/home/anen/.venvs/automl-paper`, AutoMLBenchmark-Commit `dfe8d21` in
+  `/home/anen/src/automlbenchmark` mit eigener venv
+  `/home/anen/.venvs/automlbenchmark`. Podman `4.9.3` laeuft; der interne
+  `docker`-Aufruf des Benchmarks wird ueber `/home/anen/bin/docker` auf
+  Podman abgebildet.
 
 ## Naechster Schritt
 
@@ -39,3 +53,5 @@
    gegen die Paper-Harness-Annahmen abgleichen.
 2. Nur aus gut vergleichbaren, reproduzierten Paaren Template-Kandidaten
    ableiten.
+3. Vor dem Vollbudget einen einzelnen `credit-g`-Smoke-Fold im
+   AutoMLBenchmark-/Podman-Pfad ausfuehren.

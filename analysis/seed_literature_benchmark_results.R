@@ -147,7 +147,7 @@ src_lightautoml_paper <- upsert_source(
   "paper",
   "https://www.researchgate.net/publication/354379217_LightAutoML_AutoML_Solution_for_a_Large_Financial_Services_Ecosystem",
   "OpenML AutoML benchmark, Table 7",
-  "Paper Table 7 reports OpenML benchmark scores; imported subset keeps exact rows context_only until task/harness equivalence is proven."
+  "Paper Table 7 reports OpenML benchmark scores. Appendix A specifies organizer-provided 10-fold splits, ROC-AUC for binary tasks, a 1-hour framework limit, process kill after 2 hours, 8 CPU, 32 GB RAM, Ubuntu 18.04 and Intel Xeon Gold 6148; imported rows remain context_only until local task/harness equivalence is proven."
 )
 
 src_automlbench_datasets <- upsert_source(
@@ -253,7 +253,7 @@ for (i in seq_len(nrow(lightautoml_table7_auc))) {
     openml_dataset_id = unname(openml_dataset_ids[[row$dataset]]),
     time_budget_minutes = 60,
     resampling = "10 OpenML benchmark folds according to paper appendix",
-    notes = "Table 7 ROC-AUC for binary OpenML datasets; keep context_only until exact task, class ordering, framework harness and environment equivalence are proven."
+    notes = "Table 7 ROC-AUC for binary OpenML datasets; source harness: organizer-provided 10 folds, 1-hour framework limit, 2-hour hard kill, 8 CPU and 32 GB RAM. Keep context_only until exact task, class ordering, framework harness and environment equivalence are proven."
   )
 }
 
