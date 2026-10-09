@@ -122,9 +122,14 @@ Logs/No-op-Bericht unter _artifacts/p0_*. Weitere Kandidaten bleiben offen:
   langsamer. Der absolute CV-Wert weicht vom Holdout ab, der Seed-/Thread-
   Befund bleibt aber identisch; kein Template-Defaultwechsel.
   Run `dc36a921-0fe1-4457-8872-dd7e4b033921`, Artefakte `lightgbm_seed_thread_cv_*`.
-- [ ] P2: kontrollierte LightGBM-Seeds/Threads und gepaarte Bestaetigung
-  als generischen Versuchsbaustein pruefen. Ein getestetes Feature oder
+- [x] P2: kontrollierte LightGBM-Seeds/Threads und gepaarte Bestaetigung
+  als generischen Versuchsbaustein geprueft. Ein getestetes Feature oder
   Blend wird nicht allein wegen eines kleinen positiven Mittels deployed.
+- [x] P1: Submission-Bridge auf zweitem realen Projekt bestaetigt
+  (playground-series-s6e10, read-only, 2026-10-09). Public Score 0.95785,
+  Submission-ID `fc657dc7-74a3-43de-a7c0-11bebf962352`, Modell-ID
+  `085ee4b0-b350-4c34-9759-d5de7cfeea91`; CSV-SHA und Modell-SHA stimmen mit
+  DB-Manifest und Submission-Result ueberein. Kein Projekt-Write/Upload.
 
 Nicht uebernehmen: Airline-Rating-Differenzen (zweite CV nur 2/5 Siege),
 30%-CatBoost-Blend (Konfidenzintervall enthaelt null), konkrete LightGBM-

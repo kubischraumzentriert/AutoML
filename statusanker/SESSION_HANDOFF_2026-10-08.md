@@ -179,8 +179,8 @@ Probabilitaeten bit-identisch zum bisherigen gewichteten Mittel; Modell-SHA
 unveraendert. Evidenz: _artifacts/bridge_template_noop.log. Kein reales
 Full-Training/Upload und keine Aenderung am lokalen S6E10-Projekt.
 
-Die Registrierungsbruecke ist in `fd2b312` committet und nach `origin/main`
-gepusht. Die aktuelle CV-Erweiterung ist noch uncommittet.
+Die Registrierungsbruecke und die CV-Erweiterung sind in `deffb6d` committet
+und nach `origin/main` gepusht.
 Volle Suite: 38 Testdateien, UTF-8, ohne Fehler; nur bestehende
 Paket-Build-Warnungen. Produktionsgraph mit 20 Targets geparst.
 Evidenz: _artifacts/bridge_full_suite_utf8.log. Tatsachliche tar_make()-
@@ -214,3 +214,15 @@ Differenzen = 0; Threads 4 erneut langsamer. DB-Run
 `_artifacts/lightgbm_seed_thread_cv_*`. Der absolute CV-Wert ist nicht mit
 dem Holdout-Wert gleichzusetzen; der Nullbefund zur Seed-/Thread-Wahl ist
 jedoch ueber beide Designs stabil. Kein Produktionsmodell geaendert.
+
+## Zweitprojekt-Bestaetigung S6E10 (2026-10-09)
+
+Read-only Bridge-Pruefung auf `C:\Users\HP\ML_Learning\playground-series-s6e10`.
+Die SQLite-DB wurde wegen des OneDrive-Dateisperrkontexts nur temporaer
+kopiert; Original-DB, CSV und Modell wurden nicht veraendert. Public Score
+0.95785 ist an Submission-ID `fc657dc7-74a3-43de-a7c0-11bebf962352` und
+Modell-ID `085ee4b0-b350-4c34-9759-d5de7cfeea91` gepinnt. Submission-CSV-SHA
+`7642c9e6f907ec1fbf429239757755e8fc0f6a52f8fe9c81850decae36c54bc9` und
+Modell-SHA `27796a36dcb78cd755a75625ab2120e18250d9bcc5531f7c23f49c4d5f4e1716`
+stimmen jeweils mit DB-Manifest/Result ueberein; Metrik `classif.auc`.
+Kein Upload und keine Neuregistrierung.
