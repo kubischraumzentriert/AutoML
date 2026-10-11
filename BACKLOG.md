@@ -5242,3 +5242,25 @@ Einordnung: `literature_context_only`; kein Kaggle-Score und kein Ersatz für
 den geplanten 10-Fold-Lauf. Nächster Schritt ist die vollständige
 reproduzierbare 10-Fold-Messung mit anschließender Ablage in der
 Literaturvergleichs-Datenbank.
+
+## Aktueller Stand: externe Python-Linie geschlossen (2026-10-11)
+
+Dieser Abschnitt hat Vorrang vor den älteren offenen Folgepunkten in den
+Abschnitten vom 2026-10-09. Die damalige Entscheidung fuer einen
+AutoMLBenchmark-10-Fold-Lauf wurde nach dem Smoke-Test revidiert:
+
+- [x] LightAutoML-/AutoMLBenchmark-Ergebnisse als historische
+  `literature_context_only`-Evidenz behalten.
+- [x] Keine LightAutoML- oder AutoMLBenchmark-Komponente in das R-Template
+  backportieren.
+- [x] Vollbudget-10-Fold-Lauf nicht ausfuehren; zugehoerige WSL-Venvs und das
+  LightAutoML-Podman-Image bereinigt.
+- [x] Template-Regressionstest am 2026-10-11 bestaetigt: 872 Tests, 0 Fehler,
+  0 Skips unter `English_United States.utf8`.
+- [ ] Neues unabhaengiges R-natives Klassifikationsprojekt aus dem Template
+  aufsetzen und mit Datenvertrag, Leak-Audit und Baseline beginnen.
+
+Damit ist die offene AutoMLBenchmark-Zeile kein aktueller Arbeitsauftrag
+mehr. Der Smoke-Test bleibt fuer die historische Literatur-Einordnung
+erhalten; neue Score-/Template-Entscheidungen muessen aus R-nativer,
+reproduzierbarer Evidenz entstehen.
