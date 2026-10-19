@@ -5257,10 +5257,41 @@ AutoMLBenchmark-10-Fold-Lauf wurde nach dem Smoke-Test revidiert:
   LightAutoML-Podman-Image bereinigt.
 - [x] Template-Regressionstest am 2026-10-11 bestaetigt: 872 Tests, 0 Fehler,
   0 Skips unter `English_United States.utf8`.
-- [ ] Neues unabhaengiges R-natives Klassifikationsprojekt aus dem Template
-  aufsetzen und mit Datenvertrag, Leak-Audit und Baseline beginnen.
+- [x] Unabhaengiges R-natives Klassifikationsprojekt bestaetigt:
+  `openml-aps-failure-scania` (OpenML 41138) mit Datenvertrag, Leak-Audit
+  und Baseline. Die vollstaendige Evidenz ist im lokalen Projekt-README und
+  in der zentralen DB vorhanden.
 
 Damit ist die offene AutoMLBenchmark-Zeile kein aktueller Arbeitsauftrag
 mehr. Der Smoke-Test bleibt fuer die historische Literatur-Einordnung
 erhalten; neue Score-/Template-Entscheidungen muessen aus R-nativer,
 reproduzierbarer Evidenz entstehen.
+
+## Unabhaengige R-native Bestaetigung: APS Failure (2026-10-19)
+
+- [x] Datenvertrag/Import bestaetigt: OpenML 41138, 76.000 Zeilen, 170
+  numerische Sensorfeatures, binaeres Ziel `target`, positive Klasse `pos`,
+  rund 1,8 Prozent positive Faelle.
+- [x] Target-Leak-Audit abgeschlossen: staerkstes Feature 26,8 Prozent
+  Gain-Importance; korrelierter 13-Feature-Cluster 34,5 Prozent; Entfernung
+  senkte AUC nur um 0,0048. Kein Leak-Verdacht.
+- [x] Baseline und Modellvergleich abgeschlossen. CatBoost Default erreichte
+  in 5-facher CV AUC 0,9912 und BAcc 0,8861; Klassengewichtung mit Power 1,5
+  steigerte BAcc auf 0,9634 bei AUC 0,9887.
+- [x] Missingness-Audit abgeschlossen: 40 Features zeigten zusaetzliches
+  Zielsignal in der Fehlwertanzeige. 40 Missingness-Indikatoren brachten in
+  gepaarter CV jedoch keinen Nutzen (AUC-Differenz -0,00087, BAcc-Differenz
+  0,00000). Der Befund wird deshalb nicht als generischer Feature-Default
+  uebernommen.
+- [x] Schwellenwert-Tuning bestaetigte, dass ein Teil des Klassengewichtungs-
+  effekts auch post hoc erreichbar ist; fuer das lokale Endmodell blieb die
+  Kombination CatBoost, Power 1,5 und Schwelle 0,54 dokumentiert.
+- [x] Aggregierte APS-Ergebnisse sind in der zentralen Template-DB vorhanden
+  (57 Modellkonfigurationen, 114 Metrikergebnisse); lokale DB, Vorhersagen
+  und Modellartefakte bleiben im Projektverzeichnis.
+
+Einordnung nach ADR-003: Die APS-Ergebnisse bestaetigen die Workflow- und
+Diagnosekette an einem unabhaengigen, stark unausgewogenen, fehlwertreichen
+Industriedatensatz. Sie rechtfertigen keinen universellen CatBoost-,
+Klassengewichtungs- oder Missingness-Default; diese Entscheidungen bleiben
+projektspezifisch.
