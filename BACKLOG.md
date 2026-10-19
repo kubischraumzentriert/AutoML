@@ -40,6 +40,18 @@ Release-/Clean-Checkout-Pruefung und wissenschaftliche Claim-Grenzen.
   `AUTOML_MERGE_PROJECT_ROOTS` erlauben portable Layouts; Standardwerte
   nutzen das Arbeitsverzeichnis, dessen Elternverzeichnis und `~/ML_Learning`.
 
+## Review-Nacharbeit: WAL-sicherer Merge-Snapshot (2026-10-19)
+
+- [x] P1: Quell-DBs werden vor dem Merge mit SQLite `VACUUM INTO` als
+  konsistente, schreibgeschuetzte Snapshots materialisiert. Der Snapshot
+  umfasst den committed Stand auch dann, wenn die Quelle im WAL-Modus laeuft;
+  die Original-DB wird nicht veraendert.
+- [x] Snapshot-Dateien werden nach jeder Quelle aufgeraeumt. Fehler bei der
+  Snapshot-Erzeugung oder beim Anhängen brechen den Lauf fail-closed ab,
+  anstatt einen moeglicherweise unvollstaendigen Zwischenstand zu mergen.
+- [x] Regressionstests fuer WAL-Lesbarkeit sowie idempotente Wiederholung und
+  das Nachziehen eines spaeteren lokalen Runs ergaenzt.
+
 ## S6E10 Backport-Kandidaten (2026-10-08, P0 und Task-P1 qualifiziert)
 
 Evidenz: lokales `ML_Learning/playground-series-s6e10`, Template-Basis

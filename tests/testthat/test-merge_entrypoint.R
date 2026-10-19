@@ -1,5 +1,7 @@
 library(testthat)
 source(testthat::test_path("..", "..", "modules", "db_housekeeping.R"))
+source(testthat::test_path("..", "..", "modules", "merge_project_experiments_helpers.R"))
+source(testthat::test_path("..", "..", "db_logging.R"))
 
 test_that("public merge entrypoint delegates to the canonical incremental implementation", {
   root <- normalizePath(testthat::test_path("..", ".."))
@@ -24,4 +26,96 @@ test_that("merge project roots accept semicolon-separated environment overrides"
   on.exit(if (is.na(old)) Sys.unsetenv("AUTOML_MERGE_PROJECT_ROOTS") else Sys.setenv(AUTOML_MERGE_PROJECT_ROOTS = old), add = TRUE)
   Sys.setenv(AUTOML_MERGE_PROJECT_ROOTS = "C:/one; C:/two;C:/one")
   expect_identical(merge_env_paths("AUTOML_MERGE_PROJECT_ROOTS"), c("C:/one", "C:/two"))
+})
+
+test_that("SQLite snapshot contains rows visible through WAL", {
+  source_path <- tempfile(fileext = ".db")
+  snapshot_path <- NULL
+  source_con <- DBI::dbConnect(RSQLite::SQLite(), source_path)
+  on.exit({
+    if (DBI::dbIsValid(source_con)) DBI::dbDisconnect(source_con)
+    if (!is.null(snapshot_path)) unlink(snapshot_path, force = TRUE)
+    unlink(c(source_path, paste0(source_path, "-wal"), paste0(source_path, "-shm")), force = TRUE)
+  }, add = TRUE)
+  DBI::dbExecute(source_con, "CREATE TABLE values_table (id TEXT PRIMARY KEY, value INTEGER)")
+  DBI::dbExecute(source_con, "PRAGMA journal_mode = WAL")
+  DBI::dbExecute(source_con, "INSERT INTO values_table (id, value) VALUES ('wal-row', 42)")
+
+  snapshot_path <- create_sqlite_snapshot(source_path)
+  snapshot_con <- DBI::dbConnect(RSQLite::SQLite(), snapshot_path, flags = RSQLite::SQLITE_RO)
+  on.exit(DBI::dbDisconnect(snapshot_con), add = TRUE)
+  expect_equal(DBI::dbGetQuery(snapshot_con, "SELECT value FROM values_table WHERE id = 'wal-row'")$value, 42)
+})
+
+test_that("merge reruns are idempotent and pull later source runs", {
+  root <- normalizePath(testthat::test_path("..", ".."), winslash = "/")
+  workspace <- tempfile(pattern = "merge-workspace-")
+  source_dir <- file.path(workspace, "merge-source")
+  source_path <- file.path(source_dir, "_artifacts", "experiments.db")
+  target_path <- file.path(workspace, "merge-target", "_artifacts", "experiments.db")
+  dir.create(dirname(source_path), recursive = TRUE)
+  dir.create(dirname(target_path), recursive = TRUE)
+  on.exit(unlink(workspace, recursive = TRUE, force = TRUE), add = TRUE)
+
+  source_con <- db_connect(source_path, project_dir = root)
+  project_id <- db_get_or_create_project(source_con, "merge-fixture")
+  workflow_id <- db_get_or_create_workflow(source_con, project_id, "script", "fixture")
+  first_run <- db_create_run(source_con, workflow_id, seed = 1L, log_baseline_provenance = FALSE)
+  db_finish_run(source_con, first_run)
+  dbDisconnect(source_con)
+  target_con <- db_connect(target_path, project_dir = root)
+  dbDisconnect(target_con)
+
+  run_merge <- function() {
+    executable <- file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
+    previous_directory <- getwd()
+    on.exit(setwd(previous_directory), add = TRUE)
+    env_names <- c(
+      "AUTOML_MERGE_TEMPLATE_ROOT",
+      "AUTOML_MERGE_TARGET_DB_PATH",
+      "AUTOML_MERGE_PROJECT_ROOTS"
+    )
+    previous_env <- Sys.getenv(env_names, unset = NA_character_)
+    on.exit({
+      for (name in env_names) {
+        if (is.na(previous_env[[name]])) {
+          Sys.unsetenv(name)
+        } else {
+          do.call(Sys.setenv, setNames(list(previous_env[[name]]), name))
+        }
+      }
+    }, add = TRUE)
+    setwd(root)
+    Sys.setenv(
+      AUTOML_MERGE_TEMPLATE_ROOT = root,
+      AUTOML_MERGE_TARGET_DB_PATH = normalizePath(target_path, winslash = "/", mustWork = FALSE),
+      AUTOML_MERGE_PROJECT_ROOTS = normalizePath(workspace, winslash = "/", mustWork = FALSE)
+    )
+    output <- system2(
+      executable,
+      "merge_project_experiments.R",
+      stdout = TRUE,
+      stderr = TRUE
+    )
+    expect_null(attr(output, "status"), info = paste(output, collapse = "\n"))
+  }
+
+  run_merge()
+  target_con <- db_connect(target_path, project_dir = root)
+  expect_equal(dbGetQuery(target_con, "SELECT COUNT(*) AS n FROM run")$n, 1L)
+  dbDisconnect(target_con)
+
+  run_merge()
+  target_con <- db_connect(target_path, project_dir = root)
+  expect_equal(dbGetQuery(target_con, "SELECT COUNT(*) AS n FROM run")$n, 1L)
+  dbDisconnect(target_con)
+
+  source_con <- db_connect(source_path, project_dir = root)
+  second_run <- db_create_run(source_con, workflow_id, seed = 2L, log_baseline_provenance = FALSE)
+  db_finish_run(source_con, second_run)
+  dbDisconnect(source_con)
+  run_merge()
+  target_con <- db_connect(target_path, project_dir = root)
+  expect_equal(dbGetQuery(target_con, "SELECT COUNT(*) AS n FROM run")$n, 2L)
+  dbDisconnect(target_con)
 })

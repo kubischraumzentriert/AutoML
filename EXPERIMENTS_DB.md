@@ -675,9 +675,11 @@ Rscript merge_project_experiments.R
 - Fuer ein neues Projekt genuegt ein erneuter Lauf; die automatische Discovery
   findet dessen `_artifacts/experiments.db`. Fuer Sonderpfade bleibt der
   semikolongetrennte `AUTOML_MERGE_SOURCE_DB_PATHS`-Override verfuegbar.
-- Die Quelle wird vor dem Lesen in eine temporaere lokale Kopie ueberfuehrt,
-  damit SQLite-Dateisperren oder Synchronisationszustaende nicht als fehlende
-  `project`-Zeile interpretiert werden.
+- Die Quelle wird vor dem Lesen als konsistenter SQLite-Snapshot via
+  `VACUUM INTO` in eine temporaere lokale Kopie ueberfuehrt. Dadurch wird der
+  aktuell committed Stand einschliesslich bereits sichtbarer WAL-Seiten
+  gelesen; eine laufende Synchronisation oder ein offener lokaler Schreib-
+  handle kann den Merge nicht in einen zufaelligen Zwischenstand fuehren.
 
 ## Targets- und Ensemble-Bruecke
 

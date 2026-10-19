@@ -48,6 +48,7 @@ suppressPackageStartupMessages({
 # Diagnose und tatsaechlicher Merge auseinander. Verhalten unveraendert,
 # nur an einer Stelle definiert statt dupliziert.
 source("modules/db_housekeeping.R")
+source("modules/merge_project_experiments_helpers.R")
 
 # Auf "classification" gefiltert (DB-Domain-Trennung, siehe
 # db_housekeeping.R/detect_problem_type() und BACKLOG.md "Naechste
@@ -124,56 +125,58 @@ for (project_label in names(source_db_paths)) {
     next
   }
 
-  dbExecute(con, sprintf("ATTACH DATABASE '%s' AS src", source_path))
-
-  dbBegin(con)
+  snapshot_path <- create_sqlite_snapshot(source_path)
   tryCatch({
-    any_new <- FALSE
-    for (tbl in names(merge_tables)) {
-      id_col <- merge_tables[[tbl]]
+    dbExecute(con, sprintf("ATTACH DATABASE '%s' AS src", snapshot_path))
+    dbBegin(con)
+    tryCatch({
+      any_new <- FALSE
+      for (tbl in names(merge_tables)) {
+        id_col <- merge_tables[[tbl]]
 
-      # Tabelle in der QUELLE ueberspringen, wenn sie dort (noch) nicht
-      # existiert - z.B. `evidence` (P1.2, 2026-08-27) ist neuer als die
-      # meisten lokalen Projekt-DBs, deren db_schema.sql seit ihrem
-      # letzten Lauf nicht neu ausgefuehrt wurde. Ohne diesen Check bricht
-      # die fehlende Tabelle die GESAMTE Transaktion fuer die Quelle ab -
-      # inklusive der bereits erfolgreich eingefuegten Zeilen anderer
-      # Tabellen (echter Regressionsfund, 2026-08-29: 22 von 23 Quellen
-      # zeigten "+0 Zeilen" ueberall, weil der `evidence`-Fehler ALLES
-      # zurueckrollte).
-      src_tbl_exists <- dbGetQuery(con, sprintf(
-        "SELECT name FROM src.sqlite_master WHERE type = 'table' AND name = '%s'", tbl
-      ))
-      if (nrow(src_tbl_exists) == 0) {
-        cat(sprintf("  %-14s (Tabelle nicht in der Quelle vorhanden, uebersprungen)\n", tbl))
-        next
+        # Tabelle in der QUELLE ueberspringen, wenn sie dort (noch) nicht
+        # existiert - z.B. `evidence` (P1.2, 2026-08-27) ist neuer als die
+        # meisten lokalen Projekt-DBs, deren db_schema.sql seit ihrem
+        # letzten Lauf nicht neu ausgefuehrt wurde. Ohne diesen Check bricht
+        # die fehlende Tabelle die GESAMTE Transaktion fuer die Quelle ab -
+        # inklusive der bereits erfolgreich eingefuegten Zeilen anderer
+        # Tabellen (echter Regressionsfund, 2026-08-29: 22 von 23 Quellen
+        # zeigten "+0 Zeilen" ueberall, weil der `evidence`-Fehler ALLES
+        # zurueckrollte).
+        src_tbl_exists <- dbGetQuery(con, sprintf(
+          "SELECT name FROM src.sqlite_master WHERE type = 'table' AND name = '%s'", tbl
+        ))
+        if (nrow(src_tbl_exists) == 0) {
+          cat(sprintf("  %-14s (Tabelle nicht in der Quelle vorhanden, uebersprungen)\n", tbl))
+          next
+        }
+
+        # Spaltenliste dynamisch aus PRAGMA table_info ermitteln (pk=1
+        # markiert die auszuschliessende lokale INTEGER-<praefix>_seq-Spalte,
+        # SQLite-rowid-Alias, NICHT mitkopieren - kollidiert sonst mit
+        # bereits vorhandenen Zeilen).
+        col_info <- dbGetQuery(con, sprintf("PRAGMA table_info(%s)", tbl))
+        cols <- col_info$name[col_info$pk == 0]
+        col_list <- paste(cols, collapse = ", ")
+
+        n_before <- dbGetQuery(con, paste0("SELECT COUNT(*) AS n FROM ", tbl))$n
+        dbExecute(con, sprintf(
+          "INSERT INTO %s (%s) SELECT %s FROM src.%s WHERE %s NOT IN (SELECT %s FROM %s)",
+          tbl, col_list, col_list, tbl, id_col, id_col, tbl
+        ))
+        n_after <- dbGetQuery(con, paste0("SELECT COUNT(*) AS n FROM ", tbl))$n
+        if (n_after > n_before) any_new <- TRUE
+        cat(sprintf("  %-14s +%d Zeilen (%d -> %d)\n", tbl, n_after - n_before, n_before, n_after))
       }
+      dbCommit(con)
+      if (any_new) cat("  Gemergt (inkl. neuer Zeilen).\n\n") else cat("  Keine neuen Zeilen (bereits aktuell).\n\n")
+    }, error = function(e) {
+      dbRollback(con)
+      cat("  FEHLER, Merge fuer diese Quelle zurueckgerollt:", conditionMessage(e), "\n\n")
+    })
 
-      # Spaltenliste dynamisch aus PRAGMA table_info ermitteln (pk=1
-      # markiert die auszuschliessende lokale INTEGER-<praefix>_seq-Spalte,
-      # SQLite-rowid-Alias, NICHT mitkopieren - kollidiert sonst mit
-      # bereits vorhandenen Zeilen).
-      col_info <- dbGetQuery(con, sprintf("PRAGMA table_info(%s)", tbl))
-      cols <- col_info$name[col_info$pk == 0]
-      col_list <- paste(cols, collapse = ", ")
-
-      n_before <- dbGetQuery(con, paste0("SELECT COUNT(*) AS n FROM ", tbl))$n
-      dbExecute(con, sprintf(
-        "INSERT INTO %s (%s) SELECT %s FROM src.%s WHERE %s NOT IN (SELECT %s FROM %s)",
-        tbl, col_list, col_list, tbl, id_col, id_col, tbl
-      ))
-      n_after <- dbGetQuery(con, paste0("SELECT COUNT(*) AS n FROM ", tbl))$n
-      if (n_after > n_before) any_new <- TRUE
-      cat(sprintf("  %-14s +%d Zeilen (%d -> %d)\n", tbl, n_after - n_before, n_before, n_after))
-    }
-    dbCommit(con)
-    if (any_new) cat("  Gemergt (inkl. neuer Zeilen).\n\n") else cat("  Keine neuen Zeilen (bereits aktuell).\n\n")
-  }, error = function(e) {
-    dbRollback(con)
-    cat("  FEHLER, Merge fuer diese Quelle zurueckgerollt:", conditionMessage(e), "\n\n")
-  })
-
-  dbExecute(con, "DETACH DATABASE src")
+    dbExecute(con, "DETACH DATABASE src")
+  }, finally = unlink(snapshot_path, force = TRUE))
 }
 
 cat("=== Zusammenfassung Ziel-DB (", target_db_path, ") ===\n", sep = "")

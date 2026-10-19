@@ -7,8 +7,10 @@
 - Basis-HEAD zu Beginn der Review-Umsetzung: `0ae8da1` (`Record APS independent classification confirmation`)
 - Der Selection-to-Final-Model-Contract ist in `711fb7d` committed und nach
   `origin/main` gepusht.
-- Die anschliessende Merge-Einstieg-Synchronisierung ist lokal umgesetzt und
-  noch nicht committed.
+- Die anschliessende Merge-Einstieg-Synchronisierung ist in `aa6c9a7`
+  committed und nach `origin/main` gepusht.
+- Die WAL-sichere Snapshot-Nacharbeit ist lokal umgesetzt und noch nicht
+  committed.
 
 ## Review-Arbeitsauftrag umgesetzt
 
@@ -74,11 +76,14 @@
   `AUTOML_MERGE_TEMPLATE_ROOT`, `AUTOML_MERGE_TARGET_DB_PATH` und
   `AUTOML_MERGE_PROJECT_ROOTS` konfigurierbar; der harte Rechnerpfad ist
   entfernt.
+- Quell-DBs werden fuer den Merge ueber `VACUUM INTO` als konsistente
+  temporaere Snapshots gelesen; WAL-Seiten werden damit nicht durch blindes
+  Datei-Kopieren verpasst. Die Snapshot-Dateien werden anschliessend entfernt.
 
 ## Naechste Schritte
 
-1. Diff der Merge-Einstieg-Synchronisierung pruefen und nach Nutzeranweisung
-   committen/pushen.
-2. Danach die weiteren P1-Nacharbeiten aus der Review priorisieren; keine Python-/
-   LightAutoML-Linie wieder oeffnen und keine APS-Spezialparameter in das
-   Template uebernehmen.
+1. WAL-Snapshot-Diff und Testnachweis pruefen; nach Nutzeranweisung committen
+   und pushen.
+2. Danach die verbleibenden P1-Nacharbeiten aus der Review priorisieren; keine
+   Python-/LightAutoML-Linie wieder oeffnen und keine APS-Spezialparameter in
+   das Template uebernehmen.
