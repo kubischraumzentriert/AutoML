@@ -22,12 +22,33 @@ suppressPackageStartupMessages({
   library(data.table)
 })
 
-target_db_path <- "C:/Users/HP/OneDrive/Dokumente/R_Workspace/MLR3_Classifikation/_artifacts/experiments.db"
+merge_env_paths <- function(name, default = character(0)) {
+  value <- Sys.getenv(name, unset = "")
+  if (!nzchar(value)) return(default)
+  paths <- trimws(strsplit(value, ";", fixed = TRUE)[[1L]])
+  unique(paths[nzchar(paths)])
+}
 
-project_roots <- c(
-  "C:/Users/HP/OneDrive/Dokumente/R_Workspace",
-  "C:/Users/HP/ML_Learning"
+template_root <- normalizePath(
+  Sys.getenv("AUTOML_MERGE_TEMPLATE_ROOT", unset = getwd()),
+  winslash = "/", mustWork = FALSE
 )
+target_db_path <- normalizePath(
+  Sys.getenv(
+    "AUTOML_MERGE_TARGET_DB_PATH",
+    unset = file.path(template_root, "_artifacts", "experiments.db")
+  ),
+  winslash = "/", mustWork = FALSE
+)
+
+# Standardmaessig werden Geschwisterprojekte im Workspace und ein optionaler
+# ML_Learning-Ordner unter dem Benutzerprofil durchsucht. Weitere Wurzeln
+# koennen mit AUTOML_MERGE_PROJECT_ROOTS semikolongetrennt ergaenzt werden.
+project_roots <- unique(c(
+  merge_env_paths("AUTOML_MERGE_PROJECT_ROOTS"),
+  dirname(template_root),
+  file.path(path.expand("~"), "ML_Learning")
+))
 exclude_dirs <- c("MLR3_Classifikation", "MLR3_Regression")
 
 discover_source_db_paths <- function(roots, exclude, target) {

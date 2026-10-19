@@ -5,7 +5,10 @@
 - Template-Repo: `C:\Users\HP\OneDrive\Dokumente\R_Workspace\MLR3_Classifikation`
 - Branch: `main`
 - Basis-HEAD zu Beginn der Review-Umsetzung: `0ae8da1` (`Record APS independent classification confirmation`)
-- Der Selection-to-Final-Model-Contract ist lokal umgesetzt und noch nicht committed.
+- Der Selection-to-Final-Model-Contract ist in `711fb7d` committed und nach
+  `origin/main` gepusht.
+- Die anschliessende Merge-Einstieg-Synchronisierung ist lokal umgesetzt und
+  noch nicht committed.
 
 ## Review-Arbeitsauftrag umgesetzt
 
@@ -57,17 +60,25 @@
 
 - Syntax aller geaenderten R-Skripte: bestanden.
 - Fokussierte Contract-, Classification- und Submission-Tests: bestanden.
+- Fokussierter Merge-Entry-Point-Test: bestanden.
 - Vollsuite nach der letzten Fixture-Anpassung: bestanden unter
   `English_United States.utf8`, 0 Fehler, 0 Skips; nur die bekannten
   Paket-Build-Warnungen.
 - Der neue Auswahlpfad lief gegen die reale Template-DB: unter den direkt
   trainierbaren Modellen wurde `ranger` per bewusstem Override ausgewaehlt,
   der Vertrag erhielt Hash `a4539ab1771a3d9886c05ef35d6c4606611607469eaad1549adba9cee843a6f6`.
+- Der oeffentliche Merge-Einstieg delegiert jetzt an die inkrementelle
+  `modules/`-Implementierung; neue Runs bereits bekannter Projekte werden
+  nicht mehr durch eine alte `proj_name`-Vorabpruefung verborgen.
+- Die Merge-/Housekeeping-Pfade sind jetzt ueber
+  `AUTOML_MERGE_TEMPLATE_ROOT`, `AUTOML_MERGE_TARGET_DB_PATH` und
+  `AUTOML_MERGE_PROJECT_ROOTS` konfigurierbar; der harte Rechnerpfad ist
+  entfernt.
 
 ## Naechste Schritte
 
-1. Diff pruefen und den P0-Arbeitsauftrag committen, sobald der Nutzer das
-   anweist.
-2. Danach die P1-Nacharbeiten aus der Review priorisieren; keine Python-/
+1. Diff der Merge-Einstieg-Synchronisierung pruefen und nach Nutzeranweisung
+   committen/pushen.
+2. Danach die weiteren P1-Nacharbeiten aus der Review priorisieren; keine Python-/
    LightAutoML-Linie wieder oeffnen und keine APS-Spezialparameter in das
    Template uebernehmen.

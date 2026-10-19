@@ -29,8 +29,9 @@ suppressPackageStartupMessages({
 # Spalten (<praefix>_id) - ein einfaches INSERT SELECT reicht, keine
 # Schluessel-Neuvergabe noetig (siehe db_schema.sql-Kopfkommentar).
 #
-# Idempotent: ein Projekt (per proj_name) wird nur gemergt, wenn es in der
-# Ziel-DB noch nicht existiert - mehrfaches Ausfuehren ist gefahrlos.
+# Idempotent und inkrementell: bestehende Projekte werden nicht pauschal
+# uebersprungen. Pro Tabelle werden nur UUID-Zeilen eingefuegt, die in der
+# Ziel-DB noch fehlen; neue lokale Runs werden dadurch spaeter nachgezogen.
 #
 # Quellen werden AUTOMATISCH unter den bekannten Projekt-Wurzeln gesucht
 # (`R_Workspace`, `ML_Learning`), statt eine Liste manuell zu pflegen - eine

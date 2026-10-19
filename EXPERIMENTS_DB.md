@@ -657,17 +657,24 @@ Rscript merge_project_experiments.R
   echten Mehrwert fuer projektuebergreifende Analysen. Die vollstaendigen
   Vorhersagedaten bleiben in der jeweiligen Projekt-`experiments.db` fuer
   lokale Fehleranalyse (`147`) erhalten.
-- Idempotent: ein Projekt (per `proj_name`) wird nur gemergt, wenn es in der
-  Ziel-DB noch nicht existiert - mehrfaches Ausfuehren ist gefahrlos, auch
-  nach neuen Projekten einfach `source_db_paths` ergaenzen und erneut
-  ausfuehren.
+- Idempotent und inkrementell: bereits bekannte Projekte werden nicht
+  pauschal uebersprungen. Pro Tabelle werden nur UUID-Zeilen eingefuegt, die
+  in der Ziel-DB noch fehlen; neue lokale Runs werden bei jedem erneuten Lauf
+  nachgezogen.
 - Falls die automatische Dateisystem-Discovery einen Projektordner (z.B.
   unter OneDrive) nicht sieht, kann ein expliziter, semikolongetrennter
   Override verwendet werden: `AUTOML_MERGE_SOURCE_DB_PATHS=<pfad1>;<pfad2>`.
   Der Override ergaenzt die Discovery und ist kein Ersatz fuer die
   projektbezogene `proj_name`-Pruefung.
-- Fuer ein neues Projekt `source_db_paths` im Skript um den Pfad zu dessen
-  `_artifacts/experiments.db` ergaenzen.
+- Die Discovery- und Zielpfade sind nicht mehr an einen festen Rechnerpfad
+  gebunden. Standardmaessig ist das aktuelle Template-Arbeitsverzeichnis das
+  Template-Root; zusaetzlich werden dessen Elternverzeichnis und
+  `~/ML_Learning` durchsucht. Bei abweichenden Layouts koennen
+  `AUTOML_MERGE_TEMPLATE_ROOT`, `AUTOML_MERGE_TARGET_DB_PATH` und
+  `AUTOML_MERGE_PROJECT_ROOTS=<root1>;<root2>` gesetzt werden.
+- Fuer ein neues Projekt genuegt ein erneuter Lauf; die automatische Discovery
+  findet dessen `_artifacts/experiments.db`. Fuer Sonderpfade bleibt der
+  semikolongetrennte `AUTOML_MERGE_SOURCE_DB_PATHS`-Override verfuegbar.
 - Die Quelle wird vor dem Lesen in eine temporaere lokale Kopie ueberfuehrt,
   damit SQLite-Dateisperren oder Synchronisationszustaende nicht als fehlende
   `project`-Zeile interpretiert werden.

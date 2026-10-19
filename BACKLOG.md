@@ -26,6 +26,20 @@ Nacharbeiten aus der Bewertung bleiben getrennte Aufgaben: Merge-Logik fuer
 spatere lokale Runs, konfigurierbare Projektpfade, WAL-sichere DB-Snapshots,
 Release-/Clean-Checkout-Pruefung und wissenschaftliche Claim-Grenzen.
 
+## Review-Nacharbeit: Merge-Einstieg synchronisieren (2026-10-19)
+
+- [x] P1: Den oeffentlichen `merge_project_experiments.R`-Einstieg auf die
+  aktuelle inkrementelle Implementierung unter `modules/` umgestellt. Der
+  bisherige Root-Einstieg enthielt noch die alte `proj_name`-Skip-Logik und
+  konnte neue lokale Runs eines bereits bekannten Projekts verbergen.
+- [x] Regressionstest fuer Entry-Point-Delegation, UUID-basierte
+  `NOT IN`-Inkrementalitaet, Transaktionsgrenze und gemeinsame Discovery
+  ergaenzt. Dokumentation auf "idempotent und inkrementell" aktualisiert.
+- [x] P1: Harte Ziel- und Suchpfade aus `modules/db_housekeeping.R` entfernt.
+  `AUTOML_MERGE_TEMPLATE_ROOT`, `AUTOML_MERGE_TARGET_DB_PATH` und
+  `AUTOML_MERGE_PROJECT_ROOTS` erlauben portable Layouts; Standardwerte
+  nutzen das Arbeitsverzeichnis, dessen Elternverzeichnis und `~/ML_Learning`.
+
 ## S6E10 Backport-Kandidaten (2026-10-08, P0 und Task-P1 qualifiziert)
 
 Evidenz: lokales `ML_Learning/playground-series-s6e10`, Template-Basis
