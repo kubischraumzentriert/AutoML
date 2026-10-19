@@ -4,8 +4,23 @@
 
 - Template-Repo: `C:\Users\HP\OneDrive\Dokumente\R_Workspace\MLR3_Classifikation`
 - Branch: `main`
-- Basis-HEAD zu Beginn der Session: `5107696` (`Refresh classification template status`)
-- Die aktuellen Dokumentationsaenderungen sind noch nicht committed.
+- Basis-HEAD zu Beginn der Review-Umsetzung: `0ae8da1` (`Record APS independent classification confirmation`)
+- Der Selection-to-Final-Model-Contract ist lokal umgesetzt und noch nicht committed.
+
+## Review-Arbeitsauftrag umgesetzt
+
+- `modules/final_model_spec.R` validiert und hasht den versionierten finalen
+  Modellvertrag; die aktuelle und eine hash-versionierte RDS-Datei werden
+  geschrieben.
+- `148_select_submission_model.R` speichert die ausgewaehlte DB-Konfiguration,
+  Auswahlmetrik, Auswahlquelle und Provenienz in diesem Vertrag.
+- `150_train_full_model.R` trainiert nur nach erfolgreicher Vertragspruefung
+  und schreibt Spec-Hash/Version in Bundle, Manifest und DB-Hyperparameter.
+- `155_predict_submission.R` liest den Vertrag und verweigert Export bei
+  Manipulation, Config-Drift, Manifest-/Bundle-Abweichung oder Transformations-
+  abweichung.
+- Neue Tests decken Roundtrip, Versionierung, Manipulation, Parameter-Drift
+  und echte Rscript-/SQLite-Submission-Fixtures ab.
 
 ## Heute verifiziert
 
@@ -38,10 +53,21 @@
 - CatBoost, LightGBM-Parameter und Schwellenwert 0,54 bleiben ebenfalls
   projektspezifisch.
 
+## Verifikation
+
+- Syntax aller geaenderten R-Skripte: bestanden.
+- Fokussierte Contract-, Classification- und Submission-Tests: bestanden.
+- Vollsuite nach der letzten Fixture-Anpassung: bestanden unter
+  `English_United States.utf8`, 0 Fehler, 0 Skips; nur die bekannten
+  Paket-Build-Warnungen.
+- Der neue Auswahlpfad lief gegen die reale Template-DB: unter den direkt
+  trainierbaren Modellen wurde `ranger` per bewusstem Override ausgewaehlt,
+  der Vertrag erhielt Hash `a4539ab1771a3d9886c05ef35d6c4606611607469eaad1549adba9cee843a6f6`.
+
 ## Naechste Schritte
 
-1. Diese Dokumentationsaenderungen pruefen und committen.
-2. Danach optional einen weiteren neuen Projektlauf beginnen, falls ein
-   dritter Nachweis fuer eine konkrete generische Technik benoetigt wird.
-3. Bis dahin keine Python-/LightAutoML-Linie wieder oeffnen und keine APS-
-   Spezialparameter in das Template uebernehmen.
+1. Diff pruefen und den P0-Arbeitsauftrag committen, sobald der Nutzer das
+   anweist.
+2. Danach die P1-Nacharbeiten aus der Review priorisieren; keine Python-/
+   LightAutoML-Linie wieder oeffnen und keine APS-Spezialparameter in das
+   Template uebernehmen.

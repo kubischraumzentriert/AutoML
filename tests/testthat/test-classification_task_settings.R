@@ -113,6 +113,7 @@ test_that("150 serializes positive-class metadata without removing old bundle fi
     context$learner_full <- list(id = "bundle-fixture")
     context$feature_levels <- list()
     context$feature_set <- "raw"
+    context$final_model_spec <- list(spec_hash = "spec-fixture", schema_version = 1L)
     eval(save_call, envir = context)
     bundle <- readRDS(path)
     expect_true(all(c("learner", "feature_levels", "feature_set", "positive_class") %in% names(bundle)))

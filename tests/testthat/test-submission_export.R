@@ -8,6 +8,7 @@ make_submission_fixture <- function(root, binary) {
   for (file in c("155_predict_submission.R", "157_predict_ensemble_submission.R", "158_register_submission_result.R", "db_logging.R", "db_schema.sql", "provenance.R")) {
     file.copy(file.path(root, file), file.path(directory, file))
   }
+  file.copy(file.path(root, "modules", "final_model_spec.R"), file.path(directory, "modules", "final_model_spec.R"))
   file.copy(file.path(root, "modules", "submission_contract.R"), file.path(directory, "modules", "submission_contract.R"))
   file.copy(file.path(root, "modules", "submission_registry.R"), file.path(directory, "modules", "submission_registry.R"))
   file.copy(file.path(root, "modules", "submission_artifacts.R"), file.path(directory, "modules", "submission_artifacts.R"))
@@ -30,6 +31,7 @@ make_submission_fixture <- function(root, binary) {
   source(file.path(directory, "000_config.R"), local = context)
   source(file.path(directory, "db_logging.R"), local = context)
   source(file.path(directory, "provenance.R"), local = context)
+  source(file.path(directory, "modules", "final_model_spec.R"), local = context)
   if (binary) {
     train <- data.table(x = 1:60, category = factor(rep(c("a", "b"), 30)),
       outcome = factor(rep(c("FALSE", "TRUE"), each = 30)))
@@ -41,6 +43,22 @@ make_submission_fixture <- function(root, binary) {
   }
   task <- as_task_classif(train, target = "outcome")
   if (binary) task$positive <- "TRUE"
+  final_model_spec <- context$build_final_model_spec(
+    model_name = "rpart",
+    project_name = context$project_name,
+    target_col = context$target_col,
+    feature_set = "raw",
+    preprocessing = "impute_median_mode",
+    positive_class = context$positive_class,
+    class_weight_power = NULL,
+    seed = context$seed,
+    base_learner = context$base_learner_constructors$rpart(),
+    constructor = context$base_learner_constructors$rpart,
+    selection = list(metric_name = context$baseline_measure_ids[[1]], selection_source = "fixture"),
+    feature_transform_hash = NA_character_,
+    decision_threshold = NULL
+  )
+  context$write_final_model_spec(final_model_spec, context$final_model_spec_path)
   learner <- as_learner(po("imputemedian") %>>% po("imputemode") %>>% context$base_learner_constructors$rpart())
   learner$train(task)
   fwrite(train, context$train_path)
@@ -53,7 +71,8 @@ make_submission_fixture <- function(root, binary) {
   fwrite(test, context$test_path)
   fwrite(sample, context$sample_submission_path)
   model_path <- file.path(directory, "_artifacts", "model.rds")
-  bundle <- list(learner = learner, feature_set = "raw", feature_levels = levels, positive_class = task$positive)
+  bundle <- list(learner = learner, feature_set = "raw", feature_levels = levels, positive_class = task$positive,
+    final_model_spec_hash = final_model_spec$spec_hash, final_model_spec_version = final_model_spec$schema_version)
   saveRDS(bundle, model_path)
   con <- context$db_connect()
   on.exit(DBI::dbDisconnect(con), add = TRUE)
@@ -62,7 +81,8 @@ make_submission_fixture <- function(root, binary) {
   run_id <- context$db_create_run(con, workflow_id, seed = 42)
   model_id <- context$db_create_model_config(con, run_id, "classif", "rpart", feature_set = "raw",
     hyperparams = list(model_artifact_path = model_path),
-    manifest = list(artifacts = list(model_artifact_sha256 = context$sha256_file(model_path))))
+    manifest = list(model = list(final_model_spec_hash = final_model_spec$spec_hash),
+      artifacts = list(model_artifact_sha256 = context$sha256_file(model_path))))
   context$db_finish_run(con, run_id)
   foreign_project <- context$db_get_or_create_project(con, "different-project")
   foreign_workflow <- context$db_get_or_create_workflow(con, foreign_project, "script", "150_train_full_model.R")
@@ -295,7 +315,8 @@ test_that("158 pins older validated models, preserves partial scores and keeps r
   saveRDS(newer_bundle, newer_path)
   newer_model <- context$db_create_model_config(con, newer_run, "classif", "rpart", feature_set = "raw",
     hyperparams = list(model_artifact_path = newer_path),
-    manifest = list(artifacts = list(model_artifact_sha256 = context$sha256_file(newer_path))))
+    manifest = list(model = list(final_model_spec_hash = newer_bundle$final_model_spec_hash),
+      artifacts = list(model_artifact_sha256 = context$sha256_file(newer_path))))
   context$db_finish_run(con, newer_run)
   register <- function(arguments) run_submission_fixture_script(directory,
     c("--competition", "fixture-comp", arguments), script = "158_register_submission_result.R")

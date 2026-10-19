@@ -11,6 +11,7 @@ suppressPackageStartupMessages({
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
 source(file.path(project_dir, "provenance.R"))
+source(file.path(project_dir, "modules", "final_model_spec.R"))
 # Alle features/*.R laden statt einzelne Familien-Dateien hartzucodieren -
 # bei einem neuen Projekt ohne (oder mit anderen) Feature-Familien sourct das
 # unveraendert genau die vorhandenen Dateien, statt beim Kopieren mit "file
@@ -24,8 +25,38 @@ for (f in list.files(file.path(project_dir, "features"), pattern = "\\.R$", full
 set.seed(seed)
 dir.create(artifact_dir, showWarnings = FALSE, recursive = TRUE)
 
-model_name <- resolve_submission_model_name()
-feature_set <- model_feature_sets[[model_name]]
+final_model_spec <- read_final_model_spec(final_model_spec_path)
+model_name <- final_model_spec$model$name
+feature_set <- final_model_spec$model$feature_set
+
+if (!model_name %in% names(base_learner_constructors)) {
+  stop("Final-model spec refers to an unknown learner: ", model_name, call. = FALSE)
+}
+current_constructor <- base_learner_constructors[[model_name]]
+current_base_learner <- current_constructor()
+configured_weight_power <- if (!is.null(model_class_weight_power) &&
+                                model_name %in% names(model_class_weight_power)) {
+  unname(model_class_weight_power[[model_name]])
+} else {
+  NULL
+}
+validate_final_model_spec_context(
+  final_model_spec,
+  expected = list(
+    project_name = project_name,
+    target_col = target_col,
+    model_name = model_name,
+    feature_set = feature_set,
+    preprocessing = "impute_median_mode",
+    predict_type = current_base_learner$predict_type,
+    class_weight_power = configured_weight_power,
+    positive_class = positive_class,
+    seed = seed,
+    learner_params = current_base_learner$param_set$values,
+    constructor_hash = final_model_spec_constructor_hash(current_constructor),
+    feature_transform_hash = feature_transform_function_hash(feature_set)
+  )
+)
 
 train <- fread(train_path)
 train[, (id_col) := NULL]
@@ -44,7 +75,7 @@ feature_levels <- lapply(train[, ..feature_char_cols], levels)
 task_full <- as_task_classif(train, target = target_col, id = paste0(task_id_prefix, "_full_", model_name))
 task_full <- apply_positive_class(task_full, positive_class)
 
-weight_power <- model_class_weight_power[[model_name]]
+weight_power <- final_model_spec$model$class_weight_power
 if (!is.null(weight_power) && weight_power != 0) {
   task_full <- add_balanced_class_weights(task_full, weight_power)
 }
@@ -61,11 +92,12 @@ make_baseline_learner <- function(base_learner) {
   as_learner(po("imputemedian") %>>% po("imputemode") %>>% base_learner)
 }
 
-learner_full <- make_baseline_learner(base_learner_constructors[[model_name]]())
-# Wahrscheinlichkeiten aktivieren, falls der Learner sie kann: fuer prob-
-# basierte Submissions (AUC/LogLoss) zwingend, fuer label-basierte (BAcc)
-# rueckwirkungsfrei (155 nimmt dann weiter das argmax-Label = $response).
-if ("prob" %in% learner_full$predict_types) learner_full$predict_type <- "prob"
+base_learner <- apply_final_model_spec(current_base_learner, final_model_spec)
+learner_full <- make_baseline_learner(base_learner)
+if (!final_model_spec$model$predict_type %in% learner_full$predict_types) {
+  stop("Final-model spec predict_type is unsupported by the imputation pipeline.", call. = FALSE)
+}
+learner_full$predict_type <- final_model_spec$model$predict_type
 learner_full$train(task_full)
 
 # --- Experiment-Tracking (SQLite) -------------------------------------------
@@ -82,7 +114,9 @@ db_run_id <- db_create_run(db_con, db_wf_id, seed = seed, notes = paste0("Finale
 model_path <- final_model_full_path(model_name, db_run_id)
 saveRDS(
   list(learner = learner_full, feature_levels = feature_levels, feature_set = feature_set,
-       positive_class = task_full$positive),
+       positive_class = task_full$positive,
+       final_model_spec_hash = final_model_spec$spec_hash,
+       final_model_spec_version = final_model_spec$schema_version),
   model_path
 )
 
@@ -92,7 +126,11 @@ mconf_full <- db_create_model_config(
   preprocessing = "impute_median_mode",
   class_weight_power = if (!is.null(weight_power)) weight_power else NA_real_,
   task_id = task_full$id,
-  hyperparams = list(model_artifact_path = model_path),
+  hyperparams = list(
+    model_artifact_path = model_path,
+    final_model_spec_path = final_model_spec_path,
+    final_model_spec_hash = final_model_spec$spec_hash
+  ),
   manifest = capture_reproducibility_manifest(
     model = list(
       name = model_name,
@@ -101,7 +139,9 @@ mconf_full <- db_create_model_config(
       predict_type = learner_full$predict_type,
       positive_class = task_full$positive,
       class_weight_power = if (!is.null(weight_power)) weight_power else NA_real_,
-      hyperparams = learner_full$param_set$values
+      hyperparams = learner_full$param_set$values,
+      final_model_spec_hash = final_model_spec$spec_hash,
+      final_model_spec_version = final_model_spec$schema_version
     ),
     preprocessing = list(label = "impute_median_mode", factor_levels_saved = TRUE),
     features = list(
@@ -110,7 +150,13 @@ mconf_full <- db_create_model_config(
       feature_transform_hash = feature_transform_function_hash(feature_set)
     ),
     artifacts = list(model_artifact_path = model_path, model_artifact_sha256 = sha256_file(model_path)),
-    extra = list(seed = seed, task_id = task_full$id, rows = task_full$nrow, features = length(task_full$feature_names))
+    extra = list(
+      seed = seed,
+      task_id = task_full$id,
+      rows = task_full$nrow,
+      features = length(task_full$feature_names),
+      final_model_spec_hash = final_model_spec$spec_hash
+    )
   )
 )
 

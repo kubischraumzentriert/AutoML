@@ -6,6 +6,7 @@ sample_submission_path <- file.path(project_dir, "sample_submission.csv")
 artifact_dir <- file.path(project_dir, "_artifacts")
 experiments_db_path <- file.path(artifact_dir, "experiments.db")
 submission_path <- file.path(project_dir, "submission.csv")
+final_model_spec_path <- file.path(artifact_dir, "final_model_spec.rds")
 submission_ensemble_path <- file.path(project_dir, "submission_ensemble.csv")
 id_col <- "id"
 target_col <- "outcome"
@@ -17,6 +18,7 @@ model_feature_sets <- list(rpart = "raw")
 base_learner_constructors <- list(rpart = function() {
   mlr3::lrn("classif.rpart", cp = fixture$cp, minsplit = 2L, predict_type = "prob")
 })
+model_class_weight_power <- list(rpart = NULL)
 resolve_submission_model_name <- function() "rpart"
 apply_feature_set <- function(test, feature_set) test
 feature_transform_function_hash <- function(feature_set) NA_character_

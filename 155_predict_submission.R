@@ -8,22 +8,47 @@ suppressPackageStartupMessages({
 })
 source("000_config.R")
 source(file.path(project_dir, "db_logging.R"))
+source(file.path(project_dir, "modules", "final_model_spec.R"))
 for (f in list.files(file.path(project_dir, "features"), pattern = "\\.R$", full.names = TRUE)) source(f)
 
-read_model_record <- function() {
+validate_only_arg <- "--validate-only" %in% commandArgs(trailingOnly = TRUE)
+
+if (!file.exists(final_model_spec_path)) {
+  if (validate_only_arg) {
+    stop("No final-model spec available for validation. Run 148_select_submission_model.R first.")
+  }
+  source(file.path(project_dir, "148_select_submission_model.R"))
+  source("000_config.R")
+  source(file.path(project_dir, "db_logging.R"))
+  source(file.path(project_dir, "modules", "final_model_spec.R"))
+  for (f in list.files(file.path(project_dir, "features"), pattern = "\\.R$", full.names = TRUE)) source(f)
+  validate_only_arg <- "--validate-only" %in% commandArgs(trailingOnly = TRUE)
+}
+
+final_model_spec <- read_final_model_spec(final_model_spec_path)
+
+read_model_record <- function(model_name) {
   con <- db_connect()
   on.exit(DBI::dbDisconnect(con), add = TRUE)
-  db_get_submission_model_record(con, project_name, resolve_submission_model_name())
+  db_get_submission_model_record(con, project_name, model_name)
 }
-validate_only <- "--validate-only" %in% commandArgs(trailingOnly = TRUE)
-record <- read_model_record()
+
+validate_only <- validate_only_arg
+record <- read_model_record(final_model_spec$model$name)
 if (nrow(record) == 0L || !file.exists(record$model_path)) {
   if (validate_only) stop("No completed final model available for validation.")
   source(file.path(project_dir, "150_train_full_model.R"))
   # 150 clears globals; restore the export entry point's state.
-  validate_only <- FALSE
+  validate_only <- validate_only_arg
+  source("000_config.R")
+  source(file.path(project_dir, "db_logging.R"))
+  source(file.path(project_dir, "modules", "final_model_spec.R"))
+  for (f in list.files(file.path(project_dir, "features"), pattern = "\\.R$", full.names = TRUE)) source(f)
+  source(file.path(project_dir, "provenance.R"))
+  validate_only_arg <- "--validate-only" %in% commandArgs(trailingOnly = TRUE)
+  final_model_spec <- read_final_model_spec(final_model_spec_path)
   con <- db_connect()
-  record <- db_get_submission_model_record(con, project_name, resolve_submission_model_name())
+  record <- db_get_submission_model_record(con, project_name, final_model_spec$model$name)
   DBI::dbDisconnect(con)
 }
 source(file.path(project_dir, "provenance.R"))
@@ -32,10 +57,34 @@ source(file.path(project_dir, "modules", "submission_artifacts.R"))
 
 run_submission_export <- function() {
   if (nrow(record) != 1L) stop("Could not resolve a completed final model.")
-  model_name <- resolve_submission_model_name()
-  feature_set <- model_feature_sets[[model_name]]
+  model_name <- final_model_spec$model$name
+  feature_set <- final_model_spec$model$feature_set
   model_path <- record$model_path[[1]]
   manifest <- jsonlite::fromJSON(record$mconf_manifest_json[[1]])
+  validate_final_model_spec_context(
+    final_model_spec,
+    expected = list(
+      project_name = project_name,
+      target_col = target_col,
+      model_name = model_name,
+      feature_set = feature_set,
+      preprocessing = "impute_median_mode",
+      predict_type = base_learner_constructors[[model_name]]()$predict_type,
+      class_weight_power = if (model_name %in% names(model_class_weight_power)) {
+        unname(model_class_weight_power[[model_name]])
+      } else {
+        NULL
+      },
+      positive_class = positive_class,
+      seed = seed,
+      learner_params = base_learner_constructors[[model_name]]()$param_set$values,
+      constructor_hash = final_model_spec_constructor_hash(base_learner_constructors[[model_name]]),
+      feature_transform_hash = feature_transform_function_hash(feature_set)
+    )
+  )
+  if (!identical(manifest$model$final_model_spec_hash, final_model_spec$spec_hash)) {
+    stop("Registered manifest does not reference the current final-model spec.")
+  }
   expected_hash <- manifest$artifacts$model_artifact_sha256
   model_hash <- sha256_file(model_path)
   if (is.null(expected_hash) || !identical(expected_hash, model_hash)) {
@@ -51,9 +100,18 @@ run_submission_export <- function() {
     }
   }
   bundle <- readRDS(model_path)
+  if (!identical(bundle$final_model_spec_hash, final_model_spec$spec_hash)) {
+    stop("Model artifact does not reference the current final-model spec.")
+  }
+  expected_base_learner <- apply_final_model_spec(
+    base_learner_constructors[[model_name]](), final_model_spec
+  )
   expected_learner <- as_learner(po("imputemedian") %>>% po("imputemode") %>>%
-    base_learner_constructors[[model_name]]())
-  validate_submission_model(bundle, feature_set, expected_learner$param_set$values, positive_class)
+    expected_base_learner)
+  validate_submission_model(
+    bundle, feature_set, expected_learner$param_set$values,
+    final_model_spec$model$positive_class
+  )
   if (length(id_col) != 1L) stop("Submission requires one configured ID column.")
   test <- fread(test_path, colClasses = list(character = id_col))
   test_ids <- test[[id_col]]
@@ -63,7 +121,8 @@ run_submission_export <- function() {
   test <- align_submission_factor_levels(test, bundle$feature_levels)
   predictions <- bundle$learner$predict_newdata(test)
   expected <- submission_prediction_values(predictions,
-    is_threshold_independent_metric(baseline_measure_ids[[1]]), positive_class)
+    is_threshold_independent_metric(baseline_measure_ids[[1]]),
+    final_model_spec$model$positive_class)
   sample <- if (file.exists(sample_submission_path)) {
     fread(sample_submission_path, colClasses = list(character = id_col))
   } else NULL

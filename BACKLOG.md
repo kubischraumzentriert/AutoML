@@ -2,6 +2,30 @@
 
 Dieses Dokument übersetzt die aktuelle Bewertung des Classification-Templates in einen konkreten Arbeitsplan für Codex.
 
+## Review-Arbeitsauftrag: Selection-to-Final-Model-Contract (2026-10-19)
+
+- [x] P0: Versionierte `final_model_spec.rds` als verbindlichen Vertrag zwischen
+  Auswahl, Volltraining und Submission eingefuehrt. Die Spezifikation enthaelt
+  Modell/Learner, Feature-Set, Preprocessing, Predict-Type, Hyperparameter,
+  Klassengewicht, positive Klasse, Seed, Schwellenwert-Feld, Konstruktor-Hash,
+  Auswahlmetrik/-lauf und Feature-Transformationshash.
+- [x] `148_select_submission_model.R` schreibt den aktuellen Vertrag sowie ein
+  hash-versioniertes RDS-Artefakt und protokolliert den ausgewaehlten DB-
+  Kandidaten. Die Auswahl bleibt bei einem bewussten Override nachvollziehbar.
+- [x] `150_train_full_model.R` konsumiert nur noch den Vertrag, prueft den
+  aktuellen Config-/Konstruktor-/Parameterkontext fail-closed und schreibt
+  Spec-Hash und Version in Bundle, Manifest und Experiment-DB.
+- [x] `155_predict_submission.R` liest Modell, Feature-Set und positive Klasse
+  aus demselben Vertrag und verweigert Export bei Spec-, Manifest-, Bundle-,
+  Parameter- oder Transformationsabweichung.
+- [x] Unit- und Rscript-/SQLite-Fixtures fuer Roundtrip, Versionierung,
+  Manipulation, Config-Drift und Submission-Revalidierung ergaenzt; CI kopiert
+  `modules/final_model_spec.R` in die Smoke-Fixture.
+
+Nacharbeiten aus der Bewertung bleiben getrennte Aufgaben: Merge-Logik fuer
+spatere lokale Runs, konfigurierbare Projektpfade, WAL-sichere DB-Snapshots,
+Release-/Clean-Checkout-Pruefung und wissenschaftliche Claim-Grenzen.
+
 ## S6E10 Backport-Kandidaten (2026-10-08, P0 und Task-P1 qualifiziert)
 
 Evidenz: lokales `ML_Learning/playground-series-s6e10`, Template-Basis

@@ -299,6 +299,7 @@ final_model_full_path <- function(model_name, run_id) {
 }
 submission_path <- file.path(project_dir, "submission.csv")
 submission_model_selection_path <- file.path(artifact_dir, "submission_model_selection.csv")
+final_model_spec_path <- file.path(artifact_dir, "final_model_spec.rds")
 
 ensemble_candidates_results_path <- file.path(artifact_dir, "ensemble_candidates_results.csv")
 ensemble_ranger_lightgbm_results_path <- file.path(artifact_dir, "ensemble_ranger_lightgbm_results.csv")
