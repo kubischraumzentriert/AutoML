@@ -155,8 +155,13 @@ for (project_label in names(source_db_paths)) {
         # markiert die auszuschliessende lokale INTEGER-<praefix>_seq-Spalte,
         # SQLite-rowid-Alias, NICHT mitkopieren - kollidiert sonst mit
         # bereits vorhandenen Zeilen).
+        # NUR die Schnittmenge mit den Quellspalten: aeltere Projekt-DBs haben
+        # z.B. kein run_manifest_json (Schema-Drift ist normal). Eine reine
+        # Ziel-Spaltenliste liess dort jede Quelle mit "no such column"
+        # zurueckrollen (Regression aus aa6c9a7, 2026-10-28 an 24 Quellen).
         col_info <- dbGetQuery(con, sprintf("PRAGMA table_info(%s)", tbl))
-        cols <- col_info$name[col_info$pk == 0]
+        src_col_info <- dbGetQuery(con, sprintf("PRAGMA src.table_info(%s)", tbl))
+        cols <- intersect(col_info$name[col_info$pk == 0], src_col_info$name)
         col_list <- paste(cols, collapse = ", ")
 
         n_before <- dbGetQuery(con, paste0("SELECT COUNT(*) AS n FROM ", tbl))$n

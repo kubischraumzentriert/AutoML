@@ -118,4 +118,27 @@ test_that("merge reruns are idempotent and pull later source runs", {
   target_con <- db_connect(target_path, project_dir = root)
   expect_equal(dbGetQuery(target_con, "SELECT COUNT(*) AS n FROM run")$n, 2L)
   dbDisconnect(target_con)
+
+  # Schema-Drift: eine aeltere Projekt-DB ohne run_manifest_json muss trotzdem
+  # mergen. Der Merge-Prozess endet auch bei zurueckgerolltem Fehler mit
+  # Exit-Code 0 -> nur die Zeilenzahl im Ziel entlarvt einen stillen Ausfall.
+  drift_path <- file.path(workspace, "merge-drift-source", "_artifacts", "experiments.db")
+  dir.create(dirname(drift_path), recursive = TRUE)
+  drift_con <- db_connect(drift_path, project_dir = root)
+  drift_project <- db_get_or_create_project(drift_con, "merge-drift-fixture")
+  drift_workflow <- db_get_or_create_workflow(drift_con, drift_project, "script", "fixture")
+  drift_run <- db_create_run(drift_con, drift_workflow, seed = 3L, log_baseline_provenance = FALSE)
+  db_finish_run(drift_con, drift_run)
+  for (view_name in dbGetQuery(drift_con, "SELECT name FROM sqlite_master WHERE type = 'view'")$name) {
+    dbExecute(drift_con, paste0("DROP VIEW ", view_name))
+  }
+  dbExecute(drift_con, "ALTER TABLE run DROP COLUMN run_manifest_json")
+  dbDisconnect(drift_con)
+  run_merge()
+  target_con <- db_connect(target_path, project_dir = root)
+  expect_equal(
+    dbGetQuery(target_con, "SELECT COUNT(*) AS n FROM run WHERE run_id = ?", params = list(drift_run))$n,
+    1L
+  )
+  dbDisconnect(target_con)
 })

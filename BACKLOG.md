@@ -5345,3 +5345,51 @@ Diagnosekette an einem unabhaengigen, stark unausgewogenen, fehlwertreichen
 Industriedatensatz. Sie rechtfertigen keinen universellen CatBoost-,
 Klassengewichtungs- oder Missingness-Default; diese Entscheidungen bleiben
 projektspezifisch.
+
+## Merge-Skript: stille Regression bei Schema-Drift behoben + SMS-Spam in zentraler DB (2026-10-28)
+
+**Anlass**: Nutzeranweisung "Schritt 1" - die Ergebnisse des Freitext-
+Satellitenprojekts `uci-sms-spam-text` (`ML_Learning`) in die zentrale
+`experiments.db` bringen. Der dafuer noetige Merge-Lauf deckte einen
+Fehler im Merge-Skript auf.
+
+**Fund**: seit `aa6c9a7` ("Harden incremental experiment DB merge",
+2026-10-19) bildete `modules/merge_project_experiments.R` die Spaltenliste
+je Tabelle nur noch aus dem ZIEL. Aeltere Projekt-DBs ohne
+`run_manifest_json` (Schema-Drift ist normal, das Schema wuchs ueber die
+Zeit) liessen den gesamten Insert einer Quelle mit `no such column` scheitern
+und wurden zurueckgerollt - **24 von 27 Quellen** betroffen. Der Prozess
+endete trotzdem mit Exit-Code 0 (nur eine `FEHLER`-Zeile in der Ausgabe),
+daher fiel es weder dem Test noch CI auf. Kein Datenverlust (Rollback), aber
+der inkrementelle Merge war faktisch ausser Kraft; verdeckte neue Runs
+sichtbar nach dem Fix: `climate-risk-health-prediction-challenge` +5 Runs.
+Dieselbe Klasse Fehler stand schon im aelteren Skript als bewusst geloest
+(Schnittmenge Ziel/Quelle) und ging beim Umbau verloren.
+
+**Fix**: Spaltenliste = Schnittmenge aus Ziel- und Quellspalten
+(`PRAGMA src.table_info`). **Regressionstest** in
+`tests/testthat/test-merge_entrypoint.R`: Fixture-Quelle ohne
+`run_manifest_json` (Views vorher gedroppt, sonst verweigert SQLite das
+`DROP COLUMN`); die Assertion prueft gezielt die Run-ID der Drift-Quelle
+im Ziel, weil der Exit-Code einen stillen Ausfall nicht verraet. Gemessen:
+mit Fix gruen, ohne Fix rot.
+
+**Offen (bewusst nicht geaendert)**: die drei bereits vorhandenen
+Absolutzahl-Assertions desselben Tests (Zeilen ~105/110/119) laufen auf
+einem Rechner mit Geschwisterprojekten rot - mit UND ohne diesen Fix. Grund:
+`project_roots` in `modules/db_housekeeping.R` enthaelt IMMER
+`dirname(template_root)` und `~/ML_Learning` zusaetzlich zu
+`AUTOML_MERGE_PROJECT_ROOTS`, die Fixture ist also nicht abgeschottet (in CI
+ohne diese Ordner vermutlich unauffaellig - nicht geprueft). Moegliche
+Loesung: Env-Schalter, der die Default-Wurzeln abschaltet.
+
+**SMS-Spam-Projekt**: `ML_Learning/uci-sms-spam-text` (Commit `5dca743`
+dort), erstes Freitext-Projekt. Aggregierte Ergebnisse (8 Konfigurationen
+Random-/Group-CV + 5-Seed-Rauschmessung) und 2 Evidence-Zeilen sind jetzt in
+der zentralen DB (55 Projekte). Kernbefunde: Handfeatures + foldsicherer
+TF-IDF -> LightGBM AUC 0,994/BAcc 0,964; 26,8 % der Spam-Zeilen haben einen
+Duplikat-Text, trotzdem ist die Luecke Group-CV minus Random-CV nur Rauschen
+(BAcc -0,0019, SD 0,0023 ueber 5 Seeds) - Gegenbeispiel zu Parkinsons.
+**ADR-003**: `PipeOpTfidf` hat erst 1 von 2 Projekten, KEIN Backport; ein
+zweites Textprojekt (andere Form, z.B. Multiclass/laengere Dokumente) ist die
+Bedingung.
