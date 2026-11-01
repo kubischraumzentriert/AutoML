@@ -49,7 +49,8 @@ Suggests:
     kernelshap,
     mlr3oml,
     skimr,
-    targets
+    targets,
+    text2vec
 Additional_repositories: https://mlr-org.r-universe.dev
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

@@ -5393,3 +5393,45 @@ Duplikat-Text, trotzdem ist die Luecke Group-CV minus Random-CV nur Rauschen
 **ADR-003**: `PipeOpTfidf` hat erst 1 von 2 Projekten, KEIN Backport; ein
 zweites Textprojekt (andere Form, z.B. Multiclass/laengere Dokumente) ist die
 Bedingung.
+
+## Backport: `PipeOpTfidf` (Freitext) ins Template (2026-10-28)
+
+**Nutzeranweisung**: "Ja, mach den Backport von PipeOpTfidf ins Template"
+- nach Erfuellung der ADR-003-Bedingung (2 unabhaengige Projekte).
+
+**Evidenz** (beide in der zentralen DB, `evidence`-Tabelle):
+`ML_Learning/uci-sms-spam-text` (kurze SMS, 13 % Spam, TF-IDF-only AUC
+0,986) und `ML_Learning/text2vec-movie-review` (lange Rezensionen,
+ausgewogen, AUC 0,9315 mit 3000 Termen uni+bigram -> glmnet). Das Modul lief
+im zweiten Projekt **unveraendert** (reine Kopie).
+
+**Umgesetzt**:
+- `modules/pipeop_tfidf.R`: nur der PipeOp (`po("tfidf")`, Parameter
+  `text_col`/`max_terms`/`min_doc_count`/`ngram_max`). Aenderung gegenueber
+  der Projektfassung: die `mlr_pipeops$add()`-Registrierung ist gegen
+  mehrfaches `source()` abgesichert.
+- `tests/testthat/test-pipeop_tfidf.R`: 6 Tests / 11 Expectations (Vokabular
+  nur aus Train, `predict()` aendert den Zustand nicht, `max_terms`/
+  `min_doc_count`/Bigramme, Resampling-Schleife mit trennbarem Signal,
+  Mehrfach-`source()`). `skip_if_not_installed("text2vec")`.
+- `DESCRIPTION`: `text2vec` unter **Suggests** (nicht Imports - kompilierte
+  Abhaengigkeiten `MatrixExtra`/`float`/`rsparse`, vgl. duckdb-Fund
+  2026-09-18). `.github/workflows/ci-smoke-test.yml`: `any::text2vec` in die
+  `extra-packages` des unit-tests-Jobs, damit der Test dort wirklich laeuft
+  statt still uebersprungen zu werden. **CI-Wirkung noch nicht verifiziert**
+  (Binaerpaket auf dem Runner erwartet, nicht geprueft).
+- `modules/README.md`: Zeile in "Modell-/Workflow-Bausteine".
+
+**Bewusst NICHT zurueckgefuehrt**: `add_handcrafted_text_features()`
+(Laenge/Ziffern/Waehrung/URL). Bei SMS allein AUC 0,992 und besser als
+TF-IDF-only, bei Rezensionen AUC 0,54 und ohne Zusatznutzen (+0,0005) -
+domaenenspezifisch. Ebenfalls NICHT zurueckgefuehrt: die Duplikat-Text-Aussage
+(Group-CV-Luecke bei SMS nur Rauschen) - das zweite Projekt hat nur 8
+Duplikatzeilen, die Frage ist dort nicht pruefbar, bleibt Ein-Projekt-Befund.
+
+**Grenzen / offen**:
+- Nur Klassifikations-Template. `MLR3_Regression` hat das Modul nicht (kein
+  Textprojekt dort, kein ADR-003-Beleg fuer Regression).
+- Laufzeit-Engpass: der PipeOp gibt dichte Spalten aus; `cv_glmnet` auf
+  1000-3000 Spalten braucht ~5-12 Minuten je 5-fach-CV.
+- Kein Default-Skript im Template (opt-in, wie `group_resampling.R`).

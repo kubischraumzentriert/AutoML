@@ -35,7 +35,7 @@ jobs:
           cache-version: 1
           # Nur die fuer die getesteten Module benoetigten Pakete + testthat
           # selbst - deutlich schneller als der volle Smoke-Test-Dependency-Baum.
-          extra-packages: any::testthat, any::mlr3, any::mlr3measures, any::data.table, any::digest
+          extra-packages: any::testthat, any::mlr3, any::mlr3measures, any::data.table, any::digest, any::text2vec
           # Hard-Deps only (Depends/Imports/LinkingTo) - der Action-Default
           # "all" wuerde sonst zusaetzlich DESCRIPTIONs Suggests-Pakete
           # (duckdb/mlr3oml/ggplot2/isotree/kernelshap/skimr/targets, siehe

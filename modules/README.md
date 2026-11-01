@@ -76,6 +76,7 @@ nachträglichen Diagnose.
 | `class_multiplier_tuning.R` | Metrik-optimale Klassen-Multiplikatoren fürs Threshold-Tuning bei Multiklassen-BAcc | `130_threshold_tuning.R`, alle `protocols/outer_workflow_evaluation*.R` |
 | `ensemble_selection.R` | Caruana-Greedy-Ensemble-Selection als eigenständige, testbare Funktion | `149_ensemble_selection.R`, `analysis/multilayer_stack_test.R` |
 | `group_resampling.R` | Group-aware Resampling für Aufgaben mit wiederholten Entitäten (Generalisierung auf NEUE Gruppen) | projektspezifisch (kein Default-Skript, opt-in) |
+| `pipeop_tfidf.R` | Foldsicherer TF-IDF-PipeOp (`po("tfidf")`) für Freitext-Spalten: Vokabular + IDF nur aus dem Trainingsteil; benötigt `text2vec` (Suggests) | projektspezifisch (kein Default-Skript, opt-in) |
 | `multilabel.R` | Multi-Label-Klassifikation (Binary Relevance + Metriken/Threshold-Tuning) | `021_multilabel_workflow.R` |
 | `ordinal_qwk.R` | Ordinale Ziele als Regression + QWK-optimales Runden | projektspezifisch (kein Default-Skript, opt-in) |
 | `config_validation.R` | `validate_config()` - frühe, verständliche Fehler bei falsch angepasster `000_config.R` | manuell nach Config-Anpassung |
