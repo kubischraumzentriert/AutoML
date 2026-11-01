@@ -28,6 +28,30 @@ test_that("merge project roots accept semicolon-separated environment overrides"
   expect_identical(merge_env_paths("AUTOML_MERGE_PROJECT_ROOTS"), c("C:/one", "C:/two"))
 })
 
+test_that("AUTOML_MERGE_ISOLATE_ROOTS schaltet die Default-Wurzeln ab", {
+  housekeeping_path <- testthat::test_path("..", "..", "modules", "db_housekeeping.R")
+  env_names <- c("AUTOML_MERGE_PROJECT_ROOTS", "AUTOML_MERGE_ISOLATE_ROOTS")
+  previous <- Sys.getenv(env_names, unset = NA_character_)
+  on.exit({
+    for (name in env_names) {
+      if (is.na(previous[[name]])) Sys.unsetenv(name) else do.call(Sys.setenv, setNames(list(previous[[name]]), name))
+    }
+  }, add = TRUE)
+  roots_with <- function(isolate) {
+    Sys.setenv(AUTOML_MERGE_PROJECT_ROOTS = "C:/only-this")
+    if (is.null(isolate)) Sys.unsetenv("AUTOML_MERGE_ISOLATE_ROOTS") else Sys.setenv(AUTOML_MERGE_ISOLATE_ROOTS = isolate)
+    sandbox <- new.env()
+    sys.source(housekeeping_path, envir = sandbox)
+    sandbox$project_roots
+  }
+
+  expect_identical(roots_with("1"), "C:/only-this")
+  expect_identical(roots_with("true"), "C:/only-this")
+  expect_gt(length(roots_with(NULL)), 1L)
+  expect_true("C:/only-this" %in% roots_with(NULL))
+  expect_gt(length(roots_with("0")), 1L)
+})
+
 test_that("SQLite snapshot contains rows visible through WAL", {
   source_path <- tempfile(fileext = ".db")
   snapshot_path <- NULL
@@ -73,7 +97,8 @@ test_that("merge reruns are idempotent and pull later source runs", {
     env_names <- c(
       "AUTOML_MERGE_TEMPLATE_ROOT",
       "AUTOML_MERGE_TARGET_DB_PATH",
-      "AUTOML_MERGE_PROJECT_ROOTS"
+      "AUTOML_MERGE_PROJECT_ROOTS",
+      "AUTOML_MERGE_ISOLATE_ROOTS"
     )
     previous_env <- Sys.getenv(env_names, unset = NA_character_)
     on.exit({
@@ -89,7 +114,8 @@ test_that("merge reruns are idempotent and pull later source runs", {
     Sys.setenv(
       AUTOML_MERGE_TEMPLATE_ROOT = root,
       AUTOML_MERGE_TARGET_DB_PATH = normalizePath(target_path, winslash = "/", mustWork = FALSE),
-      AUTOML_MERGE_PROJECT_ROOTS = normalizePath(workspace, winslash = "/", mustWork = FALSE)
+      AUTOML_MERGE_PROJECT_ROOTS = normalizePath(workspace, winslash = "/", mustWork = FALSE),
+      AUTOML_MERGE_ISOLATE_ROOTS = "1"
     )
     output <- system2(
       executable,

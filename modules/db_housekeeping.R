@@ -44,11 +44,24 @@ target_db_path <- normalizePath(
 # Standardmaessig werden Geschwisterprojekte im Workspace und ein optionaler
 # ML_Learning-Ordner unter dem Benutzerprofil durchsucht. Weitere Wurzeln
 # koennen mit AUTOML_MERGE_PROJECT_ROOTS semikolongetrennt ergaenzt werden.
-project_roots <- unique(c(
-  merge_env_paths("AUTOML_MERGE_PROJECT_ROOTS"),
-  dirname(template_root),
-  file.path(path.expand("~"), "ML_Learning")
-))
+# AUTOML_MERGE_ISOLATE_ROOTS=1 schaltet die Default-Wurzeln AB (nur die per
+# AUTOML_MERGE_PROJECT_ROOTS genannten zaehlen) - fuer hermetische Tests:
+# ohne den Schalter zieht eine Test-Fixture auf einem Rechner mit
+# Geschwisterprojekten/ML_Learning deren echte DBs in die Test-Ziel-DB
+# (Fund 2026-11-01: test-merge_entrypoint.R lokal rot, in CI gruen).
+merge_env_flag <- function(name) {
+  value <- tolower(trimws(Sys.getenv(name, unset = "")))
+  nzchar(value) && !value %in% c("0", "false", "no")
+}
+project_roots <- if (merge_env_flag("AUTOML_MERGE_ISOLATE_ROOTS")) {
+  merge_env_paths("AUTOML_MERGE_PROJECT_ROOTS")
+} else {
+  unique(c(
+    merge_env_paths("AUTOML_MERGE_PROJECT_ROOTS"),
+    dirname(template_root),
+    file.path(path.expand("~"), "ML_Learning")
+  ))
+}
 exclude_dirs <- c("MLR3_Classifikation", "MLR3_Regression")
 
 discover_source_db_paths <- function(roots, exclude, target) {
