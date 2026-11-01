@@ -5374,14 +5374,25 @@ Dieselbe Klasse Fehler stand schon im aelteren Skript als bewusst geloest
 im Ziel, weil der Exit-Code einen stillen Ausfall nicht verraet. Gemessen:
 mit Fix gruen, ohne Fix rot.
 
-**Offen (bewusst nicht geaendert)**: die drei bereits vorhandenen
-Absolutzahl-Assertions desselben Tests (Zeilen ~105/110/119) laufen auf
-einem Rechner mit Geschwisterprojekten rot - mit UND ohne diesen Fix. Grund:
-`project_roots` in `modules/db_housekeeping.R` enthaelt IMMER
+**Behoben (2026-11-01, `e083330`)**: die drei bereits vorhandenen
+Absolutzahl-Assertions desselben Tests (Zeilen ~105/110/119) liefen auf
+einem Rechner mit Geschwisterprojekten rot - mit UND ohne den Merge-Fix.
+Grund: `project_roots` in `modules/db_housekeeping.R` enthielt IMMER
 `dirname(template_root)` und `~/ML_Learning` zusaetzlich zu
-`AUTOML_MERGE_PROJECT_ROOTS`, die Fixture ist also nicht abgeschottet (in CI
-ohne diese Ordner vermutlich unauffaellig - nicht geprueft). Moegliche
-Loesung: Env-Schalter, der die Default-Wurzeln abschaltet.
+`AUTOML_MERGE_PROJECT_ROOTS`, die Fixture war nicht abgeschottet und zog
+echte Projekt-DBs in die Test-Ziel-DB (Ist-Werte 221/222 statt 1/2). In CI
+war der Test gruen, weil dort diese Ordner fehlen (am 2026-11-01 im CI-Log
+bestaetigt, 19 Expectations gruen). Loesung: Env-Schalter
+`AUTOML_MERGE_ISOLATE_ROOTS=1` laesst nur die per
+`AUTOML_MERGE_PROJECT_ROOTS` genannten Wurzeln gelten; Default-Verhalten
+(auch des echten Merge-Laufs) unveraendert. Die Fixture setzt den Schalter,
+ein neuer Test deckt Schalter an/aus/"0" ab. Lokale Vollsuite danach gruen
+(Exit-Code 0), vorher Exit-Code 1 durch genau diese drei Assertions. CI fuer
+`e083330` gruen in 2:46 min (Run 41308660792). Zur Einordnung der
+Laufzeiten: der Backport-Push davor (`0047268`, `DESCRIPTION` geaendert)
+brauchte 15:38 min, davon ~14 min Paketinstallation in BEIDEN Jobs - also
+Cache-Neuaufbau nach der `DESCRIPTION`-Aenderung, nicht `text2vec` allein
+(das wird in CI aus dem Quellcode gebaut, ~3 min Zusatzkosten).
 
 **SMS-Spam-Projekt**: `ML_Learning/uci-sms-spam-text` (Commit `5dca743`
 dort), erstes Freitext-Projekt. Aggregierte Ergebnisse (8 Konfigurationen
