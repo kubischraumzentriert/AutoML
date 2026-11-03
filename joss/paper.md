@@ -55,6 +55,12 @@ stripped before counting): **1445 words** - comfortably within the
 750-1750 target, ~300-word margin. Trimming was still worthwhile for
 its own sake (tighter prose). Margin remains for the still-blank
 Acknowledgements section once there is something to put there.
+
+STATUS (2026-11-03): Statement of need and Research impact statement
+revised after the protocol-v4 decision-rule control on n = 15 (see
+docs/research/PAPER_DRAFT.md, Abstract and Section 5.3). The earlier
+reading that the correction chain helps specifically where class imbalance
+dominates is withdrawn. `date:` field not changed (JOSS sets it at review).
 -->
 
 # Summary
@@ -108,18 +114,21 @@ complementary, lighter-weight process layer that a practitioner can run
 trusting a result, and that logs every run so "what changed between run
 A and run B" is an answerable database query rather than a memory
 exercise. Its core performance-relevant component — class-balanced
-training with a metric-matched correction step — was evaluated not only
-on internally-encountered datasets but also on 6 datasets from the
-external, curated OpenML-CC18 suite [@Bischl2021], selected by a
-criterion fixed before any performance was observed, and benchmarked
-against both default and *fairly tuned* competing baselines: the
-resulting, metric-conditional finding (the correction chain helps
-specifically where class imbalance dominates, and is matched or beaten
-by plain tuning on larger, balanced tasks) — together with a further,
-openly reported negative/mixed result for a more complex model-selection
-prototype — is documented in full in the project's extended technical
-report rather than in this short paper, in keeping with JOSS's focus on
-the software itself rather than a full empirical study. The
+training with a metric-matched correction step — was evaluated on
+internally-encountered datasets and on datasets from the external,
+curated OpenML-CC18 suite [@Bischl2021], selected by a criterion fixed
+before any performance was observed, against both default and *fairly
+tuned* competing baselines. Against default baselines the component wins
+on most datasets, but a later decision-rule control on 15 datasets shows
+that most of this margin comes from the class-threshold correction rather
+than from the class weighting. Against tuned baselines given the same
+correction, the advantage does not survive (median −0.3 balanced-accuracy
+points, 5 of 15 datasets won). An earlier reading that tied the advantage
+to class imbalance was withdrawn. Together with a further, openly reported
+negative/mixed result for a more complex model-selection prototype, this
+is documented in full in the project's extended technical report rather
+than in this short paper, in keeping with JOSS's focus on the software
+itself rather than a full empirical study. The
 greedy-ensemble-selection component follows the method of
 @Caruana2004, adapted to this template's per-project experiment
 database.
@@ -195,10 +204,11 @@ explainable random-forest model rather than a black-box ensemble
 (a Kaggle leaderboard score, so no local ground truth is available to
 attach a confidence interval to that particular number). Beyond
 single-project results, the template's core class-weighting-plus-
-correction claim was independently re-tested on 6 datasets from the
-external OpenML-CC18 suite [@Bischl2021], selected before any
-performance was observed specifically to guard against benchmark
-selection bias, and — on the reference project's own cross-validated
+correction claim was re-tested on OpenML-CC18 datasets [@Bischl2021],
+selected before any performance was observed to guard against benchmark
+selection bias: against default baselines the advantage is largely a
+decision-rule effect, and against tuned baselines with the same
+correction it does not survive on 15 datasets; and — on the reference project's own cross-validated
 holdout, where ground truth is available — a paired bootstrap
 comparison confirms the class-weighting effect itself is not noise
 (+0.081 Balanced Accuracy over an unweighted baseline, 90% CI
