@@ -1423,6 +1423,25 @@ stratifiziert), Metrik BAcc.
   LightGBM-Konkurrenten: gegen einen schwellenkorrigierten Ranger ist der
   Vorsprung ebenfalls verschwunden.
 - **Auswertung (165)**: erledigt, Ergebnisse siehe oben.
+- **Level 2 gegen korrigierte Baseline (166, 2026-11-03)**: Kein Neulauf
+  noetig. Protokoll v3 wendet die Klassen-Multiplikatoren im Level-2-Workflow
+  bereits an (Tuning auf dem Inner-Tune-Split). Nur die Referenz war unkorrigiert.
+  Vergleich `level2_workflow` gegen `best_single_tuned_thr` (v4), 15
+  Datensaetze: 8 Siege, 7 Niederlagen, Median +0.14, Mittel +0.01 BAcc-Punkte,
+  Wilcoxon p = 0.67, Spearman(Unbalanciertheit, d) = +0.36 (p = 0.18). Gegen die
+  unkorrigierte v2-Baseline lag das Mittel bei +1.3 (p = 0.64); der Unterschied
+  ist der Referenzeffekt. Ergebnis: Level 2 zeigt keinen messbaren Vorsprung.
+  Folds gleich bis auf `sick` (ranger_default-Score weicht um 0.013 ab, vermutlich
+  parallele ranger-Auswertung). PAPER_DRAFT Abschnitt 6 und Abstract angepasst.
+  Skript `166_level2_vs_thr_baseline_n15.R` (untracked).
+- **Entscheidungsstabilitaet gegen korrigierte Baseline (167, 2026-11-03)**:
+  Stabilitaetswerte unveraendert aus `analysis/decision_stability_level2_analysis_n15.R`,
+  Erfolg = d aus 166. Spearman n=6 rho = +0.14 (p = 0.79), n=10 rho = +0.31
+  (p = 0.39), n=15 rho = +0.12 (p = 0.67); LOO [-0.03; +0.23]. Gegen die
+  unkorrigierte Baseline war n=15 rho = -0.15 (p = 0.60). Befund unveraendert:
+  Entscheidungsinstabilitaet sagt Level-2-Erfolg nicht vorher. PAPER_DRAFT
+  Abschnitt 7.3 angepasst. Skript `167_decision_stability_vs_thr_baseline_n15.R`
+  (untracked).
 - **Risiken**: Schwellen-Holdout und Hyperparameterwahl liegen beide im
   Outer-Train (leicht optimistisch fuer Baselines, als Limitation dokumentieren).
   Rechner-Standby hat schon einmal einen Lauf verzoegert. Die DB-Registrierung

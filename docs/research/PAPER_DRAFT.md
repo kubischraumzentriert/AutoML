@@ -10,7 +10,8 @@ Section 1 extended 2026-10-01 with an explicit scope-fit argument for
 JOSS's "research software" definition. Reviewed for staleness
 2026-10-01, still accurate as of that date; Abstract, Sections 1, 5.3, 8
 and 9 revised 2026-11-02 after the protocol-v4 decision-rule control on
-n = 15, which withdraws the imbalance-boundary reading.) Not submitted
+n = 15, which withdraws the imbalance-boundary reading; Section 6 and the
+Abstract's Level-2 p-value re-based on the same control 2026-11-03.) Not submitted
 anywhere - submission itself remains paused for the 6-month public-repo-
 age gate (see `BACKLOG.md` "JOSS-Einreichung pausiert", earliest eligible
 ~2027-01-07). Written in English, even though the underlying repository
@@ -61,7 +62,7 @@ bounds, rather than inflates, the workflow's claimed value. A paired
 significance test of this result, originally underpowered at n = 6,
 was re-run once the benchmark set reached n = 15 for an unrelated
 follow-up question and confirms the null result at adequate power
-(p = 0.64). Two further
+(p = 0.67 against the threshold-corrected baseline; Section 6). Two further
 trust-layer extensions test whether Level 2's inner decisions can be
 trusted at all: a decision-stability check finds that its model-
 selection step is unstable under small seed perturbations in most cases,
@@ -490,7 +491,9 @@ loses. Neither dataset size nor class imbalance alone explains the
 pattern. One partial explanation was found for one of the three losses:
 `analcatdata-authorship` sits near a performance ceiling where all three
 inner candidates tie at a perfect inner score in most folds, making the
-final model-selection step effectively arbitrary.
+final model-selection step effectively arbitrary. The reference used in
+this paragraph is the uncorrected protocol-v2 baseline; the re-analysis
+against the threshold-corrected baseline, further below, supersedes it.
 
 We report this as a genuine negative/mixed result rather than omitting
 it or reframing it as a qualified success. More process complexity is
@@ -550,16 +553,22 @@ reasonable power, so a non-significant result at n = 6 could not
 distinguish a true null effect from simple under-power. Using the same
 Level-2-vs-best-prior deltas, extended with the 9 additional datasets
 from the two independent Weg-B extensions (Section 7.3), the pattern
-shifts numerically (9 wins, 6 losses, mean delta ≈ +1.3 points — pulled
-upward mainly by two strongly imbalanced binary datasets, `ozone-
-level-8hr` +20.1 and `jm1` +9.0 points) but remains statistically
-indistinguishable from zero: V = 69, p = 0.6387. A sensitivity check
-excluding those two outliers (n = 13) gives an even flatter result
-(V = 40, p = 0.7354), so the null finding is not an artifact of a thin
-tail being masked by two large deltas either direction. With adequate
-power for the first time, this is a materially more defensible null
-result than the original n = 6 reading, not merely a repeated one.
-Reproducible code: `analysis/p2_level2_significance_test_n15.R`.
+shifts numerically under the uncorrected reference (9 wins, 6 losses,
+mean delta ≈ +1.3 points, driven mainly by two strongly imbalanced binary
+datasets, `ozone-level-8hr` +20.1 and `jm1` +9.0 points; V = 69, p = 0.6387).
+That reference is superseded. **Re-based on the threshold-corrected
+baseline** (`best_single_tuned_thr`, protocol v4, Section 5.3), the pattern
+is 8 wins, 7 losses, median +0.14 and mean +0.01 points, two-sided Wilcoxon
+p = 0.67. `ozone-level-8hr` falls to +0.2 and `jm1` to +0.1 points. The
+Spearman correlation with class imbalance is ρ = +0.36 (p = 0.18). The
+earlier positive mean came from the reference, not from the Level-2
+prototype: Level 2 applies the same class-threshold correction already
+(protocol v3), so against a corrected baseline it shows no detectable
+advantage. Reproducible code: `analysis/p2_level2_significance_test_n15.R`
+(uncorrected reference) and `166_level2_vs_thr_baseline_n15.R` (corrected
+reference, the one this paper relies on). The earlier sensitivity check that
+excluded the two outliers was computed only against the uncorrected
+reference and is not repeated here.
 
 **We also checked whether simple dataset meta-features explain the
 pattern, and found none that do.** Beyond dataset size and class
@@ -661,8 +670,10 @@ sample sizes as the external benchmark set was extended for this
 purpose: an initial, fold-1-only reading at n = 6 was suggestive
 (Spearman ρ = -0.28), but did **not** survive re-testing on the mean
 stability across all 3 outer folds of the same 6 datasets
-(ρ = -0.086, p = 0.92), nor two independent extensions of the dataset
-sample to n = 10 (ρ = -0.134, p = 0.71) and n = 15 (ρ = -0.147,
+(ρ = +0.14, p = 0.79 against the threshold-corrected baseline; ρ = -0.09,
+p = 0.92 against the uncorrected v2 baseline), nor two independent
+extensions of the dataset sample to n = 10 (ρ = +0.31, p = 0.39; uncorrected
+ρ = -0.13, p = 0.71) and n = 15 (ρ = +0.12, p = 0.67; uncorrected ρ = -0.15,
 p = 0.60). We report the initial suggestive reading and its retraction
 explicitly, as an example of a small-sample artifact caught by directly
 re-testing rather than treated as a finding: **decision-selection
@@ -670,7 +681,10 @@ instability, at least as measured here, does not predict Level-2
 success or failure.** No corresponding pipeline change was made — a
 generic, reusable stability-reporting module remains available, but the
 specific application to Level-2 model selection yields no actionable
-guidance and was not promoted into the default workflow.
+guidance and was not promoted into the default workflow. The correlations above
+were re-computed against the threshold-corrected reference
+(`167_decision_stability_vs_thr_baseline_n15.R`); the uncorrected values are
+given alongside.
 
 ### 7.4 A structurally harder train/test split (extrapolation risk)
 
@@ -726,7 +740,8 @@ conflated in a single z-score.
   8-10-dataset minimum for reasonable power) but has since been re-run
   at n = 15, once the benchmark set was independently extended for the
   decision-stability question (Section 6/7.3) — the null result holds
-  at adequate power (p = 0.6387), so this specific test is no longer
+  at adequate power (p = 0.67 against the threshold-corrected baseline; the
+uncorrected p = 0.6387 is superseded), so this specific test is no longer
   power-limited. The other comparisons throughout Sections 5 and 7 are
   still at 6-7 datasets and remain genuinely power-limited; this is a
   real constraint of their sample size, not a gap that more careful
@@ -744,7 +759,9 @@ conflated in a single z-score.
   shows that this confound accounts for the earlier imbalance-boundary
   reading. The Level-2 comparisons in Sections 6 and 7.3 use these uncorrected
   baselines as their "best prior" reference, so their deltas carry the same
-  confound. A Level-2 re-run with the correction has not been done.
+  confound. Level 2 itself already applies the correction (protocol v3); Section 6
+re-bases its comparison, and the Section 7.3 correlations, on the
+threshold-corrected baseline.
 - **Class-multiplier stability.** The per-fold multiplier estimates on a 25%
   inner holdout are unstable for the LightGBM arms (max/min ratio up to 3582
   per fold, versus at most 4.5 for `workflow_ranger`). Corrected arms are
