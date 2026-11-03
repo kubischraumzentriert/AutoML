@@ -8,7 +8,9 @@ tuning-budget test, metafeature analysis; Section 7.3 extended
 extended 2026-10-01 with the P2 significance test re-run at n=15;
 Section 1 extended 2026-10-01 with an explicit scope-fit argument for
 JOSS's "research software" definition. Reviewed for staleness
-2026-10-01, still accurate as of that date.) Not submitted
+2026-10-01, still accurate as of that date; Abstract, Sections 1, 5.3, 8
+and 9 revised 2026-11-02 after the protocol-v4 decision-rule control on
+n = 15, which withdraws the imbalance-boundary reading.) Not submitted
 anywhere - submission itself remains paused for the 6-month public-repo-
 age gate (see `BACKLOG.md` "JOSS-Einreichung pausiert", earliest eligible
 ~2027-01-07). Written in English, even though the underlying repository
@@ -43,11 +45,14 @@ We evaluate the workflow's core weighted-training-plus-correction
 component ("Level 1") on 7 internally-encountered datasets and, to guard
 against benchmark selection bias, on 6 additional datasets drawn from
 OpenML-CC18 by a criterion fixed *before* any performance was observed.
-Against default baselines the component wins or ties on nearly every
-dataset; against **fairly tuned** baselines (matched compute budget) its
-advantage survives only on the more class-imbalanced datasets and
-disappears on larger, already-balanced ones — a precise, falsifiable
-boundary condition rather than a blanket "the workflow is better" claim.
+Against default baselines the component wins or ties on most datasets.
+A control added later shows that most of this margin is a decision-rule
+effect: once the **fairly tuned** baselines (matched compute budget)
+receive the same class-threshold correction, the component's advantage
+disappears on the 15 datasets tested (median −0.3 balanced-accuracy
+points, 5 of 15 wins, p = 0.09). An earlier reading that tied the
+advantage to class imbalance is withdrawn; it was an artifact of the
+uncorrected baselines.
 A further prototype ("Level 2": model selection, tuning, and ensembling
 performed *inside* each outer-CV fold) shows a mixed, on-average slightly
 negative result relative to Level 1 across the same 6 external datasets,
@@ -109,8 +114,9 @@ We make the following contributions:
    datasets plus 6 datasets from OpenML-CC18 selected by a criterion
    fixed before any performance was observed, evaluated against both
    default and *fairly tuned* baselines under a frozen protocol
-   (Section 5). We report the precise conditions under which the
-   workflow's advantage holds and where it does not.
+   (Section 5). A later decision-rule control on 15 datasets shows that
+   the advantage over tuned baselines is a threshold-correction effect and
+   does not survive once those baselines receive the same correction.
 4. **A negative/mixed result for Level 2** (Section 6): more process
    complexity does not reliably outperform the simpler Level-1 workflow,
    even at markedly higher compute cost — reported deliberately, because
@@ -421,19 +427,45 @@ binary + 3 multiclass tasks (`ilpd`, `sick`, `blood-transfusion`, `cmc`,
 Against **default** baselines, `workflow_ranger` reproduces the internal
 finding on genuinely unseen data: it wins clearly on 4 of 6 datasets
 (+1.6 to +6.7 balanced-accuracy points) and is close to neutral on the
-remaining 2, with no case of a severe regression.
+remaining 2, with no case of a severe regression. The decision-rule
+control below shows that most of this margin reflects the threshold
+correction rather than the class weighting.
 
-Against **fairly tuned** baselines, the advantage narrows to exactly the
-boundary the metric-conditional story predicts: it persists clearly on
-the 3 smaller, more class-imbalanced datasets (`ilpd` +11.9,
-`sick` +4.0, `blood-transfusion` +0.8 points) and effectively
-disappears — reversing narrowly on 2 of 3 — on the 3 larger, better-
-balanced ones (`cmc` -0.9, `analcatdata-authorship` -0.6,
-`optdigits` -0.3 points). We read this as the strongest, most precisely
-bounded version of the claim available: **the weighting-plus-correction
-chain adds value beyond pure hyperparameter tuning specifically where
-class imbalance is the dominant problem; on already-balanced, larger
-tasks, tuning alone matches or exceeds it.**
+Against **fairly tuned** baselines, protocol v2 showed an advantage on the
+3 smaller, more class-imbalanced datasets (`ilpd` +11.9, `sick` +4.0,
+`blood-transfusion` +0.8 points) and none on the 3 larger, better-balanced
+ones (`cmc` -0.9, `analcatdata-authorship` -0.6, `optdigits` -0.3 points).
+We first read this as a boundary condition: the weighting-plus-correction
+chain seemed to add value beyond hyperparameter tuning where class
+imbalance dominates. **A control added afterwards withdraws that reading.**
+The v2 tuned baselines decided at the default threshold of 0.5 and never
+received the class-threshold correction that `workflow_ranger` receives,
+so the comparison measured the correction, not the imbalance.
+
+**Decision-rule control (protocol v4, 15 datasets).** The 6 datasets were
+extended to 15 by the 9 further OpenML-CC18 datasets of Section 7.3, and
+each tuned baseline was run a second time with the same class-multiplier
+correction, tuned on an inner 25% holdout. Protocol and prediction were
+fixed before the run (`BACKLOG.md`, "Protokoll v4"). The primary
+comparison, `workflow_ranger` against the best tuned baseline with
+correction, shows no advantage: median −0.34 balanced-accuracy points, 5
+of 15 datasets won, Wilcoxon p = 0.094. Its correlation with class
+imbalance is ρ = +0.13 (p = 0.65), so the imbalance boundary disappears. A
+second control, against a tuned Ranger with correction, gives the same
+picture (median −0.41, 5 of 15, p = 0.35, ρ = +0.03).
+
+**Attribution.** The imbalance correlation appears only when the decision
+rule alone is compared: applying the correction to the default Ranger
+improves it on 11 of 15 datasets (median +0.10, mean +3.2 points, dominated
+by `ozone-level-8hr` +21.0; ρ = +0.58, p = 0.02). The class weighting and
+multiplier tuning beyond that rule adds nothing measurable (median −0.17,
+p = 0.48). The workflow's advantage over uncorrected baselines is therefore
+largely a decision-rule effect: it reflects where a fixed 0.5 threshold
+misclassifies the minority class, not a benefit of the weighting chain
+itself. The class-multiplier estimates are, however, unstable for the
+LightGBM arms (per-fold max/min ratio up to 3582, versus at most 4.5 for
+`workflow_ranger`); the Ranger control is less affected by this, but the
+LightGBM-based comparisons are not.
 
 ## 6. Level 2 Prototype: A Negative Result
 
@@ -680,7 +712,8 @@ conflated in a single z-score.
   by the same practitioner using the same template; independent-team
   replication has not been attempted.
 - **External benchmark is curated, not blind.** The 6 OpenML-CC18
-  datasets were selected before performance was observed, which
+  datasets of Section 5.3 were selected before performance was observed; the
+  decision-rule control uses 15 datasets selected by the same criteria, which
   addresses selection-*after*-seeing-results bias, but the inclusion
   criteria (instance/feature/class-count bounds) were still chosen by
   the same team that built the workflow.
@@ -705,6 +738,18 @@ conflated in a single z-score.
   (p = 1). We did not test budgets beyond 30 evaluations, so a much
   larger budget (e.g. 100+) remains genuinely untested, though the null
   result at 3x gives no particular reason to expect a different picture.
+- **Decision-rule confound in the Level-1 evidence.** The tuned baselines of
+  protocols v2 and v3 were decided at a 0.5 threshold and never received the
+  class-threshold correction that `workflow_ranger` receives. Section 5.3
+  shows that this confound accounts for the earlier imbalance-boundary
+  reading. The Level-2 comparisons in Sections 6 and 7.3 use these uncorrected
+  baselines as their "best prior" reference, so their deltas carry the same
+  confound. A Level-2 re-run with the correction has not been done.
+- **Class-multiplier stability.** The per-fold multiplier estimates on a 25%
+  inner holdout are unstable for the LightGBM arms (max/min ratio up to 3582
+  per fold, versus at most 4.5 for `workflow_ranger`). Corrected arms are
+  compared on equal terms, but the in-sample threshold choice may still
+  inflate the corrected numbers; the size of that effect is not quantified.
 - **Level 3 is entirely unevaluated.** The paper's title claim
   ("trust-centered AutoML workflow") is best read as applying to the
   *system as used in practice* (Level 3, informally), while the
@@ -723,10 +768,12 @@ whose main contribution is process, not algorithm: automated leak and
 drift audits, a governed template-evolution rule, and an experiment/
 evidence-logging infrastructure that make every claim in this paper
 independently re-derivable from the underlying database rather than
-taken on faith. Its core performance claim is deliberately narrow and
-metric-conditional, validated against an externally-anchored benchmark
-set and fairly tuned baselines rather than defaults alone, and a
-follow-up experiment that could have strengthened the claim further
+taken on faith. Its core performance claim is deliberately narrow: against
+default baselines it holds on our benchmark sets, but against tuned
+baselines given the same class-threshold correction it does not hold on 15
+datasets. An earlier, more specific reading that tied the advantage to class
+imbalance was withdrawn after this control. A follow-up experiment that
+could have strengthened the claim further
 (Level 2) instead produced a negative/mixed result that we report
 in full. We believe this combination — a mature trust layer, a bounded
 and externally-tested performance claim, and openly published negative

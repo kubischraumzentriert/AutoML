@@ -26,6 +26,7 @@ für die Trennung.
 | `outer_workflow_evaluation_template.R` | v1, generalisiert für beliebige Projekte | wie oben |
 | `outer_workflow_evaluation_v2_fair_baselines.R` | v2, "faire Baselines" | v1 + 2 zusätzliche GETUNTE Baseline-Arme |
 | `outer_workflow_evaluation_v3_level2.R` | v3, Level-2-Evaluation (siehe `docs/research/EVALUATION_LEVELS.md`) | v2 + Modellwahl selbst als Teil der Inner-Entscheidung |
+| `outer_workflow_evaluation_v4_decision_rule.R` | v4, Entscheidungsregel (Plan und Status: BACKLOG.md, "Protokoll v4") | v2-Arme bei Schwelle 0.5 (Reproduktion) + Klassen-Multiplikatoren für Default-, getunte und Best-Single-Arme (`*_thr`) |
 | `outer_workflow_helpers.R` | **kein Protokoll, sondern Plumbing** | gemeinsame Bausteine (Fallback-Shims, `make_imputed_learner()`, Standard-Arme, `direction_max`-Summary), aus den 4 obigen Dateien extrahiert - diese Datei selbst ist NICHT eingefroren, da reine technische Wiederverwendung ohne methodische Aussage |
 
 Ergebnisse und Interpretation je Version stehen in `BACKLOG.md`

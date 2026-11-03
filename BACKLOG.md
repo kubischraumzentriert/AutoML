@@ -1280,6 +1280,154 @@ Rang-Ergebnis mittelt ueber alle 15, verdeckt aber nicht die
 datensatzspezifische Staerke). `JOSS_TECHNIQUE_WATCH.md` Kandidat 3
 entsprechend aktualisiert.
 
+**Grenzbedingung des Level-1-Vorteils bei n=15 (2026-11-01)**: Anlass war
+der Abgleich des Materials gegen die ABCD-Kriterien (AutoML-Conf, Kategorie
+Benchmarks): Die Aussage "der Vorteil von `workflow_ranger` gegenueber fair
+getunten Baselines bleibt auf unbalancierteren Datensaetzen bestehen" stand
+im `PAPER_DRAFT` (Abschnitt 5.3) nur auf n=6 und vermengte Groesse mit
+Unbalanciertheit. Neues Skript
+[`164_boundary_condition_n15.R`](164_boundary_condition_n15.R) wertet die
+bereits vorhandenen n=15-Ergebnisse (163) aus, ohne neue Modelllaeufe.
+Vorab festgelegt: Delta = `workflow_ranger` minus `best_single_tuned_model`
+(Inner-Score-Wahl, schaut nie auf den Outer-Test) in BAcc-Punkten;
+Unbalanciertheit = log10(Mehrheit/Minderheit) im verwendeten Trainings-Task;
+Primaertest = Spearman, uebrige Konkurrenten nur Sensitivitaet.
+
+- **Global kein Vorteil**: Median -0.15 Punkte, Mittel +2.47, Siege 7/15,
+  Wilcoxon p=0.59 (vs. `tuned_lightgbm` p=0.41, vs. `tuned_ranger` p=0.094).
+  Der positive Mittelwert stammt von wenigen grossen Gewinnen; konsistent mit
+  Friedman-Rang 3.
+- **Grenzbedingung bestaetigt**: Spearman(Unbalanciertheit, Delta)
+  rho=+0.695, p=0.004 (Sensitivitaeten rho +0.60 bis +0.71, p 0.003-0.019);
+  Leave-one-out rho in [0.638, 0.766]. Lineares Modell: +1.1 BAcc-Punkte je
+  log10-Stufe Unbalanciertheit (p=0.006).
+- **Groesse ist NICHT der Treiber**: Unbalanciertheit ~ log10(n)
+  rho=-0.08 (p=0.77), Delta ~ log10(n) rho=+0.16 (p=0.57), Groesse im Modell
+  p=0.56; `jm1` (gross, unbalanciert) gewinnt mit +6.8. Die n=6-Formulierung
+  "kleinere/unausgeglichenere vs. groessere/balancierte" im `PAPER_DRAFT`
+  ist damit zu eng und muss auf "Unbalanciertheit" korrigiert werden.
+- **Grenzen**: n=15, 3 Outer-Folds, Datensatzauswahl vom selben Team;
+  Ausreisser `ozone-level-8hr` (+19.5) und `ilpd` (+11.9) - bei `ozone` ist
+  ungeprueft, ob die getunten Arme in der kleinen Inner-Holdout kollabiert
+  sind; Mehrklassen-Unbalanciertheit grob; keine Mehrfachtest-Korrektur ueber
+  die Sensitivitaeten; Aussage gilt fuer BAcc als Metrik.
+- **Ausreisser `ozone-level-8hr` geprueft (2026-11-01)**: In allen 3 Outer-
+  Folds liegt `workflow_ranger` bei 0.80-0.82, die getunten Arme bei
+  0.54-0.63 (`tuned_lightgbm` im Mittel sogar unter `lightgbm_default`:
+  0.617 vs 0.634) - also kein Ein-Fold-Zufall. Mechanismus (Skript im
+  Scratchpad, eigene 3-Fold-Stratifizierung, NICHT dieselben Folds wie das
+  Protokoll, ein Seed): Klassenverhaeltnis 2374:160; ein Default-Ranger sagt
+  bei Schwelle 0.5 in 98.8% der Faelle die Mehrheitsklasse voraus (wahr:
+  93.7%) -> BAcc 0.564. Dieselbe Ranger-Konfiguration mit einer auf einem
+  inneren 25%-Holdout gewaehlten Schwelle erreicht 0.832, also mindestens auf
+  dem Niveau von `workflow_ranger` (0.812); reine Klassengewichte p=1.5 ohne
+  Schwelle 0.731. **Der Vorsprung ist ein Entscheidungsregel-Effekt, kein
+  Versagen der Hyperparametersuche.** Die "fairen" Baselines in Protokoll v2
+  tunen nur Hyperparameter und entscheiden bei 0.5; sie bekommen keine
+  Schwellen-/Multiplier-Korrektur, die `workflow_ranger` hat. Folge fuer die
+  Grenzbedingung: Die Korrelation mit der Unbalanciertheit misst zu einem
+  guten Teil, wo fehlende Schwellenkorrektur schadet, und belegt nicht, dass
+  die Gewichtung+Korrektur-Kette mehr leistet als ein sauber schwellenkorrigierter
+  Baseline-Arm. Die Aussage "Vorteil jenseits reinen Hyperparameter-Tunings"
+  im `PAPER_DRAFT` ist damit nicht gedeckt, bis ein Arm "getunt + Schwelle"
+  im Protokoll (neue `_vN`-Datei nach ADR-008) mitlaeuft.
+- **Offen**: (1) erledigt durch Protokoll v4 (siehe unten); (2) `PAPER_DRAFT` Abschnitt 5.3, Abstract und Limitations
+  auf n=15 / "Unbalanciertheit statt Groesse" / Entscheidungsregel-Befund
+  anpassen (nicht Teil dieses Eintrags).
+
+**Protokoll v4 "Entscheidungsregel" - Protokoll geschrieben (2026-11-01), Lauf auf 15 Datensaetzen abgeschlossen (2026-11-02), Befund: Vorsprung ist Entscheidungsregel-Effekt**:
+Datei `protocols/outer_workflow_evaluation_v4_decision_rule.R` (neu, ungetrackt bis Commit). Smoke-Test
+auf `ilpd` im Scratchpad (Kopie des Projektordners, nicht im Projekt, ca. 2 Minuten): die sechs
+Schwelle-0.5-Arme sind in allen drei Folds identisch mit v2 (Reproduktion bestanden, Zufallsfolge
+unveraendert). Zusatzbefund: auf `ilpd` schrumpft die Luecke `workflow_ranger` gegen beste getunte
+Baseline mit Regel von +11.9 (v2, ohne Regel) auf etwa +5 (0.714 gegen 0.664). Ein Datensatz, keine
+Aussage. Auffaellig: Multiplikatoren bis 680 (Fold 3, `lightgbm_default_thr`), BAcc-Optimum auf kleinem
+Inner-Split ist instabil; im Befund mit Spannweite berichten.
+Ziel ist die Frage, ob der Vorteil von `workflow_ranger` nur aus der
+Entscheidungsregel (Schwellenkorrektur) stammt oder ob die Klassengewichtung
+zusaetzlich etwas beitraegt. Neue Datei `protocols/outer_workflow_evaluation_v4_decision_rule.R`
+nach ADR-008 (v2 bleibt unveraendert). Folds identisch zu v2 (gleicher Seed,
+stratifiziert), Metrik BAcc.
+
+- **Arme**: Reproduktion `ranger_default`, `lightgbm_default`, `tuned_ranger`,
+  `tuned_lightgbm`, `workflow_ranger` bei Schwelle 0.5 (Determinismus-Pruefung
+  gegen v2). Neu: `ranger_default_thr`, `lightgbm_default_thr` (nur Regel,
+  ohne Tuning und Gewichte), `tuned_ranger_thr`, `tuned_lightgbm_thr`
+  (gleiches getuntes Modell wie v2, nur mit Schwellenkorrektur),
+  `best_single_tuned_thr` (Auswahl nach Inner-Score, nie nach Outer-Test).
+- **Korrektur**: identisch zu `workflow_ranger`, `tune_class_multipliers()`
+  auf einem 75/25-Inner-Split, Anwendung auf das Vollmodell. Der getunte Fit
+  wird pro Fold einmal gemacht und mit beiden Regeln bewertet.
+- **Attribution**: `default_thr` gegen `workflow_ranger` isoliert die
+  Gewichte; `tuned_thr` gegen `default_thr` isoliert das Tuning.
+- **Vorab festgelegte Auswertung** (Skript `165_...R`, analog zu 164):
+  Primaer Spearman(Unbalanciertheit, `workflow_ranger` minus
+  `best_single_tuned_thr`), Wilcoxon und Siege, Attributions-Deltas, LOO.
+  **Vorhersage**: Ist es nur die Entscheidungsregel, schrumpft die
+  Korrelation deutlich und der Median liegt bei 0. Bleibt rho >= 0.5, traegt
+  die Gewichtung etwas bei.
+- **Aufwand**: rund 75 bis 90 Minuten sequenziell. `mfeat-karhunen` ist
+  unsicher, weil die v2-Zeit durch Standby verfaelscht ist (Schaetzung rund
+  10 Minuten). 10 Klassen erhoehen die Multiplikatorsuche (9 Dimensionen).
+- **Entschieden im Protokoll**: (1) Umfang alle Arme inklusive Reproduktion
+  (empfohlene Option); (2) `best_single_tuned_thr` wird nach dem Inner-Score
+  MIT Schwelle gewaehlt (empfohlene Option). Bei (2) ist der Score auf dem
+  25-%-Split in-sample fuer die Schwelle; beide Kandidaten sind gleich
+  verzerrt, das ist im Protokollkopf vermerkt.
+- **Lauf (3) erledigt (2026-11-02)**: 15 Datensaetze, alle rc=0, Laufzeit
+  ca. 100 Minuten sequenziell (ab 17:11, Summe der Einzelzeiten 5965 s). Ergebnisse unter
+  `ML_Learning/openml-cc18-<ds>/_artifacts/outer_workflow_evaluation_v4_*.csv`.
+  Auswertung: `165_protocol_v4_decision_rule_n15.R`, Ausgabe
+  `_artifacts/protocol_v4_decision_rule_n15.csv`. Der Smoke-Lauf auf ilpd ist
+  nicht Teil des Ergebnisses.
+- **Ergebnis Primaertest** d_thr = `workflow_ranger` minus
+  `best_single_tuned_thr` (BAcc-Punkte): Median -0.34, Mittel -0.52, Siege 5/15,
+  Wilcoxon p = 0.094. Spearman(Unbalanciertheit, d_thr) = +0.13 (p = 0.65),
+  LOO-Spanne [-0.05; +0.29]. Vorhersage: Korrelation schrumpft und Median
+  liegt bei 0 -> trifft zu. rho >= 0.5 -> nicht erfuellt.
+- **Attribution** (deskriptiv): Entscheidungsregel allein, Default-Modell
+  (`ranger_default_thr` minus `ranger_default`): Median +0.10, Mittel +3.2,
+  11/15 Siege, rho = +0.58 (p = 0.02); der Mittelwert wird von ozone (+21.0)
+  getrieben. Entscheidungsregel allein, getuntes Modell: Median +0.75, Mittel
+  +3.5, 9/15, rho = +0.56 (p = 0.03). Rest Gewichtung plus Multiplier-Tuning
+  (`workflow_ranger` minus `ranger_default_thr`): Median -0.17, Mittel +0.1,
+  5/15, p = 0.48, rho = +0.27 (p = 0.32). Kein messbarer eigener Beitrag der
+  Klassengewichtung.
+- **Korrektur zu 164**: Die Grenzbedingung aus 164 (rho = +0.695 fuer
+  `d_best_single`) gilt nur fuer v2-Baselines ohne Schwellenkorrektur. Mit
+  schwellenkorrigierter Baseline (d_thr) ist rho = +0.13. Der 164-Befund ist
+  als Entscheidungsregel-Effekt einzuordnen, nicht als Unbalanciertheitseffekt
+  jenseits der Regel. Im `docs/research/PAPER_DRAFT.md` (Abstract, Einleitung,
+  Abschnitt 5.3, Limitations, Fazit) am 2026-11-02 angepasst. `joss/paper.md`
+  (Statement of need, Research impact statement) am 2026-11-03 angepasst,
+  Fliesstext ca. 1468 Woerter. `date:`-Feld unveraendert (JOSS setzt es bei der
+  Begutachtung).
+- **Multiplikator-Streuung** (max/min ueber die Klassen je Fold, 45 Folds je
+  Arm): `workflow_ranger` Median 1.30, Maximum 4.5; `ranger_default_thr` Median
+  1.56, Maximum 14.7; `tuned_ranger_thr` Median 2.0, Maximum 62.8;
+  `lightgbm_default_thr` Median 3.5, Maximum 3582; `tuned_lightgbm_thr` Median
+  2.0, Maximum 3582. Von 19 Folds mit Verhaeltnis > 10 entfallen 16 auf
+  LightGBM-Arme und keiner auf `workflow_ranger`. Die frueher genannte
+  Spannweite "bis 680" ist unvollstaendig; das Maximum liegt bei 3582
+  (ozone-level-8hr, Folds 1 und 3). Hypothese, nicht geprueft: LightGBM-
+  Wahrscheinlichkeiten nahe 0/1 machen das Optimum auf dem kleinen
+  Inner-Split instabil. `workflow_ranger` (Ranger) ist stabil.
+- **Limitation**: Der Konkurrent `best_single_tuned_thr` ist in einzelnen
+  Datensaetzen (z.B. blood-transfusion) ein LightGBM-Arm mit instabiler
+  Schwelle. d_thr misst daher gegen einen Konkurrenten mit schwacher
+  Schwellen-Holdout-Limitation aus den Risiken oben gilt unveraendert.
+- **Gegenprobe mit Ranger-Konkurrent** (`d_ranger_thr` = `workflow_ranger`
+  minus `tuned_ranger_thr`, gleiche Modellfamilie, ohne LightGBM): Median
+  -0.41, Mittel -0.34, Siege 5/15, Wilcoxon p = 0.349; Spearman mit
+  Unbalanciertheit rho = +0.03 (p = 0.92). Der Befund haengt also nicht am
+  LightGBM-Konkurrenten: gegen einen schwellenkorrigierten Ranger ist der
+  Vorsprung ebenfalls verschwunden.
+- **Auswertung (165)**: erledigt, Ergebnisse siehe oben.
+- **Risiken**: Schwellen-Holdout und Hyperparameterwahl liegen beide im
+  Outer-Train (leicht optimistisch fuer Baselines, als Limitation dokumentieren).
+  Rechner-Standby hat schon einmal einen Lauf verzoegert. Die DB-Registrierung
+  fuer den neuen Workflow-Namen ist ein eigener Folgeschritt.
+
 ## P1.2 Schritt 2 - Status (2026-08-27): historisches Nachtragen
 
 **Nutzeranfrage**: "wir sollten die Historie nachtragen d.h. migrieren"
