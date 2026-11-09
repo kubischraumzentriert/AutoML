@@ -46,6 +46,8 @@ for (script in steps) {
   log_path <- file.path(log_dir, paste0(tools::file_path_sans_ext(script), ".log"))
   status_code <- system2(rscript, script, stdout = log_path, stderr = TRUE)
   exit_code <- attr(status_code, "status") %||% 0L
+  # stderr kommt als R-Objekt zurueck, nicht in die Datei: anhaengen, damit der Fehler im Log steht.
+  if (length(status_code) > 0L) cat(status_code, file = log_path, sep = "\n", append = TRUE)
   seconds <- round(as.numeric(difftime(Sys.time(), started, units = "secs")), 1)
   status <- if (exit_code == 0L) "ok" else "failed"
   cat(sprintf("%-32s %-7s %6.1f s  exit=%d\n", script, status, seconds, exit_code))

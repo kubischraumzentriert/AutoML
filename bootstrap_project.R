@@ -26,7 +26,8 @@ steps <- c(
   "100_lightgbm_tuning.R", "148_select_submission_model.R",
   "150_train_full_model.R", "155_predict_submission.R", "180_workflow_report.R"
 )
-entry_points <- c(steps, "000_config.R")
+# db_schema.sql wird zur Laufzeit gelesen (db_connect), nicht per source() eingebunden.
+entry_points <- c(steps, "000_config.R", "db_schema.sql")
 
 # Projekteigene Dateien, die nie aus dem Template ueberschrieben werden:
 #  - 000_config.R: die Template-Fassung ist noch die Konfiguration eines anderen
