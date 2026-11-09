@@ -1,0 +1,15 @@
+{
+  "competition": "playground-series-s6e11",
+  "platform": "kaggle",
+  "title": "Predicting Credit Card Fraud (Playground Series S6E11)",
+  "task_type": "binary",
+  "target_col": "is_fraud",
+  "id_col": "id",
+  "positive_class": "1",
+  "metric": "classif.auc",
+  "metric_evidence": "Kaggle-Overview-Seite, Tag 'Roc Auc Score' (gelesen 2026-11-06)",
+  "project_name": "playground-series-s6e11-credit-card-fraud",
+  "subset_fraction_rule": "analysis/suggest_subset_fraction.R: max(0.10, 20000 / n_train), begrenzt auf 1",
+  "learning_curve": "023_learning_curve.R laeuft nur als Bericht; aendert subset_fraction NICHT",
+  "seed": 42
+}

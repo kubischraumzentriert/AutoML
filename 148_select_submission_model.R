@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
 })
 
 source("000_config.R")
+source(file.path(project_dir, "005_benchmark_runtime.R"))
 source(file.path(project_dir, "db_logging.R"))
 source(file.path(project_dir, "provenance.R"))
 source(file.path(project_dir, "modules", "final_model_spec.R"))
@@ -21,7 +22,58 @@ for (f in list.files(file.path(project_dir, "features"), pattern = "\\.R$", full
 # auch die konkrete Kandidatenkonfiguration und deren Herkunft festgehalten.
 primary_metric <- baseline_measure_ids[1]
 
+# Gleiches Protokoll fuer alle Kandidaten: 5-fold CV auf Rohfeatures. Fehlt
+# fuer einen Algorithmus ein CV-Ergebnis in experiments.db, wird es hier
+# nachgerechnet und geloggt. Vorher wurden Holdout-Werte der Baselines gegen
+# Tuning-Versuche verglichen (INTERVENTIONS.md, Eingriff 9).
+make_cv_learner <- function(constructor) {
+  as_learner(po("imputemedian") %>>% po("imputemode") %>>% constructor())
+}
+
+eligible_cv <- intersect(names(base_learner_constructors), names(model_feature_sets))
+eligible_cv <- eligible_cv[vapply(eligible_cv, function(a) identical(unname(model_feature_sets[[a]]), "raw"), logical(1))]
+
 db_con <- db_connect()
+
+# Jeder Lauf rechnet die CV-Gegenpruefung fuer alle Kandidaten selbst und
+# protokolliert sie im Lauf. Keine Wiederverwendung aelterer Werte aus der
+# Datenbank: so zeigt der Bericht die Grundlage der Auswahl vollstaendig.
+missing_cv <- eligible_cv
+
+if (length(missing_cv) > 0L) {
+  cat("CV-Gegenpruefung je Kandidat:", paste(missing_cv, collapse = ", "), "\n")
+  task_cv <- readRDS(task_train_small_path)
+  cv_learners <- lapply(missing_cv, function(a) make_cv_learner(base_learner_constructors[[a]]))
+  names(cv_learners) <- missing_cv
+  cv_bench <- run_timed_benchmark(
+    tasks = list(task_cv),
+    learners = cv_learners,
+    resampling = rsmp("cv", folds = cv_folds),
+    measures = msrs(baseline_measure_ids)
+  )
+
+  db_proj_id <- db_get_or_create_project(db_con, project_name)
+  db_wf_id <- db_get_or_create_workflow(db_con, db_proj_id, "script", "148_select_submission_model.R")
+  db_run_id <- db_create_run(db_con, db_wf_id, seed = seed,
+                             notes = "CV-Gegenpruefung fuer Modellauswahl (gleiches Protokoll je Kandidat)")
+  db_log_timed_benchmark(
+    db_con, db_run_id, cv_bench, measure_names = baseline_measure_ids,
+    model_config_fn = function(row) {
+      list(
+        task_type = "classif",
+        algorithm = sub("^.*classif\\.", "", row$learner_id[1]),
+        feature_set = "raw",
+        preprocessing = "impute_median_mode",
+        class_weight_power = NA_real_,
+        task_id = row$task_id[1],
+        hyperparams = list()
+      )
+    },
+    resampling_strategy = "cv", resampling_folds = cv_folds, resampling_seed = seed
+  )
+  db_finish_run(db_con, db_run_id)
+}
+
 candidates_raw <- dbGetQuery(
   db_con,
   "
@@ -33,16 +85,19 @@ candidates_raw <- dbGetQuery(
          mr.mres_value AS best_value
   FROM metric_result mr
   JOIN model_config mc ON mc.mconf_id = mr.mres_mconf_id
+  JOIN resampling rs ON rs.rsmp_id = mr.mres_rsmp_id
   JOIN run r ON r.run_id = mc.mconf_run_id
   JOIN workflow wf ON wf.wf_id = r.run_wf_id
   JOIN project p ON p.proj_id = wf.wf_proj_id
   WHERE p.proj_name = ?
     AND mr.mres_measure_name = ?
     AND mr.mres_fold IS NULL
+    AND rs.rsmp_strategy = 'cv'
+    AND rs.rsmp_folds = ?
     AND mc.mconf_feature_set = 'raw'
     AND mr.mres_value IS NOT NULL
   ",
-  params = list(project_name, primary_metric)
+  params = list(project_name, primary_metric, cv_folds)
 )
 DBI::dbDisconnect(db_con)
 

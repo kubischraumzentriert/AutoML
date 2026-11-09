@@ -39,10 +39,14 @@ make_baseline_learner <- function(base_learner) {
 # BUGFIX (2026-09-01, gefunden im s6e9-Projekt - siehe dortiger Kommentar
 # in 000_config.R) zentral, statt ihn wie zuvor wortgleich in 030/035/036/
 # 037/050 zu duplizieren.
+# LightGBM (Default) ist dabei, damit 100 fuer LightGBM eine Laufzeit-
+# Referenz hat (Eingriff 8 in INTERVENTIONS.md). Kein Vergleichsgewicht:
+# Die Modellauswahl (148) nutzt nur CV-Werte.
 learners <- list(
   make_baseline_learner(base_learner_constructors$lda()),
   make_baseline_learner(base_learner_constructors$multinom()),
-  make_baseline_learner(base_learner_constructors$ranger())
+  make_baseline_learner(base_learner_constructors$ranger()),
+  make_baseline_learner(base_learner_constructors$lightgbm())
 )
 
 resampling <- rsmp("holdout", ratio = validation_ratio)
