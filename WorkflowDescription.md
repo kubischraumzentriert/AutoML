@@ -455,6 +455,24 @@ mit sehr aehnlichen Nachbarvarianten nachlegen. Weitere Submissions brauchen ein
 neue methodische Idee; reine Mikrovarianten wie minimale Regularisierungswerte,
 Clipping-Schwellen oder Temperaturwerte sind sonst schnell Leaderboard-Fitting.
 
+### Wahrscheinlichkeiten und Clipping
+
+- **Clipping** heisst: vorhergesagte Wahrscheinlichkeiten vor der Submission auf
+  `[eps, 1-eps]` begrenzen.
+- Bei **ROC AUC** ist Clipping wirkungslos. AUC haengt nur von der Reihenfolge der
+  Vorhersagen ab; eine monotone Klemme aendert diese Reihenfolge nicht, sie kann
+  hoechstens Bindungen erzeugen und AUC verschlechtern. Standard-Workflow: kein
+  Clipping.
+- Relevant nur bei **LogLoss** als Wettbewerbsmetrik. Dann gilt die eps-Definition
+  des Wettbewerbs: ist sie festgelegt, exakt uebernehmen. Ist sie nicht festgelegt,
+  eps auf OOF-Daten bzw. verschachtelter CV waehlen, nie auf dem Leaderboard.
+- **Prozentuales Clipping** (Quantile der eigenen Vorhersagen) ist verworfen: die
+  Klemme haengt vom Modell ab, ist zwischen Laeufen nicht vergleichbar und ist ein
+  Gaming-Vektor. Begruendung und Test: `docs/reference/REFERENZ_PROBABILITY_CALIBRATION.md`,
+  Abschnitt 8.
+- Clipping-Varianten nach einer Leaderboard-Bestaetigung gelten als Leaderboard-
+  Fitting (Regel oben).
+
 ## Phase 6: Feature Engineering (optional, `025`/`035`-`038`)
 
 Nur durchfuehren, wenn Phase 4 (Baselines) noch klar unterhalb einer
