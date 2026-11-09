@@ -40,13 +40,24 @@ zuerst genau **so** aus, bevor er es auf ein eigenes Projekt überträgt:
    [`WorkflowDescription.md`](WorkflowDescription.md)) oder automatisiert
    über `targets` (`tar_make()`, siehe [`TARGETS.md`](TARGETS.md) für
    Befehlsübersicht und Caching-Modell).
-5. **Auf ein eigenes Projekt übertragen**: [`TARGETS.md`](TARGETS.md)s
-   Abschnitt "Checkliste: Übertragung auf einen neuen Kaggle-Wettbewerb"
-   (kurz) bzw. [`WorkflowDescription.md`](WorkflowDescription.md) (mit
-   Beispielbefehlen und Entscheidungsregeln pro Schritt) - im Kern: eigene
-   `train.csv`/`test.csv` einsetzen, `000_config.R` neu befüllen
-   (`target_col`, Zielmetrik, Feature-Familien), Rest der Pipeline bleibt
-   strukturell gleich.
+5. **Auf ein eigenes Projekt übertragen** (Arbeitsablauf, Stand Nov. 2026):
+   - Projektordner anlegen mit `competition.json` (Vorlage:
+     `competition.example.json`; die einzige manuelle Eingabe pro Wettbewerb),
+     `train.csv`, `test.csv`, `sample_submission.csv`.
+   - Aus dem Template holen und den Workflow starten:
+     `Rscript run_workflow.R --from="<Pfad zum Template>"`.
+     `bootstrap_project.R` kopiert die eingebundenen Skripte aus dem Template,
+     prüft Spezifikation, Daten und Einbindungen und leert `_artifacts/`
+     (die Experiments-DB bleibt erhalten, Sicherung in `_archive/`).
+   - Ergebnis: `WORKFLOW_REPORT.md` (Ergebnisse, Modellauswahl, Ablauf-Diagramm).
+     Manuelle Eingriffe werden in `INTERVENTIONS.md` des Projekts festgehalten.
+   - Die Kaggle-Registrierung (`158_register_submission_result.R`) bleibt manuell.
+   Details: [`WorkflowDescription.md`](WorkflowDescription.md), Abschnitt
+   "Wahrscheinlichkeiten und Clipping" für die Metrik-Entscheidung.
+   Die Health-Konfiguration `000_config.R` bleibt die Referenz dieses
+   Beispielprojekts; ein neues Projekt bekommt stattdessen
+   `000_config_competition.R` (als `000_config.R` installiert, wenn
+   `competition.json` vorhanden ist).
 
 Fragen oder Probleme dabei? [`CONTRIBUTING.md`](CONTRIBUTING.md)
 beschreibt, wie Bug-Reports/Support-Anfragen in der Praxis gehandhabt
