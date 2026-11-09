@@ -21,9 +21,10 @@ template_dir <- if (length(from_arg) > 0L) sub("^--from=", "", from_arg[[1L]]) e
 search_dirs <- c("", "modules", "features", "analysis")
 
 # Einstiegspunkte: die Schritte aus run_workflow.R und die Konfiguration.
+# Muss der Schrittliste in run_workflow.R entsprechen (sonst fehlen Abhaengigkeiten).
 steps <- c(
   "020_task.R", "010_eda.R", "015_target_leak_audit.R", "030_baseline.R",
-  "100_lightgbm_tuning.R", "148_select_submission_model.R",
+  "023_learning_curve.R", "100_lightgbm_tuning.R", "148_select_submission_model.R",
   "150_train_full_model.R", "155_predict_submission.R", "180_workflow_report.R"
 )
 # db_schema.sql wird zur Laufzeit gelesen (db_connect), nicht per source() eingebunden.
@@ -147,6 +148,17 @@ if (length(missing_files) > 0L) {
   problems <- c(problems, paste("fehlende Skripte im Workflow:", paste(unique(missing_files), collapse = ", ")))
 }
 referenced <- checked
+
+# Drift-Pruefung: jeder Schritt aus run_workflow.R muss in dieser Liste stehen.
+wf_file <- file.path(project_dir, "run_workflow.R")
+if (file.exists(wf_file)) {
+  wf_lines <- readLines(wf_file, warn = FALSE)
+  wf_steps <- unique(gsub('"', "", unlist(regmatches(wf_lines, gregexpr('"[0-9]{3}_[^"]+[.]R"', wf_lines)))))
+  drift <- setdiff(wf_steps, steps)
+  if (length(drift) > 0L) {
+    problems <- c(problems, paste("Schritte fehlen in bootstrap_project.R:", paste(drift, collapse = ", ")))
+  }
+}
 
 if (length(problems) > 0L) {
   cat("BOOTSTRAP ABGEBROCHEN:\n")
