@@ -638,6 +638,16 @@ jetzt zusaetzlich abfragbar.
 Rscript merge_project_experiments.R
 ```
 
+**Fester Schritt (seit 2026-11):** Jedes aus dem Template abgeleitete Projekt
+fuehrt den Merge als letzten Schritt von `run_workflow.R` aus. Der Aufruf
+braucht `--from=<Template>`; der Template-Pfad wird als
+`AUTOML_MERGE_TEMPLATE_ROOT` weitergegeben. Ohne `--from` bricht der Lauf vor
+dem ersten Schritt ab, damit keine Ergebnisse still ausfallen. Der Merge ist
+idempotent: bereits uebernommene Zeilen werden nicht doppelt eingefuegt.
+
+Hinweis: Die Tabelle `submission_result` (Kaggle-Scores) fehlte in der Merge-
+Liste (`modules/merge_project_experiments.R`), bis 2026-11-11 behoben.
+
 - Sichert die Ziel-DB zuerst per Dateikopie (`experiments_backup_<Zeitstempel>.db`).
 - Kopiert `project`/`workflow`/`run`/`run_config`/`model_config`/`resampling`/
   `hyperparam`/`metric_result`/`submission_result` aus jeder in `source_db_paths` gelisteten

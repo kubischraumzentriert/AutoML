@@ -25,10 +25,16 @@ search_dirs <- c("", "modules", "features", "analysis")
 steps <- c(
   "020_task.R", "010_eda.R", "015_target_leak_audit.R", "030_baseline.R",
   "023_learning_curve.R", "100_lightgbm_tuning.R", "148_select_submission_model.R",
-  "150_train_full_model.R", "155_predict_submission.R", "180_workflow_report.R"
+  "150_train_full_model.R", "155_predict_submission.R", "180_workflow_report.R",
+  "merge_project_experiments.R"
 )
 # db_schema.sql wird zur Laufzeit gelesen (db_connect), nicht per source() eingebunden.
 entry_points <- c(steps, "000_config.R", "db_schema.sql")
+# Dateien, die der Merge per Pfad einbindet ("modules/..."). Der Abhaengigkeits-
+# scanner erkennt nur Dateinamen, deshalb werden sie explizit kopiert und geprueft.
+merge_files <- c("modules/merge_project_experiments.R",
+                 "modules/merge_project_experiments_helpers.R",
+                 "modules/db_housekeeping.R")
 
 # Projekteigene Dateien, die nie aus dem Template ueberschrieben werden:
 #  - 000_config.R: die Template-Fassung ist noch die Konfiguration eines anderen
@@ -98,6 +104,20 @@ if (!is.null(template_dir)) {
     path <- project_hit(current)
     if (!is.na(path)) queue <- c(queue, deps_of(path))
   }
+  # Merge-Module (per Pfad eingebunden): wie oben kopieren, wenn abweichend oder fehlend.
+  for (rel in merge_files) {
+    tpl_path <- file.path(template_dir, rel)
+    dest <- file.path(project_dir, rel)
+    if (file.exists(tpl_path)) {
+      same <- file.exists(dest) && unname(tools::md5sum(dest)) == unname(tools::md5sum(tpl_path))
+      if (!same) {
+        existed <- file.exists(dest)
+        dir.create(dirname(dest), recursive = TRUE, showWarnings = FALSE)
+        file.copy(tpl_path, dest, overwrite = TRUE)
+        actions <- c(actions, paste(if (existed) "aktualisiert" else "kopiert", rel))
+      }
+    }
+  }
   cat("Template-Abgleich (", template_dir, "): ", length(actions), " Aenderung(en)\n", sep = "")
   for (a in actions) cat("  -", a, "\n")
   kept <- intersect(protected, seen)
@@ -148,6 +168,11 @@ if (length(missing_files) > 0L) {
   problems <- c(problems, paste("fehlende Skripte im Workflow:", paste(unique(missing_files), collapse = ", ")))
 }
 referenced <- checked
+
+# Merge-Module muessen vorhanden sein (siehe merge_files oben).
+for (rel in merge_files) {
+  if (!file.exists(file.path(project_dir, rel))) problems <- c(problems, paste(rel, "fehlt (Merge-Modul)"))
+}
 
 # Drift-Pruefung: jeder Schritt aus run_workflow.R muss in dieser Liste stehen.
 wf_file <- file.path(project_dir, "run_workflow.R")

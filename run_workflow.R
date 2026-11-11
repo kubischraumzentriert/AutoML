@@ -14,7 +14,14 @@ project_dir <- getwd()  # Aufruf aus dem Projektordner
 
 # Vorlauf: Preflight und sauberer Start (leert _artifacts/). Vor allen anderen
 # Schritten, damit kein Lauf auf Resten frueherer Laeufe aufsetzt.
-from_args <- grep("^--from=", commandArgs(trailingOnly = TRUE), value = TRUE)  # optional: Template-Abgleich
+from_args <- grep("^--from=", commandArgs(trailingOnly = TRUE), value = TRUE)  # Pflicht: Template-Pfad
+# Der Merge (letzter Schritt) schreibt in die zentrale experiments.db des Templates.
+# Ohne Template-Pfad wuerde der Merge still ausfallen - daher gar nicht erst starten.
+if (length(from_args) == 0L) {
+  stop("Aufruf ohne --from=<Template>: der Merge in die zentrale experiments.db braucht den Template-Pfad. Lauf nicht gestartet.", call. = FALSE)
+}
+template_path <- sub("^--from=", "", from_args[[1L]])
+Sys.setenv(AUTOML_MERGE_TEMPLATE_ROOT = template_path)
 boot <- system2(rscript, c("bootstrap_project.R", from_args), stdout = TRUE, stderr = TRUE)
 if (!is.null(attr(boot, "status")) && attr(boot, "status") != 0L) {
   cat(boot, sep = "\n")
@@ -32,7 +39,8 @@ steps <- c(
   "148_select_submission_model.R",
   "150_train_full_model.R",
   "155_predict_submission.R",
-  "180_workflow_report.R"
+  "180_workflow_report.R",
+  "merge_project_experiments.R"   # fester Abschluss: Ergebnisse in die zentrale experiments.db des Templates
 )
 
 artifact_dir <- file.path(project_dir, "_artifacts")

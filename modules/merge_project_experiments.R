@@ -82,6 +82,9 @@ merge_tables <- c(
   project = "proj_id", workflow = "wf_id", run = "run_id", run_config = "rconf_id",
   model_config = "mconf_id", resampling = "rsmp_id", hyperparam = "hparam_id",
   metric_result = "mres_id",
+  # submission_result (Kaggle-Scores) fehlte bisher, obwohl EXPERIMENTS_DB.md sie
+  # nennt. Nach model_config, da es auf mconf_id verweist.
+  submission_result = "subm_id",
   # P1.2 Evidence Registry (siehe BACKLOG.md): keine FK-Abhaengigkeit zu den
   # Tabellen oben, deshalb an beliebiger Stelle in der Liste einfuegbar -
   # ans Ende gesetzt, um den bestehenden Lauf nicht umzusortieren.
